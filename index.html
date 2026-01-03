@@ -1,243 +1,33 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Pide tu ASWA 🌽</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;800&family=Bebas+Neue&display=swap" rel="stylesheet">
-    <script src="https://unpkg.com/lucide@latest"></script>
-    
-    <meta property="og:title" content="ASWA - Chicha de Calidad">
-    <meta property="og:description" content="Haz tu pedido de chicha morada tradicional aquí.">
-    <meta name="theme-color" content="#facc15">
+jsangama
+aswa
 
-    <style>
-        body {
-            font-family: 'Poppins', sans-serif;
-            background-color: #09090b;
-            -webkit-tap-highlight-color: transparent;
-        }
-        .font-bebas { font-family: 'Bebas Neue', cursive; }
-        .app-card {
-            background: #18181b;
-            border: 1px solid #27272a;
-        }
-        .input-dark {
-            background-color: #09090b;
-            border: 1px solid #27272a;
-            color: white;
-            font-size: 16px !important; /* Previene zoom en iPhone */
-        }
-        .input-dark:focus {
-            border-color: #facc15;
-            outline: none;
-        }
-        .fade-in { animation: fadeIn 0.3s ease-in; }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-    </style>
-</head>
-<body class="min-h-screen text-white pb-32 fade-in">
-
-    <!-- HEADER -->
-    <nav class="fixed top-0 left-0 w-full bg-zinc-900/95 backdrop-blur-md z-50 border-b border-yellow-500/30 px-5 py-3 flex items-center justify-between">
-        <div class="flex items-center gap-2">
-            <span class="text-2xl">🌽</span>
-            <div>
-                <h1 class="font-bebas text-3xl text-yellow-400 leading-none tracking-tighter">ASWA</h1>
-                <p class="text-[9px] text-yellow-500/80 font-bold uppercase tracking-[0.1em]">Delivery Tarapoto</p>
-            </div>
-        </div>
-        <div id="welcome-msg" class="hidden text-[10px] bg-green-500/10 text-green-400 px-3 py-1.5 rounded-full border border-green-500/20 font-bold">
-            DATOS GUARDADOS ✅
-        </div>
-    </nav>
-
-    <div class="h-20"></div>
-
-    <form id="orderForm" onsubmit="generarPedido(event)" class="max-w-md mx-auto px-5 space-y-8">
-        
-        <!-- PRODUCTOS -->
-        <section>
-            <h2 class="text-white font-extrabold text-xl mb-4">1. Elige tu presentación</h2>
-            <div class="space-y-3">
-                
-                <!-- 2 LITROS -->
-                <div class="app-card rounded-3xl p-4 flex items-center justify-between border-l-4 border-l-yellow-600">
-                    <div class="flex items-center gap-4">
-                        <div class="text-3xl">🍹</div>
-                        <div>
-                            <p class="font-bold text-lg">Botella 2L</p>
-                            <p class="text-yellow-400 font-bold">S/ 9.00</p>
-                        </div>
-                    </div>
-                    <div class="flex items-center gap-4 bg-zinc-900 rounded-2xl p-1.5 border border-zinc-800">
-                        <button type="button" onclick="updateQty('p2l', -1)" class="w-10 h-10 flex items-center justify-center text-zinc-500 text-2xl font-bold">-</button>
-                        <span id="qty-p2l" class="w-4 text-center font-bold text-xl">0</span>
-                        <button type="button" onclick="updateQty('p2l', 1)" class="w-10 h-10 flex items-center justify-center bg-yellow-500 text-black rounded-xl text-2xl font-bold shadow-lg shadow-yellow-500/20">+</button>
-                    </div>
-                </div>
-
-                <!-- 3 LITROS -->
-                <div class="app-card rounded-3xl p-4 flex items-center justify-between border-l-4 border-l-yellow-600">
-                    <div class="flex items-center gap-4">
-                        <div class="text-3xl">🍹</div>
-                        <div>
-                            <p class="font-bold text-lg">Botella 3L</p>
-                            <p class="text-yellow-400 font-bold">S/ 13.00</p>
-                        </div>
-                    </div>
-                    <div class="flex items-center gap-4 bg-zinc-900 rounded-2xl p-1.5 border border-zinc-800">
-                        <button type="button" onclick="updateQty('p3l', -1)" class="w-10 h-10 flex items-center justify-center text-zinc-500 text-2xl font-bold">-</button>
-                        <span id="qty-p3l" class="w-4 text-center font-bold text-xl">0</span>
-                        <button type="button" onclick="updateQty('p3l', 1)" class="w-10 h-10 flex items-center justify-center bg-yellow-500 text-black rounded-xl text-2xl font-bold shadow-lg shadow-yellow-500/20">+</button>
-                    </div>
-                </div>
-
-                <!-- 4 LITROS -->
-                <div class="app-card rounded-3xl p-4 flex items-center justify-between border-l-4 border-l-yellow-500">
-                    <div class="flex items-center gap-4">
-                        <div class="text-3xl">🥤</div>
-                        <div>
-                            <p class="font-bold text-lg">Botella 4L</p>
-                            <p class="text-yellow-400 font-bold">S/ 15.00</p>
-                        </div>
-                    </div>
-                    <div class="flex items-center gap-4 bg-zinc-900 rounded-2xl p-1.5 border border-zinc-800">
-                        <button type="button" onclick="updateQty('p4l', -1)" class="w-10 h-10 flex items-center justify-center text-zinc-500 text-2xl font-bold">-</button>
-                        <span id="qty-p4l" class="w-4 text-center font-bold text-xl">0</span>
-                        <button type="button" onclick="updateQty('p4l', 1)" class="w-10 h-10 flex items-center justify-center bg-yellow-500 text-black rounded-xl text-2xl font-bold shadow-lg shadow-yellow-500/20">+</button>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <!-- ENVÍO -->
-        <section class="space-y-4">
-            <h2 class="text-white font-extrabold text-xl">2. ¿A dónde lo enviamos?</h2>
-            <div class="space-y-3">
-                <input type="text" id="nombre" placeholder="Tu nombre" required class="w-full p-4 rounded-2xl input-dark">
-                <input type="tel" id="telefono" placeholder="Tu celular" required class="w-full p-4 rounded-2xl input-dark">
-                
-                <select id="distrito" onchange="calculateTotal()" class="w-full p-4 rounded-2xl input-dark appearance-none bg-zinc-900 border border-zinc-800">
-                    <option value="0" disabled selected>Selecciona tu zona...</option>
-                    <option value="3">Morales (S/3 delivery)</option>
-                    <option value="4">Tarapoto (S/4 delivery)</option>
-                    <option value="5">Banda de Shilcayo (S/5 delivery)</option>
-                </select>
-
-                <textarea id="direccion" rows="3" placeholder="Dirección exacta y alguna referencia" required class="w-full p-4 rounded-2xl input-dark resize-none"></textarea>
-            </div>
-        </section>
-
-        <!-- PAGO -->
-        <section class="space-y-4 pb-12">
-            <h2 class="text-white font-extrabold text-xl">3. ¿Cómo deseas pagar?</h2>
-            <div class="grid grid-cols-2 gap-3">
-                <label class="cursor-pointer">
-                    <input type="radio" name="pago" value="Yape/Plin" class="peer sr-only" checked onchange="toggleVuelto(false)">
-                    <div class="p-4 rounded-2xl bg-zinc-900 border border-zinc-800 peer-checked:border-yellow-500 peer-checked:bg-yellow-500/5 text-center transition-all">
-                        <span class="block text-xl mb-1">📱</span>
-                        <span class="text-sm font-bold">Yape / Plin</span>
-                    </div>
-                </label>
-                <label class="cursor-pointer">
-                    <input type="radio" name="pago" value="Efectivo" class="peer sr-only" onchange="toggleVuelto(true)">
-                    <div class="p-4 rounded-2xl bg-zinc-900 border border-zinc-800 peer-checked:border-yellow-500 peer-checked:bg-yellow-500/5 text-center transition-all">
-                        <span class="block text-xl mb-1">💵</span>
-                        <span class="text-sm font-bold">Efectivo</span>
-                    </div>
-                </label>
-            </div>
-
-            <div id="vuelto-container" class="hidden mt-3 fade-in">
-                <input type="number" id="vuelto-monto" placeholder="¿Con cuánto pagarás? (Para llevar vuelto)" class="w-full p-4 rounded-2xl input-dark">
-            </div>
-        </section>
-    </form>
-
-    <!-- FOOTER FIJO -->
-    <div class="fixed bottom-0 left-0 w-full bg-zinc-900 border-t border-zinc-800 p-5 z-50 shadow-2xl">
-        <div class="max-w-md mx-auto flex items-center justify-between gap-4">
-            <div class="flex flex-col">
-                <span class="text-[10px] text-zinc-500 font-bold uppercase tracking-widest leading-none mb-1">Total a pagar</span>
-                <span class="text-3xl font-bebas text-white tracking-tighter" id="total-price">S/ 0.00</span>
-            </div>
-            <button onclick="document.getElementById('orderForm').dispatchEvent(new Event('submit'))" class="flex-1 bg-yellow-500 hover:bg-yellow-400 text-black font-extrabold py-4 rounded-2xl flex items-center justify-center gap-2 transition-transform active:scale-95 shadow-xl shadow-yellow-500/20">
-                ENVIAR PEDIDO
-                <i data-lucide="send" class="w-5 h-5"></i>
-            </button>
-        </div>
-    </div>
-
-    <script>
-        lucide.createIcons();
-        const prices = { p2l: 9, p3l: 13, p4l: 15 };
-        const cart = { p2l: 0, p3l: 0, p4l: 0 };
-
-        window.addEventListener('load', () => {
-            const data = localStorage.getItem('aswa_user_data');
-            if (data) {
-                const user = JSON.parse(data);
-                document.getElementById('nombre').value = user.nombre || '';
-                document.getElementById('telefono').value = user.telefono || '';
-                document.getElementById('direccion').value = user.direccion || '';
-                document.getElementById('distrito').value = user.distrito || '0';
-                if(user.nombre) document.getElementById('welcome-msg').classList.remove('hidden');
-                calculateTotal();
-            }
-        });
-
-        function updateQty(p, c) {
-            const n = cart[p] + c;
-            if (n >= 0) {
-                cart[p] = n;
-                document.getElementById(`qty-${p}`).textContent = n;
-                calculateTotal();
-            }
-        }
-
-        function calculateTotal() {
-            let s = (cart.p2l * prices.p2l) + (cart.p3l * prices.p3l) + (cart.p4l * prices.p4l);
-            let d = parseFloat(document.getElementById('distrito').value) || 0;
-            let t = s > 0 ? s + d : 0;
-            document.getElementById('total-price').textContent = `S/ ${t.toFixed(2)}`;
-            return { s, d, t };
-        }
-
-        function toggleVuelto(s) {
-            document.getElementById('vuelto-container').classList.toggle('hidden', !s);
-        }
-
-        function generarPedido(e) {
-            e.preventDefault();
-            const { s, d, t } = calculateTotal();
-            if (s === 0) return alert("⚠️ Selecciona al menos una botella.");
-            if (d === 0) return alert("⚠️ Elige tu distrito para el envío.");
-
-            const nombre = document.getElementById('nombre').value;
-            const telefono = document.getElementById('telefono').value;
-            const direccion = document.getElementById('direccion').value;
-            const distritoSel = document.getElementById('distrito');
-            const pago = document.querySelector('input[name="pago"]:checked').value;
-            
-            localStorage.setItem('aswa_user_data', JSON.stringify({ nombre, telefono, direccion, distrito: distritoSel.value }));
-
-            let items = "";
-            if (cart.p2l > 0) items += `▫️ ${cart.p2l}x Botella 2L\n`;
-            if (cart.p3l > 0) items += `▫️ ${cart.p3l}x Botella 3L\n`;
-            if (cart.p4l > 0) items += `▫️ ${cart.p4l}x Botella 4L\n`;
-
-            let pagoFinal = pago;
-            if(pago === 'Efectivo') {
-                const v = document.getElementById('vuelto-monto').value;
-                pagoFinal += v ? ` (Paga con S/ ${v})` : ` (Monto exacto)`;
-            }
-
-            const mensaje = `*PEDIDO ASWA 🌽*\n\n👤 *${nombre}*\n📱 ${telefono}\n\n📍 *Envío a:* ${distritoSel.options[distritoSel.selectedIndex].text}\n🏠 ${direccion}\n\n🛒 *Pedido:*\n${items}\n🛵 Envío: S/ ${d.toFixed(2)}\n💰 *TOTAL: S/ ${t.toFixed(2)}*\n\n💳 Pago: ${pagoFinal}`;
-
-            window.location.href = `https://wa.me/51986445531?text=${encodeURIComponent(mensaje)}`;
-        }
-    </script>
-</body>
-</html>
+Type / to search
+Code
+Issues
+Pull requests
+Actions
+Projects
+Wiki
+Security
+Insights
+Settings
+Owner avatar
+aswa
+Public
+jsangama/aswa
+Go to file
+t
+Name		
+jsangama
+jsangama
+Add initial HTML structure for ASWA order form
+6eab818
+ · 
+2 hours ago
+index.html
+Add initial HTML structure for ASWA order form
+2 hours ago
+Repository files navigation
+README
+Add a README
+Help people interested in this repository understand your project.
