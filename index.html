@@ -172,7 +172,7 @@
             <div class="flex items-center gap-3">
                 <div class="logo-container" onclick="checkAdmin()">
                     <!-- Intenta cargar el logo local, si falla muestra un icono de Maíz dorado -->
-                    <img src="logo%20de%20aswa.jpg" alt="Logo ASWA" onerror="this.style.display='none'">
+                    <img src="assets/logo.jpg" alt="Logo ASWA" onerror="this.style.display='none'">
                     <div class="img-placeholder text-2xl">🌽</div>
                 </div>
                 <div>
@@ -210,7 +210,7 @@
                 <div class="app-card rounded-[2rem] p-4 flex items-center justify-between">
                     <div class="flex items-center gap-4">
                         <div class="product-img-wrapper">
-                            <img src="aswa%20de%202%20litros%201.jpg" alt="Chicha ASWA 2L" onerror="this.style.display='none'">
+                            <img src="assets/p2l.jpg" alt="Chicha ASWA 2L" onerror="this.style.display='none'">
                             <div class="img-placeholder">
                                 <span class="text-xs">ASWA</span>
                                 <span class="text-xl">2L</span>
@@ -232,7 +232,7 @@
                 <div class="app-card rounded-[2rem] p-4 flex items-center justify-between">
                     <div class="flex items-center gap-4">
                         <div class="product-img-wrapper">
-                            <img src="aswa%20de%203%20litros.jpg" alt="Chicha ASWA 3L" onerror="this.style.display='none'">
+                            <img src="assets/p3l.jpg" alt="Chicha ASWA 3L" onerror="this.style.display='none'">
                             <div class="img-placeholder">
                                 <span class="text-xs">ASWA</span>
                                 <span class="text-xl">3L</span>
@@ -254,7 +254,7 @@
                 <div class="app-card rounded-[2rem] p-4 flex items-center justify-between border border-yellow-500/30">
                     <div class="flex items-center gap-4">
                         <div class="product-img-wrapper border-yellow-500/30">
-                            <img src="envase%20de%204%20litros%20de%20aswa.jpg" alt="Chicha ASWA 4L" onerror="this.style.display='none'">
+                            <img src="assets/p4l.jpg" alt="Chicha ASWA 4L" onerror="this.style.display='none'">
                             <div class="img-placeholder">
                                 <span class="text-xs">ASWA</span>
                                 <span class="text-xl">4L</span>
@@ -401,7 +401,7 @@
             // Firebase Storage
             try {
                 if (window.isAuth) {
-                    const colRef = collection(window.db, 'artifacts', window.appId, 'public', 'data', 'pedidos');
+                    const colRef = collection(window.db, window.appId, 'public', 'data', 'pedidos');
                     await addDoc(colRef, { ...pedidoData, fecha: serverTimestamp() });
                 }
             } catch (err) { console.error("Error DB:", err); }
@@ -430,22 +430,12 @@
 
         function cargarPedidosAdmin() {
             if (!window.isAuth) return;
-            const q = query(collection(window.db, 'artifacts', window.appId, 'public', 'data', 'pedidos'), orderBy('fecha', 'desc'));
+            const q = query(collection(window.db, window.appId, 'public', 'data', 'pedidos'), orderBy('fecha', 'desc'));
             onSnapshot(q, (snapshot) => {
                 const html = snapshot.docs.map(doc => {
                     const d = doc.data();
                     const f = d.fecha ? d.fecha.toDate().toLocaleString('es-PE', { hour12: true }) : 'En proceso...';
-                    return `<div class="bg-zinc-900/50 p-5 rounded-3xl border border-zinc-800">
-                        <div class="flex justify-between items-start mb-2">
-                            <span class="font-bold text-yellow-500">${d.nombre}</span>
-                            <span class="bg-yellow-500 text-black px-2 py-0.5 rounded text-[10px] font-black">S/ ${d.total.toFixed(2)}</span>
-                        </div>
-                        <p class="text-[10px] text-zinc-500 mb-3">${f} • ${d.pago}</p>
-                        <div class="text-[11px] text-zinc-300 bg-black/40 p-3 rounded-xl border border-zinc-800/50">
-                            <strong>Dir:</strong> ${d.direccion}<br>
-                            <strong>Zona:</strong> ${d.distrito}
-                        </div>
-                    </div>`;
+                    return `<div class="bg-zinc-900/50 p-5 rounded-3xl border border-zinc-800">\n                        <div class="flex justify-between items-start mb-2">\n                            <span class="font-bold text-yellow-500">${d.nombre}</span>\n                            <span class="bg-yellow-500 text-black px-2 py-0.5 rounded text-[10px] font-black">S/ ${d.total.toFixed(2)}</span>\n                        </div>\n                        <p class="text-[10px] text-zinc-500 mb-3">${f} • ${d.pago}</p>\n                        <div class="text-[11px] text-zinc-300 bg-black/40 p-3 rounded-xl border border-zinc-800/50">\n                            <strong>Dir:</strong> ${d.direccion}<br>\n                            <strong>Zona:</strong> ${d.distrito}\n                        </div>\n                    </div>`;
                 }).join('');
                 document.getElementById('listaPedidos').innerHTML = html || '<div class="text-center py-20 text-zinc-700 font-bold uppercase tracking-widest">Sin registros</div>';
             }, (error) => console.error(error));
