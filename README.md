@@ -8,7 +8,7 @@ Dirección: Jr. Sargento Lores # 425, Morales - Tarapoto.
 
 Referencia: Cerca al parque central de Morales.
 
-Mapa: Ver en Google Maps
+Mapa: Abrir en Google Maps
 
 🚀 Funcionalidades
 
