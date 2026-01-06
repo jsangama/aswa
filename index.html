@@ -11,18 +11,10 @@
     <!-- Firebase SDK -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-app.js";
-        import { getFirestore, collection, addDoc, query, where, getDocs, serverTimestamp, doc, updateDoc } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, query, where, getDocs, onSnapshot, serverTimestamp, doc, updateDoc } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-firestore.js";
         import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-auth.js";
 
-        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {
-            // Reemplaza con tus credenciales reales si no usas variables del servidor
-            apiKey: "YOUR_API_KEY",
-            authDomain: "YOUR_PROJECT.firebaseapp.com",
-            projectId: "YOUR_PROJECT_ID",
-            storageBucket: "YOUR_PROJECT.appspot.com",
-            messagingSenderId: "YOUR_SENDER_ID",
-            appId: "YOUR_APP_ID"
-        };
+        const firebaseConfig = JSON.parse(__firebase_config);
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
         const auth = getAuth(app);
@@ -36,35 +28,51 @@
             try {
                 await signInAnonymously(auth);
             } catch (err) {
-                console.warn("Auth error:", err);
+                console.warn("Auth fallback:", err);
             }
         };
-        onAuthStateChanged(auth, user => window.currentUser = user);
+
+        onAuthStateChanged(auth, (user) => {
+            window.currentUser = user;
+        });
+
         initAuth();
 
-        window.saveOrder = async (data) => {
+        window.saveOrder = async (orderData) => {
             if (!window.currentUser) return null;
             try {
-                const ref = await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'pedidos'), {
-                    ...data,
+                const colRef = collection(db, 'artifacts', appId, 'public', 'data', 'pedidos');
+                const docRef = await addDoc(colRef, {
+                    ...orderData,
                     fecha: serverTimestamp(),
                     uid: window.currentUser.uid,
                     compartido: false
                 });
-                return ref.id;
+                return docRef.id;
             } catch (err) {
                 console.error("Error guardando pedido:", err);
                 return null;
             }
         };
 
-        window.marcarComoCompartido = async (id) => {
-            if (!id) return;
+        window.marcarComoCompartido = async (pedidoId) => {
+            if (!pedidoId || !window.currentUser) return;
             try {
-                await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'pedidos', id), { compartido: true });
+                const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'pedidos', pedidoId);
+                await updateDoc(docRef, { compartido: true });
             } catch (err) {
-                console.warn("Error marcando compartido:", err);
+                console.warn("No se pudo marcar como compartido:", err);
             }
+        };
+
+        window.listenOrders = (callback) => {
+            if (!window.currentUser) return;
+            const colRef = collection(db, 'artifacts', appId, 'public', 'data', 'pedidos');
+            return onSnapshot(colRef, (snap) => {
+                const orders = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                orders.sort((a, b) => (b.fecha?.seconds || 0) - (a.fecha?.seconds || 0));
+                callback(orders);
+            });
         };
     </script>
 
@@ -79,7 +87,7 @@
         .input-dark:focus { border-color:#facc15; outline:none; }
         .location-btn { background:linear-gradient(to right,#facc15,#eab308); color:#000; font-weight:800; }
         .location-btn:active { transform:scale(0.97); }
-        .payment-option { border:2px solid #27272a; transition:all .2s; border-radius:20px; padding:16px; cursor:pointer; }
+        .payment-option { border:2px solid #27272a; transition:all .2s; }
         .payment-option.active { border-color:#facc15 !important; background:rgba(250,204,21,0.15) !important; }
         .welcome-msg { background:rgba(250,204,21,0.15); border:1px solid #facc15; padding:12px; border-radius:20px; margin-bottom:16px; }
         .address-suggestion { background:rgba(250,204,21,0.1); border:1px solid #facc15; padding:12px; border-radius:20px; margin-top:8px; }
@@ -87,23 +95,32 @@
         .social-btn { transition:all .3s; }
         .social-btn:active { transform:scale(0.9); }
         .modal { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.95); z-index:2000; flex-direction:column; align-items:center; justify-content:center; padding:20px; backdrop-filter:blur(10px); }
-        .step-inactive { opacity:0.5; pointer-events:none; }
+        .step-inactive { opacity:0.4; pointer-events:none; }
+        .qr-image { width:240px; height:240px; object-fit:contain; border-radius:20px; border:4px solid white; }
+        .copy-toast { position:fixed; bottom:100px; left:50%; transform:translateX(-50%); background:#facc15; color:black; padding:10px 24px; border-radius:30px; font-weight:bold; font-size:13px; display:none; z-index:4000; }
     </style>
 </head>
 <body class="min-h-screen pb-48">
 
+    <div id="copyToast" class="copy-toast">¡Número copiado! ✓</div>
+
     <!-- Header -->
-    <header class="fixed top-0 left-0 w-full bg-black/80 backdrop-blur-md z-50 border-b border-zinc-900 p-6">
-        <div class="max-w-md mx-auto text-center">
-            <div class="logo-container mx-auto mb-3" onclick="checkAdmin()">
-                <img src="logo de aswa.jpg" alt="Logo ASWA" onerror="this.style.display='none'">
+    <header class="fixed top-0 left-0 w-full bg-black/80 backdrop-blur-md z-50 border-b border-zinc-900 px-6 py-4">
+        <div class="max-w-md mx-auto flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="logo-container" onclick="checkAdmin()">
+                    <img src="logo de aswa.jpg" alt="Logo ASWA" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                    <div class="img-placeholder hidden">🌽</div>
+                </div>
+                <div>
+                    <h1 class="font-bebas text-3xl text-yellow-400 leading-none tracking-widest">ASWA</h1>
+                    <p class="text-[8px] text-zinc-500 font-bold uppercase tracking-[0.4em] mt-1">La Rica Chicha</p>
+                </div>
             </div>
-            <h1 class="font-bebas text-4xl text-yellow-400 tracking-widest">La Rica Chicha</h1>
-            <p class="text-sm text-yellow-300/80 font-bold tracking-wider mt-1">el oro líquido de la selva</p>
         </div>
     </header>
 
-    <div class="h-40"></div>
+    <div class="h-32"></div>
 
     <main class="max-w-md mx-auto px-6 space-y-8">
         <!-- Bienvenida -->
@@ -113,64 +130,55 @@
             </div>
         </div>
 
-        <!-- Presentaciones -->
+        <!-- Packs -->
         <section>
             <h2 class="font-bold text-lg flex items-center gap-2 mb-5">
                 <span class="w-1.5 h-6 bg-yellow-500 rounded-full"></span>
-                Elige tu presentación
+                Elige tu pack
             </h2>
-            <div class="space-y-4">
-                <!-- 2 Litros -->
-                <div class="bg-gradient-to-br from-zinc-900 to-zinc-800 p-5 rounded-3xl border border-zinc-700 flex items-center justify-between">
+            <div class="space-y-3">
+                <div class="app-card rounded-[2rem] p-4 flex items-center justify-between">
                     <div class="flex items-center gap-4">
                         <div class="product-img-wrapper">
-                            <img src="aswa de 2 litros 1.png" alt="2L">
+                            <img src="aswa de 2 litros 1.png" alt="Pack 2L" onerror="this.style.display='none'">
+                            <div class="img-placeholder">2L</div>
                         </div>
-                        <div>
-                            <p class="font-bold">Presentación de 2 litros</p>
-                            <p class="text-yellow-400 font-bebas text-2xl">S/ 9.00</p>
-                        </div>
+                        <div><p class="font-bold text-sm">Pack 2L</p><p class="text-yellow-400 font-black text-xl">S/ 9.00</p></div>
                     </div>
-                    <div class="flex items-center gap-4 bg-black/50 p-3 rounded-2xl">
-                        <button type="button" onclick="updateQty('p2l',-1)" class="w-10 h-10 text-zinc-400">-</button>
-                        <span id="qty-p2l" class="font-bold text-xl w-8 text-center">0</span>
-                        <button type="button" onclick="updateQty('p2l',1)" class="w-10 h-10 bg-yellow-500 text-black rounded-xl">+</button>
+                    <div class="flex items-center gap-4 bg-black p-2 rounded-2xl border border-zinc-800">
+                        <button type="button" onclick="updateQty('p2l',-1)" class="w-8 h-8 font-black text-zinc-600">-</button>
+                        <span id="qty-p2l" class="font-bold text-lg w-4 text-center">0</span>
+                        <button type="button" onclick="updateQty('p2l',1)" class="w-8 h-8 bg-yellow-500 text-black rounded-xl font-black">+</button>
                     </div>
                 </div>
 
-                <!-- 3 Litros -->
-                <div class="bg-gradient-to-br from-zinc-900 to-zinc-800 p-5 rounded-3xl border border-zinc-700 flex items-center justify-between">
+                <div class="app-card rounded-[2rem] p-4 flex items-center justify-between">
                     <div class="flex items-center gap-4">
                         <div class="product-img-wrapper">
-                            <img src="aswa de 3 litros.png" alt="3L">
+                            <img src="aswa de 3 litros.png" alt="Pack 3L" onerror="this.style.display='none'">
+                            <div class="img-placeholder">3L</div>
                         </div>
-                        <div>
-                            <p class="font-bold">Presentación de 3 litros</p>
-                            <p class="text-yellow-400 font-bebas text-2xl">S/ 13.00</p>
-                        </div>
+                        <div><p class="font-bold text-sm">Pack 3L</p><p class="text-yellow-400 font-black text-xl">S/ 13.00</p></div>
                     </div>
-                    <div class="flex items-center gap-4 bg-black/50 p-3 rounded-2xl">
-                        <button type="button" onclick="updateQty('p3l',-1)" class="w-10 h-10 text-zinc-400">-</button>
-                        <span id="qty-p3l" class="font-bold text-xl w-8 text-center">0</span>
-                        <button type="button" onclick="updateQty('p3l',1)" class="w-10 h-10 bg-yellow-500 text-black rounded-xl">+</button>
+                    <div class="flex items-center gap-4 bg-black p-2 rounded-2xl border border-zinc-800">
+                        <button type="button" onclick="updateQty('p3l',-1)" class="w-8 h-8 font-black text-zinc-600">-</button>
+                        <span id="qty-p3l" class="font-bold text-lg w-4 text-center">0</span>
+                        <button type="button" onclick="updateQty('p3l',1)" class="w-8 h-8 bg-yellow-500 text-black rounded-xl font-black">+</button>
                     </div>
                 </div>
 
-                <!-- 4 Litros -->
-                <div class="bg-gradient-to-br from-zinc-900 to-zinc-800 p-5 rounded-3xl border border-yellow-500/30 flex items-center justify-between">
+                <div class="app-card rounded-[2rem] p-4 flex items-center justify-between border border-yellow-500/20">
                     <div class="flex items-center gap-4">
                         <div class="product-img-wrapper border-yellow-500/30">
-                            <img src="galon familiar de 4 litros.png" alt="4L">
+                            <img src="galon familiar de 4 litros.png" alt="Pack 4L" onerror="this.style.display='none'">
+                            <div class="img-placeholder">4L</div>
                         </div>
-                        <div>
-                            <p class="font-bold">Presentación de 4 litros</p>
-                            <p class="text-yellow-400 font-bebas text-2xl">S/ 15.00</p>
-                        </div>
+                        <div><p class="font-bold text-sm">Pack 4L</p><p class="text-yellow-400 font-black text-xl">S/ 15.00</p></div>
                     </div>
-                    <div class="flex items-center gap-4 bg-black/50 p-3 rounded-2xl">
-                        <button type="button" onclick="updateQty('p4l',-1)" class="w-10 h-10 text-zinc-400">-</button>
-                        <span id="qty-p4l" class="font-bold text-xl w-8 text-center">0</span>
-                        <button type="button" onclick="updateQty('p4l',1)" class="w-10 h-10 bg-yellow-500 text-black rounded-xl">+</button>
+                    <div class="flex items-center gap-4 bg-black p-2 rounded-2xl border border-zinc-800">
+                        <button type="button" onclick="updateQty('p4l',-1)" class="w-8 h-8 font-black text-zinc-600">-</button>
+                        <span id="qty-p4l" class="font-bold text-lg w-4 text-center">0</span>
+                        <button type="button" onclick="updateQty('p4l',1)" class="w-8 h-8 bg-yellow-500 text-black rounded-xl font-black">+</button>
                     </div>
                 </div>
             </div>
@@ -193,30 +201,10 @@
                     <option value="0">Recojo en local (S/0)</option>
                 </select>
             </div>
-
-            <div>
-                <textarea id="direccion" rows="3" placeholder="Dirección exacta + referencia" required class="w-full p-4 rounded-2xl input-dark text-sm"></textarea>
-
-                <button type="button" onclick="obtenerUbicacionActual()" class="location-btn w-full mt-3 py-4 rounded-2xl flex items-center justify-center gap-3 shadow-lg">
-                    <i data-lucide="navigation" class="w-6 h-6"></i>
-                    COMPARTIR MI UBICACIÓN ACTUAL
-                </button>
-
-                <div id="addressSuggestion" class="hidden mt-4">
-                    <div class="address-suggestion text-center">
-                        <p class="text-sm text-zinc-400 mb-3">Tu última dirección fue:</p>
-                        <p class="font-bold text-yellow-400 mb-3" id="lastAddressText"></p>
-                        <div class="flex gap-3 justify-center">
-                            <button type="button" onclick="usarDireccionAnterior()" class="px-6 py-3 bg-yellow-500 text-black font-black rounded-2xl">
-                                Usar esta
-                            </button>
-                            <button type="button" onclick="cambiarDireccion()" class="px-6 py-3 bg-zinc-800 text-white font-bold rounded-2xl">
-                                Cambiar
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
+            <textarea id="direccion" rows="3" placeholder="Dirección exacta + referencia" required class="w-full p-4 rounded-2xl input-dark text-sm"></textarea>
+            <button type="button" onclick="obtenerUbicacionActual()" class="w-full py-4 rounded-2xl bg-zinc-800 text-yellow-500 font-black text-sm flex items-center justify-center gap-2">
+                <i data-lucide="map-pin" class="w-5 h-5"></i> Compartir mi ubicación actual (como en WhatsApp)
+            </button>
         </section>
 
         <!-- Método de pago -->
@@ -226,31 +214,31 @@
                 Método de pago
             </h2>
             <div class="grid grid-cols-3 gap-3">
-                <button type="button" onclick="setPayment('Efectivo')" id="btn-efectivo" class="payment-option bg-zinc-900 flex flex-col items-center gap-2">
-                    <i data-lucide="banknote" class="w-10 h-10 text-green-500"></i>
-                    <span class="text-xs font-bold">Efectivo</span>
+                <button type="button" onclick="setPayment('Efectivo')" id="btn-efectivo" class="payment-option p-4 rounded-2xl bg-zinc-900 flex flex-col items-center gap-2 active">
+                    <i data-lucide="banknote" class="w-8 h-8 text-green-500"></i>
+                    <span class="text-[10px] font-bold">Efectivo</span>
                 </button>
-                <button type="button" onclick="setPayment('Yape')" id="btn-yape" class="payment-option bg-zinc-900 flex flex-col items-center gap-2">
-                    <div class="w-10 h-10 bg-purple-600 rounded flex items-center justify-center text-white text-2xl font-black">Y</div>
-                    <span class="text-xs font-bold">Yape</span>
+                <button type="button" onclick="setPayment('Yape')" id="btn-yape" class="payment-option p-4 rounded-2xl bg-zinc-900 flex flex-col items-center gap-2">
+                    <div class="w-8 h-8 bg-purple-600 rounded flex items-center justify-center text-white text-xl font-black">Y</div>
+                    <span class="text-[10px] font-bold">Yape</span>
                 </button>
-                <button type="button" onclick="setPayment('Plin')" id="btn-plin" class="payment-option bg-zinc-900 flex flex-col items-center gap-2">
-                    <div class="w-10 h-10 bg-cyan-500 rounded flex items-center justify-center text-white text-2xl font-black">P</div>
-                    <span class="text-xs font-bold">Plin</span>
+                <button type="button" onclick="setPayment('Plin')" id="btn-plin" class="payment-option p-4 rounded-2xl bg-zinc-900 flex flex-col items-center gap-2">
+                    <div class="w-8 h-8 bg-cyan-500 rounded flex items-center justify-center text-white text-xl font-black">P</div>
+                    <span class="text-[10px] font-bold">Plin</span>
                 </button>
             </div>
         </section>
 
-        <!-- Visítanos -->
+        <!-- Texto + Visítanos -->
         <div class="flex flex-col items-center gap-4 py-8 opacity-70">
-            <p class="text-[10px] uppercase font-black tracking-[0.6em] text-yellow-500/80 text-center px-8">
+            <p class="text-[9px] uppercase font-black tracking-[0.6em] text-yellow-500/80 text-center px-8">
                 El sabor que une a nuestra familia también está.
             </p>
             <a href="https://www.google.com/maps/search/?api=1&query=ASWA+Tarapoto" target="_blank"
-               class="flex items-center gap-3 px-6 py-4 rounded-2xl bg-zinc-900/70 border border-zinc-800 w-full max-w-xs">
+               class="flex items-center gap-3 px-6 py-4 rounded-2xl bg-zinc-900/70 border border-zinc-800 w-full max-w-xs active:scale-95 transition">
                 <i data-lucide="map-pin" class="text-yellow-500 w-6 h-6"></i>
                 <div class="text-left">
-                    <p class="text-[10px] text-zinc-500 font-bold uppercase tracking-wider">Visítanos en nuestro local</p>
+                    <p class="text-[10px] text-zinc-500 font-bold uppercase tracking-wider leading-none">Visítanos en nuestro local</p>
                     <p class="text-sm font-bold text-white">Ver en Google Maps</p>
                 </div>
                 <i data-lucide="external-link" class="text-zinc-500 w-4 h-4 ml-auto"></i>
@@ -258,106 +246,62 @@
         </div>
     </main>
 
-    <!-- Footer -->
-    <div class="fixed bottom-0 left-0 w-full bg-black/90 backdrop-blur-2xl border-t border-zinc-900 p-6 z-50">
-        <div class="max-w-md mx-auto text-center">
-            <p id="precioNormalMsg" class="text-zinc-400 text-sm mb-1"></p>
-            <p id="descuentoMotivoMsg" class="text-green-400 font-bold mb-2 hidden"></p>
-            <div class="flex items-center justify-between mt-3">
-                <div>
-                    <p class="text-xs text-zinc-500 uppercase font-bold">Total a pagar</p>
-                    <p class="text-4xl font-bebas text-yellow-500" id="total-price">S/ 0.00</p>
-                </div>
-                <button onclick="prepararResumen()" class="bg-yellow-500 text-black px-8 py-5 rounded-3xl font-black text-xl shadow-2xl">
-                    CONTINUAR <i data-lucide="arrow-right" class="w-6 h-6"></i>
-                </button>
+    <!-- Footer con descuento -->
+    <div class="fixed bottom-0 left-0 w-full bg-black/90 backdrop-blur-2xl border-t border-zinc-900 p-6 z-[60]">
+        <div class="max-w-md mx-auto flex items-center justify-between gap-6">
+            <div class="flex flex-col">
+                <p class="text-[9px] text-zinc-500 font-black uppercase tracking-widest mb-1">Total a pagar</p>
+                <p class="text-4xl font-bebas text-yellow-500" id="total-price">S/ 0.00</p>
             </div>
-        </div>
-    </div>
-
-    <!-- Modal Resumen -->
-    <div id="paymentModal" class="modal">
-        <div class="bg-zinc-900 w-full max-w-sm rounded-3xl p-8 border border-zinc-800 shadow-2xl">
-            <h3 class="font-bebas text-3xl text-yellow-500 text-center mb-6">RESUMEN</h3>
-            <div class="bg-black/50 rounded-2xl p-4 mb-6 border border-zinc-800">
-                <div id="receipt-items" class="text-sm space-y-2"></div>
-                <div class="border-t border-zinc-700 pt-3 mt-3">
-                    <div class="flex justify-between text-yellow-400 font-bold">
-                        <span>TOTAL:</span>
-                        <span id="receipt-total">S/ 0.00</span>
-                    </div>
-                </div>
-            </div>
-
-            <div id="digital-payment-info" class="hidden text-center space-y-6">
-                <p class="text-sm text-zinc-400 mb-3">1. Copia el número y paga</p>
-                <button onclick="copiarNumero()" class="w-full py-4 rounded-2xl bg-zinc-800 text-white font-bold text-sm flex items-center justify-center gap-2">
-                    <i data-lucide="copy" class="w-5 h-5"></i> 947 999 736
-                </button>
-
-                <div class="bg-white p-4 rounded-3xl inline-block shadow-2xl">
-                    <img src="yape del negocio.jpg" alt="QR ASWA" class="w-64 h-64 object-contain">
-                </div>
-
-                <p class="text-sm text-zinc-400 mb-3">2. Confirma que ya pagaste</p>
-                <button id="btn-confirm-payment" onclick="confirmarPagoRealizado()" class="w-full py-4 rounded-2xl bg-zinc-800 text-yellow-500 border border-yellow-500/40 font-black text-sm">
-                    ¡YA REALICÉ EL PAGO!
-                </button>
-            </div>
-
-            <div id="cash-payment-info" class="hidden text-center py-8">
-                <i data-lucide="truck" class="w-16 h-16 text-zinc-500 mx-auto mb-4"></i>
-                <p class="text-zinc-300 text-lg">Pagarás en efectivo al recibir</p>
-            </div>
-
-            <div class="mt-8 pt-6 border-t border-zinc-800">
-                <button id="btn-enviar-final" onclick="enviarPedidoFinal()" class="w-full bg-yellow-500 text-black py-4 rounded-2xl font-black text-lg shadow-2xl step-inactive">
-                    ENVIAR PEDIDO <i data-lucide="send" class="w-5 h-5 ml-2"></i>
-                </button>
-                <p id="txt-wait" class="text-[10px] text-zinc-500 text-center mt-3">⚠️ Debes confirmar el pago digital arriba</p>
-            </div>
-
-            <button onclick="closeModal()" class="w-full text-zinc-500 text-xs mt-6 font-bold uppercase tracking-wider">
-                Volver atrás
+            <button onclick="prepararResumen()" 
+                    class="btn-order flex-1 h-16 rounded-[1.5rem] font-black text-lg flex items-center justify-center gap-2">
+                CONTINUAR <i data-lucide="arrow-right" class="w-5 h-5"></i>
             </button>
         </div>
     </div>
 
-    <!-- Pantalla de éxito -->
-    <div id="successMsg" class="hidden fixed inset-0 bg-black z-3000 flex flex-col items-center justify-center text-center px-8">
-        <div class="animate-bounce mb-8">
-            <div class="w-32 h-32 bg-yellow-500 rounded-full flex items-center justify-center shadow-2xl">
-                <i data-lucide="check" class="w-20 h-20 text-black"></i>
+    <!-- Modal Resumen y Pago -->
+    <div id="paymentModal" class="modal">
+        <div class="bg-zinc-900 w-full max-w-sm rounded-[2.5rem] p-8 border border-zinc-800 shadow-2xl max-h-[90vh] overflow-y-auto">
+            <h3 class="font-bebas text-3xl text-yellow-500 text-center mb-6 tracking-widest">RESUMEN Y PAGO</h3>
+            <div class="bg-black/50 rounded-2xl p-4 mb-6 border border-zinc-800">
+                <div id="receipt-items" class="text-xs space-y-1 border-b border-zinc-800 pb-2"></div>
+                <div class="flex justify-between font-bold text-yellow-500 pt-2">
+                    <span>TOTAL:</span>
+                    <span id="receipt-total">S/ 0.00</span>
+                </div>
             </div>
-        </div>
-
-        <h2 class="text-5xl font-bebas text-yellow-400 tracking-widest mb-4">¡PEDIDO ENVIADO!</h2>
-        <p class="text-zinc-300 text-lg mb-8">Tu pedido llegó correctamente a ASWA</p>
-
-        <div id="discountMsg" class="hidden mb-8">
-            <div class="discount-badge px-8 py-5 rounded-3xl shadow-2xl">
-                <p class="text-3xl font-bebas" id="discountText"></p>
-                <p class="text-sm mt-2" id="discountReason"></p>
+            <div id="digital-payment-info" class="hidden text-center space-y-6">
+                <div>
+                    <p class="text-[10px] text-zinc-500 font-black uppercase mb-3">1. Copia el número y paga</p>
+                    <button onclick="copiarYContinuar()" class="w-full py-4 rounded-2xl bg-zinc-800 text-white font-bold text-sm flex items-center justify-center gap-2 active:scale-95 transition">
+                        <i data-lucide="copy" class="w-5 h-5"></i> 947 999 736
+                    </button>
+                </div>
+                <div class="bg-white p-4 rounded-3xl inline-block shadow-2xl">
+                    <img src="yape del negocio.jpg" alt="QR de pago ASWA" class="qr-image">
+                </div>
+                <div class="pt-4 border-t border-zinc-700">
+                    <p class="text-[10px] text-zinc-500 font-black uppercase mb-3">2. Confirma que ya pagaste</p>
+                    <button id="btn-confirm-payment" onclick="confirmarPagoRealizado()" class="w-full py-4 rounded-2xl bg-zinc-800 text-yellow-500 border border-yellow-500/40 font-black text-sm active:scale-95 transition">
+                        ¡YA REALICÉ EL PAGO!
+                    </button>
+                </div>
             </div>
-        </div>
-
-        <!-- Compartir en redes -->
-        <div class="space-y-6 mb-10">
-            <p class="text-zinc-300">¡Comparte tu pedido y etiqueta a ASWA!</p>
-            <div class="flex justify-center gap-8">
-                <button onclick="compartirEnFacebook()" class="social-btn bg-[#1877F2] p-5 rounded-3xl shadow-2xl">
-                    <i data-lucide="facebook" class="w-12 h-12 text-white"></i>
+            <div id="cash-payment-info" class="hidden text-center py-8">
+                <i data-lucide="truck" class="w-16 h-16 text-zinc-500 mx-auto mb-4"></i>
+                <p class="text-zinc-300 text-lg italic">Pagarás en efectivo al recibir tu pedido</p>
+            </div>
+            <div class="mt-8 pt-6 border-t border-zinc-800">
+                <button id="btn-enviar-final" onclick="enviarPedidoFinal()" class="w-full btn-order h-14 rounded-2xl font-black text-lg flex items-center justify-center gap-2 step-inactive">
+                    ENVIAR PEDIDO <i data-lucide="send" class="w-5 h-5"></i>
                 </button>
-                <button onclick="compartirEnInstagram()" class="social-btn bg-gradient-to-br from-purple-600 via-pink-500 to-red-500 p-5 rounded-3xl shadow-2xl">
-                    <i data-lucide="instagram" class="w-12 h-12 text-white"></i>
-                </button>
+                <p id="txt-wait" class="text-[10px] text-zinc-500 text-center mt-3">⚠️ Debes confirmar el pago digital arriba</p>
             </div>
-            <p class="text-zinc-500 text-xs mt-4">Ya estaremos etiquetados automáticamente ❤️</p>
+            <button onclick="closeModal()" class="w-full text-zinc-500 text-xs mt-6 font-bold uppercase tracking-wider">
+                Volver atrás
+            </button>
         </div>
-
-        <button onclick="cerrarSuccessYReiniciar()" class="bg-yellow-500 text-black px-12 py-5 rounded-3xl text-xl font-black shadow-2xl">
-            HACER OTRO PEDIDO <i data-lucide="refresh-cw" class="ml-3 w-6 h-6"></i>
-        </button>
     </div>
 
     <script>
@@ -367,6 +311,7 @@
         let currentMethod = 'Efectivo';
         let paymentConfirmed = false;
         let logoClicks = 0;
+        let adminUnsubscribe = null;
         let ultimoPedidoId = "";
         let totalOriginal = 0;
         let totalConDescuento = 0;
@@ -386,8 +331,9 @@
 
         function setPayment(met) {
             currentMethod = met;
-            document.querySelectorAll('.payment-option').forEach(el => el.classList.remove('active'));
-            document.getElementById(`btn-${met.toLowerCase()}`).classList.add('active');
+            document.getElementById('btn-efectivo').classList.toggle('active', met === 'Efectivo');
+            document.getElementById('btn-yape').classList.toggle('active', met === 'Yape');
+            document.getElementById('btn-plin').classList.toggle('active', met === 'Plin');
         }
 
         async function calculateTotal() {
@@ -445,7 +391,7 @@
         function prepararResumen() {
             const sub = cart.p2l * 9 + cart.p3l * 13 + cart.p4l * 15;
             if (sub === 0) {
-                alert("Elige al menos una presentación");
+                alert("Elige al menos un pack");
                 return;
             }
 
@@ -464,7 +410,7 @@
             if (cart.p2l) rec.innerHTML += `<div class="flex justify-between"><span>Presentación de 2 litros ×${cart.p2l}</span><span>S/ ${(cart.p2l*9).toFixed(2)}</span></div>`;
             if (cart.p3l) rec.innerHTML += `<div class="flex justify-between"><span>Presentación de 3 litros ×${cart.p3l}</span><span>S/ ${(cart.p3l*13).toFixed(2)}</span></div>`;
             if (cart.p4l) rec.innerHTML += `<div class="flex justify-between"><span>Presentación de 4 litros ×${cart.p4l}</span><span>S/ ${(cart.p4l*15).toFixed(2)}</span></div>`;
-            rec.innerHTML += `<div class="flex justify-between text-zinc-500"><span>Envío</span><span>S/ ${del.toFixed(2)}</span></div>`;
+            rec.innerHTML += `<div class="flex justify-between text-zinc-500"><span>Envío</span><span>S/ ${(parseFloat(zona) || 0).toFixed(2)}</span></div>`;
 
             document.getElementById('receipt-total').textContent = `S/ ${totalConDescuento.toFixed(2)}`;
 
@@ -542,8 +488,9 @@
         }
 
         function copiarNumero() {
-            navigator.clipboard.writeText("986445531");
-            alert("¡Número copiado!");
+            navigator.clipboard.writeText("947999736");
+            document.getElementById('copyToast').style.display = 'block';
+            setTimeout(() => document.getElementById('copyToast').style.display = 'none', 2000);
         }
 
         function compartirEnFacebook() {
@@ -572,11 +519,14 @@
         function checkAdmin() {
             logoClicks++;
             if (logoClicks >= 5) {
-                alert("Panel Admin activado (aquí iría la vista completa)");
+                document.getElementById('adminPanel').classList.remove('hidden');
                 logoClicks = 0;
             }
             setTimeout(() => logoClicks = 0, 4000);
         }
+
+        // Inicializar pago por defecto
+        setPayment('Efectivo');
     </script>
 </body>
 </html>
