@@ -11,484 +11,255 @@
     <!-- Firebase SDK -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-app.js";
-        import { getFirestore, collection, addDoc, query, orderBy, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-firestore.js";
-        import { getAuth, signInWithCustomToken, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-auth.js";
+        import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-firestore.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-auth.js";
 
         const firebaseConfig = JSON.parse(__firebase_config);
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
         const auth = getAuth(app);
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'aswa-pedidos';
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'aswa-laricachicha';
 
         window.db = db;
         window.appId = appId;
-        window.isAuth = false;
+        window.currentUser = null;
 
         const initAuth = async () => {
-            if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                await signInWithCustomToken(auth, __initial_auth_token).catch(() => signInAnonymously(auth));
-            } else {
+            try {
                 await signInAnonymously(auth);
+            } catch (err) {
+                console.warn("Auth error:", err);
             }
         };
-        initAuth();
 
         onAuthStateChanged(auth, (user) => {
-            if (user) window.isAuth = true;
+            window.currentUser = user;
         });
+
+        initAuth();
+
+        window.saveOrder = async (orderData) => {
+            if (!window.currentUser) return null;
+            try {
+                const colRef = collection(db, 'artifacts', appId, 'public', 'data', 'pedidos');
+                const docRef = await addDoc(colRef, {
+                    ...orderData,
+                    fecha: serverTimestamp(),
+                    uid: window.currentUser.uid
+                });
+                return docRef.id;
+            } catch (err) {
+                console.error("Error guardando pedido:", err);
+                return null;
+            }
+        };
     </script>
 
     <style>
-        body {
-            font-family: 'Poppins', sans-serif;
-            background-color: #0a0a0b;
-            color: white;
-            -webkit-tap-highlight-color: transparent;
-        }
+        body { font-family: 'Poppins', sans-serif; background:#0a0a0b; color:white; -webkit-tap-highlight-color:transparent; }
         .font-bebas { font-family: 'Bebas Neue', cursive; }
-
-        .logo-container {
-            width: 70px; height: 70px;
-            background: #000; border-radius: 50%;
-            display: flex; align-items: center; justify-content: center;
-            box-shadow: 0 0 20px rgba(250, 204, 21, 0.3);
-            border: 2px solid #facc15; cursor: pointer;
-            overflow: hidden; position: relative;
-        }
-        .logo-container img { width: 100%; height: 100%; object-fit: cover; }
-
-        .qr-image { width: 180px; height: 180px; object-fit: contain; border-radius: 1rem; border: 4px solid #fff; }
-
-        .product-img-wrapper {
-            width: 80px; height: 80px; border-radius: 18px;
-            border: 1px solid #333; background: #1a1a1a;
-            display: flex; align-items: center; justify-content: center;
-            overflow: hidden; position: relative;
-        }
-        .product-img-wrapper img { width: 100%; height: 100%; object-fit: cover; }
-
-        .img-placeholder {
-            color: #facc15; font-weight: 800; font-size: 1.2rem;
-            text-align: center; line-height: 1.2;
-        }
-
-        .app-card {
-            background: linear-gradient(145deg, #18181b, #0f0f11);
-            border: 1px solid #27272a;
-            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-        .app-card:active { transform: scale(0.97); }
-
-        .input-dark {
-            background-color: #121214; border: 1px solid #27272a;
-            color: white; transition: border-color 0.3s;
-        }
-        .input-dark:focus { border-color: #facc15; outline: none; }
-
-        .btn-order {
-            background: linear-gradient(to right, #facc15, #eab308);
-            box-shadow: 0 10px 30px rgba(234, 179, 8, 0.3);
-            color: #000;
-        }
-
-        .modal {
-            display: none; position: fixed; inset: 0;
-            background: rgba(0,0,0,0.95); z-index: 2000;
-            flex-direction: column; align-items: center; justify-content: center;
-            padding: 20px; backdrop-filter: blur(10px);
-        }
-
-        .payment-option {
-            border: 2px solid #27272a; transition: all 0.2s ease;
-        }
-        .payment-option.active {
-            border-color: #facc15 !important;
-            background: rgba(250, 204, 21, 0.15) !important;
-        }
-
-        .social-badge {
-            padding: 8px; border-radius: 12px;
-            display: flex; align-items: center; justify-content: center;
-            transition: transform 0.2s;
-        }
-        .social-badge:active { transform: scale(0.9); }
-        .bg-fb { background: #1877F2; }
-        .bg-ig { background: linear-gradient(45deg, #f09433 0%,#e6683c 25%,#dc2743 50%,#cc2366 75%,#bc1888 100%); }
-
-        #successMsg, #adminPanel {
-            display: none; position: fixed; inset: 0;
-            background: #000; z-index: 3000;
-            flex-direction: column; align-items: center; justify-content: center;
-            text-align: center; padding: 20px;
-        }
-        #adminPanel { z-index: 1000; overflow-y: auto; }
+        .input-dark { background:#121214; border:1px solid #27272a; color:white; transition:border-color .3s; }
+        .input-dark:focus { border-color:#facc15; outline:none; }
+        .location-btn { background: linear-gradient(to right, #facc15, #eab308); color:#000; font-weight: 800; }
+        .location-btn:active { transform: scale(0.98); opacity: 0.9; }
+        .success-overlay { display:none; position:fixed; inset:0; background:#000; z-index:3000; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding:20px; }
     </style>
 </head>
-<body class="min-h-screen pb-48">
+<body class="pb-32">
 
-    <!-- Mensaje de éxito -->
-    <div id="successMsg">
-        <div class="w-24 h-24 bg-yellow-500 rounded-full flex items-center justify-center mb-6 animate-bounce">
-            <i data-lucide="check" class="text-black w-14 h-14"></i>
-        </div>
-        <h2 class="text-4xl font-bebas text-yellow-400 mb-2 tracking-widest">¡PEDIDO EN CAMINO!</h2>
-        <p class="text-zinc-400 mb-8 font-bold">Abriendo WhatsApp para confirmar tu entrega...</p>
-    </div>
+    <!-- Header -->
+    <header class="p-6 text-center border-b border-zinc-800 bg-zinc-900/50 backdrop-blur-xl sticky top-0 z-50">
+        <h1 class="text-4xl font-bebas text-yellow-400 tracking-tighter">ASWA PREMIUM 🌽</h1>
+        <p class="text-zinc-500 text-[10px] uppercase tracking-widest font-bold">Chicha Morada Artesanal</p>
+    </header>
 
-    <!-- Panel Admin (5 clicks en logo) -->
-    <div id="adminPanel" class="hidden overflow-y-auto p-6">
-        <div class="flex justify-between items-center mb-8 border-b border-zinc-800 pb-4">
-            <h2 class="font-bebas text-4xl text-yellow-500 tracking-tighter">LISTA DE PEDIDOS</h2>
-            <button onclick="cerrarAdmin()" class="bg-zinc-800 p-2 rounded-full"><i data-lucide="x"></i></button>
-        </div>
-        <div id="listaPedidos" class="space-y-4 pb-20"></div>
-    </div>
-
-    <!-- Navegación -->
-    <nav class="fixed top-0 left-0 w-full bg-black/80 backdrop-blur-md z-50 border-b border-zinc-900 px-6 py-4">
-        <div class="max-w-md mx-auto flex items-center justify-between">
-            <div class="flex items-center gap-3">
-                <div class="logo-container" onclick="checkAdmin()">
-                    <img src="logo de aswa.jpg" alt="Logo ASWA" onerror="this.style.display='none'; document.getElementById('logo-placeholder').style.display='flex';">
-                    <div id="logo-placeholder" class="img-placeholder hidden">🌽</div>
-                </div>
-                <div>
-                    <h1 class="font-bebas text-3xl text-yellow-400 leading-none tracking-widest">ASWA</h1>
-                    <p class="text-[8px] text-zinc-500 font-bold uppercase tracking-[0.4em] mt-1">La Rica Chicha</p>
-                </div>
-            </div>
-            <div class="flex gap-2">
-                <a href="https://www.facebook.com/profile.php?id=100052222886761" target="_blank" class="social-badge bg-fb">
-                    <i data-lucide="facebook" class="w-5 h-5 text-white"></i>
-                </a>
-                <a href="https://www.instagram.com/aswa.laricachicha/" target="_blank" class="social-badge bg-ig">
-                    <i data-lucide="instagram" class="w-5 h-5 text-white"></i>
-                </a>
-            </div>
-        </div>
-    </nav>
-
-    <div class="h-32"></div>
-
-    <form id="orderForm" onsubmit="prepararResumen(event)" class="max-w-md mx-auto px-6 space-y-8">
-
+    <main class="max-w-md mx-auto p-6 space-y-8">
+       
         <!-- Productos -->
-        <section>
-            <div class="flex items-center justify-between mb-5">
-                <h2 class="font-bold text-lg flex items-center gap-2">
-                    <span class="w-1.5 h-6 bg-yellow-500 rounded-full"></span>
-                    Selecciona tu pack
-                </h2>
-                <span class="text-[10px] text-zinc-500 font-bold uppercase tracking-widest">3 Opciones</span>
+        <section class="space-y-4">
+            <h2 class="text-sm font-bold text-zinc-400 uppercase tracking-widest">Selecciona tu pedido</h2>
+           
+            <div class="bg-zinc-900 p-4 rounded-3xl border border-zinc-800 flex items-center justify-between">
+                <div>
+                    <h3 class="font-bold">Aswa 2 Litros</h3>
+                    <p class="text-yellow-400 font-bebas text-xl">S/ 15.00</p>
+                </div>
+                <div class="flex items-center gap-4 bg-black/40 p-2 rounded-2xl">
+                    <button type="button" onclick="updateQty('p2l', -1)" class="w-8 h-8 rounded-lg bg-zinc-800 flex items-center justify-center text-white">-</button>
+                    <span id="q-p2l" class="font-bold w-6 text-center">0</span>
+                    <button type="button" onclick="updateQty('p2l', 1)" class="w-8 h-8 rounded-lg bg-yellow-500 text-black flex items-center justify-center">+</button>
+                </div>
             </div>
-            <div class="space-y-3">
-                <div class="app-card rounded-[2rem] p-4 flex items-center justify-between">
-                    <div class="flex items-center gap-4">
-                        <div class="product-img-wrapper">
-                            <img src="aswa de 2 litros 1.png" alt="ASWA 2L" onerror="this.style.display='none'">
-                            <div class="img-placeholder">ASWA<br><span class="text-xl">2L</span></div>
-                        </div>
-                        <div>
-                            <p class="font-bold text-sm">Presentación 2L</p>
-                            <p class="text-yellow-400 font-black text-xl">S/ 9.00</p>
-                        </div>
-                    </div>
-                    <div class="flex items-center gap-4 bg-black p-2 rounded-2xl border border-zinc-800">
-                        <button type="button" onclick="updateQty('p2l', -1)" class="w-8 h-8 font-black text-zinc-600">-</button>
-                        <span id="qty-p2l" class="font-bold text-lg w-4 text-center">0</span>
-                        <button type="button" onclick="updateQty('p2l', 1)" class="w-8 h-8 bg-yellow-500 text-black rounded-xl font-black shadow-lg shadow-yellow-500/20">+</button>
-                    </div>
-                </div>
 
-                <div class="app-card rounded-[2rem] p-4 flex items-center justify-between">
-                    <div class="flex items-center gap-4">
-                        <div class="product-img-wrapper">
-                            <img src="aswa de 3 litros.png" alt="ASWA 3L" onerror="this.style.display='none'">
-                            <div class="img-placeholder">ASWA<br><span class="text-xl">3L</span></div>
-                        </div>
-                        <div>
-                            <p class="font-bold text-sm">Presentación 3L</p>
-                            <p class="text-yellow-400 font-black text-xl">S/ 13.00</p>
-                        </div>
-                    </div>
-                    <div class="flex items-center gap-4 bg-black p-2 rounded-2xl border border-zinc-800">
-                        <button type="button" onclick="updateQty('p3l', -1)" class="w-8 h-8 font-black text-zinc-600">-</button>
-                        <span id="qty-p3l" class="font-bold text-lg w-4 text-center">0</span>
-                        <button type="button" onclick="updateQty('p3l', 1)" class="w-8 h-8 bg-yellow-500 text-black rounded-xl font-black shadow-lg shadow-yellow-500/20">+</button>
-                    </div>
+            <div class="bg-zinc-900 p-4 rounded-3xl border border-zinc-800 flex items-center justify-between">
+                <div>
+                    <h3 class="font-bold">Aswa 3 Litros</h3>
+                    <p class="text-yellow-400 font-bebas text-xl">S/ 22.00</p>
                 </div>
-
-                <div class="app-card rounded-[2rem] p-4 flex items-center justify-between border border-yellow-500/30">
-                    <div class="flex items-center gap-4">
-                        <div class="product-img-wrapper border-yellow-500/30">
-                            <img src="galon familiar de 4 litros.png" alt="ASWA 4L" onerror="this.style.display='none'">
-                            <div class="img-placeholder">ASWA<br><span class="text-xl">4L</span></div>
-                        </div>
-                        <div>
-                            <p class="font-bold text-sm">Presentación 4L</p>
-                            <p class="text-yellow-400 font-black text-xl">S/ 15.00</p>
-                        </div>
-                    </div>
-                    <div class="flex items-center gap-4 bg-black p-2 rounded-2xl border border-zinc-800">
-                        <button type="button" onclick="updateQty('p4l', -1)" class="w-8 h-8 font-black text-zinc-600">-</button>
-                        <span id="qty-p4l" class="font-bold text-lg w-4 text-center">0</span>
-                        <button type="button" onclick="updateQty('p4l', 1)" class="w-8 h-8 bg-yellow-500 text-black rounded-xl font-black shadow-lg shadow-yellow-500/20">+</button>
-                    </div>
+                <div class="flex items-center gap-4 bg-black/40 p-2 rounded-2xl">
+                    <button type="button" onclick="updateQty('p3l', -1)" class="w-8 h-8 rounded-lg bg-zinc-800 flex items-center justify-center text-white">-</button>
+                    <span id="q-p3l" class="font-bold w-6 text-center">0</span>
+                    <button type="button" onclick="updateQty('p3l', 1)" class="w-8 h-8 rounded-lg bg-yellow-500 text-black flex items-center justify-center">+</button>
                 </div>
             </div>
         </section>
 
         <!-- Datos de entrega -->
         <section class="space-y-4">
-            <h2 class="font-bold text-lg flex items-center gap-2 mb-4">
-                <span class="w-1.5 h-6 bg-yellow-500 rounded-full"></span>
-                Datos de Entrega
-            </h2>
-            <input type="text" id="nombre" placeholder="Nombre completo" required class="w-full p-4 rounded-2xl input-dark text-sm">
-            <div class="grid grid-cols-2 gap-3">
-                <input type="tel" id="telefono" placeholder="Celular" required class="w-full p-4 rounded-2xl input-dark text-sm">
-                <select id="distrito" onchange="calculateTotal()" class="w-full p-4 rounded-2xl input-dark bg-[#121214] text-sm appearance-none">
-                    <option value="0" disabled selected>Distrito...</option>
-                    <option value="3">Morales (S/3)</option>
-                    <option value="4">Tarapoto (S/4)</option>
-                    <option value="5">Banda de Shilcayo (S/5)</option>
-                    <option value="0">Recojo en Local (S/0)</option>
-                </select>
+            <h2 class="text-sm font-bold text-zinc-400 uppercase tracking-widest">Datos de entrega</h2>
+            <input type="text" id="nombre" placeholder="Nombre completo" required class="w-full p-4 rounded-2xl input-dark">
+            <input type="tel" id="telefono" placeholder="Número de celular" required class="w-full p-4 rounded-2xl input-dark">
+
+            <div class="relative">
+                <textarea id="direccion" rows="3" placeholder="Escribe tu dirección o usa el GPS abajo..." required class="w-full p-4 rounded-2xl input-dark text-sm"></textarea>
+               
+                <button type="button" onclick="getLocation()" class="location-btn w-full mt-3 py-4 rounded-2xl flex items-center justify-center gap-3 shadow-xl shadow-yellow-500/10">
+                    <i data-lucide="map-pin" class="w-6 h-6"></i>
+                    ENVIAR MI UBICACIÓN GPS ACTUAL
+                </button>
+                <p id="geoStatus" class="text-[10px] text-zinc-500 mt-2 text-center italic"></p>
             </div>
-            <textarea id="direccion" rows="3" placeholder="Dirección exacta (Calle, N° Casa, Referencia)" required class="w-full p-4 rounded-2xl input-dark text-sm"></textarea>
         </section>
 
         <!-- Método de pago -->
         <section class="space-y-4">
-            <h2 class="font-bold text-lg flex items-center gap-2 mb-4">
-                <span class="w-1.5 h-6 bg-yellow-500 rounded-full"></span>
-                Método de Pago
-            </h2>
-            <div class="grid grid-cols-3 gap-2">
-                <button type="button" onclick="setPayment('Efectivo')" id="btn-efectivo" class="payment-option p-4 rounded-2xl bg-zinc-900 flex flex-col items-center gap-2 active">
-                    <i data-lucide="banknote" class="w-6 h-6 text-green-500"></i>
-                    <span class="text-[10px] font-bold">Efectivo</span>
-                </button>
-                <button type="button" onclick="setPayment('Yape')" id="btn-yape" class="payment-option p-4 rounded-2xl bg-zinc-900 flex flex-col items-center gap-2">
-                    <div class="w-6 h-6 bg-purple-600 rounded-md flex items-center justify-center text-[10px] font-bold">Y</div>
-                    <span class="text-[10px] font-bold">Yape</span>
-                </button>
-                <button type="button" onclick="setPayment('Plin')" id="btn-plin" class="payment-option p-4 rounded-2xl bg-zinc-900 flex flex-col items-center gap-2">
-                    <div class="w-6 h-6 bg-cyan-500 rounded-md flex items-center justify-center text-[10px] font-bold">P</div>
-                    <span class="text-[10px] font-bold">Plin</span>
-                </button>
+            <h2 class="text-sm font-bold text-zinc-400 uppercase tracking-widest">Método de pago</h2>
+            <div class="grid grid-cols-2 gap-3">
+                <button type="button" onclick="setPayment('Yape')" id="payYape" class="p-4 rounded-2xl border border-zinc-800 bg-zinc-900 font-bold">Yape / Plin</button>
+                <button type="button" onclick="setPayment('Efectivo')" id="payCash" class="p-4 rounded-2xl border border-zinc-800 bg-zinc-900 font-bold">Efectivo</button>
             </div>
         </section>
+    </main>
 
-        <!-- Ubicación -->
-        <div class="flex flex-col items-center gap-4 pb-12 opacity-70">
-            <p class="text-[9px] uppercase font-black tracking-[0.6em] text-yellow-500/80 text-center">Sabor que une a la familia</p>
-            <a href="https://www.google.com/maps/search/?api=1&query=ASWA+Tarapoto" target="_blank"
-               class="flex items-center gap-3 px-6 py-3 rounded-2xl bg-zinc-900/50">
-                <i data-lucide="map-pin" class="text-yellow-500 w-5 h-5"></i>
-                <div class="text-left">
-                    <p class="text-[10px] text-zinc-500 font-bold uppercase tracking-wider leading-none">Visítanos en nuestro local</p>
-                    <p class="text-sm font-bold text-white">Ver en Google Maps</p>
-                </div>
-            </a>
-        </div>
-    </form>
-
-    <!-- Footer total -->
-    <div class="fixed bottom-0 left-0 w-full bg-black/90 backdrop-blur-2xl border-t border-zinc-900 p-6 z-[60]">
-        <div class="max-w-md mx-auto flex items-center justify-between gap-6">
-            <div class="flex flex-col">
-                <p class="text-[9px] text-zinc-500 font-black uppercase tracking-widest mb-1">Importe Total</p>
-                <p class="text-4xl font-bebas text-yellow-500" id="total-price">S/ 0.00</p>
+    <!-- Barra de pedido -->
+    <div id="cartBar" class="fixed bottom-0 inset-x-0 p-6 bg-zinc-900/90 backdrop-blur-xl border-t border-zinc-800 hidden">
+        <div class="max-w-md mx-auto flex items-center justify-between">
+            <div>
+                <p class="text-[10px] font-bold text-zinc-500 uppercase">Total Pedido</p>
+                <p id="totalPrice" class="text-3xl font-bebas text-yellow-400">S/ 0.00</p>
             </div>
-            <button onclick="document.getElementById('orderForm').dispatchEvent(new Event('submit'))"
-                    class="btn-order flex-1 h-16 rounded-[1.5rem] font-black text-lg flex items-center justify-center">
-                CONTINUAR <i data-lucide="arrow-right" class="ml-2 w-5 h-5"></i>
+            <button onclick="enviarPedido()" id="btnSubmit" class="bg-yellow-500 text-black px-10 py-4 rounded-2xl font-black text-lg uppercase tracking-tighter shadow-lg">
+                Confirmar Pedido
             </button>
         </div>
     </div>
 
-    <!-- Modal resumen y pago -->
-    <div id="paymentModal" class="modal">
-        <div class="bg-zinc-900 w-full max-w-sm rounded-[2.5rem] p-8 border border-zinc-800 shadow-2xl overflow-y-auto max-h-[90vh]">
-            <div class="text-center mb-6">
-                <h3 class="font-bebas text-3xl text-yellow-500 tracking-widest">RESUMEN DE PEDIDO</h3>
-                <p class="text-xs text-zinc-400 mt-2">Verifica todo antes de enviar</p>
-            </div>
-
-            <div class="bg-black/50 rounded-2xl p-4 mb-6 space-y-2 border border-zinc-800/50">
-                <div id="receipt-items" class="text-xs space-y-1 border-b border-zinc-800 pb-2"></div>
-                <div class="flex justify-between font-bold text-yellow-500 pt-1">
-                    <span>TOTAL A PAGAR:</span>
-                    <span id="receipt-total">S/ 0.00</span>
-                </div>
-            </div>
-
-            <div id="digital-payment-info" class="hidden text-center space-y-4">
-                <div class="bg-white p-2 rounded-2xl inline-block mx-auto">
-                    <img src="yape del negocio.jpg" alt="QR Yape/Plin ASWA" class="qr-image">
-                </div>
-                <div>
-                    <p class="text-[10px] text-zinc-500 uppercase font-black">Número de destino</p>
-                    <p class="text-xl font-black text-white tracking-widest">986 445 531</p>
-                    <p class="text-[10px] text-zinc-500">Titular: ASWA - La Rica Chicha</p>
-                </div>
-            </div>
-
-            <div id="cash-info" class="text-center py-4">
-                <p class="text-sm text-zinc-400 italic">"Paga al repartidor al recibir tu pedido."</p>
-            </div>
-
-            <button onclick="enviarPedidoFinal()" class="w-full btn-order h-14 rounded-2xl font-black mt-6">
-                ENVIAR A WHATSAPP <i data-lucide="send" class="ml-2 w-5 h-5"></i>
-            </button>
-            <button onclick="closeModal()" class="w-full text-zinc-500 text-xs mt-4 font-bold uppercase tracking-widest">
-                Regresar
-            </button>
+    <!-- Pantalla de éxito -->
+    <div id="successMsg" class="success-overlay">
+        <div class="w-24 h-24 bg-yellow-500 rounded-full flex items-center justify-center mb-6 animate-bounce shadow-2xl">
+            <i data-lucide="check" class="w-16 h-16 text-black"></i>
         </div>
+        <h2 class="text-5xl font-bebas text-yellow-400 tracking-widest mb-4">¡PEDIDO RECIBIDO!</h2>
+        <p class="text-zinc-300 px-10">Abriendo WhatsApp con todos los detalles de tu pedido y ubicación GPS...</p>
     </div>
 
-    <script type="module">
+    <script>
         lucide.createIcons();
 
-        const prices = { p2l: 9, p3l: 13, p4l: 15 };
-        const cart = { p2l: 0, p3l: 0, p4l: 0 };
-        let currentMethod = 'Efectivo';
-        let logoClicks = 0;
+        let cart = { p2l: 0, p3l: 0 };
+        let payment = '';
+        let coords = null;
 
-        window.updateQty = (product, change) => {
-            const newQty = cart[product] + change;
-            if (newQty >= 0) {
-                cart[product] = newQty;
-                document.getElementById(`qty-${product}`).textContent = newQty;
-                calculateTotal();
-            }
-        };
-
-        window.calculateTotal = () => {
-            const subtotal = cart.p2l * prices.p2l + cart.p3l * prices.p3l + cart.p4l * prices.p4l;
-            const delivery = parseFloat(document.getElementById('distrito').value) || 0;
-            const total = subtotal > 0 ? subtotal + delivery : 0;
-            document.getElementById('total-price').textContent = `S/ ${total.toFixed(2)}`;
-            return { subtotal, delivery, total };
-        };
-
-        window.setPayment = (method) => {
-            currentMethod = method;
-            ['efectivo', 'yape', 'plin'].forEach(m => {
-                document.getElementById(`btn-${m}`).classList.remove('active');
-            });
-            document.getElementById(`btn-${method.toLowerCase()}`).classList.add('active');
-        };
-
-        window.prepararResumen = (e) => {
-            e.preventDefault();
-            const { subtotal, delivery, total } = calculateTotal();
-
-            if (subtotal === 0) return alert("Debes seleccionar al menos un pack.");
-            if (document.getElementById('distrito').selectedIndex === 0) return alert("Selecciona una zona de entrega.");
-
-            const receipt = document.getElementById('receipt-items');
-            receipt.innerHTML = '';
-            if (cart.p2l > 0) receipt.innerHTML += `<div class="flex justify-between"><span>Pack 2L x${cart.p2l}</span><span>S/ ${(cart.p2l*9).toFixed(2)}</span></div>`;
-            if (cart.p3l > 0) receipt.innerHTML += `<div class="flex justify-between"><span>Pack 3L x${cart.p3l}</span><span>S/ ${(cart.p3l*13).toFixed(2)}</span></div>`;
-            if (cart.p4l > 0) receipt.innerHTML += `<div class="flex justify-between"><span>Pack 4L x${cart.p4l}</span><span>S/ ${(cart.p4l*15).toFixed(2)}</span></div>`;
-            receipt.innerHTML += `<div class="flex justify-between text-zinc-500 italic"><span>Delivery</span><span>S/ ${delivery.toFixed(2)}</span></div>`;
-
-            document.getElementById('receipt-total').textContent = `S/ ${total.toFixed(2)}`;
-
-            // Mostrar QR solo si es pago digital
-            if (currentMethod === 'Efectivo') {
-                document.getElementById('digital-payment-info').classList.add('hidden');
-                document.getElementById('cash-info').classList.remove('hidden');
-            } else {
-                document.getElementById('digital-payment-info').classList.remove('hidden');
-                document.getElementById('cash-info').classList.add('hidden');
-            }
-
-            document.getElementById('paymentModal').style.display = 'flex';
-        };
-
-        window.closeModal = () => {
-            document.getElementById('paymentModal').style.display = 'none';
-        };
-
-        window.enviarPedidoFinal = async () => {
-            const { total } = calculateTotal();
-            const nombre = document.getElementById('nombre').value.trim();
-            const telefono = document.getElementById('telefono').value.trim();
-            const direccion = document.getElementById('direccion').value.trim();
-            const distritoText = document.getElementById('distrito').options[document.getElementById('distrito').selectedIndex].text;
-
-            const itemsStr = `${cart.p2l > 0 ? `• 2 Litros: ${cart.p2l}\n` : ''}${cart.p3l > 0 ? `• 3 Litros: ${cart.p3l}\n` : ''}${cart.p4l > 0 ? `• 4 Litros: ${cart.p4l}\n` : ''}`;
-
-            // Guardar en Firebase
-            if (window.isAuth) {
-                try {
-                    const colRef = collection(window.db, window.appId, 'public', 'data', 'pedidos');
-                    await addDoc(colRef, {
-                        nombre, telefono, direccion, distrito: distritoText,
-                        items: cart, total, pago: currentMethod,
-                        fecha: serverTimestamp()
-                    });
-                } catch (err) {
-                    console.error("Error al guardar pedido:", err);
-                }
-            }
-
-            closeModal();
-            document.getElementById('successMsg').style.display = 'flex';
-
-            const mensajeWA = `🌽 *NUEVO PEDIDO ASWA*%0A%0A👤 *Cliente:* ${nombre}%0A📱 *Celular:* ${telefono}%0A📍 *Zona:* ${distritoText}%0A🏠 *Dirección:* ${direccion}%0A%0A🛒 *Detalle:*%0A${itemsStr}%0A💳 *Pago:* ${currentMethod}%0A💰 *Total:* S/ ${total.toFixed(2)}`;
-
-            setTimeout(() => {
-                window.location.href = `https://wa.me/51986445531?text=${mensajeWA}`;
-            }, 1800);
-        };
-
-        // Admin: 5 clicks en logo
-        window.checkAdmin = () => {
-            logoClicks++;
-            if (logoClicks >= 5) {
-                document.getElementById('adminPanel').classList.remove('hidden');
-                cargarPedidosAdmin();
-                logoClicks = 0;
-            }
-            setTimeout(() => logoClicks = 0, 4000);
-        };
-
-        function cargarPedidosAdmin() {
-            if (!window.isAuth) return;
-            const q = query(collection(window.db, window.appId, 'public', 'data', 'pedidos'), orderBy('fecha', 'desc'));
-            onSnapshot(q, (snapshot) => {
-                const lista = document.getElementById('listaPedidos');
-                if (snapshot.empty) {
-                    lista.innerHTML = '<div class="text-center py-20 text-zinc-700 font-bold uppercase tracking-widest">Sin pedidos aún</div>';
-                    return;
-                }
-                lista.innerHTML = snapshot.docs.map(doc => {
-                    const d = doc.data();
-                    const fecha = d.fecha ? d.fecha.toDate().toLocaleString('es-PE') : 'En proceso';
-                    const items = `2L: ${d.items.p2l || 0} | 3L: ${d.items.p3l || 0} | 4L: ${d.items.p4l || 0}`;
-                    return `<div class="bg-zinc-900/50 p-5 rounded-3xl border border-zinc-800">
-                        <div class="flex justify-between items-start mb-2">
-                            <span class="font-bold text-yellow-500">${d.nombre}</span>
-                            <span class="bg-yellow-500 text-black px-2 py-0.5 rounded text-[10px] font-black">S/ ${d.total.toFixed(2)}</span>
-                        </div>
-                        <p class="text-[10px] text-zinc-500 mb-3">${fecha} • ${d.pago}</p>
-                        <p class="text-[11px] text-zinc-400 mb-2">${items}</p>
-                        <div class="text-[11px] text-zinc-300 bg-black/40 p-3 rounded-xl border border-zinc-800/50">
-                            <strong>Dir:</strong> ${d.direccion}<br>
-                            <strong>Zona:</strong> ${d.distrito}
-                        </div>
-                    </div>`;
-                }).join('');
-            });
+        function updateQty(id, delta) {
+            cart[id] = Math.max(0, cart[id] + delta);
+            document.getElementById(`q-${id}`).innerText = cart[id];
+            renderBar();
         }
 
-        window.cerrarAdmin = () => {
-            document.getElementById('adminPanel').classList.add('hidden');
-        };
+        function renderBar() {
+            const total = (cart.p2l * 15) + (cart.p3l * 22);
+            document.getElementById('totalPrice').innerText = `S/ ${total.toFixed(2)}`;
+            document.getElementById('cartBar').style.display = total > 0 ? 'block' : 'none';
+        }
+
+        function setPayment(m) {
+            payment = m;
+            document.getElementById('payYape').className = m === 'Yape' ? 'p-4 rounded-2xl border-2 border-yellow-500 bg-yellow-500/20 font-bold' : 'p-4 rounded-2xl border border-zinc-800 bg-zinc-900 font-bold';
+            document.getElementById('payCash').className = m === 'Efectivo' ? 'p-4 rounded-2xl border-2 border-yellow-500 bg-yellow-500/20 font-bold' : 'p-4 rounded-2xl border border-zinc-800 bg-zinc-900 font-bold';
+        }
+
+        function getLocation() {
+            if (!navigator.geolocation) {
+                alert("Tu dispositivo no soporta GPS. Escribe tu dirección manualmente.");
+                return;
+            }
+
+            const btn = document.querySelector('.location-btn');
+            const status = document.getElementById('geoStatus');
+            const direccionField = document.getElementById('direccion');
+
+            status.innerText = "Obteniendo ubicación precisa...";
+            btn.innerHTML = "LOCALIZANDO...";
+            btn.disabled = true;
+
+            navigator.geolocation.getCurrentPosition(
+                (pos) => {
+                    coords = { lat: pos.coords.latitude.toFixed(6), lng: pos.coords.longitude.toFixed(6) };
+                    const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${coords.lat},${coords.lng}`;
+
+                    direccionField.value = `UBICACIÓN GPS CAPTURADA ✅\n${mapsUrl}\n\n(Agrega referencia si quieres: casa, color de puerta, piso, etc.)`;
+
+                    status.innerText = "¡Ubicación vinculada correctamente! 🌍";
+                    btn.innerHTML = '<i data-lucide="check-circle" class="w-6 h-6"></i> UBICACIÓN CAPTURADA';
+                    btn.classList.add('bg-green-600');
+                    lucide.createIcons();
+                },
+                (err) => {
+                    direccionField.value = "";
+                    status.innerText = "Error: Permite acceso al GPS o escribe tu dirección.";
+                    btn.innerHTML = '<i data-lucide="map-pin" class="w-6 h-6"></i> REINTENTAR GPS';
+                    btn.disabled = false;
+                    lucide.createIcons();
+                },
+                { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
+            );
+        }
+
+        async function enviarPedido() {
+            const total = (cart.p2l * 15) + (cart.p3l * 22);
+            const nombre = document.getElementById('nombre').value.trim();
+            const telf = document.getElementById('telefono').value.trim();
+            const dir = document.getElementById('direccion').value.trim();
+
+            if (!nombre || !telf || !dir || total === 0 || !payment) {
+                alert("Completa todos los campos y selecciona al menos un producto.");
+                return;
+            }
+
+            const btn = document.getElementById('btnSubmit');
+            btn.disabled = true;
+            btn.innerText = "ENVIANDO...";
+
+            const orderId = await window.saveOrder({
+                cliente: nombre,
+                celular: telf,
+                direccion: dir,
+                coords: coords,
+                pedido: cart,
+                pago: payment,
+                total: total
+            });
+
+            if (orderId) {
+                document.getElementById('successMsg').style.display = 'flex';
+
+                const items = `${cart.p2l ? `• 2L: ${cart.p2l}\n` : ''}${cart.p3l ? `• 3L: ${cart.p3l}\n` : ''}`.trim();
+                const locMsg = coords ? `%0A📍 *Mi ubicación exacta:* https://www.google.com/maps/search/?api=1&query=${coords.lat},${coords.lng}` : "";
+
+                const text = `🌽 *NUEVO PEDIDO ASWA PREMIUM*%0A%0A👤 *Cliente:* ${nombre}%0A📱 *Celular:* ${telf}%0A🏠 *Dirección:* ${encodeURIComponent(dir)}${locMsg}%0A%0A🛒 *Pedido:*%0A${encodeURIComponent(items)}%0A💳 *Pago:* ${payment}%0A💰 *Total:* S/ ${total.toFixed(2)}%0A%0A¡Gracias por tu pedido! ❤️`;
+
+                setTimeout(() => {
+                    window.open(`https://wa.me/51986445531?text=${text}`, '_blank');
+                    setTimeout(() => {
+                        window.open(`https://wa.me/51955273229?text=${text}`, '_blank');
+                    }, 1000);
+                }, 2000);
+            } else {
+                alert("Error al enviar. Intenta de nuevo.");
+                btn.disabled = false;
+                btn.innerText = "Confirmar Pedido";
+            }
+        }
     </script>
 </body>
 </html>
