@@ -172,8 +172,8 @@
             <div class="flex items-center gap-3">
                 <div class="logo-container" onclick="checkAdmin()">
                     <!-- Intenta cargar el logo local, si falla muestra un icono de Maíz dorado -->
-                    <img src="logo de aswa.jpg" alt="Logo ASWA" onerror="this.style.display='none'">
-                    <div class="img-placeholder text-2xl">🌽</div>
+                    <img src="logo de aswa.jpg" alt="Logo ASWA" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+                    <div class="img-placeholder">🌽</div>
                 </div>
                 <div>
                     <h1 class="font-bebas text-3xl text-yellow-400 leading-none tracking-widest">ASWA</h1>
