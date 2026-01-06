@@ -142,6 +142,27 @@
             color: #000;
         }
 
+        .modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.95);
+            z-index: 2000;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            backdrop-filter: blur(10px);
+        }
+
+        .payment-option {
+            border: 2px solid transparent;
+            transition: all 0.3s ease;
+        }
+        .payment-option.active {
+            border-color: #facc15;
+            background: rgba(250, 204, 21, 0.1);
+        }
         .social-badge {
             padding: 8px;
             border-radius: 12px;
