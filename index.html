@@ -3,21 +3,23 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ASWA - La Rica Chicha (Oficial)</title>
+    <title>La Rica Chicha - ASWA (Oficial)</title>
     
-    <!-- Frameworks -->
+    <!-- Librerías Externas -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;800&family=Bebas+Neue&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <!-- Google Maps API (Reemplazar 'YOUR_API_KEY' si tienes una propia, sino funciona como búsqueda básica) -->
+    <script src="https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY&libraries=places"></script>
 
-    <!-- Firebase -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-app.js";
-        import { getFirestore, collection, addDoc, query, where, getDocs, serverTimestamp, doc, updateDoc } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-firestore.js";
-        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-auth.js";
+        import { getFirestore, collection, addDoc, query, where, getDocs, serverTimestamp, doc, updateDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-firestore.js";
+        import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-auth.js";
 
         const firebaseConfig = {
-            apiKey: "AIzaSy...", 
+            apiKey: "AIzaSy...", // Firebase la provee
             authDomain: "aswa-laricachicha.firebaseapp.com",
             projectId: "aswa-laricachicha",
             storageBucket: "aswa-laricachicha.appspot.com",
@@ -35,50 +37,50 @@
         window.where = where;
         window.getDocs = getDocs;
         window.collection = collection;
+        window.onSnapshot = onSnapshot;
 
         signInAnonymously(auth);
-        onAuthStateChanged(auth, user => window.currentUser = user);
 
         window.saveOrder = async (data) => {
             try {
                 const ref = await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'pedidos'), {
-                    ...data, fecha: serverTimestamp(), compartido: false
+                    ...data, fecha: serverTimestamp(), estado: 'Pendiente', confirmado_cliente: false, compartido: false
                 });
                 return ref.id;
-            } catch (e) { return "error-db"; } // Fallback para no bloquear la venta
+            } catch (e) { return "error-db"; }
         };
 
-        window.marcarCompartido = async (id) => {
-            if(!id || id === "error-db") return;
-            try { await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'pedidos', id), { compartido: true }); } catch (e) {}
+        window.confirmarEntregaCliente = async (id) => {
+            await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'pedidos', id), { confirmado_cliente: true });
         };
     </script>
 
     <style>
+        :root { --yellow: #facc15; }
         body { font-family: 'Poppins', sans-serif; background:#0a0a0b; color:white; -webkit-tap-highlight-color:transparent; }
         .font-bebas { font-family: 'Bebas Neue', cursive; }
-        .logo-container { width:90px; height:90px; background:#000; border-radius:50%; display:flex; align-items:center; justify-content:center; box-shadow:0 0 30px rgba(250,204,21,0.4); border:3px solid #facc15; overflow:hidden; cursor:pointer; }
-        .app-card { background: #121214; border: 1px solid #27272a; border-radius: 2rem; }
-        .input-dark { background:#121214; border:1px solid #27272a; color:white; border-radius: 1.2rem; padding: 1rem; width: 100%; transition: 0.3s; }
-        .input-dark:focus { border-color: #facc15; outline:none; }
-        .payment-option { border:2px solid #27272a; border-radius: 1.5rem; transition: 0.2s; cursor:pointer; }
-        .payment-option.active { border-color:#facc15; background:rgba(250,204,21,0.1); }
-        .btn-order { background: #facc15; color: black; font-weight: 900; border-radius: 1.5rem; width: 100%; transition: 0.2s; }
-        .btn-order:disabled { opacity: 0.3; filter: grayscale(1); cursor: not-allowed; }
+        .logo-container { width:90px; height:90px; background:#000; border-radius:50%; display:flex; align-items:center; justify-content:center; box-shadow:0 0 30px rgba(250,204,21,0.4); border:3px solid var(--yellow); overflow:hidden; cursor:pointer; }
+        .app-card { background: #121214; border: 1px solid #27272a; border-radius: 2rem; transition: 0.3s; }
+        .input-dark { background:#121214; border:1px solid #27272a; color:white; border-radius: 1.2rem; padding: 1rem; width: 100%; }
+        .input-dark:focus { border-color: var(--yellow); outline:none; }
+        .btn-order { background: var(--yellow); color: black; font-weight: 900; border-radius: 1.5rem; width: 100%; height: 4rem; display: flex; align-items: center; justify-content: center; gap: 0.5rem; }
+        .btn-order:disabled { opacity: 0.3; }
         .modal { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.95); z-index:2000; flex-direction:column; align-items:center; justify-content:center; padding:20px; backdrop-filter:blur(10px); }
-        .product-img { width: 70px; height: 70px; object-fit: contain; }
-        .toast { position:fixed; bottom:120px; left:50%; transform:translateX(-50%); background:#facc15; color:black; padding:10px 25px; border-radius:30px; font-weight:bold; display:none; z-index:4000; font-size: 12px; }
+        .payment-option { border: 2px solid #27272a; border-radius: 1.5rem; cursor: pointer; transition: 0.2s; }
+        .payment-option.active { border-color: var(--yellow); background: rgba(250,204,21,0.1); }
+        .pac-container { background: #121214; border: 1px solid #333; color: white; border-radius: 1rem; margin-top: 5px; font-family: 'Poppins'; }
+        .pac-item { color: #ccc; border-top: 1px solid #222; padding: 10px; }
+        .pac-item:hover { background: #222; }
+        .pac-item-query { color: white; }
     </style>
 </head>
 <body class="min-h-screen pb-44">
-
-    <div id="copyToast" class="toast">¡Número copiado! ✓</div>
 
     <!-- Header -->
     <header class="fixed top-0 left-0 w-full bg-black/80 backdrop-blur-md z-50 border-b border-zinc-900 p-4">
         <div class="max-w-md mx-auto flex items-center gap-4">
             <div class="logo-container" onclick="adminAccess()">
-                <img src="logo de aswa.jpg" alt="Logo ASWA">
+                <img src="logo de aswa.jpg" alt="ASWA">
             </div>
             <div>
                 <h1 class="font-bebas text-4xl text-yellow-400 tracking-widest leading-none">La Rica Chicha</h1>
@@ -91,48 +93,30 @@
 
     <main class="max-w-md mx-auto px-6 space-y-8">
         
-        <!-- Alerta de Bienvenida Fidelizada -->
-        <div id="welcomeMsg" class="hidden">
-            <div class="bg-yellow-500/10 border border-yellow-500/50 p-4 rounded-3xl text-center text-yellow-400 font-bold text-sm">
-                <span id="welcomeTxt"></span>
-            </div>
-        </div>
-
-        <!-- Selección de Productos -->
+        <!-- Packs -->
         <section class="space-y-4">
-            <h2 class="font-bold text-lg flex items-center gap-2">
-                <span class="w-1.5 h-6 bg-yellow-500 rounded-full"></span> Elige tus packs
-            </h2>
+            <h2 class="font-bold text-lg flex items-center gap-2"><span class="w-1.5 h-6 bg-yellow-500 rounded-full"></span> Selecciona tus Packs</h2>
             <div class="space-y-3">
                 <div class="app-card p-4 flex items-center justify-between">
-                    <div class="flex items-center gap-3">
-                        <img src="aswa de 2 litros 1.png" class="product-img" alt="2L">
-                        <div><p class="font-bold text-sm">Pack 2L</p><p class="text-yellow-400 font-bebas text-2xl">S/ 9.00</p></div>
-                    </div>
-                    <div class="flex items-center gap-4 bg-black/50 p-2 rounded-2xl">
-                        <button onclick="changeQty('p2l', -1)" class="w-8 h-8 text-zinc-500 font-bold">-</button>
+                    <div class="flex items-center gap-3"><img src="aswa de 2 litros 1.png" class="w-16"><div><p class="font-bold text-sm">Pack 2L</p><p class="text-yellow-400 font-bebas text-2xl">S/ 9.00</p></div></div>
+                    <div class="flex items-center gap-4 bg-black/40 p-2 rounded-2xl">
+                        <button onclick="changeQty('p2l', -1)" class="w-8 h-8 font-bold">-</button>
                         <span id="qty-p2l" class="font-bold text-xl w-4 text-center">0</span>
                         <button onclick="changeQty('p2l', 1)" class="w-8 h-8 bg-yellow-500 text-black rounded-xl font-bold">+</button>
                     </div>
                 </div>
                 <div class="app-card p-4 flex items-center justify-between">
-                    <div class="flex items-center gap-3">
-                        <img src="aswa de 3 litros.png" class="product-img" alt="3L">
-                        <div><p class="font-bold text-sm">Pack 3L</p><p class="text-yellow-400 font-bebas text-2xl">S/ 13.00</p></div>
-                    </div>
-                    <div class="flex items-center gap-4 bg-black/50 p-2 rounded-2xl">
-                        <button onclick="changeQty('p3l', -1)" class="w-8 h-8 text-zinc-500 font-bold">-</button>
+                    <div class="flex items-center gap-3"><img src="aswa de 3 litros.png" class="w-16"><div><p class="font-bold text-sm">Pack 3L</p><p class="text-yellow-400 font-bebas text-2xl">S/ 13.00</p></div></div>
+                    <div class="flex items-center gap-4 bg-black/40 p-2 rounded-2xl">
+                        <button onclick="changeQty('p3l', -1)" class="w-8 h-8 font-bold">-</button>
                         <span id="qty-p3l" class="font-bold text-xl w-4 text-center">0</span>
                         <button onclick="changeQty('p3l', 1)" class="w-8 h-8 bg-yellow-500 text-black rounded-xl font-bold">+</button>
                     </div>
                 </div>
-                <div class="app-card p-4 flex items-center justify-between border-yellow-500/20">
-                    <div class="flex items-center gap-3">
-                        <img src="galon familiar de 4 litros.png" class="product-img" alt="4L">
-                        <div><p class="font-bold text-sm">Familiar 4L</p><p class="text-yellow-400 font-bebas text-2xl">S/ 15.00</p></div>
-                    </div>
-                    <div class="flex items-center gap-4 bg-black/50 p-2 rounded-2xl">
-                        <button onclick="changeQty('p4l', -1)" class="w-8 h-8 text-zinc-500 font-bold">-</button>
+                <div class="app-card p-4 flex items-center justify-between">
+                    <div class="flex items-center gap-3"><img src="galon familiar de 4 litros.png" class="w-16"><div><p class="font-bold text-sm">Familiar 4L</p><p class="text-yellow-400 font-bebas text-2xl">S/ 15.00</p></div></div>
+                    <div class="flex items-center gap-4 bg-black/40 p-2 rounded-2xl">
+                        <button onclick="changeQty('p4l', -1)" class="w-8 h-8 font-bold">-</button>
                         <span id="qty-p4l" class="font-bold text-xl w-4 text-center">0</span>
                         <button onclick="changeQty('p4l', 1)" class="w-8 h-8 bg-yellow-500 text-black rounded-xl font-bold">+</button>
                     </div>
@@ -140,33 +124,32 @@
             </div>
         </section>
 
-        <!-- Datos -->
+        <!-- Datos de Entrega -->
         <section class="space-y-4">
-            <h2 class="font-bold text-lg flex items-center gap-2">
-                <span class="w-1.5 h-6 bg-yellow-500 rounded-full"></span> Entrega
-            </h2>
+            <h2 class="font-bold text-lg flex items-center gap-2"><span class="w-1.5 h-6 bg-yellow-500 rounded-full"></span> Entrega</h2>
             <div class="space-y-3">
                 <input type="tel" id="tel" placeholder="Celular" maxlength="9" class="input-dark font-bold text-yellow-400">
                 <input type="text" id="nom" placeholder="Tu nombre" class="input-dark">
                 <select id="zon" onchange="calculate()" class="input-dark">
-                    <option value="" disabled selected>Zona...</option>
+                    <option value="" disabled selected>Zona de reparto...</option>
                     <option value="3">Morales (S/3)</option>
                     <option value="4">Tarapoto (S/4)</option>
                     <option value="5">Banda de Shilcayo (S/5)</option>
                     <option value="0">Recojo en local (S/0)</option>
                 </select>
-                <textarea id="dir" rows="2" placeholder="Dirección y referencia" class="input-dark"></textarea>
-                <button onclick="getGPS()" id="gps" class="w-full py-4 rounded-2xl bg-zinc-800 text-yellow-500 font-bold text-xs flex items-center justify-center gap-2">
-                    <i data-lucide="map-pin" class="w-4 h-4"></i> COMPARTIR MI GPS
+                <div>
+                    <input type="text" id="dir" placeholder="Dirección exacta (Google Maps)" class="input-dark">
+                    <p id="map-msg" class="text-[10px] text-zinc-500 mt-1 px-2">Escribe tu calle para verificar con Maps.</p>
+                </div>
+                <button onclick="getGPS()" id="gpsBtn" class="w-full py-4 rounded-2xl bg-zinc-800 text-zinc-400 font-bold text-xs flex gap-2 justify-center">
+                    <i data-lucide="map-pin" class="w-4 h-4"></i> COMPARTIR UBICACIÓN GPS
                 </button>
             </div>
         </section>
 
-        <!-- Pagos -->
+        <!-- Pago -->
         <section class="space-y-4">
-            <h2 class="font-bold text-lg flex items-center gap-2">
-                <span class="w-1.5 h-6 bg-yellow-500 rounded-full"></span> Pago
-            </h2>
+            <h2 class="font-bold text-lg flex items-center gap-2"><span class="w-1.5 h-6 bg-yellow-500 rounded-full"></span> Método de Pago</h2>
             <div class="grid grid-cols-3 gap-3">
                 <div onclick="selectPay('Efectivo')" id="m-Efectivo" class="payment-option active p-4 flex flex-col items-center gap-2">
                     <i data-lucide="banknote" class="text-green-500"></i><span class="text-[10px] font-bold">Efectivo</span>
@@ -178,10 +161,24 @@
                     <div class="w-6 h-6 bg-cyan-500 rounded flex items-center justify-center text-[10px] font-black italic">P</div><span class="text-[10px] font-bold">Plin</span>
                 </div>
             </div>
+
+            <div id="vueltoArea" class="mt-4 p-4 app-card">
+                <p class="text-[10px] font-bold text-zinc-500 mb-2 uppercase">Vuelto</p>
+                <input type="number" id="pagoCon" placeholder="¿Con cuánto pagas?" oninput="calcVuelto()" class="input-dark mb-2">
+                <p id="vueltoMsg" class="text-yellow-500 font-black">Vuelto: S/ 0.00</p>
+            </div>
         </section>
 
-        <div class="text-center opacity-40 py-6 text-[10px] font-black uppercase tracking-[0.4em]">
-            <p>El sabor que une a nuestra familia también está en Google Maps</p>
+        <!-- Local y Redes -->
+        <div class="flex flex-col items-center gap-6 py-10">
+            <a href="https://maps.google.com/?q=ASWA+Tarapoto" target="_blank" class="flex items-center gap-3 px-6 py-3 bg-zinc-900 rounded-full border border-zinc-800">
+                <i data-lucide="map" class="text-yellow-500 w-5 h-5"></i>
+                <span class="text-xs font-bold uppercase tracking-widest">Visítanos en nuestro local</span>
+            </a>
+            <div class="flex gap-8">
+                <a href="https://facebook.com/aswa.laricachicha" target="_blank" class="text-zinc-500 hover:text-blue-500"><i data-lucide="facebook"></i></a>
+                <a href="https://instagram.com/aswa.laricachicha" target="_blank" class="text-zinc-500 hover:text-pink-500"><i data-lucide="instagram"></i></a>
+            </div>
         </div>
     </main>
 
@@ -189,59 +186,68 @@
     <footer class="fixed bottom-0 left-0 w-full bg-black/90 backdrop-blur-xl border-t border-zinc-800 p-6 z-[100]">
         <div class="max-w-md mx-auto flex items-center justify-between">
             <div>
-                <p id="subt" class="text-[10px] text-zinc-500 line-through hidden"></p>
+                <p id="totalNormal" class="text-[10px] text-zinc-500 line-through hidden"></p>
                 <p class="text-[10px] text-zinc-400 font-bold uppercase">Total</p>
-                <p id="total" class="text-4xl font-bebas text-yellow-500 tracking-wider">S/ 0.00</p>
+                <p id="totalDisplay" class="text-4xl font-bebas text-yellow-500 tracking-wider">S/ 0.00</p>
             </div>
-            <button onclick="showSummary()" class="btn-order px-10 py-5 text-lg flex items-center gap-2 shadow-xl shadow-yellow-500/10">
-                CONTINUAR <i data-lucide="arrow-right"></i>
-            </button>
+            <button onclick="showSummary()" class="btn-order px-10">CONTINUAR <i data-lucide="arrow-right"></i></button>
         </div>
     </footer>
 
     <!-- Modal Resumen -->
     <div id="modalSummary" class="modal">
-        <div class="bg-zinc-900 w-full max-w-sm rounded-[2.5rem] p-8 border border-zinc-800 shadow-2xl overflow-y-auto max-h-[90vh]">
-            <h3 class="font-bebas text-3xl text-yellow-500 text-center mb-6">RESUMEN</h3>
-            <div id="summaryItems" class="space-y-2 text-sm text-zinc-400 mb-6 border-b border-zinc-800 pb-4"></div>
+        <div class="bg-zinc-900 w-full max-w-sm rounded-[2.5rem] p-8 border border-zinc-800 overflow-y-auto max-h-[90vh]">
+            <h3 class="font-bebas text-3xl text-yellow-500 text-center mb-6">CONFIRMAR PEDIDO</h3>
+            <div id="sumList" class="space-y-2 text-sm text-zinc-400 mb-6 border-b border-zinc-800 pb-4"></div>
             
-            <div id="digitalArea" class="hidden space-y-5 text-center">
-                <div class="bg-black/40 p-4 rounded-2xl border border-zinc-800">
-                    <p class="text-[10px] text-zinc-500 uppercase font-bold mb-2">Pagar a: Telma Pezo Meléndez</p>
-                    <button onclick="copyNum()" class="text-xl font-black text-yellow-500 flex items-center justify-center gap-2 mx-auto">
-                        947 999 736 <i data-lucide="copy" class="w-4 h-4"></i>
-                    </button>
-                </div>
-                <img src="yape del negocio.jpg" class="w-44 h-44 mx-auto rounded-3xl border-4 border-white">
-                <button onclick="confirmDigi()" class="w-full py-4 rounded-2xl bg-zinc-800 text-yellow-500 text-xs font-black border border-yellow-500/30">¡YA REALICÉ EL PAGO!</button>
+            <div id="digiArea" class="hidden space-y-5 text-center">
+                <p class="text-[10px] text-zinc-500 font-bold uppercase">Pagar a: Telma Pezo Meléndez</p>
+                <button onclick="copyNum()" class="text-xl font-black text-yellow-500 flex gap-2 justify-center mx-auto">947 999 736 <i data-lucide="copy" class="w-4 h-4"></i></button>
+                <img src="yape del negocio.jpg" class="w-40 mx-auto rounded-3xl border-4 border-white shadow-2xl">
+                <button onclick="confirmPay()" class="w-full py-4 rounded-2xl bg-zinc-800 text-yellow-500 text-xs font-black border border-yellow-500/20">YA REALICÉ EL PAGO</button>
             </div>
 
-            <button id="finalBtn" onclick="sendOrder()" disabled class="btn-order mt-6 py-5 text-xl flex items-center justify-center gap-2">
-                ENVIAR PEDIDO <i data-lucide="send"></i>
-            </button>
-            
-            <button onclick="closeModal()" class="w-full mt-6 text-zinc-600 text-[10px] font-bold uppercase tracking-widest">Cerrar</button>
+            <button id="btnSend" onclick="submitOrder()" disabled class="btn-order mt-6">ENVIAR PEDIDO <i data-lucide="send"></i></button>
+            <button onclick="closeModal()" class="w-full mt-4 text-zinc-600 text-[10px] font-bold uppercase">Cerrar</button>
         </div>
     </div>
 
-    <!-- Éxito -->
+    <!-- Pantalla Éxito y Seguimiento -->
     <div id="success" class="hidden fixed inset-0 bg-black z-[3000] flex flex-col items-center justify-center p-8 text-center">
-        <div class="w-20 h-20 bg-yellow-500 rounded-full flex items-center justify-center mb-6 animate-bounce">
-            <i data-lucide="check" class="text-black w-10 h-10"></i>
+        <div class="w-20 h-20 bg-yellow-500 rounded-full flex items-center justify-center mb-6 animate-bounce"><i data-lucide="truck" class="text-black"></i></div>
+        <h2 class="font-bebas text-4xl text-yellow-500 mb-2" id="successTitle">PEDIDO EN RUTA</h2>
+        <p class="text-zinc-500 text-sm mb-10" id="statusMsg">El delivery está preparando tu ASWA...</p>
+        
+        <!-- Botón Confirmación Cliente -->
+        <div id="clientConfirmArea" class="hidden w-full space-y-4 mb-10">
+            <p class="text-xs text-green-500 font-bold">¡El delivery marca que ya llegó!</p>
+            <button onclick="confirmarEntregaTotal()" class="w-full py-5 bg-green-600 text-white rounded-[1.5rem] font-black shadow-xl">SÍ, YA RECIBÍ MI PEDIDO ✅</button>
         </div>
-        <h2 class="font-bebas text-5xl text-yellow-500 mb-2">¡ENVIADO!</h2>
-        <p class="text-zinc-500 text-sm mb-10">Revisa tus mensajes de WhatsApp.</p>
-        <div class="flex justify-center gap-4">
-            <button onclick="share('fb')" class="p-4 bg-zinc-900 rounded-2xl border border-zinc-800"><i data-lucide="facebook"></i></button>
-            <button onclick="share('ig')" class="p-4 bg-zinc-900 rounded-2xl border border-zinc-800"><i data-lucide="instagram"></i></button>
+
+        <div id="downloadArea" class="hidden w-full mb-10">
+            <button onclick="downloadReceipt()" class="w-full py-5 bg-white text-black rounded-[1.5rem] font-black flex justify-center gap-2 shadow-xl"><i data-lucide="download"></i> DESCARGAR NOTA DE VENTA</button>
         </div>
-        <button onclick="location.reload()" class="mt-12 text-zinc-600 font-bold text-xs uppercase tracking-widest">Volver</button>
+
+        <button onclick="location.reload()" class="text-zinc-600 font-bold text-[10px] uppercase">Hacer otro pedido</button>
     </div>
 
     <script>
         lucide.createIcons();
+        let state = { cart:{p2l:0, p3l:0, p4l:0}, pay:'Efectivo', disc:{p:0, m:''}, gps:'', id:'', rawTotal:0, finalTotal:0, customerData:{} };
 
-        let state = { cart: {p2l:0, p3l:0, p4l:0}, pay:'Efectivo', disc:{p:0, m:''}, gps:'', id:'', admin:0 };
+        // Google Maps Autocomplete
+        window.onload = () => {
+            const input = document.getElementById('dir');
+            const autocomplete = new google.maps.places.Autocomplete(input);
+            autocomplete.addListener('place_changed', () => {
+                const place = autocomplete.getPlace();
+                if (!place.geometry) {
+                    document.getElementById('map-msg').innerText = "⚠️ Dirección no exacta, pero puedes continuar.";
+                } else {
+                    document.getElementById('map-msg').innerText = "✅ Dirección verificada con éxito.";
+                }
+            });
+        };
 
         function changeQty(id, d) {
             state.cart[id] = Math.max(0, state.cart[id] + d);
@@ -253,17 +259,23 @@
             state.pay = m;
             document.querySelectorAll('.payment-option').forEach(el => el.classList.remove('active'));
             document.getElementById(`m-${m}`).classList.add('active');
-            calculate();
+            document.getElementById('vueltoArea').style.display = (m === 'Efectivo') ? 'block' : 'none';
         }
 
-        // Búsqueda Inteligente
+        function calcVuelto() {
+            const paga = parseFloat(document.getElementById('pagoCon').value) || 0;
+            const vuelto = Math.max(0, paga - state.finalTotal);
+            document.getElementById('vueltoMsg').innerText = `Vuelto: S/ ${vuelto.toFixed(2)}`;
+        }
+
+        // Fidelidad Inteligente
         let deb;
         document.getElementById('tel').addEventListener('input', (e) => {
             clearTimeout(deb);
-            if(e.target.value.length === 9) deb = setTimeout(() => search(e.target.value), 500);
+            if(e.target.value.length === 9) deb = setTimeout(() => searchCustomer(e.target.value), 500);
         });
 
-        async function search(t) {
+        async function searchCustomer(t) {
             const q = window.query(window.collection(window.db, 'artifacts', window.appId, 'public', 'data', 'pedidos'), window.where('telefono', '==', t));
             const snap = await window.getDocs(q);
             if(!snap.empty) {
@@ -271,118 +283,116 @@
                 const last = list.sort((a,b) => b.fecha?.seconds - a.fecha?.seconds)[0];
                 document.getElementById('nom').value = last.nombre;
                 document.getElementById('dir').value = last.direccion;
-                
                 let p = list.length >= 10 ? 0.15 : (list.length >= 5 ? 0.10 : 0);
-                let m = list.length >= 10 ? "VIP 15%" : (list.length >= 5 ? "Fiel 10%" : "");
-                
-                if(list.filter(x => x.compartido).length >= 3) { p += 0.05; m += " + Bono 5%"; }
+                let m = list.length >= 10 ? "VIP (15%)" : (list.length >= 5 ? "Fiel (10%)" : "");
+                if(list.filter(x => x.compartido).length >= 3) { p += 0.05; m += " + Social (5%)"; }
                 state.disc = {p, m};
-                document.getElementById('welcomeTxt').innerText = `¡Hola ${last.nombre.split(' ')[0]}! Tienes ${m}`;
-                document.getElementById('welcomeMsg').classList.remove('hidden');
                 calculate();
             }
         }
 
         function calculate() {
             const base = (state.cart.p2l*9) + (state.cart.p3l*13) + (state.cart.p4l*15);
-            const delivery = parseFloat(document.getElementById('zon').value) || 0;
-            const sub = base + delivery;
-            const final = sub * (1 - state.disc.p);
-            
-            document.getElementById('total').innerText = `S/ ${final.toFixed(2)}`;
+            const deli = parseFloat(document.getElementById('zon').value) || 0;
+            state.rawTotal = base + deli;
+            state.finalTotal = state.rawTotal * (1 - state.disc.p);
+            document.getElementById('totalDisplay').innerText = `S/ ${state.finalTotal.toFixed(2)}`;
             if(state.disc.p > 0) {
-                document.getElementById('subt').innerText = `S/ ${sub.toFixed(2)}`;
-                document.getElementById('subt').classList.remove('hidden');
+                document.getElementById('totalNormal').innerText = `S/ ${state.rawTotal.toFixed(2)}`;
+                document.getElementById('totalNormal').classList.remove('hidden');
             }
-            return final;
         }
 
         function getGPS() {
             navigator.geolocation.getCurrentPosition(p => {
                 state.gps = `https://www.google.com/maps?q=${p.coords.latitude},${p.coords.longitude}`;
-                document.getElementById('gps').innerText = "GPS LISTO ✅";
-                document.getElementById('gps').style.background = "#065f46";
+                document.getElementById('gpsBtn').innerText = "GPS VERIFICADO ✅";
+                document.getElementById('gpsBtn').classList.add('bg-green-900', 'text-white');
             });
         }
 
         function showSummary() {
-            const total = calculate();
-            if(total <= 0) return alert("Elige packs");
-            if(!document.getElementById('zon').value) return alert("Elige zona");
-            if(!document.getElementById('nom').value || !document.getElementById('tel').value) return alert("Completa tus datos");
+            if(state.finalTotal <= 0) return alert("Elige tus packs");
+            const list = document.getElementById('sumList');
+            list.innerHTML = "";
+            if(state.cart.p2l) list.innerHTML += `<div class="flex justify-between"><span>Pack 2L x${state.cart.p2l}</span><span>S/ ${state.cart.p2l*9}</span></div>`;
+            if(state.cart.p3l) list.innerHTML += `<div class="flex justify-between"><span>Pack 3L x${state.cart.p3l}</span><span>S/ ${state.cart.p3l*13}</span></div>`;
+            if(state.cart.p4l) list.innerHTML += `<div class="flex justify-between"><span>Pack 4L x${state.cart.p4l}</span><span>S/ ${state.cart.p4l*15}</span></div>`;
+            if(state.disc.p > 0) list.innerHTML += `<div class="flex justify-between text-green-500"><span>Desc. ${state.disc.m}</span><span>- S/ ${(state.rawTotal - state.finalTotal).toFixed(2)}</span></div>`;
+            list.innerHTML += `<div class="flex justify-between font-black text-yellow-500 pt-3 border-t border-zinc-800"><span>TOTAL</span><span>S/ ${state.finalTotal.toFixed(2)}</span></div>`;
 
-            const items = document.getElementById('summaryItems');
-            items.innerHTML = "";
-            if(state.cart.p2l) items.innerHTML += `<div class="flex justify-between"><span>Pack 2L x${state.cart.p2l}</span><span>S/ ${state.cart.p2l*9}</span></div>`;
-            if(state.cart.p3l) items.innerHTML += `<div class="flex justify-between"><span>Pack 3L x${state.cart.p3l}</span><span>S/ ${state.cart.p3l*13}</span></div>`;
-            if(state.cart.p4l) items.innerHTML += `<div class="flex justify-between"><span>Pack 4L x${state.cart.p4l}</span><span>S/ ${state.cart.p4l*15}</span></div>`;
-            items.innerHTML += `<div class="flex justify-between font-bold text-yellow-500 pt-3 mt-2 border-t border-zinc-800"><span>TOTAL</span><span>S/ ${total.toFixed(2)}</span></div>`;
-
-            const fBtn = document.getElementById('finalBtn');
-            if(state.pay === 'Efectivo') {
-                document.getElementById('digitalArea').classList.add('hidden');
-                fBtn.disabled = false;
-            } else {
-                document.getElementById('digitalArea').classList.remove('hidden');
-                fBtn.disabled = true;
-            }
+            document.getElementById('btnSend').disabled = (state.pay !== 'Efectivo');
+            document.getElementById('digiArea').classList.toggle('hidden', state.pay === 'Efectivo');
             document.getElementById('modalSummary').style.display = 'flex';
         }
 
-        function confirmDigi() {
-            document.getElementById('finalBtn').disabled = false;
-            alert("Pago verificado por ti. Ya puedes enviar.");
-        }
+        function confirmPay() { document.getElementById('btnSend').disabled = false; }
 
-        async function sendOrder() {
-            const fBtn = document.getElementById('finalBtn');
-            fBtn.innerText = "ENVIANDO...";
-            fBtn.disabled = true;
+        async function submitOrder() {
+            const pagaCon = parseFloat(document.getElementById('pagoCon').value) || state.finalTotal;
+            state.customerData = {
+                nombre: document.getElementById('nom').value,
+                telefono: document.getElementById('tel').value,
+                direccion: document.getElementById('dir').value,
+                zona: document.getElementById('zon').options[document.getElementById('zon').selectedIndex].text,
+                total: state.finalTotal, pago: state.pay, vuelto: Math.max(0, pagaCon - state.finalTotal)
+            };
 
-            const total = calculate();
-            const nom = document.getElementById('nom').value;
-            const tel = document.getElementById('tel').value;
-            const zon = document.getElementById('zon').options[document.getElementById('zon').selectedIndex].text;
-            const dir = document.getElementById('dir').value;
+            state.id = await window.saveOrder({ ...state.customerData, items: state.cart });
+            
+            const msg = `🌽 *PEDIDO ASWA*\n👤 *Cliente:* ${state.customerData.nombre}\n📱 *Cel:* ${state.customerData.telefono}\n📍 *Zona:* ${state.customerData.zona}\n🏠 *Dir:* ${state.customerData.direccion}\n🛒 *Pedido:* ${state.cart.p2l?'2L:'+state.cart.p2l+' ':''}${state.cart.p3l?'3L:'+state.cart.p3l+' ':''}${state.cart.p4l?'4L:'+state.cart.p4l:''}\n💳 *Pago:* ${state.pay} (Paga S/${pagaCon})\n💰 *Total:* S/ ${state.finalTotal.toFixed(2)}`;
 
-            state.id = await window.saveOrder({
-                nombre:nom, telefono:tel, direccion:dir, distrito:zon, 
-                items:state.cart, total:total, pago:state.pay, gps:state.gps
-            });
-
-            const det = `${state.cart.p2l?'• 2L: '+state.cart.p2l+'\n':''}${state.cart.p3l?'• 3L: '+state.cart.p3l+'\n':''}${state.cart.p4l?'• 4L: '+state.cart.p4l+'\n':''}`;
-            const msg = `🌽 *PEDIDO ASWA*\n👤 *Cliente:* ${nom}\n📱 *Cel:* ${tel}\n📍 *Zona:* ${zon}\n🏠 *Dir:* ${dir}\n${state.gps?'🌍 *GPS:* '+state.gps+'\n':''}🛒 *Pedido:*\n${det}💳 *Pago:* ${state.pay}\n💰 *Total:* S/ ${total.toFixed(2)}`;
-
-            // Dual WhatsApp
             window.open(`https://wa.me/51986445531?text=${encodeURIComponent(msg)}`, '_blank');
             setTimeout(() => {
                 window.open(`https://wa.me/51955273229?text=${encodeURIComponent(msg)}`, '_blank');
                 document.getElementById('modalSummary').style.display = 'none';
                 document.getElementById('success').classList.remove('hidden');
-                lucide.createIcons();
+                trackOrder();
             }, 1000);
         }
 
-        function copyNum() {
-            navigator.clipboard.writeText("947999736");
-            const t = document.getElementById('copyToast');
-            t.style.display = 'block';
-            setTimeout(() => t.style.display = 'none', 2000);
+        function trackOrder() {
+            window.onSnapshot(doc(window.db, 'artifacts', window.appId, 'public', 'data', 'pedidos', state.id), (doc) => {
+                const d = doc.data();
+                if(d.estado === 'Entregado' && !d.confirmado_cliente) {
+                    document.getElementById('statusMsg').innerText = "¡El delivery está afuera!";
+                    document.getElementById('clientConfirmArea').classList.remove('hidden');
+                }
+                if(d.confirmado_cliente) {
+                    document.getElementById('successTitle').innerText = "ENTREGA FINALIZADA ✅";
+                    document.getElementById('statusMsg').innerText = "¡Gracias por elegir ASWA!";
+                    document.getElementById('clientConfirmArea').classList.add('hidden');
+                    document.getElementById('downloadArea').classList.remove('hidden');
+                }
+            });
         }
 
+        async function confirmarEntregaTotal() {
+            await window.confirmarEntregaCliente(state.id);
+        }
+
+        function downloadReceipt() {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            doc.setFontSize(22); doc.text("NOTA DE VENTA - ASWA", 105, 20, {align:"center"});
+            doc.setFontSize(10); doc.text(`Ticket: ${state.id}`, 20, 30);
+            doc.text(`Cliente: ${state.customerData.nombre}`, 20, 45);
+            doc.text(`Celular: ${state.customerData.telefono}`, 20, 52);
+            doc.text(`Dirección: ${state.customerData.direccion}`, 20, 59);
+            doc.line(20, 65, 190, 65);
+            let y = 75;
+            if(state.cart.p2l) { doc.text(`Pack 2L x${state.cart.p2l}`, 20, y); doc.text(`S/ ${(state.cart.p2l*9).toFixed(2)}`, 170, y); y+=10; }
+            if(state.cart.p3l) { doc.text(`Pack 3L x${state.cart.p3l}`, 20, y); doc.text(`S/ ${(state.cart.p3l*13).toFixed(2)}`, 170, y); y+=10; }
+            if(state.cart.p4l) { doc.text(`Familiar 4L x${state.cart.p4l}`, 20, y); doc.text(`S/ ${(state.cart.p4l*15).toFixed(2)}`, 170, y); y+=10; }
+            doc.line(20, y, 190, y); y+=10;
+            doc.setFontSize(14); doc.text(`TOTAL PAGADO: S/ ${state.customerData.total.toFixed(2)}`, 20, y);
+            doc.save(`Recibo_ASWA_${state.customerData.nombre}.pdf`);
+        }
+
+        function copyNum() { navigator.clipboard.writeText("947999736"); }
         function closeModal() { document.getElementById('modalSummary').style.display = 'none'; }
-        
-        function share(p) {
-            window.marcarCompartido(state.id);
-            const t = "¡Amo la ASWA! @aswa.laricachicha";
-            if(p === 'fb') window.open(`https://www.facebook.com/sharer/sharer.php?quote=${encodeURIComponent(t)}`);
-            else alert("¡Copiado! Etiquétanos en Instagram para tu bono de 5%.");
-        }
-
-        function adminAccess() {
-            state.admin++;
-            if(state.admin >= 5) { alert("Acceso concedido"); state.admin = 0; }
-        }
+        function adminAccess() { let c=0; return () => { c++; if(c>=5) alert("Panel Admin Habilitado"); } }
+        window.adminAccess = adminAccess();
     </script>
 </body>
 </html>
