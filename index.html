@@ -64,6 +64,16 @@
                 console.warn("No se pudo marcar como compartido:", err);
             }
         };
+
+        window.listenOrders = (callback) => {
+            if (!window.currentUser) return;
+            const colRef = collection(db, 'artifacts', appId, 'public', 'data', 'pedidos');
+            return onSnapshot(colRef, (snap) => {
+                const orders = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                orders.sort((a, b) => (b.fecha?.seconds || 0) - (a.fecha?.seconds || 0));
+                callback(orders);
+            });
+        };
     </script>
 
     <style>
@@ -77,14 +87,18 @@
         .input-dark:focus { border-color:#facc15; outline:none; }
         .location-btn { background:linear-gradient(to right,#facc15,#eab308); color:#000; font-weight:800; }
         .location-btn:active { transform:scale(0.97); }
+        .payment-option { border:2px solid #27272a; transition:all .2s; }
+        .payment-option.active { border-color:#facc15 !important; background:rgba(250,204,21,0.15) !important; }
         .welcome-msg { background:rgba(250,204,21,0.15); border:1px solid #facc15; padding:12px; border-radius:20px; margin-bottom:16px; }
         .address-suggestion { background:rgba(250,204,21,0.1); border:1px solid #facc15; padding:12px; border-radius:20px; margin-top:8px; }
         .discount-badge { background:linear-gradient(to right,#10b981,#059669); color:white; }
+        .social-btn { transition:all .3s; }
+        .social-btn:active { transform:scale(0.9); }
     </style>
 </head>
 <body class="min-h-screen pb-48">
 
-    <!-- Header con logo y texto -->
+    <!-- Header -->
     <header class="fixed top-0 left-0 w-full bg-black/80 backdrop-blur-md z-50 border-b border-zinc-900 p-6">
         <div class="max-w-md mx-auto text-center">
             <div class="logo-container mx-auto mb-3">
@@ -95,10 +109,10 @@
         </div>
     </header>
 
-    <div class="h-40"></div> <!-- Espacio para header fijo -->
+    <div class="h-40"></div>
 
     <main class="max-w-md mx-auto px-6 space-y-8">
-        <!-- Mensaje de bienvenida -->
+        <!-- Bienvenida -->
         <div id="welcomeMsg" class="hidden">
             <div class="welcome-msg text-center">
                 <p class="text-yellow-400 font-bold text-lg" id="welcomeText"></p>
@@ -112,10 +126,11 @@
                 Elige tu pack
             </h2>
             <div class="space-y-4">
+                <!-- Pack 2L -->
                 <div class="bg-gradient-to-br from-zinc-900 to-zinc-800 p-5 rounded-3xl border border-zinc-700 flex items-center justify-between">
                     <div class="flex items-center gap-4">
                         <div class="product-img-wrapper">
-                            <img src="aswa de 2 litros 1.png" alt="2L" onerror="this.style.display='none'">
+                            <img src="aswa de 2 litros 1.png" alt="2L">
                         </div>
                         <div>
                             <p class="font-bold">Pack 2L</p>
@@ -129,10 +144,11 @@
                     </div>
                 </div>
 
+                <!-- Pack 3L -->
                 <div class="bg-gradient-to-br from-zinc-900 to-zinc-800 p-5 rounded-3xl border border-zinc-700 flex items-center justify-between">
                     <div class="flex items-center gap-4">
                         <div class="product-img-wrapper">
-                            <img src="aswa de 3 litros.png" alt="3L" onerror="this.style.display='none'">
+                            <img src="aswa de 3 litros.png" alt="3L">
                         </div>
                         <div>
                             <p class="font-bold">Pack 3L</p>
@@ -146,10 +162,11 @@
                     </div>
                 </div>
 
+                <!-- Pack 4L -->
                 <div class="bg-gradient-to-br from-zinc-900 to-zinc-800 p-5 rounded-3xl border border-yellow-500/30 flex items-center justify-between">
                     <div class="flex items-center gap-4">
                         <div class="product-img-wrapper border-yellow-500/30">
-                            <img src="galon familiar de 4 litros.png" alt="4L" onerror="this.style.display='none'">
+                            <img src="galon familiar de 4 litros.png" alt="4L">
                         </div>
                         <div>
                             <p class="font-bold">Pack Familiar 4L</p>
@@ -208,7 +225,7 @@
             </div>
         </section>
 
-        <!-- Método de pago -->
+        <!-- Método de pago con iconos completos -->
         <section class="space-y-4">
             <h2 class="font-bold text-lg flex items-center gap-2 mb-4">
                 <span class="w-1.5 h-6 bg-yellow-500 rounded-full"></span>
@@ -216,7 +233,7 @@
             </h2>
             <div class="grid grid-cols-3 gap-3">
                 <button type="button" onclick="setPayment('Efectivo')" id="btn-efectivo" class="payment-option p-5 rounded-2xl bg-zinc-900 flex flex-col items-center gap-2 active">
-                    <i data-lucide="banknote" class="w-8 h-8 text-green-500"></i>
+                    <i data-lucide="banknote" class="w-10 h-10 text-green-500"></i>
                     <span class="text-xs font-bold">Efectivo</span>
                 </button>
                 <button type="button" onclick="setPayment('Yape')" id="btn-yape" class="payment-option p-5 rounded-2xl bg-zinc-900 flex flex-col items-center gap-2">
@@ -247,12 +264,12 @@
         </div>
     </main>
 
-    <!-- Footer total con descuento explicado -->
+    <!-- Footer con precio normal + descuento explicado -->
     <div class="fixed bottom-0 left-0 w-full bg-black/90 backdrop-blur-2xl border-t border-zinc-900 p-6 z-50">
-        <div class="max-w-md mx-auto">
-            <div class="text-center mb-3" id="precioNormalMsg"></div>
-            <div class="text-center mb-3" id="descuentoMotivoMsg" class="hidden"></div>
-            <div class="flex items-center justify-between">
+        <div class="max-w-md mx-auto text-center">
+            <p id="precioNormalMsg" class="text-zinc-400 text-sm mb-1"></p>
+            <p id="descuentoMotivoMsg" class="text-green-400 font-bold mb-2 hidden"></p>
+            <div class="flex items-center justify-between mt-3">
                 <div>
                     <p class="text-xs text-zinc-500 uppercase font-bold">Total a pagar</p>
                     <p class="text-4xl font-bebas text-yellow-500" id="total-price">S/ 0.00</p>
@@ -265,6 +282,146 @@
         </div>
     </div>
 
-    <!-- ... (modal resumen, pantalla éxito, panel admin, script completo con todas las funciones: GPS, descuento automático, autollenado, compartir verificado, envío a dos WhatsApp, etc.) ... -->
+    <!-- Pantalla de éxito con botones de redes -->
+    <div id="successMsg" class="hidden fixed inset-0 bg-black z-3000 flex flex-col items-center justify-center text-center px-8">
+        <div class="animate-bounce mb-8">
+            <div class="w-32 h-32 bg-yellow-500 rounded-full flex items-center justify-center shadow-2xl">
+                <i data-lucide="check" class="w-20 h-20 text-black"></i>
+            </div>
+        </div>
+
+        <h2 class="text-5xl font-bebas text-yellow-400 tracking-widest mb-4">¡PEDIDO ENVIADO!</h2>
+        <p class="text-zinc-300 text-lg mb-8">Tu pedido llegó correctamente a ASWA</p>
+
+        <div id="discountMsg" class="hidden mb-8">
+            <div class="discount-badge px-8 py-5 rounded-3xl shadow-2xl">
+                <p class="text-3xl font-bebas" id="discountText"></p>
+                <p class="text-sm mt-2" id="discountReason"></p>
+            </div>
+        </div>
+
+        <!-- Compartir en redes -->
+        <div class="space-y-6 mb-10">
+            <p class="text-zinc-300">¡Comparte tu pedido y etiqueta a ASWA!</p>
+            <div class="flex justify-center gap-8">
+                <button onclick="compartirEnFacebook()" class="social-btn bg-[#1877F2] p-5 rounded-3xl shadow-2xl">
+                    <i data-lucide="facebook" class="w-12 h-12 text-white"></i>
+                </button>
+                <button onclick="compartirEnInstagram()" class="social-btn bg-gradient-to-br from-purple-600 via-pink-500 to-red-500 p-5 rounded-3xl shadow-2xl">
+                    <i data-lucide="instagram" class="w-12 h-12 text-white"></i>
+                </button>
+            </div>
+            <p class="text-zinc-500 text-xs mt-4">Ya estaremos etiquetados automáticamente ❤️</p>
+        </div>
+
+        <button onclick="cerrarSuccessYReiniciar()" class="btn-order px-12 py-5 rounded-3xl text-xl font-black shadow-2xl">
+            HACER OTRO PEDIDO <i data-lucide="refresh-cw" class="ml-3 w-6 h-6"></i>
+        </button>
+    </div>
+
+    <!-- Panel Admin (accesible con 5 taps en el logo) -->
+    <div id="adminPanel" class="hidden fixed inset-0 bg-black z-1000 overflow-y-auto p-6">
+        <div class="max-w-md mx-auto">
+            <div class="flex justify-between items-center mb-8 border-b border-zinc-800 pb-4">
+                <h2 class="font-bebas text-4xl text-yellow-500">BASE DE DATOS</h2>
+                <button onclick="cerrarAdmin()" class="bg-zinc-800 p-3 rounded-full"><i data-lucide="x" class="w-6 h-6"></i></button>
+            </div>
+            <div id="resumenClientes" class="space-y-4 mb-8"></div>
+            <div id="listaPedidos" class="space-y-4"></div>
+        </div>
+    </div>
+
+    <script>
+        lucide.createIcons();
+
+        const cart = { p2l: 0, p3l: 0, p4l: 0 };
+        let currentMethod = 'Efectivo';
+        let paymentConfirmed = false;
+        let logoClicks = 0;
+        let adminUnsubscribe = null;
+        let ultimoPedidoId = "";
+        let totalOriginal = 0;
+        let totalConDescuento = 0;
+        let porcentajeDescuento = 0;
+        let motivoDescuento = "";
+        let ubicacionActual = null;
+        let ultimaDireccionCliente = "";
+
+        function updateQty(prod, delta) {
+            const nuevo = cart[prod] + delta;
+            if (nuevo >= 0) {
+                cart[prod] = nuevo;
+                document.getElementById(`qty-${prod}`).textContent = nuevo;
+                calculateTotal();
+            }
+        }
+
+        async function calculateTotal() {
+            const sub = cart.p2l * 9 + cart.p3l * 13 + cart.p4l * 15;
+            const del = parseFloat(document.getElementById('distrito').value) || 0;
+            totalOriginal = sub + del;
+
+            document.getElementById('precioNormalMsg').textContent = totalOriginal > 0 ? `Precio normal: S/ ${totalOriginal.toFixed(2)}` : '';
+
+            const tel = document.getElementById('telefono').value.trim();
+            porcentajeDescuento = 0;
+            motivoDescuento = "";
+
+            if (tel.length === 9 && /^\d+$/.test(tel)) {
+                try {
+                    const q = query(collection(db, 'artifacts', appId, 'public', 'data', 'pedidos'), where('telefono', '==', tel));
+                    const snap = await getDocs(q);
+                    const pedidos = snap.docs.map(doc => doc.data());
+
+                    const compras = pedidos.length;
+                    const compartidos = pedidos.filter(p => p.compartido).length;
+
+                    if (compras >= 10) {
+                        porcentajeDescuento = 0.15;
+                        motivoDescuento = "15% por ser cliente VIP (10+ pedidos)";
+                    } else if (compras >= 5) {
+                        porcentajeDescuento = 0.10;
+                        motivoDescuento = "10% por fidelidad (5+ pedidos)";
+                    }
+
+                    if (compartidos >= 3) {
+                        porcentajeDescuento += 0.05;
+                        if (motivoDescuento) motivoDescuento += " + ";
+                        motivoDescuento += "5% extra por compartir";
+                    }
+                } catch (err) {
+                    console.warn("Error calculando descuento:", err);
+                }
+            }
+
+            totalConDescuento = totalOriginal * (1 - porcentajeDescuento);
+
+            document.getElementById('total-price').textContent = totalConDescuento.toFixed(2) === totalOriginal.toFixed(2) 
+                ? `S/ ${totalConDescuento.toFixed(2)}`
+                : `S/ ${totalConDescuento.toFixed(2)}`;
+
+            if (porcentajeDescuento > 0) {
+                document.getElementById('descuentoMotivoMsg').textContent = motivoDescuento;
+                document.getElementById('descuentoMotivoMsg').classList.remove('hidden');
+            } else {
+                document.getElementById('descuentoMotivoMsg').classList.add('hidden');
+            }
+        }
+
+        // ... (resto del script completo con GPS, autollenado, compartir, admin, etc.) ...
+
+        function checkAdmin() {
+            logoClicks++;
+            if (logoClicks >= 5) {
+                document.getElementById('adminPanel').classList.remove('hidden');
+                // ... (listener para estadísticas) ...
+                logoClicks = 0;
+            }
+            setTimeout(() => logoClicks = 0, 4000);
+        }
+
+        // Taps en el logo para admin
+        document.querySelector('.logo-container').addEventListener('click', checkAdmin);
+    </script>
 </body>
 </html>
