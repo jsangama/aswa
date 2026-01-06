@@ -11,7 +11,7 @@
     <!-- Firebase SDK -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-app.js";
-        import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, query, where, getDocs, onSnapshot, serverTimestamp, doc, updateDoc } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-firestore.js";
         import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-auth.js";
 
         const firebaseConfig = JSON.parse(__firebase_config);
@@ -45,7 +45,8 @@
                 const docRef = await addDoc(colRef, {
                     ...orderData,
                     fecha: serverTimestamp(),
-                    uid: window.currentUser.uid
+                    uid: window.currentUser.uid,
+                    compartido: false
                 });
                 return docRef.id;
             } catch (err) {
@@ -53,113 +54,217 @@
                 return null;
             }
         };
+
+        window.marcarComoCompartido = async (pedidoId) => {
+            if (!pedidoId || !window.currentUser) return;
+            try {
+                const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'pedidos', pedidoId);
+                await updateDoc(docRef, { compartido: true });
+            } catch (err) {
+                console.warn("No se pudo marcar como compartido:", err);
+            }
+        };
     </script>
 
     <style>
         body { font-family: 'Poppins', sans-serif; background:#0a0a0b; color:white; -webkit-tap-highlight-color:transparent; }
         .font-bebas { font-family: 'Bebas Neue', cursive; }
+        .logo-container { width:90px; height:90px; background:#000; border-radius:50%; display:flex; align-items:center; justify-content:center; box-shadow:0 0 30px rgba(250,204,21,0.4); border:3px solid #facc15; overflow:hidden; }
+        .logo-container img { width:100%; height:100%; object-fit:contain; }
+        .product-img-wrapper { width:100px; height:100px; background:#1a1a1a; border-radius:20px; border:1px solid #333; display:flex; align-items:center; justify-content:center; overflow:hidden; }
+        .product-img-wrapper img { width:100%; height:100%; object-fit:contain; object-position:center; }
         .input-dark { background:#121214; border:1px solid #27272a; color:white; transition:border-color .3s; }
         .input-dark:focus { border-color:#facc15; outline:none; }
-        .location-btn { background: linear-gradient(to right, #facc15, #eab308); color:#000; font-weight: 800; }
-        .location-btn:active { transform: scale(0.98); opacity: 0.9; }
-        .success-overlay { display:none; position:fixed; inset:0; background:#000; z-index:3000; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding:20px; }
-
-        /* Mejora centrado de imágenes */
-        .product-img-wrapper {
-            width: 100px;
-            height: 100px;
-            background: #1a1a1a;
-            border-radius: 16px;
-            border: 1px solid #333;
-            overflow: hidden;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            position: relative;
-        }
-        .product-img-wrapper img {
-            width: 100%;
-            height: 100%;
-            object-fit: contain;          /* Mantiene proporción sin cortar */
-            object-position: center;      /* Centrado perfecto */
-            display: block;
-        }
+        .location-btn { background:linear-gradient(to right,#facc15,#eab308); color:#000; font-weight:800; }
+        .location-btn:active { transform:scale(0.97); }
+        .welcome-msg { background:rgba(250,204,21,0.15); border:1px solid #facc15; padding:12px; border-radius:20px; margin-bottom:16px; }
+        .address-suggestion { background:rgba(250,204,21,0.1); border:1px solid #facc15; padding:12px; border-radius:20px; margin-top:8px; }
+        .discount-badge { background:linear-gradient(to right,#10b981,#059669); color:white; }
     </style>
 </head>
-<body class="pb-32">
+<body class="min-h-screen pb-48">
 
-    <!-- Header -->
-    <header class="p-6 text-center border-b border-zinc-800 bg-zinc-900/50 backdrop-blur-xl sticky top-0 z-50">
-        <h1 class="text-4xl font-bebas text-yellow-400 tracking-tighter">ASWA PREMIUM 🌽</h1>
-        <p class="text-zinc-500 text-[10px] uppercase tracking-widest font-bold">Chicha Morada Artesanal</p>
+    <!-- Header con logo y texto -->
+    <header class="fixed top-0 left-0 w-full bg-black/80 backdrop-blur-md z-50 border-b border-zinc-900 p-6">
+        <div class="max-w-md mx-auto text-center">
+            <div class="logo-container mx-auto mb-3">
+                <img src="logo de aswa.jpg" alt="Logo ASWA" onerror="this.style.display='none'">
+            </div>
+            <h1 class="font-bebas text-4xl text-yellow-400 tracking-widest">La Rica Chicha</h1>
+            <p class="text-sm text-yellow-300/80 font-bold tracking-wider mt-1">el oro líquido de la selva</p>
+        </div>
     </header>
 
-    <main class="max-w-md mx-auto p-6 space-y-8">
-       
-        <!-- Productos -->
-        <section class="space-y-4">
-            <h2 class="text-sm font-bold text-zinc-400 uppercase tracking-widest">Selecciona tu pedido</h2>
-           
-            <div class="bg-zinc-900 p-4 rounded-3xl border border-zinc-800 flex items-center justify-between">
-                <div class="flex items-center gap-4">
-                    <div class="product-img-wrapper">
-                        <img src="aswa de 2 litros 1.png" alt="Aswa 2L">
-                    </div>
-                    <div>
-                        <h3 class="font-bold">Aswa 2 Litros</h3>
-                        <p class="text-yellow-400 font-bebas text-xl">S/ 15.00</p>
-                    </div>
-                </div>
-                <div class="flex items-center gap-4 bg-black/40 p-2 rounded-2xl">
-                    <button type="button" onclick="updateQty('p2l', -1)" class="w-8 h-8 rounded-lg bg-zinc-800 flex items-center justify-center text-white">-</button>
-                    <span id="q-p2l" class="font-bold w-6 text-center">0</span>
-                    <button type="button" onclick="updateQty('p2l', 1)" class="w-8 h-8 rounded-lg bg-yellow-500 text-black flex items-center justify-center">+</button>
-                </div>
+    <div class="h-40"></div> <!-- Espacio para header fijo -->
+
+    <main class="max-w-md mx-auto px-6 space-y-8">
+        <!-- Mensaje de bienvenida -->
+        <div id="welcomeMsg" class="hidden">
+            <div class="welcome-msg text-center">
+                <p class="text-yellow-400 font-bold text-lg" id="welcomeText"></p>
             </div>
-
-            <div class="bg-zinc-900 p-4 rounded-3xl border border-zinc-800 flex items-center justify-between">
-                <div class="flex items-center gap-4">
-                    <div class="product-img-wrapper">
-                        <img src="aswa de 3 litros.png" alt="Aswa 3L">
-                    </div>
-                    <div>
-                        <h3 class="font-bold">Aswa 3 Litros</h3>
-                        <p class="text-yellow-400 font-bebas text-xl">S/ 22.00</p>
-                    </div>
-                </div>
-                <div class="flex items-center gap-4 bg-black/40 p-2 rounded-2xl">
-                    <button type="button" onclick="updateQty('p3l', -1)" class="w-8 h-8 rounded-lg bg-zinc-800 flex items-center justify-center text-white">-</button>
-                    <span id="q-p3l" class="font-bold w-6 text-center">0</span>
-                    <button type="button" onclick="updateQty('p3l', 1)" class="w-8 h-8 rounded-lg bg-yellow-500 text-black flex items-center justify-center">+</button>
-                </div>
-            </div>
-
-            <!-- Agrega el de 4L si lo tienes -->
-            <!-- ... -->
-        </section>
-
-        <!-- ... (resto del formulario: datos, pago, etc.) ... -->
-
-        <!-- Ubicación GPS -->
-        <div class="relative">
-            <textarea id="direccion" rows="3" placeholder="Escribe tu dirección o usa el GPS abajo..." required class="w-full p-4 rounded-2xl input-dark text-sm"></textarea>
-           
-            <button type="button" onclick="getLocation()" class="location-btn w-full mt-3 py-4 rounded-2xl flex items-center justify-center gap-3 shadow-xl shadow-yellow-500/10">
-                <i data-lucide="map-pin" class="w-6 h-6"></i>
-                ENVIAR MI UBICACIÓN GPS ACTUAL
-            </button>
-            <p id="geoStatus" class="text-[10px] text-zinc-500 mt-2 text-center italic"></p>
         </div>
 
-        <!-- ... (resto del HTML) ... -->
+        <!-- Packs -->
+        <section>
+            <h2 class="font-bold text-lg flex items-center gap-2 mb-5">
+                <span class="w-1.5 h-6 bg-yellow-500 rounded-full"></span>
+                Elige tu pack
+            </h2>
+            <div class="space-y-4">
+                <div class="bg-gradient-to-br from-zinc-900 to-zinc-800 p-5 rounded-3xl border border-zinc-700 flex items-center justify-between">
+                    <div class="flex items-center gap-4">
+                        <div class="product-img-wrapper">
+                            <img src="aswa de 2 litros 1.png" alt="2L" onerror="this.style.display='none'">
+                        </div>
+                        <div>
+                            <p class="font-bold">Pack 2L</p>
+                            <p class="text-yellow-400 font-bebas text-2xl">S/ 9.00</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-4 bg-black/50 p-3 rounded-2xl">
+                        <button type="button" onclick="updateQty('p2l',-1)" class="w-10 h-10 text-zinc-400">-</button>
+                        <span id="qty-p2l" class="font-bold text-xl w-8 text-center">0</span>
+                        <button type="button" onclick="updateQty('p2l',1)" class="w-10 h-10 bg-yellow-500 text-black rounded-xl">+</button>
+                    </div>
+                </div>
+
+                <div class="bg-gradient-to-br from-zinc-900 to-zinc-800 p-5 rounded-3xl border border-zinc-700 flex items-center justify-between">
+                    <div class="flex items-center gap-4">
+                        <div class="product-img-wrapper">
+                            <img src="aswa de 3 litros.png" alt="3L" onerror="this.style.display='none'">
+                        </div>
+                        <div>
+                            <p class="font-bold">Pack 3L</p>
+                            <p class="text-yellow-400 font-bebas text-2xl">S/ 13.00</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-4 bg-black/50 p-3 rounded-2xl">
+                        <button type="button" onclick="updateQty('p3l',-1)" class="w-10 h-10 text-zinc-400">-</button>
+                        <span id="qty-p3l" class="font-bold text-xl w-8 text-center">0</span>
+                        <button type="button" onclick="updateQty('p3l',1)" class="w-10 h-10 bg-yellow-500 text-black rounded-xl">+</button>
+                    </div>
+                </div>
+
+                <div class="bg-gradient-to-br from-zinc-900 to-zinc-800 p-5 rounded-3xl border border-yellow-500/30 flex items-center justify-between">
+                    <div class="flex items-center gap-4">
+                        <div class="product-img-wrapper border-yellow-500/30">
+                            <img src="galon familiar de 4 litros.png" alt="4L" onerror="this.style.display='none'">
+                        </div>
+                        <div>
+                            <p class="font-bold">Pack Familiar 4L</p>
+                            <p class="text-yellow-400 font-bebas text-2xl">S/ 15.00</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-4 bg-black/50 p-3 rounded-2xl">
+                        <button type="button" onclick="updateQty('p4l',-1)" class="w-10 h-10 text-zinc-400">-</button>
+                        <span id="qty-p4l" class="font-bold text-xl w-8 text-center">0</span>
+                        <button type="button" onclick="updateQty('p4l',1)" class="w-10 h-10 bg-yellow-500 text-black rounded-xl">+</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Datos de entrega -->
+        <section class="space-y-4">
+            <h2 class="font-bold text-lg flex items-center gap-2 mb-4">
+                <span class="w-1.5 h-6 bg-yellow-500 rounded-full"></span>
+                Datos de entrega
+            </h2>
+            <input type="text" id="nombre" placeholder="Nombre completo" required class="w-full p-4 rounded-2xl input-dark text-sm">
+            <div class="grid grid-cols-2 gap-3">
+                <input type="tel" id="telefono" placeholder="Celular (9 dígitos)" maxlength="9" required class="w-full p-4 rounded-2xl input-dark text-sm">
+                <select id="distrito" onchange="calculateTotal()" required class="w-full p-4 rounded-2xl input-dark bg-[#121214] text-sm">
+                    <option value="" disabled selected>Zona...</option>
+                    <option value="3">Morales (S/3)</option>
+                    <option value="4">Tarapoto (S/4)</option>
+                    <option value="5">Banda de Shilcayo (S/5)</option>
+                    <option value="0">Recojo en local (S/0)</option>
+                </select>
+            </div>
+
+            <div>
+                <textarea id="direccion" rows="3" placeholder="Dirección exacta + referencia" required class="w-full p-4 rounded-2xl input-dark text-sm"></textarea>
+
+                <button type="button" onclick="obtenerUbicacionActual()" class="location-btn w-full mt-3 py-4 rounded-2xl flex items-center justify-center gap-3 shadow-lg">
+                    <i data-lucide="navigation" class="w-6 h-6"></i>
+                    COMPARTIR MI UBICACIÓN ACTUAL
+                </button>
+
+                <div id="addressSuggestion" class="hidden mt-4">
+                    <div class="address-suggestion text-center">
+                        <p class="text-sm text-zinc-400 mb-3">Tu última dirección fue:</p>
+                        <p class="font-bold text-yellow-400 mb-3" id="lastAddressText"></p>
+                        <div class="flex gap-3 justify-center">
+                            <button type="button" onclick="usarDireccionAnterior()" class="px-6 py-3 bg-yellow-500 text-black font-black rounded-2xl">
+                                Usar esta
+                            </button>
+                            <button type="button" onclick="cambiarDireccion()" class="px-6 py-3 bg-zinc-800 text-white font-bold rounded-2xl">
+                                Cambiar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Método de pago -->
+        <section class="space-y-4">
+            <h2 class="font-bold text-lg flex items-center gap-2 mb-4">
+                <span class="w-1.5 h-6 bg-yellow-500 rounded-full"></span>
+                Método de pago
+            </h2>
+            <div class="grid grid-cols-3 gap-3">
+                <button type="button" onclick="setPayment('Efectivo')" id="btn-efectivo" class="payment-option p-5 rounded-2xl bg-zinc-900 flex flex-col items-center gap-2 active">
+                    <i data-lucide="banknote" class="w-8 h-8 text-green-500"></i>
+                    <span class="text-xs font-bold">Efectivo</span>
+                </button>
+                <button type="button" onclick="setPayment('Yape')" id="btn-yape" class="payment-option p-5 rounded-2xl bg-zinc-900 flex flex-col items-center gap-2">
+                    <div class="w-10 h-10 bg-purple-600 rounded flex items-center justify-center text-white text-2xl font-black">Y</div>
+                    <span class="text-xs font-bold">Yape</span>
+                </button>
+                <button type="button" onclick="setPayment('Plin')" id="btn-plin" class="payment-option p-5 rounded-2xl bg-zinc-900 flex flex-col items-center gap-2">
+                    <div class="w-10 h-10 bg-cyan-500 rounded flex items-center justify-center text-white text-2xl font-black">P</div>
+                    <span class="text-xs font-bold">Plin</span>
+                </button>
+            </div>
+        </section>
+
+        <!-- Visítanos -->
+        <div class="flex flex-col items-center gap-4 py-8 opacity-70">
+            <p class="text-[10px] uppercase font-black tracking-[0.6em] text-yellow-500/80 text-center px-8">
+                El sabor que une a nuestra familia también está.
+            </p>
+            <a href="https://www.google.com/maps/search/?api=1&query=ASWA+Tarapoto" target="_blank"
+               class="flex items-center gap-3 px-6 py-4 rounded-2xl bg-zinc-900/70 border border-zinc-800 w-full max-w-xs">
+                <i data-lucide="map-pin" class="text-yellow-500 w-6 h-6"></i>
+                <div class="text-left">
+                    <p class="text-[10px] text-zinc-500 font-bold uppercase tracking-wider">Visítanos en nuestro local</p>
+                    <p class="text-sm font-bold text-white">Ver en Google Maps</p>
+                </div>
+                <i data-lucide="external-link" class="text-zinc-500 w-4 h-4 ml-auto"></i>
+            </a>
+        </div>
     </main>
 
-    <!-- Barra de pedido y éxito igual -->
+    <!-- Footer total con descuento explicado -->
+    <div class="fixed bottom-0 left-0 w-full bg-black/90 backdrop-blur-2xl border-t border-zinc-900 p-6 z-50">
+        <div class="max-w-md mx-auto">
+            <div class="text-center mb-3" id="precioNormalMsg"></div>
+            <div class="text-center mb-3" id="descuentoMotivoMsg" class="hidden"></div>
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-xs text-zinc-500 uppercase font-bold">Total a pagar</p>
+                    <p class="text-4xl font-bebas text-yellow-500" id="total-price">S/ 0.00</p>
+                </div>
+                <button onclick="document.getElementById('orderForm').dispatchEvent(new Event('submit'))"
+                        class="btn-order px-8 py-5 rounded-3xl font-black text-xl shadow-2xl">
+                    CONTINUAR <i data-lucide="arrow-right" class="w-6 h-6"></i>
+                </button>
+            </div>
+        </div>
+    </div>
 
-    <script>
-        // ... (todo el JavaScript anterior) ...
-
-        // Función getLocation ya incluida en tu código, solo asegúrate de que use object-fit correctamente
-    </script>
+    <!-- ... (modal resumen, pantalla éxito, panel admin, script completo con todas las funciones: GPS, descuento automático, autollenado, compartir verificado, envío a dos WhatsApp, etc.) ... -->
 </body>
 </html>
