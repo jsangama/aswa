@@ -5,20 +5,19 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>ASWA - La Rica Chicha (Oficial)</title>
     
-    <!-- Librerías -->
+    <!-- Frameworks -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;800&family=Bebas+Neue&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
 
-    <!-- Firebase Integración -->
+    <!-- Firebase -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-app.js";
         import { getFirestore, collection, addDoc, query, where, getDocs, serverTimestamp, doc, updateDoc } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-firestore.js";
         import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-auth.js";
 
-        // CONFIGURACIÓN DE FIREBASE (Asegúrate de que __firebase_config esté definido en tu entorno)
-        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {
-            apiKey: "AIzaSy...", // Reemplazar con tu clave real si no usas entorno automático
+        const firebaseConfig = {
+            apiKey: "AIzaSy...", 
             authDomain: "aswa-laricachicha.firebaseapp.com",
             projectId: "aswa-laricachicha",
             storageBucket: "aswa-laricachicha.appspot.com",
@@ -43,16 +42,15 @@
         window.saveOrder = async (data) => {
             try {
                 const ref = await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'pedidos'), {
-                    ...data, fecha: serverTimestamp(), uid: window.currentUser ? window.currentUser.uid : 'anon', compartido: false
+                    ...data, fecha: serverTimestamp(), compartido: false
                 });
                 return ref.id;
-            } catch (e) { console.error(e); return null; }
+            } catch (e) { return "error-db"; } // Fallback para no bloquear la venta
         };
 
         window.marcarCompartido = async (id) => {
-            if(!id) return;
-            try { await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'pedidos', id), { compartido: true }); } 
-            catch (e) { console.warn(e); }
+            if(!id || id === "error-db") return;
+            try { await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'pedidos', id), { compartido: true }); } catch (e) {}
         };
     </script>
 
@@ -61,15 +59,15 @@
         .font-bebas { font-family: 'Bebas Neue', cursive; }
         .logo-container { width:90px; height:90px; background:#000; border-radius:50%; display:flex; align-items:center; justify-content:center; box-shadow:0 0 30px rgba(250,204,21,0.4); border:3px solid #facc15; overflow:hidden; cursor:pointer; }
         .app-card { background: #121214; border: 1px solid #27272a; border-radius: 2rem; }
-        .input-dark { background:#121214; border:1px solid #27272a; color:white; border-radius: 1.2rem; width: 100%; padding: 1rem; transition: 0.3s; }
+        .input-dark { background:#121214; border:1px solid #27272a; color:white; border-radius: 1.2rem; padding: 1rem; width: 100%; transition: 0.3s; }
         .input-dark:focus { border-color: #facc15; outline:none; }
-        .payment-option { border:2px solid #27272a; transition: 0.2s; cursor:pointer; border-radius: 1.5rem; }
-        .payment-option.active { border-color:#facc15 !important; background:rgba(250,204,21,0.1) !important; transform: scale(1.05); }
-        .btn-order { background: #facc15; color: black; font-weight: 900; border-radius: 1.5rem; transition: 0.2s; }
-        .btn-order:active { transform: scale(0.96); }
+        .payment-option { border:2px solid #27272a; border-radius: 1.5rem; transition: 0.2s; cursor:pointer; }
+        .payment-option.active { border-color:#facc15; background:rgba(250,204,21,0.1); }
+        .btn-order { background: #facc15; color: black; font-weight: 900; border-radius: 1.5rem; width: 100%; transition: 0.2s; }
+        .btn-order:disabled { opacity: 0.3; filter: grayscale(1); cursor: not-allowed; }
         .modal { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.95); z-index:2000; flex-direction:column; align-items:center; justify-content:center; padding:20px; backdrop-filter:blur(10px); }
-        .toast { position:fixed; bottom:120px; left:50%; transform:translateX(-50%); background:#facc15; color:black; padding:10px 25px; border-radius:30px; font-weight:bold; font-size:12px; display:none; z-index:4000; }
         .product-img { width: 70px; height: 70px; object-fit: contain; }
+        .toast { position:fixed; bottom:120px; left:50%; transform:translateX(-50%); background:#facc15; color:black; padding:10px 25px; border-radius:30px; font-weight:bold; display:none; z-index:4000; font-size: 12px; }
     </style>
 </head>
 <body class="min-h-screen pb-44">
@@ -79,8 +77,8 @@
     <!-- Header -->
     <header class="fixed top-0 left-0 w-full bg-black/80 backdrop-blur-md z-50 border-b border-zinc-900 p-4">
         <div class="max-w-md mx-auto flex items-center gap-4">
-            <div class="logo-container" onclick="handleLogoClick()">
-                <img src="logo de aswa.jpg" alt="Logo ASWA" onerror="this.src='https://via.placeholder.com/100?text=ASWA'">
+            <div class="logo-container" onclick="adminAccess()">
+                <img src="logo de aswa.jpg" alt="Logo ASWA">
             </div>
             <div>
                 <h1 class="font-bebas text-4xl text-yellow-400 tracking-widest leading-none">La Rica Chicha</h1>
@@ -93,50 +91,50 @@
 
     <main class="max-w-md mx-auto px-6 space-y-8">
         
-        <!-- Mensaje de Bienvenida -->
-        <div id="welcomeArea" class="hidden animate-fade-in">
-            <div class="bg-yellow-500/10 border border-yellow-500/50 p-4 rounded-[1.5rem] text-center">
-                <p id="welcomeText" class="text-yellow-400 font-bold text-sm"></p>
+        <!-- Alerta de Bienvenida Fidelizada -->
+        <div id="welcomeMsg" class="hidden">
+            <div class="bg-yellow-500/10 border border-yellow-500/50 p-4 rounded-3xl text-center text-yellow-400 font-bold text-sm">
+                <span id="welcomeTxt"></span>
             </div>
         </div>
 
-        <!-- Packs -->
+        <!-- Selección de Productos -->
         <section class="space-y-4">
             <h2 class="font-bold text-lg flex items-center gap-2">
-                <span class="w-1.5 h-6 bg-yellow-500 rounded-full"></span> Selecciona tu pedido
+                <span class="w-1.5 h-6 bg-yellow-500 rounded-full"></span> Elige tus packs
             </h2>
             <div class="space-y-3">
                 <div class="app-card p-4 flex items-center justify-between">
-                    <div class="flex items-center gap-4">
+                    <div class="flex items-center gap-3">
                         <img src="aswa de 2 litros 1.png" class="product-img" alt="2L">
-                        <div><p class="font-bold text-sm">Pack 2 Litros</p><p class="text-yellow-400 font-bebas text-2xl">S/ 9.00</p></div>
+                        <div><p class="font-bold text-sm">Pack 2L</p><p class="text-yellow-400 font-bebas text-2xl">S/ 9.00</p></div>
                     </div>
                     <div class="flex items-center gap-4 bg-black/50 p-2 rounded-2xl">
-                        <button onclick="updateQty('p2l', -1)" class="w-10 h-10 text-zinc-500 text-xl font-bold">-</button>
+                        <button onclick="changeQty('p2l', -1)" class="w-8 h-8 text-zinc-500 font-bold">-</button>
                         <span id="qty-p2l" class="font-bold text-xl w-4 text-center">0</span>
-                        <button onclick="updateQty('p2l', 1)" class="w-10 h-10 bg-yellow-500 text-black rounded-xl font-bold">+</button>
+                        <button onclick="changeQty('p2l', 1)" class="w-8 h-8 bg-yellow-500 text-black rounded-xl font-bold">+</button>
                     </div>
                 </div>
                 <div class="app-card p-4 flex items-center justify-between">
-                    <div class="flex items-center gap-4">
+                    <div class="flex items-center gap-3">
                         <img src="aswa de 3 litros.png" class="product-img" alt="3L">
-                        <div><p class="font-bold text-sm">Pack 3 Litros</p><p class="text-yellow-400 font-bebas text-2xl">S/ 13.00</p></div>
+                        <div><p class="font-bold text-sm">Pack 3L</p><p class="text-yellow-400 font-bebas text-2xl">S/ 13.00</p></div>
                     </div>
                     <div class="flex items-center gap-4 bg-black/50 p-2 rounded-2xl">
-                        <button onclick="updateQty('p3l', -1)" class="w-10 h-10 text-zinc-500 text-xl font-bold">-</button>
+                        <button onclick="changeQty('p3l', -1)" class="w-8 h-8 text-zinc-500 font-bold">-</button>
                         <span id="qty-p3l" class="font-bold text-xl w-4 text-center">0</span>
-                        <button onclick="updateQty('p3l', 1)" class="w-10 h-10 bg-yellow-500 text-black rounded-xl font-bold">+</button>
+                        <button onclick="changeQty('p3l', 1)" class="w-8 h-8 bg-yellow-500 text-black rounded-xl font-bold">+</button>
                     </div>
                 </div>
                 <div class="app-card p-4 flex items-center justify-between border-yellow-500/20">
-                    <div class="flex items-center gap-4">
+                    <div class="flex items-center gap-3">
                         <img src="galon familiar de 4 litros.png" class="product-img" alt="4L">
-                        <div><p class="font-bold text-sm">Galón 4 Litros</p><p class="text-yellow-400 font-bebas text-2xl">S/ 15.00</p></div>
+                        <div><p class="font-bold text-sm">Familiar 4L</p><p class="text-yellow-400 font-bebas text-2xl">S/ 15.00</p></div>
                     </div>
                     <div class="flex items-center gap-4 bg-black/50 p-2 rounded-2xl">
-                        <button onclick="updateQty('p4l', -1)" class="w-10 h-10 text-zinc-500 text-xl font-bold">-</button>
+                        <button onclick="changeQty('p4l', -1)" class="w-8 h-8 text-zinc-500 font-bold">-</button>
                         <span id="qty-p4l" class="font-bold text-xl w-4 text-center">0</span>
-                        <button onclick="updateQty('p4l', 1)" class="w-10 h-10 bg-yellow-500 text-black rounded-xl font-bold">+</button>
+                        <button onclick="changeQty('p4l', 1)" class="w-8 h-8 bg-yellow-500 text-black rounded-xl font-bold">+</button>
                     </div>
                 </div>
             </div>
@@ -145,289 +143,245 @@
         <!-- Datos -->
         <section class="space-y-4">
             <h2 class="font-bold text-lg flex items-center gap-2">
-                <span class="w-1.5 h-6 bg-yellow-500 rounded-full"></span> Datos de entrega
+                <span class="w-1.5 h-6 bg-yellow-500 rounded-full"></span> Entrega
             </h2>
             <div class="space-y-3">
-                <input type="tel" id="telefono" placeholder="Celular (9 dígitos)" maxlength="9" class="input-dark font-bold text-yellow-400">
-                <input type="text" id="nombre" placeholder="Nombre completo" class="input-dark">
-                <select id="distrito" onchange="calculateTotal()" class="input-dark">
-                    <option value="" disabled selected>Zona de entrega...</option>
+                <input type="tel" id="tel" placeholder="Celular" maxlength="9" class="input-dark font-bold text-yellow-400">
+                <input type="text" id="nom" placeholder="Tu nombre" class="input-dark">
+                <select id="zon" onchange="calculate()" class="input-dark">
+                    <option value="" disabled selected>Zona...</option>
                     <option value="3">Morales (S/3)</option>
                     <option value="4">Tarapoto (S/4)</option>
                     <option value="5">Banda de Shilcayo (S/5)</option>
                     <option value="0">Recojo en local (S/0)</option>
                 </select>
-                <textarea id="direccion" rows="2" placeholder="Dirección exacta + referencia" class="input-dark"></textarea>
-                <button onclick="obtenerGPS()" id="gpsBtn" class="w-full py-4 rounded-2xl bg-zinc-800 text-yellow-500 font-black text-xs flex items-center justify-center gap-2">
-                    <i data-lucide="map-pin" class="w-4 h-4"></i> COMPARTIR MI UBICACIÓN GPS
+                <textarea id="dir" rows="2" placeholder="Dirección y referencia" class="input-dark"></textarea>
+                <button onclick="getGPS()" id="gps" class="w-full py-4 rounded-2xl bg-zinc-800 text-yellow-500 font-bold text-xs flex items-center justify-center gap-2">
+                    <i data-lucide="map-pin" class="w-4 h-4"></i> COMPARTIR MI GPS
                 </button>
             </div>
         </section>
 
-        <!-- Pago -->
+        <!-- Pagos -->
         <section class="space-y-4">
             <h2 class="font-bold text-lg flex items-center gap-2">
-                <span class="w-1.5 h-6 bg-yellow-500 rounded-full"></span> Método de pago
+                <span class="w-1.5 h-6 bg-yellow-500 rounded-full"></span> Pago
             </h2>
             <div class="grid grid-cols-3 gap-3">
-                <div onclick="setPayment('Efectivo')" id="pay-Efectivo" class="payment-option active p-4 flex flex-col items-center gap-2">
+                <div onclick="selectPay('Efectivo')" id="m-Efectivo" class="payment-option active p-4 flex flex-col items-center gap-2">
                     <i data-lucide="banknote" class="text-green-500"></i><span class="text-[10px] font-bold">Efectivo</span>
                 </div>
-                <div onclick="setPayment('Yape')" id="pay-Yape" class="payment-option p-4 flex flex-col items-center gap-2">
+                <div onclick="selectPay('Yape')" id="m-Yape" class="payment-option p-4 flex flex-col items-center gap-2">
                     <div class="w-6 h-6 bg-purple-600 rounded flex items-center justify-center text-[10px] font-black italic">Y</div><span class="text-[10px] font-bold">Yape</span>
                 </div>
-                <div onclick="setPayment('Plin')" id="pay-Plin" class="payment-option p-4 flex flex-col items-center gap-2">
+                <div onclick="selectPay('Plin')" id="m-Plin" class="payment-option p-4 flex flex-col items-center gap-2">
                     <div class="w-6 h-6 bg-cyan-500 rounded flex items-center justify-center text-[10px] font-black italic">P</div><span class="text-[10px] font-bold">Plin</span>
                 </div>
             </div>
         </section>
 
-        <!-- Local -->
-        <div class="text-center py-6 opacity-60">
-            <p class="text-[10px] uppercase font-black tracking-[0.5em] mb-4">El sabor que une a nuestra familia</p>
-            <a href="https://maps.google.com/?q=ASWA+Tarapoto" target="_blank" class="inline-flex items-center gap-2 text-xs font-bold text-yellow-500 border-b border-yellow-500/30 pb-1">
-                <i data-lucide="map" class="w-4 h-4"></i> VISÍTANOS EN NUESTRO LOCAL
-            </a>
+        <div class="text-center opacity-40 py-6 text-[10px] font-black uppercase tracking-[0.4em]">
+            <p>El sabor que une a nuestra familia también está en Google Maps</p>
         </div>
     </main>
 
     <!-- Footer -->
-    <footer class="fixed bottom-0 left-0 w-full bg-black/90 backdrop-blur-2xl border-t border-zinc-800 p-6 z-[100]">
+    <footer class="fixed bottom-0 left-0 w-full bg-black/90 backdrop-blur-xl border-t border-zinc-800 p-6 z-[100]">
         <div class="max-w-md mx-auto flex items-center justify-between">
             <div>
-                <p id="labelSub" class="text-[10px] text-zinc-500 line-through hidden"></p>
-                <p class="text-[10px] text-zinc-400 font-bold uppercase">Total a pagar</p>
-                <p id="totalPrice" class="text-4xl font-bebas text-yellow-500 tracking-wider">S/ 0.00</p>
+                <p id="subt" class="text-[10px] text-zinc-500 line-through hidden"></p>
+                <p class="text-[10px] text-zinc-400 font-bold uppercase">Total</p>
+                <p id="total" class="text-4xl font-bebas text-yellow-500 tracking-wider">S/ 0.00</p>
             </div>
-            <button onclick="abrirResumen()" class="btn-order px-10 py-5 text-lg flex items-center gap-2 shadow-xl shadow-yellow-500/20">
-                CONTINUAR <i data-lucide="chevron-right"></i>
+            <button onclick="showSummary()" class="btn-order px-10 py-5 text-lg flex items-center gap-2 shadow-xl shadow-yellow-500/10">
+                CONTINUAR <i data-lucide="arrow-right"></i>
             </button>
         </div>
     </footer>
 
-    <!-- Resumen y Pago -->
-    <div id="modalResumen" class="modal">
-        <div class="bg-zinc-900 w-full max-w-sm rounded-[2.5rem] p-8 border border-zinc-800 shadow-2xl relative max-h-[90vh] overflow-y-auto">
-            <h3 class="font-bebas text-3xl text-yellow-500 text-center mb-6">RESUMEN DE PEDIDO</h3>
+    <!-- Modal Resumen -->
+    <div id="modalSummary" class="modal">
+        <div class="bg-zinc-900 w-full max-w-sm rounded-[2.5rem] p-8 border border-zinc-800 shadow-2xl overflow-y-auto max-h-[90vh]">
+            <h3 class="font-bebas text-3xl text-yellow-500 text-center mb-6">RESUMEN</h3>
+            <div id="summaryItems" class="space-y-2 text-sm text-zinc-400 mb-6 border-b border-zinc-800 pb-4"></div>
             
-            <div id="itemsLista" class="space-y-2 text-sm text-zinc-400 mb-6 border-b border-zinc-800 pb-4"></div>
-            
-            <div id="zonaDigital" class="hidden space-y-5 text-center">
+            <div id="digitalArea" class="hidden space-y-5 text-center">
                 <div class="bg-black/40 p-4 rounded-2xl border border-zinc-800">
                     <p class="text-[10px] text-zinc-500 uppercase font-bold mb-2">Pagar a: Telma Pezo Meléndez</p>
-                    <button onclick="copiarNum()" class="text-xl font-black text-yellow-500 flex items-center justify-center gap-2 mx-auto">
+                    <button onclick="copyNum()" class="text-xl font-black text-yellow-500 flex items-center justify-center gap-2 mx-auto">
                         947 999 736 <i data-lucide="copy" class="w-4 h-4"></i>
                     </button>
                 </div>
-                <div class="bg-white p-2 rounded-3xl inline-block shadow-2xl">
-                    <img src="yape del negocio.jpg" class="w-44 h-44 rounded-2xl" alt="QR Yape">
-                </div>
-                <button id="btnConfirmarDigital" onclick="pagoRealizado()" class="w-full py-4 rounded-2xl bg-zinc-800 text-xs font-black border border-yellow-500/20 text-yellow-500">¡YA REALICÉ EL PAGO!</button>
+                <img src="yape del negocio.jpg" class="w-44 h-44 mx-auto rounded-3xl border-4 border-white">
+                <button onclick="confirmDigi()" class="w-full py-4 rounded-2xl bg-zinc-800 text-yellow-500 text-xs font-black border border-yellow-500/30">¡YA REALICÉ EL PAGO!</button>
             </div>
 
-            <button id="btnFinal" onclick="finalizarTodo()" class="w-full mt-6 py-5 btn-order text-xl shadow-2xl opacity-40 pointer-events-none flex items-center justify-center gap-2">
+            <button id="finalBtn" onclick="sendOrder()" disabled class="btn-order mt-6 py-5 text-xl flex items-center justify-center gap-2">
                 ENVIAR PEDIDO <i data-lucide="send"></i>
             </button>
             
-            <button onclick="cerrarModal()" class="w-full mt-6 text-zinc-600 text-[10px] font-bold uppercase tracking-widest">Volver y modificar</button>
+            <button onclick="closeModal()" class="w-full mt-6 text-zinc-600 text-[10px] font-bold uppercase tracking-widest">Cerrar</button>
         </div>
     </div>
 
     <!-- Éxito -->
-    <div id="successScreen" class="hidden fixed inset-0 bg-black z-[3000] flex flex-col items-center justify-center p-8 text-center">
-        <div class="w-24 h-24 bg-yellow-500 rounded-full flex items-center justify-center mb-8 animate-bounce shadow-[0_0_50px_rgba(250,204,21,0.5)]">
-            <i data-lucide="check" class="text-black w-14 h-14"></i>
+    <div id="success" class="hidden fixed inset-0 bg-black z-[3000] flex flex-col items-center justify-center p-8 text-center">
+        <div class="w-20 h-20 bg-yellow-500 rounded-full flex items-center justify-center mb-6 animate-bounce">
+            <i data-lucide="check" class="text-black w-10 h-10"></i>
         </div>
-        <h2 class="font-bebas text-5xl text-yellow-500 mb-2">¡PEDIDO ENVIADO!</h2>
-        <p class="text-zinc-400 text-sm mb-10">Tu pedido está siendo procesado. <br> Te contactaremos por WhatsApp.</p>
-        
-        <div class="bg-zinc-900 p-8 rounded-[2.5rem] w-full max-w-xs border border-zinc-800">
-            <p class="text-xs font-black text-yellow-500 uppercase mb-4 tracking-widest">¿Te gustó el servicio?</p>
-            <p class="text-[10px] text-zinc-500 mb-6 uppercase">Comparte en redes y gana 5% extra en tu siguiente compra</p>
-            <div class="flex justify-center gap-6">
-                <button onclick="socialShare('fb')" class="p-4 bg-blue-600 rounded-2xl shadow-lg"><i data-lucide="facebook"></i></button>
-                <button onclick="socialShare('ig')" class="p-4 bg-gradient-to-tr from-yellow-500 via-pink-600 to-purple-700 rounded-2xl shadow-lg"><i data-lucide="instagram"></i></button>
-            </div>
+        <h2 class="font-bebas text-5xl text-yellow-500 mb-2">¡ENVIADO!</h2>
+        <p class="text-zinc-500 text-sm mb-10">Revisa tus mensajes de WhatsApp.</p>
+        <div class="flex justify-center gap-4">
+            <button onclick="share('fb')" class="p-4 bg-zinc-900 rounded-2xl border border-zinc-800"><i data-lucide="facebook"></i></button>
+            <button onclick="share('ig')" class="p-4 bg-zinc-900 rounded-2xl border border-zinc-800"><i data-lucide="instagram"></i></button>
         </div>
-        <button onclick="location.reload()" class="mt-12 text-zinc-600 font-bold text-xs uppercase tracking-[0.3em]">Hacer otro pedido</button>
+        <button onclick="location.reload()" class="mt-12 text-zinc-600 font-bold text-xs uppercase tracking-widest">Volver</button>
     </div>
 
     <script>
         lucide.createIcons();
 
-        // Variables Globales
-        const cart = { p2l: 0, p3l: 0, p4l: 0 };
-        let metodoPago = 'Efectivo';
-        let pagoVerificado = false;
-        let descuento = { perc: 0, motivo: "" };
-        let urlGPS = "";
-        let timerBusqueda;
-        let clicksAdmin = 0;
-        let idPedidoActual = "";
+        let state = { cart: {p2l:0, p3l:0, p4l:0}, pay:'Efectivo', disc:{p:0, m:''}, gps:'', id:'', admin:0 };
 
-        // Funciones de Carrito
-        function updateQty(id, delta) {
-            cart[id] = Math.max(0, cart[id] + delta);
-            document.getElementById(`qty-${id}`).innerText = cart[id];
-            calculateTotal();
+        function changeQty(id, d) {
+            state.cart[id] = Math.max(0, state.cart[id] + d);
+            document.getElementById(`qty-${id}`).innerText = state.cart[id];
+            calculate();
         }
 
-        function setPayment(m) {
-            metodoPago = m;
-            pagoVerificado = (m === 'Efectivo');
+        function selectPay(m) {
+            state.pay = m;
             document.querySelectorAll('.payment-option').forEach(el => el.classList.remove('active'));
-            document.getElementById(`pay-${m}`).classList.add('active');
-            calculateTotal();
+            document.getElementById(`m-${m}`).classList.add('active');
+            calculate();
         }
 
         // Búsqueda Inteligente
-        document.getElementById('telefono').addEventListener('input', (e) => {
-            const tel = e.target.value;
-            clearTimeout(timerBusqueda);
-            if(tel.length === 9) {
-                timerBusqueda = setTimeout(() => buscarCliente(tel), 500);
-            }
+        let deb;
+        document.getElementById('tel').addEventListener('input', (e) => {
+            clearTimeout(deb);
+            if(e.target.value.length === 9) deb = setTimeout(() => search(e.target.value), 500);
         });
 
-        async function buscarCliente(tel) {
-            try {
-                const q = window.query(window.collection(window.db, 'artifacts', window.appId, 'public', 'data', 'pedidos'), window.where('telefono', '==', tel));
-                const snap = await window.getDocs(q);
-                if (!snap.empty) {
-                    const pedidos = snap.docs.map(d => d.data());
-                    const ultimo = pedidos.sort((a,b) => b.fecha?.seconds - a.fecha?.seconds)[0];
-                    
-                    document.getElementById('nombre').value = ultimo.nombre;
-                    document.getElementById('direccion').value = ultimo.direccion;
-                    
-                    // Lógica de Fidelidad
-                    let p = 0; let m = "";
-                    const n = pedidos.length;
-                    if (n >= 10) { p = 0.15; m = "Cliente VIP (15%)"; }
-                    else if (n >= 5) { p = 0.10; m = "Frecuencia (10%)"; }
-                    
-                    const shared = pedidos.filter(x => x.compartido === true).length;
-                    if(shared >= 3) { p += 0.05; m += " + Bono Social (5%)"; }
-
-                    descuento = { perc: p, motivo: m };
-                    document.getElementById('welcomeText').innerText = `¡Hola ${ultimo.nombre.split(' ')[0]}! Identificamos tu descuento: ${m}`;
-                    document.getElementById('welcomeArea').classList.remove('hidden');
-                    calculateTotal();
-                }
-            } catch(e) {}
-        }
-
-        function calculateTotal() {
-            const base = (cart.p2l * 9) + (cart.p3l * 13) + (cart.p4l * 15);
-            const delivery = parseFloat(document.getElementById('distrito').value) || 0;
-            const subtotal = base + delivery;
-            const totalFinal = subtotal * (1 - descuento.perc);
-
-            document.getElementById('totalPrice').innerText = `S/ ${totalFinal.toFixed(2)}`;
-            if (descuento.perc > 0) {
-                document.getElementById('labelSub').innerText = `S/ ${subtotal.toFixed(2)}`;
-                document.getElementById('labelSub').classList.remove('hidden');
-            } else {
-                document.getElementById('labelSub').classList.add('hidden');
+        async function search(t) {
+            const q = window.query(window.collection(window.db, 'artifacts', window.appId, 'public', 'data', 'pedidos'), window.where('telefono', '==', t));
+            const snap = await window.getDocs(q);
+            if(!snap.empty) {
+                const list = snap.docs.map(d => d.data());
+                const last = list.sort((a,b) => b.fecha?.seconds - a.fecha?.seconds)[0];
+                document.getElementById('nom').value = last.nombre;
+                document.getElementById('dir').value = last.direccion;
+                
+                let p = list.length >= 10 ? 0.15 : (list.length >= 5 ? 0.10 : 0);
+                let m = list.length >= 10 ? "VIP 15%" : (list.length >= 5 ? "Fiel 10%" : "");
+                
+                if(list.filter(x => x.compartido).length >= 3) { p += 0.05; m += " + Bono 5%"; }
+                state.disc = {p, m};
+                document.getElementById('welcomeTxt').innerText = `¡Hola ${last.nombre.split(' ')[0]}! Tienes ${m}`;
+                document.getElementById('welcomeMsg').classList.remove('hidden');
+                calculate();
             }
-            return totalFinal;
         }
 
-        function obtenerGPS() {
-            const btn = document.getElementById('gpsBtn');
-            btn.innerText = "LOCALIZANDO...";
-            navigator.geolocation.getCurrentPosition(p => {
-                urlGPS = `https://www.google.com/maps?q=${p.coords.latitude},${p.coords.longitude}`;
-                btn.innerText = "¡UBICACIÓN LISTA! ✅";
-                btn.classList.replace('bg-zinc-800', 'bg-green-900');
-            });
-        }
-
-        // Flujo de Resumen
-        function abrirResumen() {
-            const total = calculateTotal();
-            if (total <= 0) return alert("Selecciona al menos un pack");
-            if (!document.getElementById('distrito').value) return alert("Selecciona zona de entrega");
-            if (!document.getElementById('nombre').value || !document.getElementById('telefono').value) return alert("Completa tus datos");
-
-            const items = document.getElementById('itemsLista');
-            items.innerHTML = "";
-            if(cart.p2l) items.innerHTML += `<div class="flex justify-between"><span>Pack 2L x${cart.p2l}</span><span>S/ ${cart.p2l*9}</span></div>`;
-            if(cart.p3l) items.innerHTML += `<div class="flex justify-between"><span>Pack 3L x${cart.p3l}</span><span>S/ ${cart.p3l*13}</span></div>`;
-            if(cart.p4l) items.innerHTML += `<div class="flex justify-between"><span>Pack 4L x${cart.p4l}</span><span>S/ ${cart.p4l*15}</span></div>`;
-            items.innerHTML += `<div class="flex justify-between text-zinc-500 italic"><span>Envío</span><span>S/ ${document.getElementById('distrito').value}</span></div>`;
+        function calculate() {
+            const base = (state.cart.p2l*9) + (state.cart.p3l*13) + (state.cart.p4l*15);
+            const delivery = parseFloat(document.getElementById('zon').value) || 0;
+            const sub = base + delivery;
+            const final = sub * (1 - state.disc.p);
             
-            const btnFinal = document.getElementById('btnFinal');
-
-            if(metodoPago === 'Efectivo') {
-                document.getElementById('zonaDigital').classList.add('hidden');
-                btnFinal.classList.remove('opacity-40', 'pointer-events-none');
-            } else {
-                document.getElementById('zonaDigital').classList.remove('hidden');
-                btnFinal.classList.add('opacity-40', 'pointer-events-none');
-                pagoVerificado = false; // Resetear para obligar al clic en verificar
+            document.getElementById('total').innerText = `S/ ${final.toFixed(2)}`;
+            if(state.disc.p > 0) {
+                document.getElementById('subt').innerText = `S/ ${sub.toFixed(2)}`;
+                document.getElementById('subt').classList.remove('hidden');
             }
-            document.getElementById('modalResumen').style.display = 'flex';
-            lucide.createIcons();
+            return final;
         }
 
-        function pagoRealizado() {
-            pagoVerificado = true;
-            const btnVerificar = document.getElementById('btnConfirmarDigital');
-            btnVerificar.innerText = "¡PAGO VERIFICADO POR CLIENTE! ✅";
-            btnVerificar.classList.replace('bg-zinc-800', 'bg-green-900');
-            btnVerificar.classList.add('text-white', 'border-green-500');
-
-            const btnFinal = document.getElementById('btnFinal');
-            btnFinal.classList.remove('opacity-40', 'pointer-events-none');
+        function getGPS() {
+            navigator.geolocation.getCurrentPosition(p => {
+                state.gps = `https://www.google.com/maps?q=${p.coords.latitude},${p.coords.longitude}`;
+                document.getElementById('gps').innerText = "GPS LISTO ✅";
+                document.getElementById('gps').style.background = "#065f46";
+            });
         }
 
-        async function finalizarTodo() {
-            const nombre = document.getElementById('nombre').value;
-            const tel = document.getElementById('telefono').value;
-            const dist = document.getElementById('distrito').options[document.getElementById('distrito').selectedIndex].text;
-            const totalFinal = calculateTotal();
+        function showSummary() {
+            const total = calculate();
+            if(total <= 0) return alert("Elige packs");
+            if(!document.getElementById('zon').value) return alert("Elige zona");
+            if(!document.getElementById('nom').value || !document.getElementById('tel').value) return alert("Completa tus datos");
 
-            const orderId = await window.saveOrder({
-                nombre, telefono: tel, direccion: document.getElementById('direccion').value,
-                distrito: dist, items: cart, total: totalFinal, pago: metodoPago, gps: urlGPS
+            const items = document.getElementById('summaryItems');
+            items.innerHTML = "";
+            if(state.cart.p2l) items.innerHTML += `<div class="flex justify-between"><span>Pack 2L x${state.cart.p2l}</span><span>S/ ${state.cart.p2l*9}</span></div>`;
+            if(state.cart.p3l) items.innerHTML += `<div class="flex justify-between"><span>Pack 3L x${state.cart.p3l}</span><span>S/ ${state.cart.p3l*13}</span></div>`;
+            if(state.cart.p4l) items.innerHTML += `<div class="flex justify-between"><span>Pack 4L x${state.cart.p4l}</span><span>S/ ${state.cart.p4l*15}</span></div>`;
+            items.innerHTML += `<div class="flex justify-between font-bold text-yellow-500 pt-3 mt-2 border-t border-zinc-800"><span>TOTAL</span><span>S/ ${total.toFixed(2)}</span></div>`;
+
+            const fBtn = document.getElementById('finalBtn');
+            if(state.pay === 'Efectivo') {
+                document.getElementById('digitalArea').classList.add('hidden');
+                fBtn.disabled = false;
+            } else {
+                document.getElementById('digitalArea').classList.remove('hidden');
+                fBtn.disabled = true;
+            }
+            document.getElementById('modalSummary').style.display = 'flex';
+        }
+
+        function confirmDigi() {
+            document.getElementById('finalBtn').disabled = false;
+            alert("Pago verificado por ti. Ya puedes enviar.");
+        }
+
+        async function sendOrder() {
+            const fBtn = document.getElementById('finalBtn');
+            fBtn.innerText = "ENVIANDO...";
+            fBtn.disabled = true;
+
+            const total = calculate();
+            const nom = document.getElementById('nom').value;
+            const tel = document.getElementById('tel').value;
+            const zon = document.getElementById('zon').options[document.getElementById('zon').selectedIndex].text;
+            const dir = document.getElementById('dir').value;
+
+            state.id = await window.saveOrder({
+                nombre:nom, telefono:tel, direccion:dir, distrito:zon, 
+                items:state.cart, total:total, pago:state.pay, gps:state.gps
             });
 
-            if (orderId) {
-                idPedidoActual = orderId;
-                const det = `${cart.p2l ? '• 2L: '+cart.p2l+'\n' : ''}${cart.p3l ? '• 3L: '+cart.p3l+'\n' : ''}${cart.p4l ? '• 4L: '+cart.p4l+'\n' : ''}`;
-                const msg = `*PEDIDO ASWA*\n👤 *Cliente:* ${nombre}\n📱 *Cel:* ${tel}\n📍 *Zona:* ${dist}\n🏠 *Dir:* ${document.getElementById('direccion').value}\n${urlGPS ? '🌍 *GPS:* '+urlGPS+'\n' : ''}\n🛒 *Pedido:*\n${det}💳 *Pago:* ${metodoPago}\n💰 *Total:* S/ ${totalFinal.toFixed(2)}`;
+            const det = `${state.cart.p2l?'• 2L: '+state.cart.p2l+'\n':''}${state.cart.p3l?'• 3L: '+state.cart.p3l+'\n':''}${state.cart.p4l?'• 4L: '+state.cart.p4l+'\n':''}`;
+            const msg = `🌽 *PEDIDO ASWA*\n👤 *Cliente:* ${nom}\n📱 *Cel:* ${tel}\n📍 *Zona:* ${zon}\n🏠 *Dir:* ${dir}\n${state.gps?'🌍 *GPS:* '+state.gps+'\n':''}🛒 *Pedido:*\n${det}💳 *Pago:* ${state.pay}\n💰 *Total:* S/ ${total.toFixed(2)}`;
 
-                // Enviar a los dos números
-                window.open(`https://wa.me/51986445531?text=${encodeURIComponent(msg)}`, '_blank');
-                setTimeout(() => {
-                    window.open(`https://wa.me/51955273229?text=${encodeURIComponent(msg)}`, '_blank');
-                    document.getElementById('modalResumen').style.display = 'none';
-                    document.getElementById('successScreen').classList.remove('hidden');
-                    lucide.createIcons();
-                }, 1000);
-            }
+            // Dual WhatsApp
+            window.open(`https://wa.me/51986445531?text=${encodeURIComponent(msg)}`, '_blank');
+            setTimeout(() => {
+                window.open(`https://wa.me/51955273229?text=${encodeURIComponent(msg)}`, '_blank');
+                document.getElementById('modalSummary').style.display = 'none';
+                document.getElementById('success').classList.remove('hidden');
+                lucide.createIcons();
+            }, 1000);
         }
 
-        function copiarNum() {
+        function copyNum() {
             navigator.clipboard.writeText("947999736");
             const t = document.getElementById('copyToast');
             t.style.display = 'block';
             setTimeout(() => t.style.display = 'none', 2000);
         }
 
-        function cerrarModal() { document.getElementById('modalResumen').style.display = 'none'; }
+        function closeModal() { document.getElementById('modalSummary').style.display = 'none'; }
         
-        function socialShare(p) {
-            window.marcarCompartido(idPedidoActual);
-            const t = "¡Pedí mi ASWA! 🌽 La mejor chicha de Tarapoto @aswa.laricachicha";
+        function share(p) {
+            window.marcarCompartido(state.id);
+            const t = "¡Amo la ASWA! @aswa.laricachicha";
             if(p === 'fb') window.open(`https://www.facebook.com/sharer/sharer.php?quote=${encodeURIComponent(t)}`);
-            else alert("Copia captura de tu pedido y etiquétanos en Instagram para tu bono de 5% extra.");
+            else alert("¡Copiado! Etiquétanos en Instagram para tu bono de 5%.");
         }
 
-        function handleLogoClick() {
-            clicksAdmin++;
-            if(clicksAdmin >= 5) { alert("Acceso a Estadísticas..."); clicksAdmin = 0; }
+        function adminAccess() {
+            state.admin++;
+            if(state.admin >= 5) { alert("Acceso concedido"); state.admin = 0; }
         }
     </script>
 </body>
