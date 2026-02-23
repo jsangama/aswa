@@ -1,39 +1,246 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Improved Index</title>
-    <link rel="stylesheet" href="styles.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>La Rica Chicha - ASWA (Oficial)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;800&family=Bebas+Neue&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-app.js";
+        import { getFirestore, collection, addDoc, query, where, getDocs, onSnapshot, serverTimestamp, doc, updateDoc } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-firestore.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-auth.js";
+        import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-storage.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyAsAIZEEuE4Ha3xCFgfn8hBTictVi4CTIk",
+            authDomain: "pedidos-aswa-peru.firebaseapp.com",
+            projectId: "pedidos-aswa-peru",
+            storageBucket: "pedidos-aswa-peru.appspot.com",
+            messagingSenderId: "213964983594",
+            appId: "1:213964983594:web:92d761a6e0cce9ddaa253"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        window.db = getFirestore(app);
+        window.auth = getAuth(app);
+        window.storage = getStorage(app);
+        window.collection = collection;
+        window.addDoc = addDoc;
+        window.query = query;
+        window.where = where;
+        window.getDocs = getDocs;
+        window.onSnapshot = onSnapshot;
+        window.serverTimestamp = serverTimestamp;
+        window.doc = doc;
+        window.updateDoc = updateDoc;
+        window.storageRef = ref;
+        window.uploadBytes = uploadBytes;
+        window.getDownloadURL = getDownloadURL;
+
+        onAuthStateChanged(window.auth, (user) => {
+            if (user) {
+                window.currentUser = user;
+                console.log("✅ Firebase OK");
+            } else {
+                signInAnonymously(window.auth).catch(console.error);
+            }
+        });
+    </script>
+
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Poppins', sans-serif; background: #0a0a0b; color: white; -webkit-tap-highlight-color: transparent; }
+        .font-bebas { font-family: 'Bebas Neue', cursive; }
+        .app-card { background: #121214; border: 1px solid #27272a; border-radius: 1.5rem; }
+        .input-dark { background: #18181b; border: 1px solid #27272a; color: white; border-radius: 1rem; padding: 1rem; width: 100%; }
+        .input-dark:focus { border-color: #facc15; outline: none; }
+        .btn-main { background: #facc15; color: black; font-weight: 800; border-radius: 1.2rem; border: none; cursor: pointer; transition: 0.2s; }
+        .btn-main:hover { background: #fde047; }
+        .btn-main:disabled { opacity: 0.5; cursor: not-allowed; }
+        .payment-option { border: 2px solid #27272a; background: #18181b; border-radius: 1.2rem; cursor: pointer; transition: 0.2s; }
+        .payment-option.active { border-color: #facc15; background: rgba(250,204,21,0.12); }
+        .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.94); z-index: 2000; align-items: center; justify-content: center; backdrop-filter: blur(6px); }
+        .toast { position: fixed; bottom: 100px; left: 50%; transform: translateX(-50%); background: #facc15; color: black; padding: 10px 24px; border-radius: 9999px; font-weight: bold; display: none; z-index: 5000; }
+        .badge { display: inline-block; padding: 4px 12px; border-radius: 9999px; font-size: 10px; font-weight: bold; }
+        .nivel-bronce { background: #cd7f32; color: white; }
+        .nivel-plata { background: #e2e8f0; color: #1e293b; }
+        .nivel-oro { background: #facc15; color: black; }
+        .progress-bar { width: 100%; height: 6px; background: #27272a; border-radius: 10px; overflow: hidden; }
+        .progress-fill { height: 100%; background: linear-gradient(90deg, #facc15, #fbbf24); transition: width 1s; }
+    </style>
 </head>
-<body>
-    <header>
-        <h1>Welcome to ASWA</h1>
-        <nav>
-            <ul>
-                <li><a href="#">Home</a></li>
-                <li><a href="#">About</a></li>
-                <li><a href="#">Contact</a></li>
-            </ul>
-        </nav>
+<body class="min-h-screen pb-36">
+    <div id="copyToast" class="toast">¡Copiado! ✓</div>
+
+    <header class="fixed top-0 left-0 right-0 bg-black/90 backdrop-blur-lg z-50 border-b border-zinc-900 px-4 py-3">
+        <div class="max-w-md mx-auto flex items-center gap-4">
+            <div class="w-20 h-20 bg-yellow-500 rounded-full flex items-center justify-center text-black text-4xl font-black">A</div>
+            <div class="flex-1">
+                <h1 class="font-bebas text-4xl text-yellow-400 tracking-widest">La Rica Chicha</h1>
+                <p class="text-[10px] text-zinc-400 font-bold uppercase">el oro líquido de la selva</p>
+            </div>
+        </div>
     </header>
-    <main>
-        <section id="introduction">
-            <h2>Introduction</h2>
-            <p>This is a modular approach to structuring your HTML.</p>
+
+    <div class="h-28"></div>
+
+    <main class="max-w-md mx-auto px-5 space-y-8">
+        <section class="space-y-4">
+            <h2 class="font-bold text-lg">Elige tu Presentación</h2>
+            <div class="space-y-3">
+                <div class="app-card p-4 flex justify-between items-center">
+                    <div><p class="font-bold">2 Litros</p><p class="text-yellow-400 font-bebas text-2xl">S/ 9.00</p></div>
+                    <div class="flex gap-2">
+                        <button onclick="updateQty('p2l', 1)" class="w-8 h-8 bg-yellow-500 text-black rounded">+</button>
+                        <span id="qty-p2l">0</span>
+                        <button onclick="updateQty('p2l', -1)" class="w-8 h-8 bg-zinc-700 rounded">-</button>
+                    </div>
+                </div>
+                <div class="app-card p-4 flex justify-between items-center">
+                    <div><p class="font-bold">3 Litros</p><p class="text-yellow-400 font-bebas text-2xl">S/ 13.00</p></div>
+                    <div class="flex gap-2">
+                        <button onclick="updateQty('p3l', 1)" class="w-8 h-8 bg-yellow-500 text-black rounded">+</button>
+                        <span id="qty-p3l">0</span>
+                        <button onclick="updateQty('p3l', -1)" class="w-8 h-8 bg-zinc-700 rounded">-</button>
+                    </div>
+                </div>
+                <div class="app-card p-4 flex justify-between items-center">
+                    <div><p class="font-bold">4 Litros</p><p class="text-yellow-400 font-bebas text-2xl">S/ 15.00</p></div>
+                    <div class="flex gap-2">
+                        <button onclick="updateQty('p4l', 1)" class="w-8 h-8 bg-yellow-500 text-black rounded">+</button>
+                        <span id="qty-p4l">0</span>
+                        <button onclick="updateQty('p4l', -1)" class="w-8 h-8 bg-zinc-700 rounded">-</button>
+                    </div>
+                </div>
+            </div>
         </section>
-        <section id="features">
-            <h2>Features</h2>
-            <ul>
-                <li>Feature 1</li>
-                <li>Feature 2</li>
-                <li>Feature 3</li>
-            </ul>
+
+        <section class="space-y-4">
+            <h2 class="font-bold text-lg">Datos de Entrega</h2>
+            <input type="tel" id="telefono" maxlength="9" placeholder="9XXXXXXXX" class="input-dark">
+            <input type="text" id="nombre" placeholder="Nombre completo" class="input-dark">
+            <input type="text" id="direccion" placeholder="Dirección" class="input-dark">
+            <select id="distrito" class="input-dark" onchange="calculateTotal()">
+                <option value="">Selecciona zona</option>
+                <option value="3">Morales (S/ 3)</option>
+                <option value="4">Tarapoto (S/ 4)</option>
+                <option value="5">Banda Shilcayo (S/ 5)</option>
+                <option value="0">Recojo local (S/ 0)</option>
+            </select>
+        </section>
+
+        <section class="space-y-4">
+            <h2 class="font-bold text-lg">Método de Pago</h2>
+            <div class="grid grid-cols-4 gap-2">
+                <div onclick="setPayment('Efectivo')" id="pay-Efectivo" class="payment-option active p-3 text-center">Efectivo</div>
+                <div onclick="setPayment('Yape')" id="pay-Yape" class="payment-option p-3 text-center">Yape</div>
+                <div onclick="setPayment('Plin')" id="pay-Plin" class="payment-option p-3 text-center">Plin</div>
+                <div onclick="setPayment('Transferencia')" id="pay-Transferencia" class="payment-option p-3 text-center">Transf</div>
+            </div>
+            <div id="vueltoArea" class="bg-zinc-900 p-4 rounded-xl">
+                <label class="text-xs text-zinc-400">¿Con cuánto pagarás?</label>
+                <input type="number" id="pagoCon" placeholder="0.00" oninput="calcVuelto()" class="input-dark mt-2">
+                <p id="vueltoMsg" class="text-yellow-500 mt-2">Vuelto: S/ 0.00</p>
+            </div>
         </section>
     </main>
-    <footer>
-        <p>&copy; 2026 ASWA. All rights reserved.</p>
+
+    <footer class="fixed bottom-0 left-0 right-0 bg-black/95 border-t border-zinc-800 p-4 z-40">
+        <div class="max-w-md mx-auto flex items-center justify-between">
+            <div>
+                <p class="text-xs text-zinc-400">Total</p>
+                <p id="totalPrice" class="text-4xl font-bebas text-yellow-500">S/ 0.00</p>
+            </div>
+            <button onclick="abrirResumen()" class="btn-main px-8 py-4">CONTINUAR</button>
+        </div>
     </footer>
-    <script src="app.js"></script>
+
+    <div id="modalResumen" class="modal">
+        <div class="bg-[#121214] w-full max-w-sm rounded-3xl p-6 border border-zinc-800 max-h-[90vh] overflow-y-auto">
+            <h3 class="font-bebas text-3xl text-center mb-4">RESUMEN DE PEDIDO</h3>
+            <div id="listaResumen" class="mb-4 pb-4 border-b border-zinc-800"></div>
+            <button onclick="finalizarEnvio()" class="w-full btn-main py-4">ENVIAR A WHATSAPP</button>
+            <button onclick="cerrarModal()" class="w-full text-zinc-500 mt-3 text-sm">Cancelar</button>
+        </div>
+    </div>
+
+    <div id="successScreen" class="hidden fixed inset-0 bg-black z-[3000] flex flex-col items-center justify-center p-8 text-center">
+        <div class="text-6xl mb-4">✅</div>
+        <h2 class="font-bebas text-5xl mb-4">¡PEDIDO ENVIADO!</h2>
+        <p class="text-zinc-400 mb-8">Tu pedido fue enviado a WhatsApp</p>
+        <button onclick="location.reload()" class="btn-main px-6 py-3">Hacer otro pedido</button>
+    </div>
+
+    <script>
+        const st = { cart: { p2l: 0, p3l: 0, p4l: 0 }, pay: 'Efectivo', raw: 0, final: 0, gps_google: '' };
+
+        function updateQty(id, delta) {
+            st.cart[id] = Math.max(0, st.cart[id] + delta);
+            document.getElementById(`qty-${id}`).textContent = st.cart[id];
+            calculateTotal();
+        }
+
+        function calculateTotal() {
+            const base = (st.cart.p2l * 9) + (st.cart.p3l * 13) + (st.cart.p4l * 15);
+            const deli = Number(document.getElementById('distrito').value) || 0;
+            st.raw = base + deli;
+            st.final = st.raw;
+            document.getElementById('totalPrice').textContent = `S/ ${st.final.toFixed(2)}`;
+            return st.final;
+        }
+
+        function setPayment(m) {
+            st.pay = m;
+            document.querySelectorAll('.payment-option').forEach(el => el.classList.remove('active'));
+            document.getElementById(`pay-${m}`).classList.add('active');
+            document.getElementById('vueltoArea').style.display = (m === 'Efectivo') ? 'block' : 'none';
+        }
+
+        function calcVuelto() {
+            const paga = Number(document.getElementById('pagoCon').value) || 0;
+            const v = Math.max(0, paga - st.final);
+            document.getElementById('vueltoMsg').textContent = `Vuelto: S/ ${v.toFixed(2)}`;
+        }
+
+        function abrirResumen() {
+            if (st.final <= 0) return alert("Selecciona productos");
+            if (!document.getElementById('telefono').value) return alert("Ingresa teléfono");
+            if (!document.getElementById('nombre').value) return alert("Ingresa nombre");
+            if (!document.getElementById('distrito').value) return alert("Selecciona zona");
+
+            const list = document.getElementById('listaResumen');
+            list.innerHTML = '';
+            if (st.cart.p2l) list.innerHTML += `<div class="flex justify-between"><span>${st.cart.p2l}x 2L</span><span>S/ ${(st.cart.p2l*9).toFixed(2)}</span></div>`;
+            if (st.cart.p3l) list.innerHTML += `<div class="flex justify-between"><span>${st.cart.p3l}x 3L</span><span>S/ ${(st.cart.p3l*13).toFixed(2)}</span></div>`;
+            if (st.cart.p4l) list.innerHTML += `<div class="flex justify-between"><span>${st.cart.p4l}x 4L</span><span>S/ ${(st.cart.p4l*15).toFixed(2)}</span></div>`;
+            list.innerHTML += `<div class="flex justify-between font-bold mt-2 text-yellow-500 text-lg"><span>Total</span><span>S/ ${st.final.toFixed(2)}</span></div>`;
+
+            document.getElementById('modalResumen').style.display = 'flex';
+        }
+
+        function cerrarModal() {
+            document.getElementById('modalResumen').style.display = 'none';
+        }
+
+        async function finalizarEnvio() {
+            const msg = `🌽 *NUEVO PEDIDO ASWA*\n👤 ${document.getElementById('nombre').value}\n📱 ${document.getElementById('telefono').value}\n🏠 ${document.getElementById('direccion').value}\n📍 ${document.getElementById('distrito').options[document.getElementById('distrito').selectedIndex].text}\n\n*PRODUCTOS:*\n${st.cart.p2l ? `• ${st.cart.p2l}x 2L\n` : ''}${st.cart.p3l ? `• ${st.cart.p3l}x 3L\n` : ''}${st.cart.p4l ? `• ${st.cart.p4l}x 4L\n` : ''}\n*TOTAL → S/ ${st.final.toFixed(2)}*`;
+            
+            window.open(`https://wa.me/51947999736?text=${encodeURIComponent(msg)}`, '_blank');
+            
+            setTimeout(() => {
+                document.getElementById('modalResumen').style.display = 'none';
+                document.getElementById('successScreen').classList.remove('hidden');
+            }, 1000);
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            lucide.createIcons();
+            setPayment('Efectivo');
+        });
+    </script>
 </body>
 </html>
