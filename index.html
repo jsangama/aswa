@@ -78,7 +78,7 @@
 
     <header class="fixed top-0 left-0 right-0 bg-black/90 backdrop-blur-lg z-50 border-b border-zinc-900 px-4 py-3">
         <div class="max-w-md mx-auto flex items-center gap-4">
-            <div class="w-20 h-20 bg-yellow-500 rounded-full flex items-center justify-center text-black text-4xl font-black">A</div>
+            <img src="logo%20de%20aswajpg" alt="Logo ASWA" class="w-20 h-20 rounded-full object-cover">
             <div class="flex-1">
                 <h1 class="font-bebas text-4xl text-yellow-400 tracking-widest">La Rica Chicha</h1>
                 <p class="text-[10px] text-zinc-400 font-bold uppercase">el oro líquido de la selva</p>
@@ -90,34 +90,51 @@
 
     <main class="max-w-md mx-auto px-5 space-y-8">
         <section class="space-y-4">
-            <h2 class="font-bold text-lg">Elige tu Presentación</h2>
-            <div class="space-y-3">
-                <div class="app-card p-4 flex justify-between items-center">
-                    <div><p class="font-bold">2 Litros</p><p class="text-yellow-400 font-bebas text-2xl">S/ 9.00</p></div>
-                    <div class="flex gap-2">
-                        <button onclick="updateQty('p2l', 1)" class="w-8 h-8 bg-yellow-500 text-black rounded">+</button>
-                        <span id="qty-p2l">0</span>
-                        <button onclick="updateQty('p2l', -1)" class="w-8 h-8 bg-zinc-700 rounded">-</button>
-                    </div>
-                </div>
-                <div class="app-card p-4 flex justify-between items-center">
-                    <div><p class="font-bold">3 Litros</p><p class="text-yellow-400 font-bebas text-2xl">S/ 13.00</p></div>
-                    <div class="flex gap-2">
-                        <button onclick="updateQty('p3l', 1)" class="w-8 h-8 bg-yellow-500 text-black rounded">+</button>
-                        <span id="qty-p3l">0</span>
-                        <button onclick="updateQty('p3l', -1)" class="w-8 h-8 bg-zinc-700 rounded">-</button>
-                    </div>
-                </div>
-                <div class="app-card p-4 flex justify-between items-center">
-                    <div><p class="font-bold">4 Litros</p><p class="text-yellow-400 font-bebas text-2xl">S/ 15.00</p></div>
-                    <div class="flex gap-2">
-                        <button onclick="updateQty('p4l', 1)" class="w-8 h-8 bg-yellow-500 text-black rounded">+</button>
-                        <span id="qty-p4l">0</span>
-                        <button onclick="updateQty('p4l', -1)" class="w-8 h-8 bg-zinc-700 rounded">-</button>
-                    </div>
-                </div>
-            </div>
-        </section>
+			<h2 class="font-bold text-lg">Elige tu Presentación</h2>
+			<div class="space-y-3">
+				<!-- Producto 2 Litros -->
+				<div class="app-card p-4 flex items-center gap-4">
+					<img src="aswa%20de%202%20litros%201.png" alt="ASWA 2 Litros" class="w-16 h-16 rounded-xl object-cover">
+					<div class="flex-1">
+						<p class="font-bold">2 Litros</p>
+						<p class="text-yellow-400 font-bebas text-2xl">S/ 9.00</p>
+					</div>
+					<div class="flex gap-2">
+						<button onclick="updateQty('p2l', 1)" class="w-8 h-8 bg-yellow-500 text-black rounded">+</button>
+						<span id="qty-p2l">0</span>
+						<button onclick="updateQty('p2l', -1)" class="w-8 h-8 bg-zinc-700 rounded">-</button>
+					</div>
+				</div>
+				
+				<!-- Producto 3 Litros -->
+				<div class="app-card p-4 flex items-center gap-4">
+					<img src="aswa%20de%203%20litros.png" alt="ASWA 3 Litros" class="w-16 h-16 rounded-xl object-cover">
+					<div class="flex-1">
+						<p class="font-bold">3 Litros</p>
+						<p class="text-yellow-400 font-bebas text-2xl">S/ 13.00</p>
+					</div>
+					<div class="flex gap-2">
+						<button onclick="updateQty('p3l', 1)" class="w-8 h-8 bg-yellow-500 text-black rounded">+</button>
+						<span id="qty-p3l">0</span>
+						<button onclick="updateQty('p3l', -1)" class="w-8 h-8 bg-zinc-700 rounded">-</button>
+					</div>
+				</div>
+				
+				<!-- Producto 4 Litros -->
+				<div class="app-card p-4 flex items-center gap-4">
+					<img src="envase%20de%204%20litros%20de%20aswa.png" alt="ASWA 4 Litros" class="w-16 h-16 rounded-xl object-cover">
+					<div class="flex-1">
+						<p class="font-bold">4 Litros</p>
+						<p class="text-yellow-400 font-bebas text-2xl">S/ 15.00</p>
+					</div>
+					<div class="flex gap-2">
+						<button onclick="updateQty('p4l', 1)" class="w-8 h-8 bg-yellow-500 text-black rounded">+</button>
+						<span id="qty-p4l">0</span>
+						<button onclick="updateQty('p4l', -1)" class="w-8 h-8 bg-zinc-700 rounded">-</button>
+					</div>
+				</div>
+			</div>
+		</section>
 
         <section class="space-y-4">
             <h2 class="font-bold text-lg">Datos de Entrega</h2>
@@ -126,6 +143,7 @@
             <input type="text" id="direccion" placeholder="Dirección" class="input-dark">
             <select id="distrito" class="input-dark" onchange="calculateTotal()">
                 <option value="">Selecciona zona</option>
+				<option value="3">A Nivel Nacional (S/ 10)</option>
                 <option value="3">Morales (S/ 3)</option>
                 <option value="4">Tarapoto (S/ 4)</option>
                 <option value="5">Banda Shilcayo (S/ 5)</option>
@@ -134,20 +152,27 @@
         </section>
 
         <section class="space-y-4">
-            <h2 class="font-bold text-lg">Método de Pago</h2>
-            <div class="grid grid-cols-4 gap-2">
-                <div onclick="setPayment('Efectivo')" id="pay-Efectivo" class="payment-option active p-3 text-center">Efectivo</div>
-                <div onclick="setPayment('Yape')" id="pay-Yape" class="payment-option p-3 text-center">Yape</div>
-                <div onclick="setPayment('Plin')" id="pay-Plin" class="payment-option p-3 text-center">Plin</div>
-                <div onclick="setPayment('Transferencia')" id="pay-Transferencia" class="payment-option p-3 text-center">Transf</div>
-            </div>
-            <div id="vueltoArea" class="bg-zinc-900 p-4 rounded-xl">
-                <label class="text-xs text-zinc-400">¿Con cuánto pagarás?</label>
-                <input type="number" id="pagoCon" placeholder="0.00" oninput="calcVuelto()" class="input-dark mt-2">
-                <p id="vueltoMsg" class="text-yellow-500 mt-2">Vuelto: S/ 0.00</p>
-            </div>
-        </section>
-    </main>
+			<h2 class="font-bold text-lg">Método de Pago</h2>
+			<div class="grid grid-cols-4 gap-2">
+				<div onclick="setPayment('Efectivo')" id="pay-Efectivo" class="payment-option active p-3 text-center">Efectivo</div>
+				<div onclick="setPayment('Yape')" id="pay-Yape" class="payment-option p-3 text-center">Yape</div>
+				<div onclick="setPayment('Plin')" id="pay-Plin" class="payment-option p-3 text-center">Plin</div>
+				<div onclick="setPayment('Transferencia')" id="pay-Transferencia" class="payment-option p-3 text-center">Transf</div>
+			</div>
+			
+			<!-- Área para mostrar el QR de Yape -->
+			<div id="yapeQrArea" class="hidden bg-zinc-900 p-4 rounded-xl text-center">
+				<img src="yape%20del%20negocio.jpg" alt="QR Yape" class="w-48 h-48 mx-auto rounded-lg mb-2">
+				<p class="text-xs text-zinc-400">Escanea para pagar con Yape</p>
+			</div>
+			
+			<div id="vueltoArea" class="bg-zinc-900 p-4 rounded-xl">
+				<label class="text-xs text-zinc-400">¿Con cuánto pagarás?</label>
+				<input type="number" id="pagoCon" placeholder="0.00" oninput="calcVuelto()" class="input-dark mt-2">
+				<p id="vueltoMsg" class="text-yellow-500 mt-2">Vuelto: S/ 0.00</p>
+			</div>
+	</section>
+	</main>
 
     <footer class="fixed bottom-0 left-0 right-0 bg-black/95 border-t border-zinc-800 p-4 z-40">
         <div class="max-w-md mx-auto flex items-center justify-between">
@@ -194,11 +219,22 @@
         }
 
         function setPayment(m) {
-            st.pay = m;
-            document.querySelectorAll('.payment-option').forEach(el => el.classList.remove('active'));
-            document.getElementById(`pay-${m}`).classList.add('active');
-            document.getElementById('vueltoArea').style.display = (m === 'Efectivo') ? 'block' : 'none';
-        }
+			st.pay = m;
+			document.querySelectorAll('.payment-option').forEach(el => el.classList.remove('active'));
+			document.getElementById(`pay-${m}`).classList.add('active');
+			
+			// Mostrar/ocultar áreas según el método de pago
+			if (m === 'Efectivo') {
+				document.getElementById('vueltoArea').style.display = 'block';
+				document.getElementById('yapeQrArea').classList.add('hidden');
+			} else if (m === 'Yape') {
+				document.getElementById('vueltoArea').style.display = 'none';
+				document.getElementById('yapeQrArea').classList.remove('hidden');
+			} else {
+				document.getElementById('vueltoArea').style.display = 'none';
+				document.getElementById('yapeQrArea').classList.add('hidden');
+			}
+		}
 
         function calcVuelto() {
             const paga = Number(document.getElementById('pagoCon').value) || 0;
