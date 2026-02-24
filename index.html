@@ -143,7 +143,7 @@
             <input type="text" id="direccion" placeholder="Dirección" class="input-dark">
             <select id="distrito" class="input-dark" onchange="calculateTotal()">
                 <option value="">Selecciona zona</option>
-				<option value="3">A Nivel Nacional (S/ 10)</option>
+				<option value="10">A Nivel Nacional (S/ 10)</option>
                 <option value="3">Morales (S/ 3)</option>
                 <option value="4">Tarapoto (S/ 4)</option>
                 <option value="5">Banda Shilcayo (S/ 5)</option>
@@ -265,7 +265,7 @@
         async function finalizarEnvio() {
             const msg = `🌽 *NUEVO PEDIDO ASWA*\n👤 ${document.getElementById('nombre').value}\n📱 ${document.getElementById('telefono').value}\n🏠 ${document.getElementById('direccion').value}\n📍 ${document.getElementById('distrito').options[document.getElementById('distrito').selectedIndex].text}\n\n*PRODUCTOS:*\n${st.cart.p2l ? `• ${st.cart.p2l}x 2L\n` : ''}${st.cart.p3l ? `• ${st.cart.p3l}x 3L\n` : ''}${st.cart.p4l ? `• ${st.cart.p4l}x 4L\n` : ''}\n*TOTAL → S/ ${st.final.toFixed(2)}*`;
             
-            window.open(`https://wa.me/51947999736?text=${encodeURIComponent(msg)}`, '_blank');
+            window.open(`https://wa.me/51955273229?text=${encodeURIComponent(msg)}`, '_blank');
             
             setTimeout(() => {
                 document.getElementById('modalResumen').style.display = 'none';
