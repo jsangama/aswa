@@ -1,294 +1,995 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>La Rica Chicha - ASWA (Oficial)</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;800&family=Bebas+Neue&display=swap" rel="stylesheet">
-    <script src="https://unpkg.com/lucide@latest"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#09090b">
+  <meta name="description" content="La Rica Chicha ASWA — Pide tu chicha de jora artesanal en Tarapoto. Delivery a domicilio.">
+  <title>La Rica Chicha — ASWA Oficial</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700;800&family=Bebas+Neue&display=swap" rel="stylesheet">
 
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-app.js";
-        import { getFirestore, collection, addDoc, query, where, getDocs, onSnapshot, serverTimestamp, doc, updateDoc } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-firestore.js";
-        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-auth.js";
-        import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-storage.js";
+  <!-- ══════════════════════════════════════
+       FIREBASE — pedidos-aswa-peru
+  ══════════════════════════════════════ -->
+  <script type="module">
+    import { initializeApp }
+      from "https://www.gstatic.com/firebasejs/11.1.0/firebase-app.js";
+    import { getFirestore, collection, addDoc, query, where,
+             getDocs, serverTimestamp, doc, updateDoc }
+      from "https://www.gstatic.com/firebasejs/11.1.0/firebase-firestore.js";
+    import { getAuth, signInAnonymously, onAuthStateChanged }
+      from "https://www.gstatic.com/firebasejs/11.1.0/firebase-auth.js";
 
-        const firebaseConfig = {
-            apiKey: "AIzaSyAsAIZEEuE4Ha3xCFgfn8hBTictVi4CTIk",
-            authDomain: "pedidos-aswa-peru.firebaseapp.com",
-            projectId: "pedidos-aswa-peru",
-            storageBucket: "pedidos-aswa-peru.appspot.com",
-            messagingSenderId: "213964983594",
-            appId: "1:213964983594:web:92d761a6e0cce9ddaa253"
-        };
+    const cfg = {
+      apiKey:            "AIzaSyAsAIZEEuE4Ha3xCFgfn8hBTictVi4CTIk",
+      authDomain:        "pedidos-aswa-peru.firebaseapp.com",
+      projectId:         "pedidos-aswa-peru",
+      storageBucket:     "pedidos-aswa-peru.appspot.com",
+      messagingSenderId: "213964983594",
+      appId:             "1:213964983594:web:92d761a6e0cce9ddaa253"
+    };
+    const app   = initializeApp(cfg);
+    window.db   = getFirestore(app);
+    window.auth = getAuth(app);
+    window.FB   = { collection, addDoc, query, where, getDocs,
+                    serverTimestamp, doc, updateDoc };
+    onAuthStateChanged(window.auth, u => {
+      if (u) window.currentUser = u;
+      else   signInAnonymously(window.auth).catch(console.error);
+    });
+  </script>
 
-        const app = initializeApp(firebaseConfig);
-        window.db = getFirestore(app);
-        window.auth = getAuth(app);
-        window.storage = getStorage(app);
-        window.collection = collection;
-        window.addDoc = addDoc;
-        window.query = query;
-        window.where = where;
-        window.getDocs = getDocs;
-        window.onSnapshot = onSnapshot;
-        window.serverTimestamp = serverTimestamp;
-        window.doc = doc;
-        window.updateDoc = updateDoc;
-        window.storageRef = ref;
-        window.uploadBytes = uploadBytes;
-        window.getDownloadURL = getDownloadURL;
+  <style>
+    /* ══ VARIABLES ══ */
+    :root {
+      --bg:     #09090b;
+      --s1:     #111113;
+      --s2:     #18181b;
+      --brd:    #27272a;
+      --y:      #facc15;
+      --y2:     #fde047;
+      --txt:    #fafafa;
+      --mut:    #71717a;
+      --grn:    #22c55e;
+      --red:    #ef4444;
+      --pur:    #a855f7;
+      --r:      1.2rem;
+    }
+    *, *::before, *::after {
+      margin: 0; padding: 0;
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: 'Poppins', sans-serif;
+      background: var(--bg); color: var(--txt);
+      min-height: 100dvh; padding-bottom: 130px;
+      -webkit-font-smoothing: antialiased;
+    }
 
-        onAuthStateChanged(window.auth, (user) => {
-            if (user) {
-                window.currentUser = user;
-                console.log("✅ Firebase OK");
-            } else {
-                signInAnonymously(window.auth).catch(console.error);
-            }
-        });
-    </script>
+    /* ══ HEADER ══ */
+    header {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      background: rgba(9,9,11,0.95);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--brd);
+    }
+    .hi {
+      max-width: 430px; margin: 0 auto;
+      padding: 10px 16px;
+      display: flex; align-items: center; gap: 12px;
+    }
+    .logo {
+      width: 54px; height: 54px; border-radius: 50%;
+      object-fit: cover; border: 2px solid var(--y); flex-shrink: 0;
+    }
+    .bname { font-family:'Bebas Neue',cursive; font-size:26px; color:var(--y); letter-spacing:.12em; line-height:1; }
+    .bsub  { font-size:9px; color:var(--mut); font-weight:600; text-transform:uppercase; letter-spacing:.2em; }
+    .btn-ref {
+      margin-left:auto; flex-shrink:0;
+      background: linear-gradient(135deg,#7c3aed,#4f46e5);
+      color:#fff; border:none; padding:8px 14px; border-radius:999px;
+      font-size:11px; font-weight:700; cursor:pointer;
+      display:none; align-items:center; gap:6px; white-space:nowrap;
+      font-family:'Poppins',sans-serif;
+    }
+    .btn-ref.on { display:flex; }
+    .sp { height:86px; }
 
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Poppins', sans-serif; background: #0a0a0b; color: white; -webkit-tap-highlight-color: transparent; }
-        .font-bebas { font-family: 'Bebas Neue', cursive; }
-        .app-card { background: #121214; border: 1px solid #27272a; border-radius: 1.5rem; }
-        .input-dark { background: #18181b; border: 1px solid #27272a; color: white; border-radius: 1rem; padding: 1rem; width: 100%; }
-        .input-dark:focus { border-color: #facc15; outline: none; }
-        .btn-main { background: #facc15; color: black; font-weight: 800; border-radius: 1.2rem; border: none; cursor: pointer; transition: 0.2s; }
-        .btn-main:hover { background: #fde047; }
-        .btn-main:disabled { opacity: 0.5; cursor: not-allowed; }
-        .payment-option { border: 2px solid #27272a; background: #18181b; border-radius: 1.2rem; cursor: pointer; transition: 0.2s; }
-        .payment-option.active { border-color: #facc15; background: rgba(250,204,21,0.12); }
-        .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.94); z-index: 2000; align-items: center; justify-content: center; backdrop-filter: blur(6px); }
-        .toast { position: fixed; bottom: 100px; left: 50%; transform: translateX(-50%); background: #facc15; color: black; padding: 10px 24px; border-radius: 9999px; font-weight: bold; display: none; z-index: 5000; }
-        .badge { display: inline-block; padding: 4px 12px; border-radius: 9999px; font-size: 10px; font-weight: bold; }
-        .nivel-bronce { background: #cd7f32; color: white; }
-        .nivel-plata { background: #e2e8f0; color: #1e293b; }
-        .nivel-oro { background: #facc15; color: black; }
-        .progress-bar { width: 100%; height: 6px; background: #27272a; border-radius: 10px; overflow: hidden; }
-        .progress-fill { height: 100%; background: linear-gradient(90deg, #facc15, #fbbf24); transition: width 1s; }
-    </style>
+    /* ══ LAYOUT ══ */
+    main { max-width:430px; margin:0 auto; padding:20px 16px; }
+    section { margin-bottom:28px; }
+    .stitle {
+      font-size:11px; font-weight:700; color:var(--mut);
+      text-transform:uppercase; letter-spacing:.15em;
+      margin-bottom:14px; display:flex; align-items:center; gap:10px;
+    }
+    .stitle::after { content:''; flex:1; height:1px; background:var(--brd); }
+
+    /* ══ BANNER CLIENTE ══ */
+    .cban {
+      background:linear-gradient(135deg,rgba(34,197,94,.08),rgba(34,197,94,.03));
+      border:1px solid rgba(34,197,94,.2); border-radius:var(--r);
+      padding:12px 16px; display:none; align-items:center; gap:12px;
+      margin-bottom:14px; animation:fi .3s ease;
+    }
+    .cban.on { display:flex; }
+    @keyframes fi { from{opacity:0;transform:translateY(-6px)} to{opacity:1;transform:none} }
+    .npill {
+      padding:4px 10px; border-radius:999px;
+      font-size:10px; font-weight:800;
+      text-transform:uppercase; letter-spacing:.08em; white-space:nowrap;
+    }
+    .bronce   { background:#451a03; color:#fed7aa; }
+    .plata    { background:#1e293b; color:#e2e8f0; }
+    .oro      { background:#422006; color:var(--y); }
+    .diamante { background:linear-gradient(135deg,#312e81,#4c1d95); color:#c4b5fd; }
+
+    /* ══ PRODUCTO CARDS ══ */
+    .pc {
+      background:var(--s1); border:1px solid var(--brd); border-radius:var(--r);
+      padding:14px; display:flex; align-items:center; gap:14px;
+      margin-bottom:10px; transition:border-color .2s, background .2s;
+    }
+    .pc.on { border-color:var(--y); background:rgba(250,204,21,.04); }
+    .pimg {
+      width:70px; height:70px; border-radius:12px;
+      object-fit:contain; background:#1a1a1e; flex-shrink:0;
+    }
+    .pn { font-size:15px; font-weight:700; margin-bottom:2px; }
+    .pd { font-size:11px; color:var(--mut); margin-bottom:4px; }
+    .pp { font-family:'Bebas Neue',cursive; font-size:28px; color:var(--y); line-height:1; }
+    .po { font-size:12px; color:var(--mut); text-decoration:line-through; margin-left:6px; vertical-align:middle; }
+    .qw { display:flex; align-items:center; gap:10px; flex-shrink:0; }
+    .qb {
+      width:36px; height:36px; border:none; border-radius:9px;
+      font-size:20px; font-weight:800; cursor:pointer;
+      display:flex; align-items:center; justify-content:center;
+      transition:transform .1s;
+    }
+    .qb:active { transform:scale(.88); }
+    .qplus  { background:var(--y); color:#000; }
+    .qminus { background:var(--s2); color:var(--txt); }
+    .qn { font-size:18px; font-weight:800; min-width:22px; text-align:center; }
+
+    /* ══ INPUTS ══ */
+    .fld { margin-bottom:12px; position:relative; }
+    .fld label {
+      display:block; font-size:11px; font-weight:600; color:var(--mut);
+      text-transform:uppercase; letter-spacing:.1em; margin-bottom:6px;
+    }
+    .inp {
+      width:100%; background:var(--s1); border:1px solid var(--brd);
+      color:var(--txt); border-radius:12px; padding:14px 16px;
+      font-size:15px; font-family:'Poppins',sans-serif;
+      transition:border-color .2s; outline:none;
+      -webkit-appearance:none; appearance:none;
+    }
+    .inp:focus { border-color:var(--y); }
+    .inp::placeholder { color:var(--mut); }
+    .rst {
+      position:absolute; right:14px; bottom:15px;
+      font-size:11px; font-weight:700; pointer-events:none;
+    }
+
+    /* ══ PAGO ══ */
+    .pgrd { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; }
+    .popt {
+      background:var(--s1); border:2px solid var(--brd); border-radius:12px;
+      padding:10px 4px; text-align:center; font-size:12px; font-weight:600;
+      cursor:pointer; transition:all .15s;
+    }
+    .popt.on { border-color:var(--y); background:rgba(250,204,21,.08); color:var(--y); }
+    .pic { font-size:22px; display:block; margin-bottom:4px; }
+
+    .ybox {
+      display:none; background:var(--s1); border:1px solid var(--brd);
+      border-radius:var(--r); padding:20px; text-align:center; margin-top:12px;
+    }
+    .ybox.on { display:block; }
+    .ybox img { width:190px; height:190px; border-radius:14px; margin:0 auto 12px; display:block; }
+    .ynum { font-family:'Bebas Neue',cursive; font-size:24px; color:var(--y); letter-spacing:.1em; }
+    .ybox p { font-size:12px; color:var(--mut); margin-top:4px; }
+
+    .vbox {
+      background:var(--s1); border:1px solid var(--brd);
+      border-radius:var(--r); padding:16px; margin-top:12px;
+    }
+    .vlbl { font-size:11px; color:var(--mut); text-transform:uppercase; letter-spacing:.1em; font-weight:600; display:block; margin-bottom:8px; }
+    .vmsg { font-size:14px; font-weight:700; color:var(--y); margin-top:10px; }
+
+    /* ══ FOOTER BAR ══ */
+    .fbar {
+      position:fixed; bottom:0; left:0; right:0; z-index:90;
+      background:rgba(9,9,11,.97); border-top:1px solid var(--brd);
+      padding:12px 20px 18px;
+    }
+    .fin {
+      max-width:430px; margin:0 auto;
+      display:flex; align-items:center; justify-content:space-between; gap:16px;
+    }
+    .plbl { font-size:10px; color:var(--mut); text-transform:uppercase; letter-spacing:.1em; }
+    .pold { font-size:12px; color:var(--mut); text-decoration:line-through; display:none; }
+    .pbig { font-family:'Bebas Neue',cursive; font-size:40px; color:var(--y); line-height:1; }
+    .bcont {
+      background:var(--y); color:#000; border:none;
+      padding:16px 28px; border-radius:14px;
+      font-size:15px; font-weight:800; cursor:pointer;
+      white-space:nowrap; flex-shrink:0;
+      transition:background .15s, transform .1s;
+      font-family:'Poppins',sans-serif;
+    }
+    .bcont:active { transform:scale(.96); }
+    .bcont:hover  { background:var(--y2); }
+
+    /* ══ MODALES (bottom sheet) ══ */
+    .ov {
+      display:none; position:fixed; inset:0; z-index:200;
+      background:rgba(0,0,0,.88); backdrop-filter:blur(8px);
+      align-items:flex-end; justify-content:center;
+    }
+    .ov.on { display:flex; }
+    .sheet {
+      background:var(--s1); width:100%; max-width:430px;
+      border-radius:24px 24px 0 0; padding:20px 20px 36px;
+      max-height:92dvh; overflow-y:auto;
+      animation:up .25s cubic-bezier(.22,1,.36,1);
+    }
+    @keyframes up { from{transform:translateY(50px);opacity:0} to{transform:none;opacity:1} }
+    .hnd { width:40px; height:4px; background:var(--brd); border-radius:2px; margin:0 auto 20px; }
+    .mttl {
+      font-family:'Bebas Neue',cursive; font-size:26px;
+      text-align:center; letter-spacing:.05em; margin-bottom:18px;
+    }
+
+    /* Resumen */
+    .rrow {
+      display:flex; justify-content:space-between; align-items:center;
+      padding:10px 0; border-bottom:1px solid var(--brd); font-size:14px;
+    }
+    .rrow.tot { border-bottom:none; padding-top:14px; font-size:18px; font-weight:800; color:var(--y); }
+    .rdesc { color:var(--mut); }
+    .dban {
+      background:rgba(34,197,94,.08); border:1px solid rgba(34,197,94,.2);
+      border-radius:10px; padding:10px 14px; font-size:13px; color:var(--grn);
+      display:none; margin:10px 0;
+    }
+    .dban.on { display:block; }
+
+    .bws {
+      width:100%; background:#25D366; color:#fff; border:none;
+      padding:18px; border-radius:14px; font-size:16px; font-weight:800;
+      cursor:pointer; display:flex; align-items:center; justify-content:center;
+      gap:8px; margin-top:16px; font-family:'Poppins',sans-serif;
+      transition:background .15s;
+    }
+    .bws:hover    { background:#128C7E; }
+    .bws:disabled { opacity:.6; cursor:not-allowed; }
+    .bcancel {
+      width:100%; background:transparent; border:none;
+      color:var(--mut); font-size:14px; font-weight:600;
+      padding:14px; cursor:pointer; margin-top:4px;
+      font-family:'Poppins',sans-serif;
+    }
+
+    /* Referidos modal */
+    .rbox { background:var(--s2); border:1px solid var(--brd); border-radius:14px; padding:16px; margin-bottom:14px; }
+    .cfr  { background:var(--bg); border:2px dashed var(--y); border-radius:12px; padding:14px; text-align:center; margin:12px 0; }
+    .ctxt { font-family:'Bebas Neue',cursive; font-size:32px; color:var(--y); letter-spacing:.18em; }
+    .bcopy {
+      width:100%; background:var(--y); color:#000; border:none;
+      padding:12px; border-radius:10px; font-size:14px; font-weight:800;
+      cursor:pointer; margin-top:8px; font-family:'Poppins',sans-serif;
+    }
+    .bshr {
+      width:100%; background:#25D366; color:#fff; border:none;
+      padding:14px; border-radius:12px; font-size:14px; font-weight:800;
+      cursor:pointer; margin-top:8px;
+      display:flex; align-items:center; justify-content:center; gap:8px;
+      font-family:'Poppins',sans-serif;
+    }
+
+    /* Confirmar entrega */
+    .confbox {
+      background:rgba(34,197,94,.06); border:1px solid rgba(34,197,94,.2);
+      border-radius:14px; padding:20px; text-align:center;
+    }
+    .confbox p { font-size:13px; color:var(--mut); margin-bottom:14px; line-height:1.7; }
+    .bconf {
+      background:var(--grn); color:#000; border:none;
+      padding:14px 28px; border-radius:12px;
+      font-size:15px; font-weight:800; cursor:pointer;
+      font-family:'Poppins',sans-serif; transition:background .15s;
+    }
+    .bconf:hover    { background:#16a34a; }
+    .bconf:disabled { opacity:.6; cursor:not-allowed; }
+
+    /* ══ PANTALLA ÉXITO ══ */
+    .succ {
+      display:none; position:fixed; inset:0; z-index:999;
+      background:var(--bg); flex-direction:column;
+      align-items:center; justify-content:center;
+      padding:40px 24px; text-align:center;
+    }
+    .succ.on { display:flex; }
+    .semo   { font-size:72px; margin-bottom:16px; animation:pop .4s ease; }
+    @keyframes pop { 0%{transform:scale(0)} 70%{transform:scale(1.18)} 100%{transform:scale(1)} }
+    .sttl   { font-family:'Bebas Neue',cursive; font-size:46px; color:var(--y); letter-spacing:.05em; margin-bottom:8px; }
+    .ssub   { font-size:14px; color:var(--mut); margin-bottom:8px; }
+    .scod   {
+      font-family:'Bebas Neue',cursive; font-size:20px; color:var(--pur);
+      letter-spacing:.1em; background:rgba(168,85,247,.08);
+      border:1px solid rgba(168,85,247,.2);
+      padding:8px 20px; border-radius:999px; margin:12px 0 28px; display:none;
+    }
+    .bnvo {
+      background:var(--y); color:#000; border:none;
+      padding:16px 44px; border-radius:14px;
+      font-size:16px; font-weight:800; cursor:pointer;
+      font-family:'Poppins',sans-serif;
+    }
+
+    /* ══ TOAST ══ */
+    .tst {
+      position:fixed; bottom:140px; left:50%;
+      transform:translateX(-50%) translateY(16px);
+      background:var(--s2); color:var(--txt); border:1px solid var(--brd);
+      padding:10px 22px; border-radius:999px;
+      font-size:13px; font-weight:600;
+      opacity:0; transition:all .28s; z-index:500;
+      pointer-events:none; white-space:nowrap;
+    }
+    .tst.on { opacity:1; transform:translateX(-50%) translateY(0); }
+
+    /* SVG WhatsApp inline reutilizable */
+    .ws-ico { width:20px; height:20px; flex-shrink:0; }
+  </style>
 </head>
-<body class="min-h-screen pb-36">
-    <div id="copyToast" class="toast">¡Copiado! ✓</div>
+<body>
 
-    <header class="fixed top-0 left-0 right-0 bg-black/90 backdrop-blur-lg z-50 border-b border-zinc-900 px-4 py-3">
-        <div class="max-w-md mx-auto flex items-center gap-4">
-            <img src="logo de aswa.jpg" alt="Logo ASWA" class="w-20 h-20 rounded-full object-cover">
-            <div class="flex-1">
-                <h1 class="font-bebas text-4xl text-yellow-400 tracking-widest">La Rica Chicha</h1>
-                <p class="text-[10px] text-zinc-400 font-bold uppercase">el oro líquido de la selva</p>
-            </div>
-        </div>
-    </header>
+<!-- ══════════════ HEADER ══════════════ -->
+<header>
+  <div class="hi">
+    <img src="logo de aswa.jpg" alt="ASWA" class="logo"
+         onerror="this.style.cssText='width:54px;height:54px;border-radius:50%;background:var(--y);flex-shrink:0'">
+    <div>
+      <div class="bname">La Rica Chicha</div>
+      <div class="bsub">ASWA · El oro líquido de la selva</div>
+    </div>
+    <button class="btn-ref" id="btnRef" onclick="abrirRef()">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+        <circle cx="9" cy="7" r="4"/>
+        <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+        <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+      </svg>
+      Refiere y Gana
+    </button>
+  </div>
+</header>
+<div class="sp"></div>
 
-    <div class="h-28"></div>
+<!-- ══════════════ MAIN ══════════════ -->
+<main>
 
-    <main class="max-w-md mx-auto px-5 space-y-8">
-        <section class="space-y-4">
-			<h2 class="font-bold text-lg">Elige tu Presentación</h2>
-			<div class="space-y-3">
-				<!-- Producto 2 Litros -->
-				<div class="app-card p-4 flex items-center gap-4">
-					<img 
-					  src="aswa de 2 litros 1.png" 
-					  alt="ASWA 2 Litros" 
-					  class="w-16 h-16 rounded-xl object-contain object-center bg-gray-800/30"
-					>
-					<div class="flex-1">
-						<p class="font-bold">2 Litros</p>
-						<p class="text-yellow-400 font-bebas text-2xl">S/ 9.00</p>
-					</div>
-					<div class="flex gap-2">
-						<button onclick="updateQty('p2l', 1)" class="w-8 h-8 bg-yellow-500 text-black rounded">+</button>
-						<span id="qty-p2l">0</span>
-						<button onclick="updateQty('p2l', -1)" class="w-8 h-8 bg-zinc-700 rounded">-</button>
-					</div>
-				</div>
-				
-				<!-- Producto 3 Litros -->
-				<div class="app-card p-4 flex items-center gap-4">
-					<img 
-					  src="aswa de 3 litros.png" 
-					  alt="ASWA 3 Litros" 
-					  class="w-16 h-16 rounded-xl object-contain object-center bg-gray-800/30"
-					>
-					<div class="flex-1">
-						<p class="font-bold">3 Litros</p>
-						<p class="text-yellow-400 font-bebas text-2xl">S/ 13.00</p>
-					</div>
-					<div class="flex gap-2">
-						<button onclick="updateQty('p3l', 1)" class="w-8 h-8 bg-yellow-500 text-black rounded">+</button>
-						<span id="qty-p3l">0</span>
-						<button onclick="updateQty('p3l', -1)" class="w-8 h-8 bg-zinc-700 rounded">-</button>
-					</div>
-				</div>
-				
-				<!-- Producto 4 Litros -->
-				<div class="app-card p-4 flex items-center gap-4">
-					<img 
-					  src="galon familiar de 4 litros.png" 
-					  alt="ASWA 4 Litros" 
-					  class="w-16 h-16 rounded-xl object-contain object-center bg-gray-800/30"
-					>
-					<div class="flex-1">
-						<p class="font-bold">4 Litros</p>
-						<p class="text-yellow-400 font-bebas text-2xl">S/ 15.00</p>
-					</div>
-					<div class="flex gap-2">
-						<button onclick="updateQty('p4l', 1)" class="w-8 h-8 bg-yellow-500 text-black rounded">+</button>
-						<span id="qty-p4l">0</span>
-						<button onclick="updateQty('p4l', -1)" class="w-8 h-8 bg-zinc-700 rounded">-</button>
-					</div>
-				</div>
-			</div>
-		</section>
+  <!-- PRODUCTOS -->
+  <section>
+    <div class="stitle">Elige tu presentación</div>
 
-        <section class="space-y-4">
-            <h2 class="font-bold text-lg">Datos de Entrega</h2>
-            <input type="tel" id="telefono" maxlength="9" placeholder="9XXXXXXXX" class="input-dark">
-            <input type="text" id="nombre" placeholder="Nombre completo" class="input-dark">
-            <input type="text" id="direccion" placeholder="Dirección" class="input-dark">
-            <select id="distrito" class="input-dark" onchange="calculateTotal()">
-                <option value="">Selecciona zona</option>
-				<option value="10">A Nivel Nacional (S/ 10)</option>
-                <option value="3">Morales (S/ 3)</option>
-                <option value="4">Tarapoto (S/ 4)</option>
-                <option value="5">Banda Shilcayo (S/ 5)</option>
-                <option value="0">Recojo local (S/ 0)</option>
-            </select>
-        </section>
-
-        <section class="space-y-4">
-			<h2 class="font-bold text-lg">Método de Pago</h2>
-			<div class="grid grid-cols-4 gap-2">
-				<div onclick="setPayment('Efectivo')" id="pay-Efectivo" class="payment-option active p-3 text-center">Efectivo</div>
-				<div onclick="setPayment('Yape')" id="pay-Yape" class="payment-option p-3 text-center">Yape</div>
-				<div onclick="setPayment('Plin')" id="pay-Plin" class="payment-option p-3 text-center">Plin</div>
-				<div onclick="setPayment('Transferencia')" id="pay-Transferencia" class="payment-option p-3 text-center">Transf</div>
-			</div>
-			
-			<!-- Área para mostrar el QR de Yape -->
-			<div id="yapeQrArea" class="hidden bg-zinc-900 p-4 rounded-xl text-center">
-				<img src="yape%20del%20negocio.jpg" alt="QR Yape" class="w-48 h-48 mx-auto rounded-lg mb-2">
-				<p class="text-xs text-zinc-400">Escanea para pagar con Yape</p>
-			</div>
-			
-			<div id="vueltoArea" class="bg-zinc-900 p-4 rounded-xl">
-				<label class="text-xs text-zinc-400">¿Con cuánto pagarás?</label>
-				<input type="number" id="pagoCon" placeholder="0.00" oninput="calcVuelto()" class="input-dark mt-2">
-				<p id="vueltoMsg" class="text-yellow-500 mt-2">Vuelto: S/ 0.00</p>
-			</div>
-	</section>
-	</main>
-
-    <footer class="fixed bottom-0 left-0 right-0 bg-black/95 border-t border-zinc-800 p-4 z-40">
-        <div class="max-w-md mx-auto flex items-center justify-between">
-            <div>
-                <p class="text-xs text-zinc-400">Total</p>
-                <p id="totalPrice" class="text-4xl font-bebas text-yellow-500">S/ 0.00</p>
-            </div>
-            <button onclick="abrirResumen()" class="btn-main px-8 py-4">CONTINUAR</button>
-        </div>
-    </footer>
-
-    <div id="modalResumen" class="modal">
-        <div class="bg-[#121214] w-full max-w-sm rounded-3xl p-6 border border-zinc-800 max-h-[90vh] overflow-y-auto">
-            <h3 class="font-bebas text-3xl text-center mb-4">RESUMEN DE PEDIDO</h3>
-            <div id="listaResumen" class="mb-4 pb-4 border-b border-zinc-800"></div>
-            <button onclick="finalizarEnvio()" class="w-full btn-main py-4">ENVIAR A WHATSAPP</button>
-            <button onclick="cerrarModal()" class="w-full text-zinc-500 mt-3 text-sm">Cancelar</button>
-        </div>
+    <!-- 2 Litros -->
+    <div class="pc" id="c-p2l">
+      <img src="aswa de 2 litros 1.png" alt="2L" class="pimg"
+           onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2270%22 height=%2270%22><rect width=%2270%22 height=%2270%22 fill=%22%231a1a1e%22 rx=%2212%22/><text x=%2235%22 y=%2244%22 text-anchor=%22middle%22 fill=%22%23facc15%22 font-size=%2228%22>🫙</text></svg>'">
+      <div style="flex:1">
+        <div class="pn">Chicha ASWA</div>
+        <div class="pd">Presentación 2 Litros</div>
+        <div class="pp" id="pr-p2l">S/ 9.00</div>
+      </div>
+      <div class="qw">
+        <button class="qb qminus" onclick="qty('p2l',-1)">−</button>
+        <span class="qn" id="q-p2l">0</span>
+        <button class="qb qplus"  onclick="qty('p2l',+1)">+</button>
+      </div>
     </div>
 
-    <div id="successScreen" class="hidden fixed inset-0 bg-black z-[3000] flex flex-col items-center justify-center p-8 text-center">
-        <div class="text-6xl mb-4">✅</div>
-        <h2 class="font-bebas text-5xl mb-4">¡PEDIDO ENVIADO!</h2>
-        <p class="text-zinc-400 mb-8">Tu pedido fue enviado a WhatsApp</p>
-        <button onclick="location.reload()" class="btn-main px-6 py-3">Hacer otro pedido</button>
+    <!-- 3 Litros -->
+    <div class="pc" id="c-p3l">
+      <img src="aswa de 3 litros.png" alt="3L" class="pimg"
+           onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2270%22 height=%2270%22><rect width=%2270%22 height=%2270%22 fill=%22%231a1a1e%22 rx=%2212%22/><text x=%2235%22 y=%2244%22 text-anchor=%22middle%22 fill=%22%23facc15%22 font-size=%2228%22>🫙</text></svg>'">
+      <div style="flex:1">
+        <div class="pn">Chicha ASWA</div>
+        <div class="pd">Presentación 3 Litros</div>
+        <div class="pp" id="pr-p3l">S/ 13.00</div>
+      </div>
+      <div class="qw">
+        <button class="qb qminus" onclick="qty('p3l',-1)">−</button>
+        <span class="qn" id="q-p3l">0</span>
+        <button class="qb qplus"  onclick="qty('p3l',+1)">+</button>
+      </div>
     </div>
 
-    <script>
-        const st = { cart: { p2l: 0, p3l: 0, p4l: 0 }, pay: 'Efectivo', raw: 0, final: 0, gps_google: '' };
+    <!-- 4 Litros -->
+    <div class="pc" id="c-p4l">
+      <img src="galon familiar de 4 litros.png" alt="4L" class="pimg"
+           onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2270%22 height=%2270%22><rect width=%2270%22 height=%2270%22 fill=%22%231a1a1e%22 rx=%2212%22/><text x=%2235%22 y=%2244%22 text-anchor=%22middle%22 fill=%22%23facc15%22 font-size=%2228%22>🫙</text></svg>'">
+      <div style="flex:1">
+        <div class="pn">Chicha ASWA Familiar</div>
+        <div class="pd">Presentación 4 Litros</div>
+        <div class="pp" id="pr-p4l">S/ 15.00</div>
+      </div>
+      <div class="qw">
+        <button class="qb qminus" onclick="qty('p4l',-1)">−</button>
+        <span class="qn" id="q-p4l">0</span>
+        <button class="qb qplus"  onclick="qty('p4l',+1)">+</button>
+      </div>
+    </div>
+  </section>
 
-        function updateQty(id, delta) {
-            st.cart[id] = Math.max(0, st.cart[id] + delta);
-            document.getElementById(`qty-${id}`).textContent = st.cart[id];
-            calculateTotal();
-        }
+  <!-- DATOS -->
+  <section>
+    <div class="stitle">Tus datos</div>
 
-        function calculateTotal() {
-            const base = (st.cart.p2l * 9) + (st.cart.p3l * 13) + (st.cart.p4l * 15);
-            const deli = Number(document.getElementById('distrito').value) || 0;
-            st.raw = base + deli;
-            st.final = st.raw;
-            document.getElementById('totalPrice').textContent = `S/ ${st.final.toFixed(2)}`;
-            return st.final;
-        }
+    <!-- Banner cliente reconocido -->
+    <div class="cban" id="cban">
+      <div style="flex:1">
+        <div style="font-size:13px;font-weight:700" id="bnNom">¡Hola!</div>
+        <div style="font-size:11px;color:var(--mut)" id="bnDesc"></div>
+      </div>
+      <span class="npill bronce" id="bnNivel">BRONCE</span>
+    </div>
 
-        function setPayment(m) {
-			st.pay = m;
-			document.querySelectorAll('.payment-option').forEach(el => el.classList.remove('active'));
-			document.getElementById(`pay-${m}`).classList.add('active');
-			
-			// Mostrar/ocultar áreas según el método de pago
-			if (m === 'Efectivo') {
-				document.getElementById('vueltoArea').style.display = 'block';
-				document.getElementById('yapeQrArea').classList.add('hidden');
-			} else if (m === 'Yape') {
-				document.getElementById('vueltoArea').style.display = 'none';
-				document.getElementById('yapeQrArea').classList.remove('hidden');
-			} else {
-				document.getElementById('vueltoArea').style.display = 'none';
-				document.getElementById('yapeQrArea').classList.add('hidden');
-			}
-		}
+    <div class="fld">
+      <label>Teléfono</label>
+      <input type="tel" id="telefono" class="inp" maxlength="9"
+             placeholder="9XXXXXXXX" inputmode="numeric" autocomplete="tel">
+    </div>
+    <div class="fld">
+      <label>Nombre completo</label>
+      <input type="text" id="nombre" class="inp"
+             placeholder="¿Cómo te llamamos?" autocomplete="name">
+    </div>
+    <div class="fld">
+      <label>Código referido
+        <span style="color:var(--mut);font-weight:400;text-transform:none;font-size:10px"> (opcional)</span>
+      </label>
+      <input type="text" id="codigoUsado" class="inp" maxlength="13"
+             placeholder="ASWA-XXXXXXXX"
+             style="text-transform:uppercase;letter-spacing:.05em">
+      <span class="rst" id="rst"></span>
+    </div>
+    <div class="fld">
+      <label>Dirección de entrega</label>
+      <input type="text" id="direccion" class="inp"
+             placeholder="Calle, número, referencia" autocomplete="street-address">
+    </div>
+    <div class="fld">
+      <label>Zona</label>
+      <select id="zona" class="inp" onchange="calcTotal()">
+        <option value="">Selecciona tu zona</option>
+        <option value="3">Morales — S/ 3.00</option>
+        <option value="4">Tarapoto — S/ 4.00</option>
+        <option value="5">Banda de Shilcayo — S/ 5.00</option>
+        <option value="0">Recojo en local — Gratis</option>
+        <option value="10">A nivel nacional — S/ 10.00</option>
+      </select>
+    </div>
+  </section>
 
-        function calcVuelto() {
-            const paga = Number(document.getElementById('pagoCon').value) || 0;
-            const v = Math.max(0, paga - st.final);
-            document.getElementById('vueltoMsg').textContent = `Vuelto: S/ ${v.toFixed(2)}`;
-        }
+  <!-- PAGO -->
+  <section>
+    <div class="stitle">Método de pago</div>
+    <div class="pgrd">
+      <div class="popt on" id="pay-Efectivo"      onclick="setPago('Efectivo')">
+        <span class="pic">💵</span>Efectivo</div>
+      <div class="popt"    id="pay-Yape"          onclick="setPago('Yape')">
+        <span class="pic">📱</span>Yape</div>
+      <div class="popt"    id="pay-Plin"          onclick="setPago('Plin')">
+        <span class="pic">💜</span>Plin</div>
+      <div class="popt"    id="pay-Transferencia" onclick="setPago('Transferencia')">
+        <span class="pic">🏦</span>Transf.</div>
+    </div>
 
-        function abrirResumen() {
-            if (st.final <= 0) return alert("Selecciona productos");
-            if (!document.getElementById('telefono').value) return alert("Ingresa teléfono");
-            if (!document.getElementById('nombre').value) return alert("Ingresa nombre");
-            if (!document.getElementById('distrito').value) return alert("Selecciona zona");
+    <!-- QR Yape -->
+    <div class="ybox" id="yapeBox">
+      <img src="yape%20del%20negocio.jpg" alt="QR Yape ASWA"
+           onerror="this.style.display='none'">
+      <div class="ynum">+51 947 999 736</div>
+      <p>Escanea o transfiere al número de arriba</p>
+    </div>
 
-            const list = document.getElementById('listaResumen');
-            list.innerHTML = '';
-            if (st.cart.p2l) list.innerHTML += `<div class="flex justify-between"><span>${st.cart.p2l}x 2L</span><span>S/ ${(st.cart.p2l*9).toFixed(2)}</span></div>`;
-            if (st.cart.p3l) list.innerHTML += `<div class="flex justify-between"><span>${st.cart.p3l}x 3L</span><span>S/ ${(st.cart.p3l*13).toFixed(2)}</span></div>`;
-            if (st.cart.p4l) list.innerHTML += `<div class="flex justify-between"><span>${st.cart.p4l}x 4L</span><span>S/ ${(st.cart.p4l*15).toFixed(2)}</span></div>`;
-            list.innerHTML += `<div class="flex justify-between font-bold mt-2 text-yellow-500 text-lg"><span>Total</span><span>S/ ${st.final.toFixed(2)}</span></div>`;
+    <!-- Vuelto -->
+    <div class="vbox" id="vueltoBox">
+      <span class="vlbl">¿Con cuánto pagarás?</span>
+      <input type="number" id="pagoCon" class="inp"
+             placeholder="S/ 0.00" inputmode="decimal" oninput="calcVuelto()">
+      <div class="vmsg" id="vmsg">Vuelto: S/ 0.00</div>
+    </div>
+  </section>
 
-            document.getElementById('modalResumen').style.display = 'flex';
-        }
+</main>
 
-        function cerrarModal() {
-            document.getElementById('modalResumen').style.display = 'none';
-        }
+<!-- ══════════════ FOOTER BAR ══════════════ -->
+<div class="fbar">
+  <div class="fin">
+    <div>
+      <div class="plbl">Total a pagar</div>
+      <div class="pold" id="pold"></div>
+      <div class="pbig" id="pbig">S/ 0.00</div>
+    </div>
+    <button class="bcont" onclick="abrirResumen()">CONTINUAR →</button>
+  </div>
+</div>
 
-        async function finalizarEnvio() {
-            const msg = `🌽 *NUEVO PEDIDO ASWA*\n👤 ${document.getElementById('nombre').value}\n📱 ${document.getElementById('telefono').value}\n🏠 ${document.getElementById('direccion').value}\n📍 ${document.getElementById('distrito').options[document.getElementById('distrito').selectedIndex].text}\n\n*PRODUCTOS:*\n${st.cart.p2l ? `• ${st.cart.p2l}x 2L\n` : ''}${st.cart.p3l ? `• ${st.cart.p3l}x 3L\n` : ''}${st.cart.p4l ? `• ${st.cart.p4l}x 4L\n` : ''}\n*TOTAL → S/ ${st.final.toFixed(2)}*`;
-            
-            window.open(`https://wa.me/51955273229?text=${encodeURIComponent(msg)}`, '_blank');
-            
-            setTimeout(() => {
-                document.getElementById('modalResumen').style.display = 'none';
-                document.getElementById('successScreen').classList.remove('hidden');
-            }, 1000);
-        }
+<!-- ══════════════ MODAL RESUMEN ══════════════ -->
+<div class="ov" id="mResumen">
+  <div class="sheet">
+    <div class="hnd"></div>
+    <div class="mttl">Resumen del pedido</div>
+    <div id="resLista"></div>
+    <div class="dban" id="dban"></div>
+    <button class="bws" id="btnEnviar" onclick="enviarPedido()">
+      <svg class="ws-ico" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/>
+      </svg>
+      ENVIAR PEDIDO POR WHATSAPP
+    </button>
+    <button class="bcancel" onclick="cerrar('mResumen')">← Volver y editar</button>
+  </div>
+</div>
 
-        document.addEventListener('DOMContentLoaded', () => {
-            lucide.createIcons();
-            setPayment('Efectivo');
+<!-- ══════════════ MODAL REFERIDOS ══════════════ -->
+<div class="ov" id="mRef">
+  <div class="sheet">
+    <div class="hnd"></div>
+    <div class="mttl" style="color:var(--pur)">🎁 Refiere y Gana</div>
+    <div class="rbox">
+      <div style="font-size:13px;font-weight:700;color:var(--y);margin-bottom:10px">¿Cómo funciona?</div>
+      <div style="font-size:13px;color:#a1a1aa;line-height:1.9">
+        1️⃣ Comparte tu código personal con amigos<br>
+        2️⃣ Ellos lo ingresan en su primer pedido<br>
+        3️⃣ <strong style="color:var(--txt)">Ambos reciben 5% de descuento</strong><br>
+        4️⃣ El bono dura <strong style="color:var(--txt)">30 días</strong> desde tu primer pedido<br>
+        5️⃣ Se acumula con cada nuevo referido ✨
+      </div>
+    </div>
+    <div style="font-size:11px;color:var(--mut);text-align:center;margin-bottom:6px;text-transform:uppercase;letter-spacing:.12em">
+      Tu código personal
+    </div>
+    <div class="cfr">
+      <div class="ctxt" id="codModal">ASWA-——</div>
+    </div>
+    <button class="bcopy" onclick="copiarCod()">📋 COPIAR MI CÓDIGO</button>
+    <button class="bshr"  onclick="compartirCod()">
+      <svg class="ws-ico" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/>
+      </svg>
+      COMPARTIR POR WHATSAPP
+    </button>
+    <button class="bcancel" onclick="cerrar('mRef')">Cerrar</button>
+  </div>
+</div>
+
+<!-- ══════════════ MODAL CONFIRMAR ENTREGA ══════════════ -->
+<div class="ov" id="mConfirmar">
+  <div class="sheet">
+    <div class="hnd"></div>
+    <div class="mttl">¿Ya recibiste tu pedido?</div>
+    <div class="confbox">
+      <p>
+        Cuando recibas tu chicha, confirma la entrega.<br>
+        Esto activa tu descuento acumulado y el bono<br>
+        para quien te recomendó 🎉
+      </p>
+      <button class="bconf" id="btnConf" onclick="confirmarEntrega()">
+        ✅ SÍ, YA RECIBÍ MI PEDIDO
+      </button>
+    </div>
+    <button class="bcancel" onclick="cerrar('mConfirmar')">Todavía no llegó</button>
+  </div>
+</div>
+
+<!-- ══════════════ PANTALLA ÉXITO ══════════════ -->
+<div class="succ" id="succScreen">
+  <div class="semo">✅</div>
+  <div class="sttl">¡Pedido enviado!</div>
+  <p class="ssub">Tu pedido fue enviado a WhatsApp.<br>¡Pronto te contactamos! 🌽</p>
+  <div class="scod" id="succCod"></div>
+  <button class="bnvo" onclick="location.reload()">Hacer otro pedido</button>
+</div>
+
+<!-- TOAST -->
+<div class="tst" id="tst"></div>
+
+
+<!-- ══════════════════════════════════════
+     JAVASCRIPT
+══════════════════════════════════════ -->
+<script>
+/* ── ESTADO GLOBAL ── */
+const ST = {
+  cart:   { p2l:0, p3l:0, p4l:0 },
+  precio: { p2l:9, p3l:13, p4l:15 },
+  pago:   'Efectivo',
+  raw:0, final:0, delivery:0,
+  disc:   { fid:0, bon:0, ref:0 },
+  cli: {
+    id:'', tel:'', nom:'', nivel:'BRONCE',
+    pedidos:0, cod:'', bonos:[], consumo:0
+  },
+  pedidoFbId: null
+};
+
+/* ── CARRITO ── */
+function qty(id, d) {
+  ST.cart[id] = Math.max(0, ST.cart[id] + d);
+  document.getElementById('q-' + id).textContent = ST.cart[id];
+  document.getElementById('c-' + id).classList.toggle('on', ST.cart[id] > 0);
+  calcTotal();
+}
+
+function calcTotal() {
+  const base = ST.cart.p2l*9 + ST.cart.p3l*13 + ST.cart.p4l*15;
+  ST.delivery = Number(document.getElementById('zona').value) || 0;
+  ST.raw      = base + ST.delivery;
+  const disc  = Math.min(50, ST.disc.fid + ST.disc.bon + ST.disc.ref);
+  ST.final    = +(ST.raw * (1 - disc/100)).toFixed(2);
+
+  document.getElementById('pbig').textContent = 'S/ ' + ST.final.toFixed(2);
+  const oel = document.getElementById('pold');
+  if (disc > 0 && ST.raw > 0) { oel.textContent = 'S/ '+ST.raw.toFixed(2); oel.style.display='block'; }
+  else oel.style.display = 'none';
+
+  ['p2l','p3l','p4l'].forEach(id => {
+    const b = ST.precio[id], f = +(b*(1-disc/100)).toFixed(2);
+    document.getElementById('pr-'+id).innerHTML = disc > 0
+      ? 'S/ '+f.toFixed(2)+' <span class="po">S/ '+b.toFixed(2)+'</span>'
+      : 'S/ '+b.toFixed(2);
+  });
+}
+
+/* ── PAGO ── */
+function setPago(m) {
+  ST.pago = m;
+  document.querySelectorAll('.popt').forEach(e => e.classList.remove('on'));
+  document.getElementById('pay-'+m).classList.add('on');
+  document.getElementById('yapeBox').classList.toggle('on', m === 'Yape');
+  document.getElementById('vueltoBox').style.display = m === 'Efectivo' ? 'block' : 'none';
+}
+function calcVuelto() {
+  const p = Number(document.getElementById('pagoCon').value) || 0;
+  document.getElementById('vmsg').textContent = 'Vuelto: S/ ' + Math.max(0, p - ST.final).toFixed(2);
+}
+
+/* ── GENERAR CÓDIGO REFERIDO ── */
+async function genCod() {
+  if (!window.currentUser) {
+    await new Promise(res => {
+      const u = window.auth.onAuthStateChanged(usr => { if(usr){ window.currentUser=usr; u(); res(); }});
+    });
+  }
+  return 'ASWA-' + window.currentUser.uid.slice(-8).toUpperCase()
+    .replace(/O/g,'0').replace(/I/g,'1').replace(/L/g,'1');
+}
+
+/* ── BUSCAR CLIENTE POR TELÉFONO ── */
+document.getElementById('telefono').addEventListener('input', async e => {
+  const tel = e.target.value.trim();
+  const ban = document.getElementById('cban');
+  const brn = document.getElementById('btnRef');
+
+  // Reset
+  ST.disc.fid = 0; ST.disc.bon = 0;
+  ST.cli = { id:'',tel:'',nom:'',nivel:'BRONCE',pedidos:0,cod:'',bonos:[],consumo:0 };
+  ban.classList.remove('on'); brn.classList.remove('on'); calcTotal();
+
+  if (tel.length !== 9 || !tel.startsWith('9')) return;
+
+  try {
+    const { query:q, collection:col, where:wh, getDocs:gd } = window.FB;
+    const snap = await gd(q(col(db,'clientes'), wh('telefono','==',tel)));
+
+    if (!snap.empty) {
+      const data = snap.docs[0].data();
+      ST.cli = { ...data, id: snap.docs[0].id };
+
+      // Nivel de fidelidad
+      const p = data.pedidos_totales || 0;
+      let nivel='BRONCE', fid=0;
+      if      (p>=20){ nivel='DIAMANTE'; fid=20; }
+      else if (p>=10){ nivel='ORO';      fid=15; }
+      else if (p>=5) { nivel='PLATA';    fid=10; }
+      ST.cli.nivel = nivel; ST.disc.fid = fid;
+
+      // Bonos no expirados
+      const now   = new Date();
+      const bonos = (data.bonos_activos||[]).filter(b => !b.expira || new Date(b.expira)>now);
+      ST.disc.bon = Math.min(30, bonos.reduce((s,b) => s+b.valor, 0));
+
+      // Autocompletar nombre
+      if (data.nombre && !document.getElementById('nombre').value)
+        document.getElementById('nombre').value = data.nombre;
+
+      // Banner
+      const nm = { BRONCE:'bronce', PLATA:'plata', ORO:'oro', DIAMANTE:'diamante' };
+      document.getElementById('bnNom').textContent = '¡Hola, '+data.nombre+'! 👋';
+      const nb = document.getElementById('bnNivel');
+      nb.className = 'npill ' + (nm[nivel]||'bronce');
+      nb.textContent = nivel;
+      const pts = [];
+      if (fid > 0)        pts.push(fid+'% fidelidad');
+      if (ST.disc.bon>0)  pts.push(ST.disc.bon+'% bonos');
+      document.getElementById('bnDesc').textContent =
+        pts.length ? pts.join(' · ') : (p+' pedido'+(p!==1?'s':''));
+      ban.classList.add('on');
+
+    } else {
+      // Cliente nuevo
+      ST.cli.cod = await genCod();
+      ST.cli.tel = tel;
+    }
+
+    if (ST.cli.cod || ST.cli.codigo_referido) {
+      const cod = ST.cli.cod || ST.cli.codigo_referido;
+      ST.cli.cod = cod;
+      brn.classList.add('on');
+      document.getElementById('codModal').textContent = cod;
+    }
+    calcTotal();
+
+  } catch(err) { console.error('Error buscando cliente:', err); }
+});
+
+/* ── VALIDAR CÓDIGO REFERIDO ── */
+let rtmr;
+document.getElementById('codigoUsado').addEventListener('input', e => {
+  clearTimeout(rtmr);
+  const cod = e.target.value.trim().toUpperCase();
+  const el  = document.getElementById('rst');
+  if (cod.length < 8) { el.textContent=''; ST.disc.ref=0; calcTotal(); return; }
+  el.textContent = '⏳';
+  rtmr = setTimeout(async () => {
+    try {
+      const { query:q, collection:col, where:wh, getDocs:gd } = window.FB;
+      const snap = await gd(q(col(db,'clientes'), wh('codigo_referido','==',cod)));
+      if (!snap.empty && snap.docs[0].id !== ST.cli.id) {
+        el.textContent='✓ +5%'; el.style.color='var(--grn)'; ST.disc.ref=5;
+      } else if (snap.docs[0]?.id === ST.cli.id) {
+        el.textContent='⚠ Tu código'; el.style.color='#f59e0b'; ST.disc.ref=0;
+      } else {
+        el.textContent='✗ Inválido'; el.style.color='var(--red)'; ST.disc.ref=0;
+      }
+    } catch { el.textContent=''; ST.disc.ref=0; }
+    calcTotal();
+  }, 600);
+});
+
+/* ── RESUMEN ── */
+function abrirResumen() {
+  if (ST.final <= 0)    return tst('Selecciona al menos un producto 🛒');
+  const tel = document.getElementById('telefono').value.trim();
+  const nom = document.getElementById('nombre').value.trim();
+  const dis = document.getElementById('zona').value;
+  if (tel.length !== 9) return tst('Ingresa tu número de teléfono 📱');
+  if (!nom)             return tst('Ingresa tu nombre completo');
+  if (!dis)             return tst('Selecciona tu zona de entrega 📍');
+
+  const lista = document.getElementById('resLista'); lista.innerHTML = '';
+  const row = (a,b,cls='') =>
+    lista.insertAdjacentHTML('beforeend',
+      '<div class="rrow '+cls+'"><span>'+a+'</span><span>'+b+'</span></div>');
+
+  if (ST.cart.p2l) row(ST.cart.p2l+'× ASWA 2L',         'S/ '+(ST.cart.p2l*9).toFixed(2));
+  if (ST.cart.p3l) row(ST.cart.p3l+'× ASWA 3L',         'S/ '+(ST.cart.p3l*13).toFixed(2));
+  if (ST.cart.p4l) row(ST.cart.p4l+'× ASWA 4L Familiar','S/ '+(ST.cart.p4l*15).toFixed(2));
+  if (ST.delivery) row('Delivery','S/ '+ST.delivery.toFixed(2));
+
+  const disc = Math.min(50, ST.disc.fid+ST.disc.bon+ST.disc.ref);
+  const db2  = document.getElementById('dban');
+  if (disc > 0) {
+    const pts=[];
+    if(ST.disc.fid) pts.push(ST.disc.fid+'% fidelidad');
+    if(ST.disc.bon) pts.push(ST.disc.bon+'% bonos');
+    if(ST.disc.ref) pts.push(ST.disc.ref+'% referido');
+    db2.textContent = '🎉 Descuento '+disc+'% ('+pts.join(' + ')+') aplicado';
+    db2.classList.add('on');
+    row('Descuento '+disc+'%','−S/ '+(ST.raw*disc/100).toFixed(2),'rdesc');
+  } else db2.classList.remove('on');
+  row('<strong>TOTAL</strong>','<strong>S/ '+ST.final.toFixed(2)+'</strong>','tot');
+
+  document.getElementById('mResumen').classList.add('on');
+}
+
+/* ── ENVIAR PEDIDO ── */
+async function enviarPedido() {
+  const btn = document.getElementById('btnEnviar');
+  btn.disabled = true; btn.textContent = 'Enviando...';
+
+  const telefono    = document.getElementById('telefono').value.trim();
+  const nombre      = document.getElementById('nombre').value.trim();
+  const direccion   = document.getElementById('direccion').value.trim() || 'No especificada';
+  const zonaSel     = document.getElementById('zona');
+  const zonaTexto   = zonaSel.options[zonaSel.selectedIndex]?.text || '';
+  const codigoUsado = document.getElementById('codigoUsado').value.trim().toUpperCase();
+  const pagoCon     = Number(document.getElementById('pagoCon').value) || ST.final;
+  const disc        = Math.min(50, ST.disc.fid+ST.disc.bon+ST.disc.ref);
+  const pid         = '#'+Date.now().toString(36).slice(-6).toUpperCase();
+
+  /* Construir mensaje WhatsApp */
+  let items = '';
+  if (ST.cart.p2l) items += '• '+ST.cart.p2l+'× ASWA 2L → S/ '+(ST.cart.p2l*9).toFixed(2)+'\n';
+  if (ST.cart.p3l) items += '• '+ST.cart.p3l+'× ASWA 3L → S/ '+(ST.cart.p3l*13).toFixed(2)+'\n';
+  if (ST.cart.p4l) items += '• '+ST.cart.p4l+'× ASWA 4L Familiar → S/ '+(ST.cart.p4l*15).toFixed(2)+'\n';
+
+  const msg =
+    '🌽 *NUEVO PEDIDO ASWA '+pid+'*\n\n'
+    +'👤 *'+nombre+'*\n'
+    +'📱 '+telefono+'\n'
+    +'🏠 '+direccion+'\n'
+    +'📍 '+zonaTexto+'\n\n'
+    +'*PRODUCTOS:*\n'+items+'\n'
+    +(disc>0 ? '🎉 *Descuento '+disc+'%:* −S/ '+(ST.raw*disc/100).toFixed(2)+'\n' : '')
+    +'💰 *TOTAL: S/ '+ST.final.toFixed(2)+'*\n'
+    +'💳 *Pago: '+ST.pago+'*'
+    +(ST.pago==='Efectivo' ? ' | Con S/ '+pagoCon.toFixed(2)+' → Vuelto S/ '+Math.max(0,pagoCon-ST.final).toFixed(2) : '')
+    +(codigoUsado ? '\n🔖 Código referido: '+codigoUsado : '');
+
+  /* Enviar a ambos WhatsApp */
+  window.open('https://wa.me/51955273229?text='+encodeURIComponent(msg), '_blank');
+  setTimeout(() => window.open('https://wa.me/51986445531?text='+encodeURIComponent(msg), '_blank'), 900);
+
+  /* Guardar en Firestore */
+  try {
+    const { addDoc:ad, collection:col, query:q, where:wh,
+            getDocs:gd, doc:d, updateDoc:ud, serverTimestamp:ts } = window.FB;
+
+    // 1. Guardar pedido
+    const ref = await ad(col(db,'pedidos'), {
+      nombre, telefono, direccion,
+      distrito:       zonaTexto,
+      items:          { ...ST.cart },
+      subtotal:       ST.raw,
+      delivery:       ST.delivery,
+      descuento_pct:  disc,
+      descuento_amt:  +(ST.raw*disc/100).toFixed(2),
+      total:          ST.final,
+      pago:           ST.pago,
+      pago_con:       pagoCon,
+      vuelto:         Math.max(0, pagoCon-ST.final),
+      codigo_usado:   codigoUsado || null,
+      nivel_cliente:  ST.cli.nivel || 'BRONCE',
+      estado:         'Pendiente',
+      confirmacion_cliente: false, // Cloud Function escucha este campo
+      fecha:          ts()
+    });
+    ST.pedidoFbId = ref.id;
+
+    // 2. Upsert cliente
+    const snapC = await gd(q(col(db,'clientes'), wh('telefono','==',telefono)));
+    const codFin = ST.cli.cod || await genCod();
+    const cdata  = {
+      nombre, telefono,
+      nivel:           ST.cli.nivel || 'BRONCE',
+      pedidos_totales: (ST.cli.pedidos||0) + 1,
+      total_consumo:   (ST.cli.consumo||0) + ST.final,
+      ultimo_pedido:   ts(),
+      codigo_referido: codFin,
+      bonos_activos:   ST.cli.bonos || []
+    };
+    if (!snapC.empty) await ud(d(db,'clientes',snapC.docs[0].id), cdata);
+    else              await ad(col(db,'clientes'), cdata);
+
+    // 3. Aplicar bono al referidor
+    if (codigoUsado && ST.disc.ref > 0) {
+      const snapR = await gd(q(col(db,'clientes'), wh('codigo_referido','==',codigoUsado)));
+      if (!snapR.empty) {
+        const rd  = snapR.docs[0].data();
+        const exp = new Date(); exp.setDate(exp.getDate()+30);
+        await ud(d(db,'clientes',snapR.docs[0].id), {
+          bonos_activos: [...(rd.bonos_activos||[]), {
+            tipo:'referido', valor:5, origen:telefono,
+            fecha: new Date().toISOString(), expira: exp.toISOString()
+          }],
+          referidos: [...(rd.referidos||[]), telefono]
         });
-    </script>
+      }
+    }
+
+  } catch(err) { console.error('Firebase error:', err); }
+
+  /* Restaurar botón */
+  btn.disabled = false;
+  btn.innerHTML =
+    '<svg class="ws-ico" viewBox="0 0 24 24" fill="currentColor">'
+    +'<path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/>'
+    +'</svg> ENVIAR PEDIDO POR WHATSAPP';
+
+  /* Mostrar éxito y modal confirmar entrega */
+  setTimeout(() => {
+    cerrar('mResumen');
+    if (ST.cli.cod) {
+      const el = document.getElementById('succCod');
+      el.textContent = 'Tu código: ' + ST.cli.cod;
+      el.style.display = 'block';
+    }
+    document.getElementById('succScreen').classList.add('on');
+    if (ST.pedidoFbId) {
+      setTimeout(() => {
+        document.getElementById('succScreen').classList.remove('on');
+        document.getElementById('mConfirmar').classList.add('on');
+      }, 3500);
+    }
+  }, 1200);
+}
+
+/* ── CONFIRMAR ENTREGA (activa Cloud Function) ── */
+async function confirmarEntrega() {
+  if (!ST.pedidoFbId) { cerrar('mConfirmar'); location.reload(); return; }
+  const btn = document.getElementById('btnConf');
+  btn.disabled = true; btn.textContent = 'Confirmando...';
+  try {
+    const { doc:d, updateDoc:ud } = window.FB;
+    /* Este update activa onPedidoConfirmado en Cloud Functions:
+       → cambia estado a confirmado
+       → activa ciclo 30 días
+       → acumula descuento referidor
+       → genera nota de venta PDF */
+    await ud(d(db,'pedidos',ST.pedidoFbId), {
+      confirmacion_cliente: true,
+      estado: 'en_reparto'
+    });
+    cerrar('mConfirmar');
+    tst('🎉 ¡Entrega confirmada! Tu descuento está activo', 3500);
+    setTimeout(() => location.reload(), 3700);
+  } catch(err) {
+    console.error(err);
+    btn.disabled = false; btn.textContent = '✅ SÍ, YA RECIBÍ MI PEDIDO';
+  }
+}
+
+/* ── MODALES ── */
+function cerrar(id) { document.getElementById(id).classList.remove('on'); }
+document.querySelectorAll('.ov').forEach(m => {
+  m.addEventListener('click', e => { if (e.target===m) m.classList.remove('on'); });
+});
+
+/* ── REFERIDOS ── */
+function abrirRef() {
+  if (ST.cli.cod) document.getElementById('codModal').textContent = ST.cli.cod;
+  document.getElementById('mRef').classList.add('on');
+}
+function copiarCod() {
+  const c = ST.cli.cod;
+  if (!c) return tst('Ingresa tu teléfono primero 📱');
+  navigator.clipboard.writeText(c).then(() => tst('¡Código copiado! 📋', 2000));
+}
+function compartirCod() {
+  const c = ST.cli.cod;
+  if (!c) return tst('Ingresa tu teléfono primero 📱');
+  const txt =
+    '¡Prueba *La Rica Chicha — ASWA*! 🌽\n\n'
+    +'Usa mi código *'+c+'* en tu primer pedido.\n\n'
+    +'✅ Ambos recibimos 5% de descuento\n'
+    +'⏰ Válido por 30 días\n\n'
+    +'Pide aquí 👉 https://jsangama.github.io/aswa\n\n'
+    +'¡El sabor de la selva! 🇵🇪';
+  if (navigator.share) {
+    navigator.share({ title:'ASWA', text:txt })
+      .catch(() => window.open('https://wa.me/?text='+encodeURIComponent(txt),'_blank'));
+  } else {
+    window.open('https://wa.me/?text='+encodeURIComponent(txt),'_blank');
+  }
+}
+
+/* ── TOAST ── */
+function tst(msg, dur=2500) {
+  const t = document.getElementById('tst');
+  t.textContent = msg; t.className = 'tst on';
+  setTimeout(() => t.className = 'tst', dur);
+}
+
+/* ── INIT ── */
+document.addEventListener('DOMContentLoaded', () => setPago('Efectivo'));
+</script>
 </body>
 </html>
