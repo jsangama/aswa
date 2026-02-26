@@ -15,7 +15,7 @@
     import { initializeApp }
       from "https://www.gstatic.com/firebasejs/11.1.0/firebase-app.js";
     import { getFirestore, collection, addDoc, query, where,
-             getDocs, serverTimestamp, doc, updateDoc }
+             getDocs, serverTimestamp, doc, updateDoc, getDoc }
       from "https://www.gstatic.com/firebasejs/11.1.0/firebase-firestore.js";
     import { getAuth, signInAnonymously, onAuthStateChanged }
       from "https://www.gstatic.com/firebasejs/11.1.0/firebase-auth.js";
@@ -32,7 +32,7 @@
     window.db   = getFirestore(app);
     window.auth = getAuth(app);
     window.FB   = { collection, addDoc, query, where, getDocs,
-                    serverTimestamp, doc, updateDoc };
+                    serverTimestamp, doc, updateDoc, getDoc };
     onAuthStateChanged(window.auth, u => {
       if (u) window.currentUser = u;
       else   signInAnonymously(window.auth).catch(console.error);
@@ -64,7 +64,7 @@
     body {
       font-family: 'Poppins', sans-serif;
       background: var(--bg); color: var(--txt);
-      min-height: 100dvh; padding-bottom: 130px;
+      min-height: 100dvh; padding-bottom: 90px;
       -webkit-font-smoothing: antialiased;
     }
 
@@ -199,29 +199,268 @@
     .vlbl { font-size:11px; color:var(--mut); text-transform:uppercase; letter-spacing:.1em; font-weight:600; display:block; margin-bottom:8px; }
     .vmsg { font-size:14px; font-weight:700; color:var(--y); margin-top:10px; }
 
-    /* ══ FOOTER BAR ══ */
+    /* ══ BARRA DE PEDIDO FLOTANTE (solo visible en pantalla Pedir) ══ */
     .fbar {
-      position:fixed; bottom:0; left:0; right:0; z-index:90;
+      position:fixed; bottom:68px; left:0; right:0; z-index:90;
       background:rgba(9,9,11,.97); border-top:1px solid var(--brd);
-      padding:12px 20px 18px;
+      padding:10px 20px 12px;
+      display:none;
     }
+    .fbar.show { display:block; }
     .fin {
       max-width:430px; margin:0 auto;
       display:flex; align-items:center; justify-content:space-between; gap:16px;
     }
     .plbl { font-size:10px; color:var(--mut); text-transform:uppercase; letter-spacing:.1em; }
     .pold { font-size:12px; color:var(--mut); text-decoration:line-through; display:none; }
-    .pbig { font-family:'Bebas Neue',cursive; font-size:40px; color:var(--y); line-height:1; }
+    .pbig { font-family:'Bebas Neue',cursive; font-size:38px; color:var(--y); line-height:1; }
     .bcont {
       background:var(--y); color:#000; border:none;
-      padding:16px 28px; border-radius:14px;
-      font-size:15px; font-weight:800; cursor:pointer;
+      padding:14px 24px; border-radius:14px;
+      font-size:14px; font-weight:800; cursor:pointer;
       white-space:nowrap; flex-shrink:0;
       transition:background .15s, transform .1s;
       font-family:'Poppins',sans-serif;
     }
     .bcont:active { transform:scale(.96); }
     .bcont:hover  { background:var(--y2); }
+
+    /* ══ NAVEGACIÓN INFERIOR ══ */
+    .bottomnav {
+      position:fixed; bottom:0; left:0; right:0; z-index:100;
+      background:rgba(9,9,11,0.97);
+      backdrop-filter:blur(20px);
+      border-top:1px solid var(--brd);
+      height:68px;
+    }
+    .bnav-inner {
+      max-width:430px; margin:0 auto; height:100%;
+      display:grid; grid-template-columns:repeat(4,1fr);
+    }
+    .bnav-btn {
+      display:flex; flex-direction:column; align-items:center; justify-content:center;
+      gap:4px; border:none; background:transparent; color:var(--mut);
+      font-family:'Poppins',sans-serif; font-size:10px; font-weight:600;
+      cursor:pointer; transition:color .15s; padding:0; position:relative;
+    }
+    .bnav-btn.active { color:var(--y); }
+    .bnav-btn svg { width:22px; height:22px; }
+    .bnav-btn .badge {
+      position:absolute; top:6px; right:calc(50% - 18px);
+      background:var(--red); color:#fff;
+      font-size:9px; font-weight:800;
+      min-width:16px; height:16px; border-radius:999px;
+      display:flex; align-items:center; justify-content:center;
+      padding:0 4px; display:none;
+    }
+    .bnav-btn .badge.show { display:flex; }
+
+    /* ══ PANTALLAS (páginas) ══ */
+    .page { display:none; }
+    .page.active { display:block; }
+
+    /* ══ GALERÍA ══ */
+    .galeria-hero {
+      text-align:center; padding:28px 16px 20px;
+    }
+    .galeria-hero h2 {
+      font-family:'Bebas Neue',cursive; font-size:42px;
+      letter-spacing:.05em; color:var(--txt);
+      display:flex; align-items:center; justify-content:center; gap:12px;
+    }
+    .galeria-hero p { font-size:13px; color:var(--mut); margin-top:4px; }
+
+    .gal-filters {
+      display:grid; grid-template-columns:repeat(4,1fr); gap:8px;
+      padding:0 16px 16px; max-width:430px; margin:0 auto;
+    }
+    .gf-btn {
+      background:var(--s1); border:1px solid var(--brd); color:var(--mut);
+      border-radius:12px; padding:10px 4px; font-size:11px; font-weight:700;
+      cursor:pointer; text-align:center; transition:all .15s;
+      font-family:'Poppins',sans-serif;
+    }
+    .gf-btn.active { background:var(--y); color:#000; border-color:var(--y); }
+
+    .gal-grid {
+      display:grid; grid-template-columns:1fr 1fr;
+      gap:8px; padding:0 16px; max-width:430px; margin:0 auto;
+    }
+    .gal-card {
+      background:var(--s1); border:1px solid var(--brd); border-radius:14px;
+      overflow:hidden; position:relative; aspect-ratio:1;
+      cursor:pointer; transition:transform .2s;
+    }
+    .gal-card:hover { transform:scale(.98); }
+    .gal-card img { width:100%; height:100%; object-fit:cover; display:block; }
+    .gal-card .gal-overlay {
+      position:absolute; inset:0;
+      background:linear-gradient(to top, rgba(0,0,0,.7) 0%, transparent 50%);
+    }
+    .gal-card .gal-info {
+      position:absolute; bottom:0; left:0; right:0; padding:10px;
+    }
+    .gal-card .gal-user { font-size:11px; font-weight:700; color:#fff; }
+    .gal-card .gal-likes { font-size:10px; color:rgba(255,255,255,.7); }
+    .gal-card .gal-badge {
+      position:absolute; top:8px; right:8px;
+      background:var(--y); color:#000;
+      font-size:9px; font-weight:800;
+      padding:2px 7px; border-radius:999px;
+    }
+    .gal-empty {
+      text-align:center; padding:48px 16px; color:var(--mut);
+    }
+    .gal-empty .gal-emo { font-size:48px; margin-bottom:12px; }
+    .gal-empty p { font-size:14px; }
+
+    /* ══ BONO (UGC) ══ */
+    .bono-page { max-width:430px; margin:0 auto; padding:20px 16px 30px; }
+    .bono-header {
+      background:linear-gradient(135deg, rgba(250,204,21,.12), rgba(250,204,21,.04));
+      border:1px solid rgba(250,204,21,.25); border-radius:16px;
+      padding:16px; margin-bottom:20px; text-align:center;
+    }
+    .bono-header h2 {
+      font-family:'Bebas Neue',cursive; font-size:28px; color:var(--y);
+      letter-spacing:.08em; margin-bottom:6px;
+    }
+    .bono-pills { display:flex; gap:8px; justify-content:center; flex-wrap:wrap; margin-top:8px; }
+    .bono-pill {
+      background:rgba(250,204,21,.15); border:1px solid rgba(250,204,21,.3);
+      color:var(--y); font-size:11px; font-weight:700;
+      padding:4px 12px; border-radius:999px;
+    }
+    .bono-section {
+      background:var(--s1); border:1px solid var(--brd); border-radius:14px;
+      padding:16px; margin-bottom:14px;
+    }
+    .bono-section-title {
+      font-size:12px; font-weight:700; color:var(--y);
+      text-transform:uppercase; letter-spacing:.1em; margin-bottom:12px;
+    }
+    .bono-inp {
+      width:100%; background:var(--s2); border:1px solid var(--brd);
+      color:var(--txt); border-radius:10px; padding:12px 14px;
+      font-size:14px; font-family:'Poppins',sans-serif;
+      outline:none; margin-bottom:10px; transition:border-color .2s;
+      -webkit-appearance:none; appearance:none;
+    }
+    .bono-inp:focus { border-color:var(--y); }
+    .bono-inp::placeholder { color:var(--mut); }
+    .bono-inp:last-child { margin-bottom:0; }
+    select.bono-inp { cursor:pointer; }
+    textarea.bono-inp { resize:none; height:80px; }
+
+    .upload-zone {
+      border:2px dashed rgba(250,204,21,.3); border-radius:12px;
+      padding:24px 16px; text-align:center; cursor:pointer;
+      transition:all .2s; margin-top:4px;
+    }
+    .upload-zone:hover { border-color:var(--y); background:rgba(250,204,21,.04); }
+    .upload-zone .uico { font-size:28px; margin-bottom:6px; }
+    .upload-zone p { font-size:12px; color:var(--mut); }
+    .upload-zone.has-file { border-color:var(--grn); background:rgba(34,197,94,.04); }
+    .upload-preview { width:100%; border-radius:10px; margin-top:10px; max-height:200px; object-fit:cover; display:none; }
+
+    .autorizo-box {
+      background:var(--s1); border:1px solid var(--brd); border-radius:12px;
+      padding:14px; display:flex; align-items:flex-start; gap:12px;
+      margin-bottom:14px;
+    }
+    .autorizo-box input[type=checkbox] {
+      width:18px; height:18px; flex-shrink:0; margin-top:2px;
+      accent-color:var(--y); cursor:pointer;
+    }
+    .autorizo-box p { font-size:11px; color:var(--mut); line-height:1.6; }
+    .autorizo-box strong { color:var(--y); }
+
+    .btn-enviar-bono {
+      width:100%; background:var(--s2); color:var(--mut);
+      border:1px solid var(--brd); border-radius:14px;
+      padding:16px; font-size:15px; font-weight:800;
+      cursor:not-allowed; font-family:'Poppins',sans-serif;
+      transition:all .2s;
+    }
+    .btn-enviar-bono.ready {
+      background:var(--y); color:#000; border-color:var(--y); cursor:pointer;
+    }
+    .btn-enviar-bono.ready:hover { background:var(--y2); }
+
+    /* ══ CONCURSO ══ */
+    .concurso-page { max-width:430px; margin:0 auto; padding:20px 16px 30px; }
+    .concurso-card {
+      background:linear-gradient(135deg, #ec4899, #f97316, #eab308);
+      border-radius:20px; padding:20px; margin-bottom:16px;
+      position:relative; overflow:hidden;
+    }
+    .concurso-card::before {
+      content:''; position:absolute; top:-30px; right:-30px;
+      width:120px; height:120px; border-radius:50%;
+      background:rgba(255,255,255,.08);
+    }
+    .concurso-card::after {
+      content:''; position:absolute; bottom:-20px; left:-20px;
+      width:80px; height:80px; border-radius:50%;
+      background:rgba(255,255,255,.06);
+    }
+    .conc-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; }
+    .conc-title { font-family:'Bebas Neue',cursive; font-size:30px; color:#fff; letter-spacing:.05em; }
+    .conc-subtitle { font-size:12px; color:rgba(255,255,255,.8); margin-top:-2px; }
+    .conc-close {
+      background:rgba(0,0,0,.2); border:none; color:#fff;
+      width:28px; height:28px; border-radius:50%; cursor:pointer;
+      font-size:14px; display:flex; align-items:center; justify-content:center;
+    }
+    .conc-premio {
+      background:rgba(0,0,0,.25); border-radius:12px; padding:12px 14px; margin-bottom:12px;
+    }
+    .conc-premio-label { font-size:10px; color:rgba(255,255,255,.7); text-transform:uppercase; letter-spacing:.1em; }
+    .conc-premio-val { font-size:16px; font-weight:800; color:#fff; margin-top:2px; }
+    .conc-desc { font-size:13px; color:rgba(255,255,255,.85); margin-bottom:14px; line-height:1.5; }
+    .conc-meta { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:16px; }
+    .conc-pill {
+      background:rgba(0,0,0,.25); color:#fff;
+      font-size:11px; font-weight:600; padding:4px 12px; border-radius:999px;
+      display:flex; align-items:center; gap:5px;
+    }
+    .btn-participar {
+      width:100%; background:var(--y); color:#000; border:none;
+      padding:16px; border-radius:14px; font-size:15px; font-weight:800;
+      cursor:pointer; font-family:'Poppins',sans-serif;
+      transition:background .15s, transform .1s;
+    }
+    .btn-participar:active { transform:scale(.98); }
+
+    .conc-ranking {
+      background:var(--s1); border:1px solid var(--brd); border-radius:14px;
+      padding:16px; margin-bottom:14px;
+    }
+    .conc-ranking h3 {
+      font-size:13px; font-weight:700; color:var(--y);
+      text-transform:uppercase; letter-spacing:.1em; margin-bottom:14px;
+    }
+    .rank-item {
+      display:flex; align-items:center; gap:12px;
+      padding:10px 0; border-bottom:1px solid var(--brd);
+    }
+    .rank-item:last-child { border-bottom:none; }
+    .rank-num {
+      font-family:'Bebas Neue',cursive; font-size:22px;
+      color:var(--mut); min-width:28px; text-align:center;
+    }
+    .rank-num.gold   { color:#fbbf24; }
+    .rank-num.silver { color:#94a3b8; }
+    .rank-num.bronze { color:#b45309; }
+    .rank-info { flex:1; }
+    .rank-user { font-size:13px; font-weight:700; }
+    .rank-sub  { font-size:11px; color:var(--mut); }
+    .rank-likes { font-size:14px; font-weight:800; color:var(--y); }
+
+    .conc-empty {
+      text-align:center; padding:32px 16px; color:var(--mut);
+    }
+    .conc-empty .cemo { font-size:44px; margin-bottom:10px; }
 
     /* ══ MODALES (bottom sheet) ══ */
     .ov {
@@ -330,6 +569,114 @@
       font-family:'Poppins',sans-serif;
     }
 
+    /* ══ REDES SOCIALES ══ */
+    .social-section {
+      margin-bottom: 28px;
+    }
+    .social-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+    .social-btn {
+      display: flex; align-items: center; gap: 10px;
+      background: var(--s1); border: 1px solid var(--brd);
+      border-radius: 14px; padding: 14px 16px;
+      text-decoration: none; color: var(--txt);
+      font-size: 13px; font-weight: 600;
+      transition: all .2s; cursor: pointer;
+      position: relative; overflow: hidden;
+    }
+    .social-btn::before {
+      content: '';
+      position: absolute; inset: 0;
+      opacity: 0; transition: opacity .2s;
+    }
+    .social-btn:active { transform: scale(.97); }
+    .social-btn .sico {
+      width: 36px; height: 36px; border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px; flex-shrink: 0;
+    }
+    .social-btn .sname { font-size: 12px; font-weight: 700; }
+    .social-btn .ssub  { font-size: 10px; color: var(--mut); margin-top: 1px; }
+
+    /* Colores por red */
+    .sb-facebook { border-color: rgba(24,119,242,.3); }
+    .sb-facebook .sico { background: rgba(24,119,242,.12); color: #1877f2; }
+    .sb-facebook:hover { border-color:#1877f2; background:rgba(24,119,242,.06); }
+
+    .sb-instagram { border-color: rgba(228,64,95,.3); }
+    .sb-instagram .sico { background: rgba(228,64,95,.12); color: #e4405f; }
+    .sb-instagram:hover { border-color:#e4405f; background:rgba(228,64,95,.06); }
+
+    .sb-tiktok { border-color: rgba(255,0,80,.3); }
+    .sb-tiktok .sico { background: rgba(255,0,80,.1); color: #ff0050; }
+    .sb-tiktok:hover { border-color:#ff0050; background:rgba(255,0,80,.06); }
+
+    .sb-x { border-color: rgba(255,255,255,.15); }
+    .sb-x .sico { background: rgba(255,255,255,.06); color: var(--txt); }
+    .sb-x:hover { border-color:var(--txt); background:rgba(255,255,255,.04); }
+
+    .sb-youtube { border-color: rgba(255,0,0,.3); }
+    .sb-youtube .sico { background: rgba(255,0,0,.1); color: #ff0000; }
+    .sb-youtube:hover { border-color:#ff0000; background:rgba(255,0,0,.06); }
+
+    .sb-maps {
+      grid-column: 1 / -1;
+      border-color: rgba(250,204,21,.3);
+      background: linear-gradient(135deg,rgba(250,204,21,.06),rgba(250,204,21,.02));
+    }
+    .sb-maps .sico { background: rgba(250,204,21,.12); color: var(--y); }
+    .sb-maps:hover { border-color: var(--y); background:rgba(250,204,21,.08); }
+    .sb-maps .sname { color: var(--y); }
+
+    /* Estado cargando */
+    .social-skeleton {
+      background: var(--s1); border: 1px solid var(--brd);
+      border-radius: 14px; height: 66px;
+      animation: shimmer 1.5s infinite;
+    }
+    @keyframes shimmer {
+      0%,100% { opacity:.4; } 50% { opacity:.8; }
+    }
+
+    /* ══ BOTÓN GPS ══ */
+    .btn-gps {
+      width: 100%; background: var(--s2);
+      border: 1px solid var(--brd);
+      color: var(--y); border-radius: 14px;
+      padding: 16px 20px;
+      font-size: 13px; font-weight: 800;
+      font-family: 'Poppins', sans-serif;
+      letter-spacing: 0.08em; cursor: pointer;
+      display: flex; align-items: center; justify-content: center; gap: 10px;
+      transition: all .2s;
+      text-transform: uppercase;
+    }
+    .btn-gps:hover  { background: rgba(250,204,21,.08); border-color: var(--y); }
+    .btn-gps:active { transform: scale(.98); }
+    .btn-gps.loading {
+      color: var(--mut); border-color: var(--brd);
+      animation: pulse 1.2s infinite;
+    }
+    .btn-gps.success {
+      color: var(--grn); border-color: rgba(34,197,94,.4);
+      background: rgba(34,197,94,.06);
+    }
+    .btn-gps.error {
+      color: var(--red); border-color: rgba(239,68,68,.3);
+    }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.5} }
+
+    .gps-status {
+      margin-top: 8px; font-size: 12px; color: var(--mut);
+      padding: 0 4px; min-height: 16px;
+      display: flex; align-items: center; gap: 6px;
+    }
+    .gps-status.ok  { color: var(--grn); }
+    .gps-status.err { color: var(--red); }
+
     /* ══ TOAST ══ */
     .tst {
       position:fixed; bottom:140px; left:50%;
@@ -370,6 +717,12 @@
 </header>
 <div class="sp"></div>
 
+<!-- ══════════════════════════════════════
+     PÁGINAS
+══════════════════════════════════════ -->
+
+<!-- PÁGINA: PEDIR -->
+<div class="page active" id="page-pedir">
 <!-- ══════════════ MAIN ══════════════ -->
 <main>
 
@@ -462,6 +815,20 @@
       <label>Dirección de entrega</label>
       <input type="text" id="direccion" class="inp"
              placeholder="Calle, número, referencia" autocomplete="street-address">
+      <div style="font-size:11px;color:var(--mut);margin-top:6px;padding:0 4px">
+        ¿No aparece tu dirección? Puedes escribirla manualmente.
+      </div>
+    </div>
+    <div class="fld">
+      <button class="btn-gps" id="btnGPS" onclick="compartirUbicacion()">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
+             stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
+          <circle cx="12" cy="10" r="3"/>
+        </svg>
+        <span id="gpsLabel">COMPARTIR UBICACIÓN GPS</span>
+      </button>
+      <div class="gps-status" id="gpsStatus"></div>
     </div>
     <div class="fld">
       <label>Zona</label>
@@ -507,10 +874,171 @@
     </div>
   </section>
 
-</main>
+  <!-- ══ REDES SOCIALES & UBICACIÓN ══ -->
+  <section class="social-section">
+    <div class="stitle">Encuéntranos</div>
+    <div id="socialGrid" class="social-grid">
+      <div class="social-skeleton"></div>
+      <div class="social-skeleton"></div>
+      <div class="social-skeleton"></div>
+      <div class="social-skeleton"></div>
+      <div class="social-skeleton" style="grid-column:1/-1"></div>
+    </div>
+  </section>
 
-<!-- ══════════════ FOOTER BAR ══════════════ -->
-<div class="fbar">
+</main>
+</div><!-- /page-pedir -->
+
+<!-- ══════════════════════════════════════
+     PÁGINA: GALERÍA
+══════════════════════════════════════ -->
+<div class="page" id="page-galeria">
+  <div class="galeria-hero">
+    <h2>📸 GALERÍA</h2>
+    <p>Momentos de nuestra comunidad</p>
+  </div>
+  <div class="gal-filters">
+    <button class="gf-btn active" onclick="filtrarGal('todos',this)">Todos</button>
+    <button class="gf-btn" onclick="filtrarGal('destacados',this)">⭐ Destacados</button>
+    <button class="gf-btn" onclick="filtrarGal('recientes',this)">🕐 Recientes</button>
+    <button class="gf-btn" onclick="filtrarGal('populares',this)">🔥 Populares</button>
+  </div>
+  <div class="gal-grid" id="galGrid">
+    <!-- fotos cargadas dinámicamente desde Firestore -->
+    <div style="grid-column:1/-1" class="gal-empty">
+      <div class="gal-emo">📸</div>
+      <p>Cargando galería...</p>
+    </div>
+  </div>
+</div><!-- /page-galeria -->
+
+<!-- ══════════════════════════════════════
+     PÁGINA: BONO (UGC)
+══════════════════════════════════════ -->
+<div class="page" id="page-bono">
+  <div class="bono-page">
+
+    <!-- Header con bonos disponibles -->
+    <div class="bono-header">
+      <h2>🤳 COMPARTE Y GANA</h2>
+      <p style="font-size:12px;color:var(--mut)">Sube tu contenido y gana descuentos</p>
+      <div class="bono-pills">
+        <span class="bono-pill">📸 Foto +2%</span>
+        <span class="bono-pill">🎬 Video +4%</span>
+        <span class="bono-pill">📹 Reels +2%</span>
+      </div>
+    </div>
+
+    <!-- Tu Info -->
+    <div class="bono-section">
+      <div class="bono-section-title">Tu Info</div>
+      <input type="text"   id="b-nombre"   class="bono-inp" placeholder="Nombre">
+      <input type="tel"    id="b-celular"  class="bono-inp" placeholder="Celular" maxlength="9" inputmode="numeric">
+      <select id="b-primera" class="bono-inp">
+        <option value="">¿Primera compra?</option>
+        <option value="si">Sí, es mi primera vez</option>
+        <option value="no">No, ya soy cliente</option>
+      </select>
+    </div>
+
+    <!-- Contenido -->
+    <div class="bono-section">
+      <div class="bono-section-title">Contenido</div>
+      <select id="b-tipo" class="bono-inp" onchange="actualizarBonoPill()">
+        <option value="">Tipo de contenido</option>
+        <option value="foto">📸 Foto</option>
+        <option value="video">🎬 Video</option>
+        <option value="reels">📹 Reels / Story</option>
+        <option value="review">⭐ Reseña escrita</option>
+      </select>
+      <select id="b-plataforma" class="bono-inp">
+        <option value="">Plataforma</option>
+        <option value="instagram">Instagram</option>
+        <option value="tiktok">TikTok</option>
+        <option value="facebook">Facebook</option>
+        <option value="youtube">YouTube</option>
+        <option value="google">Google Maps</option>
+        <option value="otro">Otro</option>
+      </select>
+      <input type="text" id="b-usuario"  class="bono-inp" placeholder="Tu usuario @">
+      <input type="url"  id="b-link"     class="bono-inp" placeholder="Link publicación">
+      <textarea          id="b-mensaje"  class="bono-inp" placeholder="Tu mensaje / experiencia con ASWA"></textarea>
+      <select id="b-campana" class="bono-inp">
+        <option value="">Sin campaña</option>
+        <option value="febrero2026">Febrero 2026</option>
+        <option value="verano2026">Verano 2026</option>
+      </select>
+
+      <!-- Upload foto -->
+      <div class="upload-zone" id="uploadZone" onclick="document.getElementById('b-foto').click()">
+        <div class="uico">📁</div>
+        <p>Toca para subir imagen o video</p>
+        <input type="file" id="b-foto" accept="image/*,video/*" style="display:none" onchange="previsualizarArchivo(this)">
+      </div>
+      <img id="uploadPreview" class="upload-preview" alt="preview">
+    </div>
+
+    <!-- Autorización -->
+    <div class="autorizo-box">
+      <input type="checkbox" id="b-autorizo" onchange="checkBonoReady()">
+      <p>
+        <strong>AUTORIZO A ASWA</strong><br>
+        Uso de imagen en redes, publicidad y materiales.
+        Puedo solicitar eliminación. Mayor de 18 años.
+      </p>
+    </div>
+
+    <!-- Botón enviar -->
+    <button class="btn-enviar-bono" id="btnEnviarBono" onclick="enviarBono()">
+      ENVIAR
+    </button>
+
+  </div>
+</div><!-- /page-bono -->
+
+<!-- ══════════════════════════════════════
+     PÁGINA: CONCURSO
+══════════════════════════════════════ -->
+<div class="page" id="page-concurso">
+  <div class="concurso-page">
+
+    <!-- Card principal del concurso -->
+    <div class="concurso-card" id="concursoCard">
+      <div class="conc-header">
+        <div>
+          <div class="conc-title">🏆 CONCURSO</div>
+          <div class="conc-subtitle" id="concSubtitle">Mejor Foto ASWA · Febrero 2026</div>
+        </div>
+        <button class="conc-close" onclick="irA('pedir')">✕</button>
+      </div>
+      <div class="conc-premio">
+        <div class="conc-premio-label">🎁 Premio</div>
+        <div class="conc-premio-val" id="concPremio">Pedido Gratis</div>
+      </div>
+      <div class="conc-desc" id="concDesc">Comparte tu mejor momento disfrutando una chicha ASWA</div>
+      <div class="conc-meta">
+        <div class="conc-pill">📅 <span id="concFecha">Hasta 28 feb</span></div>
+        <div class="conc-pill">👥 <span id="concParticipantes">0 participantes</span></div>
+      </div>
+      <button class="btn-participar" onclick="irA('bono')">Participar →</button>
+    </div>
+
+    <!-- Ranking -->
+    <div class="conc-ranking">
+      <h3>🏅 Ranking actual</h3>
+      <div id="rankingLista">
+        <div class="conc-empty">
+          <div class="cemo">🏆</div>
+          <p>Sé el primero en participar</p>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div><!-- /page-concurso -->
+
+<!-- ══════════════ BARRA FLOTANTE PEDIDO ══════════════ -->
+<div class="fbar" id="fbarPedir">
   <div class="fin">
     <div>
       <div class="plbl">Total a pagar</div>
@@ -520,6 +1048,42 @@
     <button class="bcont" onclick="abrirResumen()">CONTINUAR →</button>
   </div>
 </div>
+
+<!-- ══════════════ NAVEGACIÓN INFERIOR ══════════════ -->
+<nav class="bottomnav">
+  <div class="bnav-inner">
+    <button class="bnav-btn active" id="nav-pedir" onclick="irA('pedir')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/>
+        <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>
+      </svg>
+      Pedir
+    </button>
+    <button class="bnav-btn" id="nav-bono" onclick="irA('bono')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="2" y="7" width="20" height="14" rx="2" ry="2"/>
+        <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/>
+      </svg>
+      Bono
+      <span class="badge show" id="badge-bono">!</span>
+    </button>
+    <button class="bnav-btn" id="nav-galeria" onclick="irA('galeria')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="3" y="3" width="18" height="18" rx="2"/>
+        <circle cx="8.5" cy="8.5" r="1.5"/>
+        <polyline points="21 15 16 10 5 21"/>
+      </svg>
+      Galería
+    </button>
+    <button class="bnav-btn" id="nav-concurso" onclick="irA('concurso')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="8" r="6"/>
+        <path d="M15.477 12.89L17 22l-5-3-5 3 1.523-9.11"/>
+      </svg>
+      Concurso
+    </button>
+  </div>
+</nav>
 
 <!-- ══════════════ MODAL RESUMEN ══════════════ -->
 <div class="ov" id="mResumen">
@@ -617,7 +1181,9 @@ const ST = {
     id:'', tel:'', nom:'', nivel:'BRONCE',
     pedidos:0, cod:'', bonos:[], consumo:0
   },
-  pedidoFbId: null
+  pedidoFbId: null,
+  gpsUrl: null,
+  gpsCoords: null
 };
 
 /* ── CARRITO ── */
@@ -821,11 +1387,16 @@ async function enviarPedido() {
   if (ST.cart.p3l) items += '• '+ST.cart.p3l+'× ASWA 3L → S/ '+(ST.cart.p3l*13).toFixed(2)+'\n';
   if (ST.cart.p4l) items += '• '+ST.cart.p4l+'× ASWA 4L Familiar → S/ '+(ST.cart.p4l*15).toFixed(2)+'\n';
 
+  // Línea de ubicación: si tiene GPS, incluir link de Maps
+  const lineaUbicacion = ST.gpsUrl
+    ? '🏠 '+direccion+'\n'+'📌 *Ubicación GPS:* '+ST.gpsUrl
+    : '🏠 '+direccion;
+
   const msg =
     '🌽 *NUEVO PEDIDO ASWA '+pid+'*\n\n'
     +'👤 *'+nombre+'*\n'
     +'📱 '+telefono+'\n'
-    +'🏠 '+direccion+'\n'
+    +lineaUbicacion+'\n'
     +'📍 '+zonaTexto+'\n\n'
     +'*PRODUCTOS:*\n'+items+'\n'
     +(disc>0 ? '🎉 *Descuento '+disc+'%:* −S/ '+(ST.raw*disc/100).toFixed(2)+'\n' : '')
@@ -860,6 +1431,8 @@ async function enviarPedido() {
       nivel_cliente:  ST.cli.nivel || 'BRONCE',
       estado:         'Pendiente',
       confirmacion_cliente: false, // Cloud Function escucha este campo
+      gps_url:        ST.gpsUrl || null,
+      gps_coords:     ST.gpsCoords || null,
       fecha:          ts()
     });
     ST.pedidoFbId = ref.id;
@@ -989,7 +1562,440 @@ function tst(msg, dur=2500) {
 }
 
 /* ── INIT ── */
-document.addEventListener('DOMContentLoaded', () => setPago('Efectivo'));
+/* ── GPS — COMPARTIR UBICACIÓN EN TIEMPO REAL ── */
+function compartirUbicacion() {
+  const btn    = document.getElementById('btnGPS');
+  const label  = document.getElementById('gpsLabel');
+  const status = document.getElementById('gpsStatus');
+
+  // ¿Soporta geolocalización?
+  if (!navigator.geolocation) {
+    btn.classList.add('error');
+    status.className = 'gps-status err';
+    status.textContent = '❌ Tu navegador no soporta GPS. Escribe tu dirección manualmente.';
+    return;
+  }
+
+  // Estado: buscando
+  btn.classList.add('loading');
+  btn.disabled = true;
+  label.textContent = 'OBTENIENDO UBICACIÓN...';
+  status.className  = 'gps-status';
+  status.textContent = '📡 Buscando señal GPS...';
+
+  navigator.geolocation.getCurrentPosition(
+    // ── ÉXITO ──
+    (pos) => {
+      const lat = pos.coords.latitude.toFixed(6);
+      const lng = pos.coords.longitude.toFixed(6);
+      const acc = Math.round(pos.coords.accuracy);
+
+      // URL de Google Maps con pin exacto
+      const mapsUrl    = `https://www.google.com/maps?q=${lat},${lng}`;
+      const mapsNavUrl = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`;
+
+      // Guardar en el campo dirección
+      const dirInput = document.getElementById('direccion');
+      if (!dirInput.value) {
+        dirInput.value = `GPS: ${lat}, ${lng}`;
+      }
+
+      // Guardar en estado global para el mensaje de WhatsApp
+      ST.gpsUrl = mapsUrl;
+      ST.gpsCoords = { lat, lng, acc };
+
+      // UI éxito
+      btn.classList.remove('loading');
+      btn.classList.add('success');
+      btn.disabled = false;
+      label.textContent = '✅ UBICACIÓN COMPARTIDA';
+      status.className  = 'gps-status ok';
+      status.innerHTML  = `📍 Precisión: ±${acc}m · <a href="${mapsUrl}" target="_blank" style="color:var(--grn);text-decoration:underline">Ver en Maps</a>`;
+
+      tst('📍 Ubicación GPS capturada correctamente', 3000);
+    },
+
+    // ── ERROR ──
+    (err) => {
+      btn.classList.remove('loading');
+      btn.classList.add('error');
+      btn.disabled = false;
+      label.textContent = 'COMPARTIR UBICACIÓN GPS';
+
+      const msgs = {
+        1: '❌ Permiso denegado. Activa la ubicación en tu navegador.',
+        2: '❌ No se pudo obtener la ubicación. Intenta de nuevo.',
+        3: '❌ Tiempo agotado. Verifica tu conexión GPS.'
+      };
+      status.className  = 'gps-status err';
+      status.textContent = msgs[err.code] || '❌ Error de GPS. Escribe tu dirección.';
+      setTimeout(() => { btn.classList.remove('error'); status.textContent=''; }, 4000);
+    },
+
+    // ── OPCIONES ──
+    { enableHighAccuracy: true, timeout: 12000, maximumAge: 0 }
+  );
+}
+
+/* ── REDES SOCIALES DESDE FIRESTORE ── */
+async function cargarRedes() {
+  const grid = document.getElementById('socialGrid');
+
+  // Definición de redes: id en Firestore → config visual
+  const REDES = [
+    {
+      key:   'facebook',
+      clase: 'sb-facebook',
+      ico:   `<svg width="18" height="18" viewBox="0 0 24 24" fill="#1877f2">
+                <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+              </svg>`,
+      nombre: 'Facebook',
+      sub:    'Síguenos'
+    },
+    {
+      key:   'instagram',
+      clase: 'sb-instagram',
+      ico:   `<svg width="18" height="18" viewBox="0 0 24 24" fill="#e4405f">
+                <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 1 0 0 12.324 6.162 6.162 0 0 0 0-12.324zM12 16a4 4 0 1 1 0-8 4 4 0 0 1 0 8zm6.406-11.845a1.44 1.44 0 1 0 0 2.881 1.44 1.44 0 0 0 0-2.881z"/>
+              </svg>`,
+      nombre: 'Instagram',
+      sub:    '@aswa.laricachicha'
+    },
+    {
+      key:   'tiktok',
+      clase: 'sb-tiktok',
+      ico:   `<svg width="18" height="18" viewBox="0 0 24 24" fill="#ff0050">
+                <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-2.88 2.5 2.89 2.89 0 0 1-2.89-2.89 2.89 2.89 0 0 1 2.89-2.89c.28 0 .54.04.79.1V9.01a6.33 6.33 0 0 0-.79-.05 6.34 6.34 0 0 0-6.34 6.34 6.34 6.34 0 0 0 6.34 6.34 6.34 6.34 0 0 0 6.33-6.34V8.69a8.18 8.18 0 0 0 4.78 1.52V6.76a4.85 4.85 0 0 1-1.01-.07z"/>
+              </svg>`,
+      nombre: 'TikTok',
+      sub:    'Síguenos'
+    },
+    {
+      key:   'x',
+      clase: 'sb-x',
+      ico:   `<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.746l7.73-8.835L1.254 2.25H8.08l4.253 5.622zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+              </svg>`,
+      nombre: 'X (Twitter)',
+      sub:    'Síguenos'
+    },
+    {
+      key:   'youtube',
+      clase: 'sb-youtube',
+      ico:   `<svg width="18" height="18" viewBox="0 0 24 24" fill="#ff0000">
+                <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
+              </svg>`,
+      nombre: 'YouTube',
+      sub:    'Mira nuestros videos'
+    }
+  ];
+
+  const MAPS_CONFIG = {
+    key:   'maps',
+    clase: 'sb-maps',
+    ico:   `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#facc15" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
+              <circle cx="12" cy="10" r="3"/>
+            </svg>`,
+    nombre: 'Ver en Google Maps',
+    sub:    'Cómo llegar → Navegación GPS'
+  };
+
+  try {
+    const { doc:d } = window.FB;
+    const snap = await window.FB.getDoc(d(db, 'business_settings', 'aswa'));
+    const data = snap.exists() ? snap.data() : {};
+
+    // Construir botones
+    let html = '';
+
+    REDES.forEach(r => {
+      const url = data[r.key];
+      if (!url) return; // Si está vacío no se muestra
+      html += `
+        <a href="${url}" target="_blank" rel="noopener noreferrer" class="social-btn ${r.clase}">
+          <div class="sico">${r.ico}</div>
+          <div>
+            <div class="sname">${r.nombre}</div>
+            <div class="ssub">${r.sub}</div>
+          </div>
+        </a>`;
+    });
+
+    // Maps siempre al final, full width
+    const mapsUrl = data.maps;
+    if (mapsUrl) {
+      // Convertir a URL de navegación GPS si es link de Google Maps normal
+      const navUrl = mapsUrl.includes('/dir/') ? mapsUrl
+        : 'https://www.google.com/maps/dir/?api=1&destination=-6.4760847,-76.387505';
+      html += `
+        <a href="${navUrl}" target="_blank" rel="noopener noreferrer" class="social-btn ${MAPS_CONFIG.clase}">
+          <div class="sico">${MAPS_CONFIG.ico}</div>
+          <div>
+            <div class="sname">${MAPS_CONFIG.nombre}</div>
+            <div class="ssub">${MAPS_CONFIG.sub}</div>
+          </div>
+        </a>`;
+    }
+
+    grid.innerHTML = html || '<p style="color:var(--mut);font-size:13px;text-align:center;grid-column:1/-1;padding:10px">Próximamente en redes sociales 🌽</p>';
+
+  } catch(err) {
+    console.error('Error cargando redes:', err);
+    // Si falla Firestore, mostrar con links fijos
+    grid.innerHTML = `
+      <a href="https://www.facebook.com/profile.php?id=100052222886761" target="_blank" rel="noopener" class="social-btn sb-facebook">
+        <div class="sico"><svg width="18" height="18" viewBox="0 0 24 24" fill="#1877f2"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg></div>
+        <div><div class="sname">Facebook</div><div class="ssub">Síguenos</div></div>
+      </a>
+      <a href="https://www.instagram.com/aswa.laricachicha/?hl=es-la" target="_blank" rel="noopener" class="social-btn sb-instagram">
+        <div class="sico"><svg width="18" height="18" viewBox="0 0 24 24" fill="#e4405f"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 1 0 0 12.324 6.162 6.162 0 0 0 0-12.324zM12 16a4 4 0 1 1 0-8 4 4 0 0 1 0 8zm6.406-11.845a1.44 1.44 0 1 0 0 2.881 1.44 1.44 0 0 0 0-2.881z"/></svg></div>
+        <div><div class="sname">Instagram</div><div class="ssub">@aswa.laricachicha</div></div>
+      </a>
+      <a href="https://www.google.com/maps/dir/?api=1&destination=-6.4760847,-76.387505" target="_blank" rel="noopener" class="social-btn sb-maps" style="grid-column:1/-1">
+        <div class="sico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#facc15" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg></div>
+        <div><div class="sname" style="color:var(--y)">Ver en Google Maps</div><div class="ssub">Cómo llegar → Navegación GPS</div></div>
+      </a>`;
+  }
+}
+
+/* ── NAVEGACIÓN ENTRE PÁGINAS ── */
+function irA(pagina) {
+  // Ocultar todas las páginas
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.bnav-btn').forEach(b => b.classList.remove('active'));
+
+  // Activar página seleccionada
+  document.getElementById('page-' + pagina).classList.add('active');
+  document.getElementById('nav-' + pagina).classList.add('active');
+
+  // Mostrar/ocultar barra de pedido
+  const fbar = document.getElementById('fbarPedir');
+  fbar.classList.toggle('show', pagina === 'pedir');
+
+  // Ocultar badge de bono al visitarlo
+  if (pagina === 'bono') {
+    document.getElementById('badge-bono').classList.remove('show');
+  }
+
+  // Cargar contenido según página
+  if (pagina === 'galeria') cargarGaleria('todos');
+  if (pagina === 'concurso') cargarConcurso();
+
+  window.scrollTo(0, 0);
+}
+
+/* ── GALERÍA ── */
+let galFiltro = 'todos';
+async function cargarGaleria(filtro) {
+  galFiltro = filtro;
+  const grid = document.getElementById('galGrid');
+  grid.innerHTML = '<div style="grid-column:1/-1" class="gal-empty"><div class="gal-emo">⏳</div><p>Cargando...</p></div>';
+
+  try {
+    const { collection:col, query:q, where:wh, getDocs:gd, orderBy } = window.FB;
+    let snap;
+
+    const colRef = col(db, 'ugc_posts');
+
+    if (filtro === 'todos') {
+      const { query:qq, getDocs:gg } = window.FB;
+      const { getDocs: getD, query: makeQ, where: fw, orderBy: ob } =
+        await import("https://www.gstatic.com/firebasejs/11.1.0/firebase-firestore.js");
+      snap = await getD(makeQ(colRef, fw('estado', '==', 'aprobado')));
+    } else if (filtro === 'destacados') {
+      const { getDocs: getD, query: makeQ, where: fw } =
+        await import("https://www.gstatic.com/firebasejs/11.1.0/firebase-firestore.js");
+      snap = await getD(makeQ(colRef, fw('estado', '==', 'aprobado'), fw('destacado', '==', true)));
+    } else {
+      const { getDocs: getD, query: makeQ, where: fw, orderBy: ob, limit: lm } =
+        await import("https://www.gstatic.com/firebasejs/11.1.0/firebase-firestore.js");
+      if (filtro === 'recientes') {
+        snap = await getD(makeQ(colRef, fw('estado', '==', 'aprobado'), ob('created_at', 'desc'), lm(20)));
+      } else { // populares
+        snap = await getD(makeQ(colRef, fw('estado', '==', 'aprobado'), ob('likes', 'desc'), lm(20)));
+      }
+    }
+
+    if (snap.empty) {
+      grid.innerHTML = `
+        <div style="grid-column:1/-1" class="gal-empty">
+          <div class="gal-emo">📸</div>
+          <p>Aún no hay fotos en esta categoría.<br>¡Sé el primero!</p>
+        </div>`;
+      return;
+    }
+
+    grid.innerHTML = '';
+    snap.forEach(d => {
+      const data = d.data();
+      if (!data.media_url) return;
+      const isDestacado = data.destacado ? '<span class="gal-badge">⭐</span>' : '';
+      grid.insertAdjacentHTML('beforeend', `
+        <div class="gal-card">
+          <img src="${data.media_url}" alt="foto ASWA" loading="lazy"
+               onerror="this.parentElement.style.display='none'">
+          <div class="gal-overlay"></div>
+          ${isDestacado}
+          <div class="gal-info">
+            <div class="gal-user">@${data.usuario || data.telefono?.slice(-4) || 'anon'}</div>
+            <div class="gal-likes">❤️ ${data.likes || 0}</div>
+          </div>
+        </div>`);
+    });
+
+  } catch(err) {
+    console.error('Galería error:', err);
+    grid.innerHTML = `
+      <div style="grid-column:1/-1" class="gal-empty">
+        <div class="gal-emo">📸</div>
+        <p>La galería se llenará con fotos de nuestra comunidad.<br>¡Comparte la tuya en Bono!</p>
+      </div>`;
+  }
+}
+
+function filtrarGal(filtro, btn) {
+  document.querySelectorAll('.gf-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  cargarGaleria(filtro);
+}
+
+/* ── BONO UGC ── */
+function actualizarBonoPill() {
+  const tipo = document.getElementById('b-tipo').value;
+  const bonos = { foto:'📸 +2% descuento', video:'🎬 +4% descuento', reels:'📹 +2% descuento', review:'⭐ +1% descuento', '':'Selecciona tipo' };
+  checkBonoReady();
+}
+
+function previsualizarArchivo(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const zone = document.getElementById('uploadZone');
+  const prev = document.getElementById('uploadPreview');
+  zone.classList.add('has-file');
+  zone.querySelector('p').textContent = file.name;
+
+  if (file.type.startsWith('image/')) {
+    const reader = new FileReader();
+    reader.onload = e => { prev.src = e.target.result; prev.style.display = 'block'; };
+    reader.readAsDataURL(file);
+  }
+  checkBonoReady();
+}
+
+function checkBonoReady() {
+  const nom  = document.getElementById('b-nombre').value.trim();
+  const cel  = document.getElementById('b-celular').value.trim();
+  const tipo = document.getElementById('b-tipo').value;
+  const auth = document.getElementById('b-autorizo').checked;
+  const btn  = document.getElementById('btnEnviarBono');
+  const listo = nom && cel.length === 9 && tipo && auth;
+  btn.classList.toggle('ready', listo);
+}
+
+['b-nombre','b-celular','b-tipo','b-plataforma'].forEach(id => {
+  const el = document.getElementById(id);
+  if (el) el.addEventListener('input', checkBonoReady);
+});
+
+async function enviarBono() {
+  const btn = document.getElementById('btnEnviarBono');
+  if (!btn.classList.contains('ready')) return;
+
+  const nombre    = document.getElementById('b-nombre').value.trim();
+  const celular   = document.getElementById('b-celular').value.trim();
+  const primera   = document.getElementById('b-primera').value;
+  const tipo      = document.getElementById('b-tipo').value;
+  const plataforma= document.getElementById('b-plataforma').value;
+  const usuario   = document.getElementById('b-usuario').value.trim();
+  const link      = document.getElementById('b-link').value.trim();
+  const mensaje   = document.getElementById('b-mensaje').value.trim();
+  const campana   = document.getElementById('b-campana').value;
+
+  btn.textContent = 'Enviando...'; btn.disabled = true;
+
+  try {
+    const { addDoc:ad, collection:col, serverTimestamp:ts } = window.FB;
+    await ad(col(db, 'ugc_posts'), {
+      nombre, telefono: celular, primera_compra: primera,
+      tipo, plataforma, usuario, link_publicacion: link,
+      texto: mensaje, campana,
+      estado: 'pendiente',
+      likes: 0, destacado: false,
+      created_at: ts()
+    });
+
+    // Éxito
+    document.getElementById('page-bono').innerHTML = `
+      <div style="max-width:430px;margin:0 auto;padding:60px 24px;text-align:center">
+        <div style="font-size:64px;margin-bottom:16px">🎉</div>
+        <div style="font-family:'Bebas Neue',cursive;font-size:36px;color:var(--y);letter-spacing:.05em;margin-bottom:8px">¡RECIBIDO!</div>
+        <p style="font-size:14px;color:var(--mut);line-height:1.7;margin-bottom:28px">
+          Tu contenido está en revisión.<br>
+          En 24-48hs te notificamos por WhatsApp con tu bono de descuento.
+        </p>
+        <button onclick="irA('pedir')" style="background:var(--y);color:#000;border:none;padding:16px 36px;border-radius:14px;font-size:15px;font-weight:800;cursor:pointer;font-family:'Poppins',sans-serif">
+          ← Volver a pedir
+        </button>
+      </div>`;
+
+    tst('✅ ¡Contenido enviado! Revisaremos en 24-48hs', 4000);
+
+  } catch(err) {
+    console.error(err);
+    btn.textContent = 'ENVIAR'; btn.disabled = false;
+    tst('❌ Error al enviar. Intenta de nuevo.', 3000);
+  }
+}
+
+/* ── CONCURSO ── */
+async function cargarConcurso() {
+  try {
+    const { doc:d } = window.FB;
+    const snap = await window.FB.getDoc(d(db, 'concursos', 'activo'));
+
+    if (snap.exists()) {
+      const data = snap.data();
+      document.getElementById('concSubtitle').textContent  = data.nombre || 'Mejor Foto ASWA';
+      document.getElementById('concPremio').textContent    = data.premio || 'Pedido Gratis';
+      document.getElementById('concDesc').textContent      = data.descripcion || 'Comparte tu mejor momento';
+      document.getElementById('concParticipantes').textContent = (data.participantes || 0) + ' participantes';
+      if (data.fecha_fin) {
+        const f = new Date(data.fecha_fin.seconds * 1000);
+        document.getElementById('concFecha').textContent = 'Hasta ' + f.toLocaleDateString('es-PE', {day:'numeric',month:'short'});
+      }
+      // Ranking
+      if (data.ranking && data.ranking.length > 0) {
+        const medals = ['gold','silver','bronze'];
+        const html = data.ranking.map((r, i) => `
+          <div class="rank-item">
+            <div class="rank-num ${medals[i]||''}">${i+1}</div>
+            <div class="rank-info">
+              <div class="rank-user">@${r.usuario}</div>
+              <div class="rank-sub">${r.plataforma || ''}</div>
+            </div>
+            <div class="rank-likes">❤️ ${r.likes || 0}</div>
+          </div>`).join('');
+        document.getElementById('rankingLista').innerHTML = html;
+      }
+    }
+  } catch(err) {
+    console.error('Concurso error:', err);
+    // Deja el contenido por defecto
+  }
+}
+
+/* ── INIT ── */
+document.addEventListener('DOMContentLoaded', () => {
+  setPago('Efectivo');
+  cargarRedes();
+  // Mostrar barra de pedido al inicio
+  document.getElementById('fbarPedir').classList.add('show');
+  // Badge de bono (novedad)
+  setTimeout(() => {
+    document.getElementById('badge-bono').classList.add('show');
+  }, 2000);
+});
 </script>
 </body>
 </html>
