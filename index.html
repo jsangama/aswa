@@ -39,6 +39,44 @@
     });
   </script>
 
+  <!-- ══════════════════════════════════════
+       MULTI-NEGOCIO — SaaS Config
+       Cambiar BUSINESS_ID para cada negocio
+  ══════════════════════════════════════ -->
+  <script>
+    // ── Identificador del negocio ──
+    // Para agregar otro negocio, solo cambia este valor
+    // Futuro: obtener desde URL (?b=aswa001), subdominio (aswa.laricachicha.com) o login
+    const BUSINESS_ID = "aswa001";
+
+    // ── Cargar config del negocio desde Firestore ──
+    async function cargarNegocio() {
+      try {
+        const snap = await window.FB.getDoc(
+          window.FB.doc(db, 'negocios', BUSINESS_ID)
+        );
+        if (snap.exists()) {
+          const data = snap.data();
+          // Actualizar UI con datos del negocio
+          if (data.nombre) {
+            const el = document.querySelector('.bname');
+            if (el) el.textContent = data.nombre;
+          }
+          if (data.whatsapp1) window.WA1 = data.whatsapp1;
+          if (data.whatsapp2) window.WA2 = data.whatsapp2;
+          // Guardar config globalmente
+          window.NEGOCIO = data;
+        }
+      } catch(e) {
+        console.warn('cargarNegocio:', e.message);
+      }
+    }
+
+    // Números WhatsApp por defecto (se sobreescriben si existen en Firestore)
+    window.WA1 = "51955273229";
+    window.WA2 = "51986445531";
+  </script>
+
   <style>
     /* ══ VARIABLES ══ */
     :root {
@@ -108,23 +146,110 @@
     .stitle::after { content:''; flex:1; height:1px; background:var(--brd); }
 
     /* ══ BANNER CLIENTE ══ */
+    /* ══ BANNER CLIENTE ══ */
     .cban {
-      background:linear-gradient(135deg,rgba(34,197,94,.08),rgba(34,197,94,.03));
-      border:1px solid rgba(34,197,94,.2); border-radius:var(--r);
-      padding:12px 16px; display:none; align-items:center; gap:12px;
-      margin-bottom:14px; animation:fi .3s ease;
+      border-radius:var(--r); padding:0;
+      display:none; flex-direction:column; gap:0;
+      margin-bottom:14px; animation:fi .35s cubic-bezier(.22,1,.36,1);
+      overflow:hidden;
     }
     .cban.on { display:flex; }
-    @keyframes fi { from{opacity:0;transform:translateY(-6px)} to{opacity:1;transform:none} }
-    .npill {
-      padding:4px 10px; border-radius:999px;
-      font-size:10px; font-weight:800;
-      text-transform:uppercase; letter-spacing:.08em; white-space:nowrap;
+    @keyframes fi { from{opacity:0;transform:translateY(-8px)} to{opacity:1;transform:none} }
+
+    /* Cabecera del banner con color del nivel */
+    .cban-head {
+      padding:14px 16px; display:flex; align-items:center; gap:12px;
     }
-    .bronce   { background:#451a03; color:#fed7aa; }
-    .plata    { background:#1e293b; color:#e2e8f0; }
-    .oro      { background:#422006; color:var(--y); }
-    .diamante { background:linear-gradient(135deg,#312e81,#4c1d95); color:#c4b5fd; }
+    .cban-emo { font-size:28px; flex-shrink:0; }
+    .cban-nom { font-size:14px; font-weight:800; line-height:1.2; }
+    .cban-sub { font-size:11px; opacity:.8; margin-top:2px; }
+    .cban-pill {
+      margin-left:auto; flex-shrink:0;
+      padding:6px 12px; border-radius:999px;
+      font-size:10px; font-weight:900;
+      text-transform:uppercase; letter-spacing:.1em; white-space:nowrap;
+      border:2px solid rgba(255,255,255,.3);
+      background:rgba(0,0,0,.25); color:#fff;
+    }
+
+    /* Barra de progreso al siguiente nivel */
+    .cban-prog-wrap {
+      padding:0 16px 4px; background:rgba(0,0,0,.15);
+    }
+    .cban-prog-label {
+      display:flex; justify-content:space-between;
+      font-size:10px; font-weight:600; opacity:.75;
+      padding-top:8px; margin-bottom:5px;
+    }
+    .cban-prog-bar {
+      height:5px; border-radius:999px;
+      background:rgba(255,255,255,.15); overflow:hidden; margin-bottom:10px;
+    }
+    .cban-prog-fill {
+      height:100%; border-radius:999px;
+      background:rgba(255,255,255,.6);
+      transition:width .6s cubic-bezier(.22,1,.36,1);
+    }
+
+    /* Alertas de vencimiento + descuentos */
+    .cban-body {
+      background:rgba(0,0,0,.2);
+      padding:10px 16px 12px;
+      display:flex; flex-wrap:wrap; gap:6px;
+    }
+    .cban-tag {
+      font-size:11px; font-weight:700;
+      padding:4px 10px; border-radius:999px;
+      background:rgba(255,255,255,.12);
+      color:#fff; white-space:nowrap;
+    }
+    .cban-tag.warn { background:rgba(239,68,68,.3); color:#fca5a5; }
+    .cban-tag.ok   { background:rgba(34,197,94,.25); color:#86efac; }
+
+    /* Colores de fondo por nivel */
+    .nivel-bronce  { background:linear-gradient(135deg,#7c2d12,#9a3412); color:#fff; }
+    .nivel-plata   { background:linear-gradient(135deg,#1e3a5f,#1e40af); color:#fff; }
+    .nivel-oro     { background:linear-gradient(135deg,#78350f,#b45309); color:#fff; }
+    .nivel-diamante{ background:linear-gradient(135deg,#4c1d95,#5b21b6); color:#fff; }
+
+    /* Tabla niveles pequeña */
+    .niveles-tabla {
+      background:var(--s2); border:1px solid var(--brd); border-radius:12px;
+      overflow:hidden; margin:10px 0;
+    }
+    .nrow {
+      display:grid; grid-template-columns:2fr 2fr 1fr;
+      padding:9px 14px; font-size:12px; align-items:center;
+      border-bottom:1px solid var(--brd);
+    }
+    .nrow:last-child { border-bottom:none; }
+    .nrow.active { background:rgba(250,204,21,.07); }
+    .nrow .nbadge {
+      font-size:10px; font-weight:800; padding:3px 8px; border-radius:999px;
+      display:inline-flex; align-items:center; gap:4px; width:fit-content;
+    }
+    .nbadge.bronce   { background:#451a03; color:#fed7aa; }
+    .nbadge.plata    { background:#1e293b; color:#bfdbfe; }
+    .nbadge.oro      { background:#422006; color:var(--y); }
+    .nbadge.diamante { background:linear-gradient(135deg,#312e81,#4c1d95); color:#c4b5fd; }
+    .nrow .nped  { font-size:11px; color:var(--mut); }
+    .nrow .ndisc { font-size:13px; font-weight:800; color:var(--grn); text-align:right; }
+    .nrow.active .nped  { color:var(--txt); }
+
+    /* Código referido visual */
+    .cfr  { background:var(--bg); border:2px dashed var(--y); border-radius:12px; padding:14px; text-align:center; margin:12px 0; }
+    .bcopy {
+      width:100%; background:var(--y); color:#000; border:none;
+      padding:12px; border-radius:10px; font-size:14px; font-weight:800;
+      cursor:pointer; margin-top:8px; font-family:'Poppins',sans-serif;
+    }
+    .bshr {
+      width:100%; background:#25D366; color:#fff; border:none;
+      padding:14px; border-radius:12px; font-size:14px; font-weight:800;
+      cursor:pointer; margin-top:8px;
+      display:flex; align-items:center; justify-content:center; gap:8px;
+      font-family:'Poppins',sans-serif;
+    }
 
     /* ══ PRODUCTO CARDS ══ */
     .pc {
@@ -785,11 +910,25 @@
 
     <!-- Banner cliente reconocido -->
     <div class="cban" id="cban">
-      <div style="flex:1">
-        <div style="font-size:13px;font-weight:700" id="bnNom">¡Hola!</div>
-        <div style="font-size:11px;color:var(--mut)" id="bnDesc"></div>
+      <!-- Cabecera nivel -->
+      <div class="cban-head nivel-bronce" id="cbanHead">
+        <div class="cban-emo" id="cbanEmo">🥉</div>
+        <div>
+          <div class="cban-nom" id="bnNom">¡Hola!</div>
+          <div class="cban-sub" id="bnDesc"></div>
+        </div>
+        <div class="cban-pill" id="bnNivel">BRONCE</div>
       </div>
-      <span class="npill bronce" id="bnNivel">BRONCE</span>
+      <!-- Barra progreso -->
+      <div class="cban-prog-wrap" id="cbanProgWrap" style="display:none">
+        <div class="cban-prog-label">
+          <span id="cbanProgLabel">Progreso al siguiente nivel</span>
+          <span id="cbanProgNum"></span>
+        </div>
+        <div class="cban-prog-bar"><div class="cban-prog-fill" id="cbanFill" style="width:0%"></div></div>
+      </div>
+      <!-- Tags descuentos + vencimientos -->
+      <div class="cban-body" id="cbanTags"></div>
     </div>
 
     <div class="fld">
@@ -1106,29 +1245,57 @@
 <div class="ov" id="mRef">
   <div class="sheet">
     <div class="hnd"></div>
-    <div class="mttl" style="color:var(--pur)">🎁 Refiere y Gana</div>
-    <div class="rbox">
-      <div style="font-size:13px;font-weight:700;color:var(--y);margin-bottom:10px">¿Cómo funciona?</div>
-      <div style="font-size:13px;color:#a1a1aa;line-height:1.9">
-        1️⃣ Comparte tu código personal con amigos<br>
-        2️⃣ Ellos lo ingresan en su primer pedido<br>
-        3️⃣ <strong style="color:var(--txt)">Ambos reciben 5% de descuento</strong><br>
-        4️⃣ El bono dura <strong style="color:var(--txt)">30 días</strong> desde tu primer pedido<br>
-        5️⃣ Se acumula con cada nuevo referido ✨
+
+    <!-- TÍTULO -->
+    <div class="mttl" style="color:var(--pur)">🎁 Regala un Descuento</div>
+
+    <!-- TABLA DE NIVELES -->
+    <div style="font-size:11px;color:var(--mut);text-transform:uppercase;letter-spacing:.1em;font-weight:700;margin-bottom:8px">
+      🏆 Tu nivel actual y beneficios
+    </div>
+    <div class="niveles-tabla">
+      <div class="nrow" id="nrow-bronce">
+        <span class="nbadge bronce">🥉 BRONCE</span>
+        <span class="nped">0 – 4 pedidos</span>
+        <span class="ndisc">0%</span>
+      </div>
+      <div class="nrow" id="nrow-plata">
+        <span class="nbadge plata">🥈 PLATA</span>
+        <span class="nped">5 – 9 pedidos</span>
+        <span class="ndisc">10%</span>
+      </div>
+      <div class="nrow" id="nrow-oro">
+        <span class="nbadge oro">🥇 ORO</span>
+        <span class="nped">10 – 19 pedidos</span>
+        <span class="ndisc">15%</span>
+      </div>
+      <div class="nrow" id="nrow-diamante">
+        <span class="nbadge diamante">💎 DIAMANTE</span>
+        <span class="nped">20+ pedidos</span>
+        <span class="ndisc">20%</span>
       </div>
     </div>
-    <div style="font-size:11px;color:var(--mut);text-align:center;margin-bottom:6px;text-transform:uppercase;letter-spacing:.12em">
-      Tu código personal
+
+    <!-- CÓDIGO PERSONAL -->
+    <div style="font-size:11px;color:var(--mut);text-align:center;margin:12px 0 6px;text-transform:uppercase;letter-spacing:.12em">
+      Tu código para compartir
     </div>
     <div class="cfr">
       <div class="ctxt" id="codModal">ASWA-——</div>
     </div>
+
+    <!-- ALERTA VENCIMIENTO si aplica -->
+    <div id="refVencAlert" style="display:none;background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);border-radius:10px;padding:10px 14px;font-size:12px;color:#fca5a5;text-align:center;margin-bottom:10px">
+      ⏰ <span id="refVencTxt"></span>
+    </div>
+
+    <!-- ACCIONES -->
     <button class="bcopy" onclick="copiarCod()">📋 COPIAR MI CÓDIGO</button>
-    <button class="bshr"  onclick="compartirCod()">
+    <button class="bshr" id="btnCompartir" onclick="compartirCod()">
       <svg class="ws-ico" viewBox="0 0 24 24" fill="currentColor">
         <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/>
       </svg>
-      COMPARTIR POR WHATSAPP
+      ENVIAR A MIS AMIGOS / FAMILIA 💛
     </button>
     <button class="bcancel" onclick="cerrar('mRef')">Cerrar</button>
   </div>
@@ -1253,40 +1420,79 @@ document.getElementById('telefono').addEventListener('input', async e => {
 
   try {
     const { query:q, collection:col, where:wh, getDocs:gd } = window.FB;
-    const snap = await gd(q(col(db,'clientes'), wh('telefono','==',tel)));
+    const snap = await gd(q(col(db,'clientes'), wh('businessId','==',BUSINESS_ID), wh('telefono','==',tel)));
 
     if (!snap.empty) {
       const data = snap.docs[0].data();
       ST.cli = { ...data, id: snap.docs[0].id };
 
-      // Nivel de fidelidad
+      // ── SISTEMA DE FIDELIDAD (nuevo) ──
+      // 🥉 BRONCE  0-4  → 0%
+      // 🥈 PLATA   5-9  → 10%
+      // 🥇 ORO     10-19 → 15%
+      // 💎 DIAMANTE 20+ → 20%
       const p = data.pedidos_totales || 0;
-      let nivel='BRONCE', fid=0;
-      if      (p>=20){ nivel='DIAMANTE'; fid=20; }
-      else if (p>=10){ nivel='ORO';      fid=15; }
-      else if (p>=5) { nivel='PLATA';    fid=10; }
+      let nivel='BRONCE', fid=0, emo='🥉', nivelClass='nivel-bronce';
+      let pedSig=5, pedActual=p; // pedidos hasta siguiente nivel
+      if      (p>=20){ nivel='DIAMANTE'; fid=20; emo='💎'; nivelClass='nivel-diamante'; pedSig=null; }
+      else if (p>=10){ nivel='ORO';      fid=15; emo='🥇'; nivelClass='nivel-oro';      pedSig=20; }
+      else if (p>=5) { nivel='PLATA';    fid=10; emo='🥈'; nivelClass='nivel-plata';    pedSig=10; }
       ST.cli.nivel = nivel; ST.disc.fid = fid;
 
-      // Bonos no expirados
+      // Bonos activos (no expirados)
       const now   = new Date();
       const bonos = (data.bonos_activos||[]).filter(b => !b.expira || new Date(b.expira)>now);
-      ST.disc.bon = Math.min(30, bonos.reduce((s,b) => s+b.valor, 0));
+      ST.disc.bon = Math.min(30, bonos.reduce((a,b) => a+b.valor, 0));
 
       // Autocompletar nombre
       if (data.nombre && !document.getElementById('nombre').value)
         document.getElementById('nombre').value = data.nombre;
 
-      // Banner
-      const nm = { BRONCE:'bronce', PLATA:'plata', ORO:'oro', DIAMANTE:'diamante' };
-      document.getElementById('bnNom').textContent = '¡Hola, '+data.nombre+'! 👋';
-      const nb = document.getElementById('bnNivel');
-      nb.className = 'npill ' + (nm[nivel]||'bronce');
-      nb.textContent = nivel;
-      const pts = [];
-      if (fid > 0)        pts.push(fid+'% fidelidad');
-      if (ST.disc.bon>0)  pts.push(ST.disc.bon+'% bonos');
-      document.getElementById('bnDesc').textContent =
-        pts.length ? pts.join(' · ') : (p+' pedido'+(p!==1?'s':''));
+      // ── ACTUALIZAR BANNER ──
+      const head = document.getElementById('cbanHead');
+      head.className = 'cban-head ' + nivelClass;
+      document.getElementById('cbanEmo').textContent  = emo;
+      document.getElementById('bnNivel').textContent  = nivel;
+      document.getElementById('bnNom').textContent    = '¡Hola, ' + data.nombre + '! 👋';
+
+      // Desc de nivel
+      const nivelDesc = { BRONCE:'Sigue pidiendo para subir de nivel', PLATA:'¡Cliente de confianza!', ORO:'¡Cliente VIP!', DIAMANTE:'¡Leyenda ASWA! 🌽' };
+      document.getElementById('bnDesc').textContent = nivelDesc[nivel];
+
+      // Barra de progreso hacia siguiente nivel
+      const progWrap = document.getElementById('cbanProgWrap');
+      if (pedSig !== null) {
+        progWrap.style.display = 'block';
+        const nivelAnterior = { PLATA:5, ORO:10, DIAMANTE:20 };
+        const limInf  = nivel==='BRONCE' ? 0 : nivelAnterior[{ BRONCE:'PLATA', PLATA:'ORO', ORO:'DIAMANTE' }[nivel]] || 0;
+        const pct     = Math.min(100, Math.round((p - limInf) / (pedSig - limInf) * 100));
+        document.getElementById('cbanFill').style.width    = pct + '%';
+        document.getElementById('cbanProgLabel').textContent = `Camino a ${({BRONCE:'PLATA 🥈', PLATA:'ORO 🥇', ORO:'DIAMANTE 💎'})[nivel]}`;
+        document.getElementById('cbanProgNum').textContent   = `${p}/${pedSig} pedidos`;
+      } else {
+        progWrap.style.display = 'none';
+      }
+
+      // Tags — descuento fidelidad + bonos + alertas vencimiento
+      const tagsEl = document.getElementById('cbanTags');
+      const tags   = [];
+      if (fid > 0) tags.push(`<span class="cban-tag ok">🏆 ${fid}% fidelidad</span>`);
+      if (ST.disc.bon > 0) tags.push(`<span class="cban-tag ok">🎁 ${ST.disc.bon}% bonos activos</span>`);
+      tags.push(`<span class="cban-tag">${p} pedido${p!==1?'s':''} acumulado${p!==1?'s':''}</span>`);
+
+      // Alertas vencimiento de bonos (próximos 3 días)
+      const bonosAlerta = bonos.filter(b => {
+        if (!b.expira) return false;
+        const dias = (new Date(b.expira) - now) / 86400000;
+        return dias <= 3 && dias >= 0;
+      });
+      bonosAlerta.forEach(b => {
+        const dias = Math.ceil((new Date(b.expira) - now) / 86400000);
+        const txt  = dias === 0 ? 'hoy' : dias === 1 ? 'mañana' : `en ${dias} días`;
+        tags.push(`<span class="cban-tag warn">⚠️ Bono ${b.valor}% vence ${txt}</span>`);
+      });
+      tagsEl.innerHTML = tags.join('');
+
       ban.classList.add('on');
 
     } else {
@@ -1317,7 +1523,7 @@ document.getElementById('codigoUsado').addEventListener('input', e => {
   rtmr = setTimeout(async () => {
     try {
       const { query:q, collection:col, where:wh, getDocs:gd } = window.FB;
-      const snap = await gd(q(col(db,'clientes'), wh('codigo_referido','==',cod)));
+      const snap = await gd(q(col(db,'clientes'), wh('businessId','==',BUSINESS_ID), wh('codigo_referido','==',cod)));
       if (!snap.empty && snap.docs[0].id !== ST.cli.id) {
         el.textContent='✓ +5%'; el.style.color='var(--grn)'; ST.disc.ref=5;
       } else if (snap.docs[0]?.id === ST.cli.id) {
@@ -1406,8 +1612,8 @@ async function enviarPedido() {
     +(codigoUsado ? '\n🔖 Código referido: '+codigoUsado : '');
 
   /* Enviar a ambos WhatsApp */
-  window.open('https://wa.me/51955273229?text='+encodeURIComponent(msg), '_blank');
-  setTimeout(() => window.open('https://wa.me/51986445531?text='+encodeURIComponent(msg), '_blank'), 900);
+  window.open('https://wa.me/'+window.WA1+'?text='+encodeURIComponent(msg), '_blank');
+  setTimeout(() => window.open('https://wa.me/'+window.WA2+'?text='+encodeURIComponent(msg), '_blank'), 900);
 
   /* Guardar en Firestore */
   try {
@@ -1416,6 +1622,7 @@ async function enviarPedido() {
 
     // 1. Guardar pedido
     const ref = await ad(col(db,'pedidos'), {
+      businessId:     BUSINESS_ID,
       nombre, telefono, direccion,
       distrito:       zonaTexto,
       items:          { ...ST.cart },
@@ -1438,9 +1645,10 @@ async function enviarPedido() {
     ST.pedidoFbId = ref.id;
 
     // 2. Upsert cliente
-    const snapC = await gd(q(col(db,'clientes'), wh('telefono','==',telefono)));
+    const snapC = await gd(q(col(db,'clientes'), wh('businessId','==',BUSINESS_ID), wh('telefono','==',telefono)));
     const codFin = ST.cli.cod || await genCod();
     const cdata  = {
+      businessId: BUSINESS_ID,
       nombre, telefono,
       nivel:           ST.cli.nivel || 'BRONCE',
       pedidos_totales: (ST.cli.pedidos||0) + 1,
@@ -1454,7 +1662,7 @@ async function enviarPedido() {
 
     // 3. Aplicar bono al referidor
     if (codigoUsado && ST.disc.ref > 0) {
-      const snapR = await gd(q(col(db,'clientes'), wh('codigo_referido','==',codigoUsado)));
+      const snapR = await gd(q(col(db,'clientes'), wh('businessId','==',BUSINESS_ID), wh('codigo_referido','==',codigoUsado)));
       if (!snapR.empty) {
         const rd  = snapR.docs[0].data();
         const exp = new Date(); exp.setDate(exp.getDate()+30);
@@ -1529,6 +1737,35 @@ document.querySelectorAll('.ov').forEach(m => {
 /* ── REFERIDOS ── */
 function abrirRef() {
   if (ST.cli.cod) document.getElementById('codModal').textContent = ST.cli.cod;
+
+  // Resaltar fila del nivel actual
+  ['bronce','plata','oro','diamante'].forEach(n => {
+    const row = document.getElementById('nrow-' + n);
+    if (row) row.classList.toggle('active', n === (ST.cli.nivel||'BRONCE').toLowerCase());
+  });
+
+  // Alerta vencimiento en modal
+  const bonos   = ST.cli.bonos || [];
+  const now     = new Date();
+  const proxBono = bonos
+    .filter(b => b.expira)
+    .map(b => ({ ...b, _dias: (new Date(b.expira) - now) / 86400000 }))
+    .filter(b => b._dias >= 0)
+    .sort((a,b) => a._dias - b._dias)[0];
+
+  const alertEl = document.getElementById('refVencAlert');
+  const alertTx = document.getElementById('refVencTxt');
+  if (proxBono) {
+    const dias = Math.ceil(proxBono._dias);
+    const txt  = dias === 0 ? 'hoy al final del día'
+               : dias === 1 ? 'mañana'
+               : `en ${dias} días`;
+    alertTx.textContent = `Tu bono de ${proxBono.valor}% vence ${txt}. ¡Compártelo antes de que expire!`;
+    alertEl.style.display = 'block';
+  } else {
+    alertEl.style.display = 'none';
+  }
+
   document.getElementById('mRef').classList.add('on');
 }
 function copiarCod() {
@@ -1537,21 +1774,71 @@ function copiarCod() {
   navigator.clipboard.writeText(c).then(() => tst('¡Código copiado! 📋', 2000));
 }
 function compartirCod() {
-  const c = ST.cli.cod;
-  if (!c) return tst('Ingresa tu teléfono primero 📱');
+  const cod = ST.cli.cod;
+  if (!cod) return tst('Ingresa tu teléfono primero 📱');
+
+  // Saludos cálidos al azar — para que cada mensaje se sienta diferente
+  const saludos = [
+    'Hola amigo/a 😄',
+    'Oe prima/o 🫶',
+    'Hermano/a, escucha esto 👇',
+    'Causa, tengo algo para ti 🎁',
+    'Bro/Sis, mira lo que encontré 👀',
+    'Mi soli, esto te va a gustar 💛',
+    'Oye vecin@, tienes que probar esto 🌽',
+  ];
+  const saludoExtra = [
+    'te quiero contar algo que me alegró el día 🌞',
+    'me acordé de ti y quería compartirte esto 💛',
+    'sé que te va a encantar esto 😋',
+    'porque me caes bien y mereces lo mejor 🙌',
+    'esto vale mucho y es GRATIS para ti 🎉',
+  ];
+  const cierres = [
+    'Ya me dirás cómo te fue. ¡Un abrazo! 🫂',
+    'Te juro que está riquisísima. ¡Provecho! 🥂',
+    'Avísame cuando la pidas que yo ya soy fan 😂',
+    'Que te llegue bien helada, que así está mejor 🧊',
+    'Cuéntame qué tal. ¡Salud! 🌾',
+  ];
+
+  const rand = arr => arr[Math.floor(Math.random()*arr.length)];
+  const saludo = rand(saludos);
+  const extra  = rand(saludoExtra);
+  const cierre = rand(cierres);
+
+  // Nivel del cliente para personalizar
+  const nivel    = ST.cli.nivel || 'BRONCE';
+  const nivelMsg = {
+    BRONCE:   '',
+    PLATA:    '\n\n💡 Yo ya tengo descuento del 10% por ser cliente frecuente. Tú también puedes llegar ahí.',
+    ORO:      '\n\n🥇 Yo ya estoy en nivel ORO (15% de descuento). Si pides seguido, llegas igual.',
+    DIAMANTE: '\n\n💎 Yo ya soy DIAMANTE con 20% de descuento. ¡Es el nivel más alto!'
+  }[nivel] || '';
+
   const txt =
-    '¡Prueba *La Rica Chicha — ASWA*! 🌽\n\n'
-    +'Usa mi código *'+c+'* en tu primer pedido.\n\n'
-    +'✅ Ambos recibimos 5% de descuento\n'
-    +'⏰ Válido por 30 días\n\n'
-    +'Pide aquí 👉 https://jsangama.github.io/aswa\n\n'
-    +'¡El sabor de la selva! 🇵🇪';
+    saludo + ', ' + extra + ' 👇\n\n'
+    + '🌽 *ASWA - La Rica Chicha*\n'
+    + 'La chicha de jora artesanal de Tarapoto.\n'
+    + 'Hecha con maíz del campo, fermentada con amor. 🍺\n\n'
+    + '🎁 *Te regalo un descuento en tu primera compra:*\n'
+    + '━━━━━━━━━━━━━━━━━\n'
+    + '   Código: *' + cod + '*\n'
+    + '   Descuento: *5% en tu pedido*\n'
+    + '   Válido: *30 días*\n'
+    + '━━━━━━━━━━━━━━━━━\n\n'
+    + '👇 Pide ahora por delivery:\n'
+    + 'https://jsangama.github.io/aswa\n'
+    + nivelMsg + '\n\n'
+    + cierre;
+
   if (navigator.share) {
-    navigator.share({ title:'ASWA', text:txt })
+    navigator.share({ title:'Descuento ASWA para ti 🌽', text:txt })
       .catch(() => window.open('https://wa.me/?text='+encodeURIComponent(txt),'_blank'));
   } else {
     window.open('https://wa.me/?text='+encodeURIComponent(txt),'_blank');
   }
+  tst('¡Mensaje listo para enviar! 💛', 2500);
 }
 
 /* ── TOAST ── */
@@ -1802,11 +2089,11 @@ async function cargarGaleria(filtro) {
       const { query:qq, getDocs:gg } = window.FB;
       const { getDocs: getD, query: makeQ, where: fw, orderBy: ob } =
         await import("https://www.gstatic.com/firebasejs/11.1.0/firebase-firestore.js");
-      snap = await getD(makeQ(colRef, fw('estado', '==', 'aprobado')));
+      snap = await getD(makeQ(colRef, fw('businessId','==',BUSINESS_ID), fw('estado', '==', 'aprobado')));
     } else if (filtro === 'destacados') {
       const { getDocs: getD, query: makeQ, where: fw } =
         await import("https://www.gstatic.com/firebasejs/11.1.0/firebase-firestore.js");
-      snap = await getD(makeQ(colRef, fw('estado', '==', 'aprobado'), fw('destacado', '==', true)));
+      snap = await getD(makeQ(colRef, fw('businessId','==',BUSINESS_ID), fw('estado', '==', 'aprobado'), fw('destacado', '==', true)));
     } else {
       const { getDocs: getD, query: makeQ, where: fw, orderBy: ob, limit: lm } =
         await import("https://www.gstatic.com/firebasejs/11.1.0/firebase-firestore.js");
@@ -1917,6 +2204,7 @@ async function enviarBono() {
   try {
     const { addDoc:ad, collection:col, serverTimestamp:ts } = window.FB;
     await ad(col(db, 'ugc_posts'), {
+      businessId: BUSINESS_ID,
       nombre, telefono: celular, primera_compra: primera,
       tipo, plataforma, usuario, link_publicacion: link,
       texto: mensaje, campana,
@@ -1989,6 +2277,7 @@ async function cargarConcurso() {
 document.addEventListener('DOMContentLoaded', () => {
   setPago('Efectivo');
   cargarRedes();
+  cargarNegocio(); // ← SaaS: carga config del negocio desde Firestore
   // Mostrar barra de pedido al inicio
   document.getElementById('fbarPedir').classList.add('show');
   // Badge de bono (novedad)
