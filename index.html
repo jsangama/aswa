@@ -221,11 +221,29 @@
     .cban-tag.warn { background:rgba(239,68,68,.3); color:#fca5a5; }
     .cban-tag.ok   { background:rgba(34,197,94,.25); color:#86efac; }
 
-    /* Colores de fondo por nivel */
-    .nivel-bronce  { background:linear-gradient(135deg,#7c2d12,#9a3412); color:#fff; }
-    .nivel-plata   { background:linear-gradient(135deg,#1e3a5f,#1e40af); color:#fff; }
-    .nivel-oro     { background:linear-gradient(135deg,#78350f,#b45309); color:#fff; }
-    .nivel-diamante{ background:linear-gradient(135deg,#4c1d95,#5b21b6); color:#fff; }
+    /* ── Colores de fondo por nivel — vibrantes ── */
+    .nivel-bronce  {
+      background:linear-gradient(135deg,#92400e,#b45309);
+      color:#fff; box-shadow:0 4px 16px rgba(180,83,9,.3);
+    }
+    .nivel-plata   {
+      background:linear-gradient(135deg,#1e3a8a,#2563eb);
+      color:#fff; box-shadow:0 4px 16px rgba(37,99,235,.3);
+    }
+    .nivel-oro     {
+      background:linear-gradient(135deg,#92400e,#d97706);
+      color:#fff; box-shadow:0 4px 16px rgba(217,119,6,.35);
+    }
+    .nivel-diamante{
+      background:linear-gradient(135deg,#4c1d95,#7c3aed);
+      color:#fff; box-shadow:0 4px 16px rgba(124,58,237,.35);
+    }
+
+    /* ── Código de cliente — color cambia con el nivel ── */
+    .cref-cod.nivel-bronce-cod  { border-color:#d97706; color:#d97706; }
+    .cref-cod.nivel-plata-cod   { border-color:#3b82f6; color:#3b82f6; }
+    .cref-cod.nivel-oro-cod     { border-color:#f59e0b; color:#f59e0b; }
+    .cref-cod.nivel-diamante-cod{ border-color:#a78bfa; color:#a78bfa; }
 
     /* Tabla niveles pequeña */
     .niveles-tabla {
@@ -317,76 +335,165 @@
     .nota-modal {
       display:none; position:fixed; inset:0; z-index:400;
       background:rgba(0,0,0,.92); backdrop-filter:blur(16px);
-      align-items:center; justify-content:center; padding:16px;
+      align-items:flex-end; justify-content:center;
     }
     .nota-modal.open { display:flex; }
     .nota-sheet {
-      background:var(--s1); border:1px solid var(--brd); border-radius:20px;
-      width:100%; max-width:420px; max-height:92dvh; overflow-y:auto;
-      animation:mup .25s ease;
+      background:#fff; border-radius:24px 24px 0 0;
+      width:100%; max-width:480px; max-height:96dvh; overflow-y:auto;
+      animation:mup .3s cubic-bezier(.22,1,.36,1);
     }
+
+    /* CABECERA blanca con logo grande */
     .nota-top {
-      background:linear-gradient(135deg,#09090b,#1a1a0a);
-      border-bottom:2px solid var(--y); border-radius:20px 20px 0 0;
-      padding:20px; text-align:center;
+      background:#fff; border-bottom:3px solid #facc15;
+      padding:28px 20px 18px; text-align:center;
     }
-    .nota-logo {
-      width:64px; height:64px; border-radius:50%; border:3px solid var(--y);
-      object-fit:cover; margin:0 auto 10px; display:block;
+    .nota-logo-wrap {
+      width:130px; height:130px; margin:0 auto 14px;
+      border-radius:16px; overflow:hidden;
+      box-shadow:0 4px 20px rgba(0,0,0,.12);
     }
-    .nota-empresa { font-family:'Bebas Neue',cursive; font-size:28px; color:var(--y); letter-spacing:.1em; }
-    .nota-sub { font-size:11px; color:var(--mut); }
-    .nota-num { font-size:11px; color:var(--txt); margin-top:6px; font-weight:700; }
+    .nota-logo-wrap img {
+      width:100%; height:100%; object-fit:cover; display:block;
+    }
+    .nota-empresa {
+      font-family:'Poppins',sans-serif; font-size:20px; font-weight:900;
+      color:#c27c00; letter-spacing:.02em; text-transform:uppercase;
+    }
+    .nota-sub { font-size:12px; color:#6b7280; margin-top:2px; line-height:1.6; }
+    .nota-divider { border:none; border-top:2px solid #facc15; margin:14px 0 0; }
+    .nota-titulo {
+      font-size:15px; font-weight:900; color:#111; letter-spacing:.12em;
+      text-transform:uppercase; margin:12px 0 4px;
+    }
+    .nota-num { font-size:12px; color:#374151; font-weight:600; }
+    .nota-fecha { font-size:11px; color:#9ca3af; margin-top:2px; }
 
-    .nota-body { padding:16px; }
-    .nota-section { margin-bottom:14px; }
-    .nota-section h4 {
-      font-size:10px; font-weight:800; color:var(--y);
-      text-transform:uppercase; letter-spacing:.12em;
-      border-bottom:1px solid var(--brd); padding-bottom:6px; margin-bottom:10px;
-    }
-    .nota-row {
-      display:flex; justify-content:space-between; align-items:flex-start;
-      padding:5px 0; font-size:12px; border-bottom:1px dashed rgba(255,255,255,.05);
-    }
-    .nota-row:last-child { border-bottom:none; }
-    .nota-row .nlbl { color:var(--mut); }
-    .nota-row .nval { font-weight:600; text-align:right; max-width:60%; }
+    /* CUERPO */
+    .nota-body { padding:0 18px 8px; background:#fff; }
 
-    /* Items con imagen */
-    .nota-item {
+    /* Datos del cliente — estilo ticket */
+    .nota-cliente {
+      border:1px solid #e5e7eb; border-radius:12px;
+      padding:14px 16px; margin:16px 0 12px;
+    }
+    .nc-row {
+      display:flex; padding:5px 0;
+      border-bottom:1px dashed #f3f4f6; font-size:13px;
+    }
+    .nc-row:last-child { border-bottom:none; }
+    .nc-lbl { font-weight:700; color:#374151; min-width:90px; flex-shrink:0; }
+    .nc-val { color:#111; flex:1; }
+
+    /* Badge de nivel en nota */
+    .nota-nivel-badge {
+      display:inline-flex; align-items:center; gap:6px;
+      padding:4px 12px; border-radius:999px;
+      font-size:11px; font-weight:800; text-transform:uppercase;
+      letter-spacing:.08em;
+    }
+    .nnb-bronce   { background:#fef3c7; color:#92400e; border:1px solid #fbbf24; }
+    .nnb-plata    { background:#eff6ff; color:#1e40af; border:1px solid #93c5fd; }
+    .nnb-oro      { background:#fffbeb; color:#b45309; border:1px solid #f59e0b; }
+    .nnb-diamante { background:#f5f3ff; color:#6d28d9; border:1px solid #c4b5fd; }
+
+    /* Código de cliente en nota */
+    .nota-cod-box {
+      background:#fffbeb; border:1.5px dashed #f59e0b;
+      border-radius:10px; padding:10px 14px; margin:4px 0 12px;
       display:flex; align-items:center; gap:10px;
-      padding:8px 0; border-bottom:1px dashed rgba(255,255,255,.05);
     }
-    .nota-item:last-child { border-bottom:none; }
-    .nota-item img { width:44px; height:44px; border-radius:8px; object-fit:cover; flex-shrink:0; }
-    .nota-item .ni-info { flex:1; }
-    .nota-item .ni-nom { font-size:12px; font-weight:700; }
-    .nota-item .ni-sub { font-size:10px; color:var(--mut); }
-    .nota-item .ni-price { font-size:13px; font-weight:800; color:var(--y); white-space:nowrap; }
+    .nota-cod-box .ncb-lbl { font-size:10px; font-weight:700; color:#92400e; text-transform:uppercase; letter-spacing:.08em; }
+    .nota-cod-box .ncb-cod { font-family:'Bebas Neue',cursive; font-size:22px; color:#c27c00; letter-spacing:.12em; flex:1; }
+    .nota-cod-box .ncb-desc { font-size:10px; color:#92400e; margin-top:1px; }
 
-    .nota-total-row {
-      background:rgba(250,204,21,.08); border:1px solid rgba(250,204,21,.2);
-      border-radius:10px; padding:12px 14px;
+    /* TABLA de productos */
+    .nota-tabla-header {
+      display:grid; grid-template-columns:1fr 50px 70px 70px;
+      background:#f9fafb; border:1px solid #e5e7eb;
+      border-radius:8px 8px 0 0; padding:8px 10px;
+      font-size:11px; font-weight:800; color:#374151; text-transform:uppercase;
+      letter-spacing:.06em;
+    }
+    .nota-tabla-header .nth-prod { grid-column:1; }
+    .nota-tabla-header .nth-cant,
+    .nota-tabla-header .nth-unit,
+    .nota-tabla-header .nth-sub  { text-align:right; }
+
+    .nota-prod-row {
+      display:grid; grid-template-columns:1fr 50px 70px 70px;
+      align-items:center; padding:10px 10px;
+      border:1px solid #e5e7eb; border-top:none;
+      font-size:12px; background:#fff;
+    }
+    .nota-prod-row:last-child { border-radius:0 0 8px 8px; }
+    .nota-prod-img {
+      width:40px; height:40px; border-radius:8px; object-fit:cover;
+      border:1px solid #e5e7eb; flex-shrink:0;
+    }
+    .nota-prod-cell { display:flex; align-items:center; gap:8px; }
+    .nota-prod-nom  { font-size:12px; font-weight:700; color:#111; }
+    .nota-prod-sz   { font-size:10px; color:#9ca3af; }
+    .nota-prod-cant,
+    .nota-prod-unit,
+    .nota-prod-sub  { text-align:right; color:#374151; }
+    .nota-prod-sub  { font-weight:800; color:#c27c00; }
+
+    /* Delivery row */
+    .nota-delivery-row {
+      display:grid; grid-template-columns:1fr 50px 70px 70px;
+      align-items:center; padding:8px 10px;
+      border:1px solid #e5e7eb; border-top:1px dashed #e5e7eb;
+      font-size:12px; background:#f9fafb; border-radius:0 0 8px 8px;
+    }
+    .nota-delivery-row .ndl-lbl { font-size:12px; color:#374151; }
+    .nota-delivery-row .ndl-val { text-align:right; font-weight:700; color:#374151; }
+
+    /* Totales finales */
+    .nota-totales { margin:14px 0 8px; }
+    .nota-tot-row {
+      display:flex; justify-content:space-between;
+      padding:6px 14px; font-size:13px; border-bottom:1px dashed #f3f4f6;
+    }
+    .nota-tot-row:last-child { border-bottom:none; }
+    .nota-tot-row .ntl { color:#6b7280; }
+    .nota-tot-row .ntv { font-weight:700; color:#111; }
+    .nota-tot-row .ntv.green { color:#16a34a; }
+
+    /* Total grande */
+    .nota-gran-total {
+      background:#fffbeb; border:2px solid #facc15;
+      border-radius:14px; padding:16px 20px; margin:12px 0;
       display:flex; justify-content:space-between; align-items:center;
-      margin:12px 0;
     }
-    .nota-total-row .nt-lbl { font-size:13px; font-weight:700; }
-    .nota-total-row .nt-val { font-family:'Bebas Neue',cursive; font-size:32px; color:var(--y); }
+    .nota-gran-total .ngt-lbl { font-size:14px; font-weight:900; color:#111; text-transform:uppercase; }
+    .nota-gran-total .ngt-val {
+      font-family:'Bebas Neue',cursive; font-size:38px; color:#c27c00; line-height:1;
+    }
 
+    /* Footer */
     .nota-footer {
-      text-align:center; padding:0 16px 16px; font-size:11px; color:var(--mut); line-height:1.6;
+      text-align:center; padding:12px 18px 18px;
+      font-size:11px; color:#9ca3af; line-height:1.8; background:#fff;
+      border-top:1px dashed #e5e7eb; margin-top:8px;
     }
-    .nota-actions { display:grid; grid-template-columns:1fr 1fr; gap:10px; padding:0 16px 16px; }
+    .nota-footer strong { color:#c27c00; }
+
+    /* Botones descarga/cerrar */
+    .nota-actions {
+      display:grid; grid-template-columns:1fr 1fr; gap:10px;
+      padding:12px 18px 24px; background:#fff;
+    }
     .nota-btn-dl {
-      background:var(--y); color:#000; border:none;
-      padding:14px; border-radius:12px; font-size:13px; font-weight:800;
+      background:#facc15; color:#000; border:none;
+      padding:15px; border-radius:12px; font-size:14px; font-weight:900;
       cursor:pointer; font-family:'Poppins',sans-serif;
       display:flex; align-items:center; justify-content:center; gap:6px;
     }
     .nota-btn-cl {
-      background:var(--s2); color:var(--mut); border:1px solid var(--brd);
-      padding:14px; border-radius:12px; font-size:13px; font-weight:700;
+      background:#f3f4f6; color:#374151; border:1px solid #e5e7eb;
+      padding:15px; border-radius:12px; font-size:14px; font-weight:700;
       cursor:pointer; font-family:'Poppins',sans-serif;
     }
 
@@ -1521,71 +1628,119 @@
 <div class="nota-modal" id="notaVentaModal">
   <div class="nota-sheet" id="notaVentaSheet">
 
-    <!-- Cabecera empresa -->
+    <!-- ══ CABECERA — replica exacta del PDF ══ -->
     <div class="nota-top">
-      <img src="logo de aswa.jpg" alt="ASWA" class="nota-logo"
-           onerror="this.style.cssText='width:64px;height:64px;border-radius:50%;background:var(--y);display:block;margin:0 auto 10px'">
-      <div class="nota-empresa">La Rica Chicha — ASWA</div>
-      <div class="nota-sub">El oro líquido de la selva 🌽 · Tarapoto, San Martín</div>
-      <div class="nota-num" id="nvNumero">Nota de Venta #—</div>
-      <div class="nota-num" id="nvFecha" style="color:var(--mut);font-weight:400"></div>
+      <!-- Logo grande cuadrado como en el PDF -->
+      <div class="nota-logo-wrap">
+        <img src="logo de aswa.jpg" alt="ASWA"
+             onerror="this.parentElement.style.cssText='width:130px;height:130px;background:#facc15;border-radius:16px;display:flex;align-items:center;justify-content:center;font-size:48px;margin:0 auto'">
+      </div>
+      <!-- Nombre en dorado como en el PDF -->
+      <div class="nota-empresa">LA RICA CHICHA - ASWA</div>
+      <div class="nota-sub">
+        El sabor de mi tierra<br>
+        Tarapoto - San Martín<br>
+        WhatsApp: 947 999 736 / 955 273 229
+      </div>
+      <hr class="nota-divider">
+      <div class="nota-titulo">NOTA DE VENTA</div>
+      <div class="nota-num" id="nvNumero">N° Nota: —</div>
+      <div class="nota-fecha" id="nvFecha"></div>
     </div>
 
     <div class="nota-body">
 
-      <!-- Cliente -->
-      <div class="nota-section">
-        <h4>📋 Datos del Cliente</h4>
-        <div class="nota-row"><span class="nlbl">Nombre</span><span class="nval" id="nvNombre">—</span></div>
-        <div class="nota-row"><span class="nlbl">Teléfono</span><span class="nval" id="nvTelefono">—</span></div>
-        <div class="nota-row"><span class="nlbl">Dirección</span><span class="nval" id="nvDireccion">—</span></div>
-        <div class="nota-row" id="nvGpsRow" style="display:none">
-          <span class="nlbl">📍 Ubicación GPS</span>
-          <a id="nvGpsLink" href="#" target="_blank" style="color:var(--grn);font-size:12px;font-weight:600">Ver en Maps →</a>
+      <!-- ══ DATOS DEL CLIENTE ══ -->
+      <div class="nota-cliente">
+        <div class="nc-row">
+          <span class="nc-lbl">Cliente:</span>
+          <span class="nc-val" id="nvNombre">—</span>
         </div>
-        <div class="nota-row"><span class="nlbl">Nivel</span><span class="nval" id="nvNivel">BRONCE</span></div>
-      </div>
-
-      <!-- Productos con imagen -->
-      <div class="nota-section">
-        <h4>🛒 Productos Pedidos</h4>
-        <div id="nvItems"><!-- generado dinámicamente --></div>
-      </div>
-
-      <!-- Desglose de cobro -->
-      <div class="nota-section">
-        <h4>💰 Resumen de Cobro</h4>
-        <div class="nota-row"><span class="nlbl">Subtotal</span><span class="nval" id="nvSubtotal">S/ 0.00</span></div>
-        <div class="nota-row"><span class="nlbl">Delivery</span><span class="nval" id="nvDelivery">S/ 0.00</span></div>
-        <div class="nota-row" id="nvDescRow" style="display:none">
-          <span class="nlbl" style="color:var(--grn)">Descuento</span>
-          <span class="nval" style="color:var(--grn)" id="nvDescuento">— %</span>
+        <div class="nc-row">
+          <span class="nc-lbl">Celular:</span>
+          <span class="nc-val" id="nvTelefono">—</span>
         </div>
-        <div class="nota-row"><span class="nlbl">Forma de pago</span><span class="nval" id="nvPago">—</span></div>
-      </div>
-
-      <!-- Total -->
-      <div class="nota-total-row">
-        <span class="nt-lbl">TOTAL A PAGAR</span>
-        <span class="nt-val" id="nvTotal">S/ 0.00</span>
-      </div>
-
-      <!-- Código referido si aplica -->
-      <div class="nota-section" id="nvRefSection" style="display:none">
-        <h4>🎁 Tu Código de Referidos</h4>
-        <div class="nota-row"><span class="nlbl">Código personal</span><span class="nval" id="nvCodRef" style="color:var(--y);font-size:14px">—</span></div>
-        <div style="font-size:11px;color:var(--mut);margin-top:4px;line-height:1.6">
-          Comparte este código con tus amigos. Cuando hagan su primer pedido, ¡ambos reciben 5% de descuento! 💛
+        <div class="nc-row">
+          <span class="nc-lbl">Dirección:</span>
+          <span class="nc-val" id="nvDireccion">—</span>
+        </div>
+        <div class="nc-row" id="nvGpsRow" style="display:none">
+          <span class="nc-lbl">📍 GPS:</span>
+          <a id="nvGpsLink" href="#" target="_blank"
+             style="color:#16a34a;font-weight:700;font-size:12px">Ver ubicación →</a>
+        </div>
+        <div class="nc-row">
+          <span class="nc-lbl">Zona:</span>
+          <span class="nc-val" id="nvZona">—</span>
+        </div>
+        <div class="nc-row">
+          <span class="nc-lbl">Pago:</span>
+          <span class="nc-val" id="nvPago">—</span>
+        </div>
+        <!-- NIVEL — nuevo campo solicitado -->
+        <div class="nc-row">
+          <span class="nc-lbl">Nivel:</span>
+          <span class="nc-val">
+            <span class="nota-nivel-badge nnb-bronce" id="nvNivelBadge">🥉 BRONCE</span>
+          </span>
         </div>
       </div>
 
-    </div>
+      <!-- CÓDIGO DEL CLIENTE — nuevo, siempre visible si existe -->
+      <div class="nota-cod-box" id="nvCodBox" style="display:none">
+        <div>
+          <div class="ncb-lbl">🎁 Tu código personal de descuento</div>
+          <div class="ncb-cod" id="nvCodRef">—</div>
+          <div class="ncb-desc">Compártelo · Tus amigos y tú reciben 5% de descuento</div>
+        </div>
+      </div>
+
+      <!-- ══ TABLA DE PRODUCTOS — igual al PDF ══ -->
+      <div class="nota-tabla-header">
+        <span class="nth-prod">Producto</span>
+        <span class="nth-cant" style="text-align:right">Cant.</span>
+        <span class="nth-unit" style="text-align:right">P. Unit.</span>
+        <span class="nth-sub"  style="text-align:right">Subtotal</span>
+      </div>
+
+      <!-- Filas generadas dinámicamente -->
+      <div id="nvItems"></div>
+
+      <!-- Delivery como fila de la tabla -->
+      <div class="nota-delivery-row">
+        <span class="ndl-lbl" style="display:flex;align-items:center;gap:6px">
+          Costo de entrega
+        </span>
+        <span style="text-align:right;font-size:12px;color:#374151">1</span>
+        <span class="ndl-val" id="nvDeliveryUnit">S/ 0.00</span>
+        <span class="ndl-val" id="nvDelivery">S/ 0.00</span>
+      </div>
+
+      <!-- ══ TOTALES ══ -->
+      <div class="nota-totales">
+        <div class="nota-tot-row" id="nvDescRow" style="display:none">
+          <span class="ntl">Descuento aplicado</span>
+          <span class="ntv green" id="nvDescuento">—</span>
+        </div>
+        <div class="nota-tot-row">
+          <span class="ntl">Subtotal productos</span>
+          <span class="ntv" id="nvSubtotal">S/ 0.00</span>
+        </div>
+      </div>
+
+      <!-- Total grande como en el PDF -->
+      <div class="nota-gran-total">
+        <span class="ngt-lbl">TOTAL<br>A PAGAR</span>
+        <span class="ngt-val" id="nvTotal">S/ 0.00</span>
+      </div>
+
+    </div><!-- /nota-body -->
 
     <!-- Footer -->
     <div class="nota-footer">
       ¡Gracias por tu preferencia! 🌾<br>
-      Chicha de jora artesanal — hecha con maíz del campo.<br>
-      <span style="color:var(--y)">ASWA</span> · Tarapoto, San Martín, Perú
+      Chicha de jora artesanal — hecha con maíz del campo y amor de la selva.<br>
+      <strong>LA RICA CHICHA - ASWA</strong> · Tarapoto, San Martín, Perú
     </div>
 
     <!-- Botones -->
@@ -1770,6 +1925,12 @@ document.getElementById('telefono').addEventListener('input', async e => {
       const cbanCod = document.getElementById('cbanCod');
       if (cod && cbanRef && cbanCod) {
         cbanCod.textContent = cod;
+        // Color del código según nivel
+        const codColorMap = {
+          BRONCE:'nivel-bronce-cod', PLATA:'nivel-plata-cod',
+          ORO:'nivel-oro-cod', DIAMANTE:'nivel-diamante-cod'
+        };
+        cbanCod.className = 'cref-cod ' + (codColorMap[nivel] || 'nivel-bronce-cod');
         cbanRef.style.display = 'block';
       }
 
@@ -2010,69 +2171,103 @@ async function confirmarEntrega() {
 
 /* ── NOTA DE VENTA ── */
 function mostrarNotaVenta() {
-  const ahora  = new Date();
-  const fechaStr = ahora.toLocaleDateString('es-PE', {
-    weekday:'long', year:'numeric', month:'long', day:'numeric'
-  });
-  const horaStr = ahora.toLocaleTimeString('es-PE', { hour:'2-digit', minute:'2-digit' });
-  const nv = Math.floor(10000 + Math.random() * 90000); // nro provisional
+  const ahora    = new Date();
+  const fechaStr = ahora.toLocaleDateString('es-PE', { day:'2-digit', month:'2-digit', year:'2-digit' });
+  const horaStr  = ahora.toLocaleTimeString('es-PE', { hour:'2-digit', minute:'2-digit' });
 
-  // Cabecera
-  document.getElementById('nvNumero').textContent = 'Nota de Venta #' + nv;
-  document.getElementById('nvFecha').textContent  = fechaStr + ' · ' + horaStr;
+  // Número de nota: alfanumérico estilo el PDF (8 chars)
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  let nv = '';
+  for (let i=0; i<10; i++) nv += chars[Math.floor(Math.random()*chars.length)];
 
-  // Datos cliente
-  document.getElementById('nvNombre').textContent   = ST.cli.nom || document.getElementById('nombre')?.value || '—';
-  document.getElementById('nvTelefono').textContent = ST.cli.tel || document.getElementById('telefono')?.value || '—';
-  document.getElementById('nvDireccion').textContent= document.getElementById('direccion')?.value || '—';
-  document.getElementById('nvNivel').textContent    = (ST.cli.nivel || 'BRONCE') + ' 🏆';
+  // ── Cabecera ──
+  document.getElementById('nvNumero').textContent = 'N° Nota: ' + nv;
+  document.getElementById('nvFecha').textContent  = 'Fecha: ' + fechaStr + ', ' + horaStr;
 
-  // GPS
+  // ── Datos cliente ──
+  const nombre    = ST.cli.nom    || document.getElementById('nombre')?.value    || '—';
+  const telefono  = ST.cli.tel    || document.getElementById('telefono')?.value  || '—';
+  const direccion = document.getElementById('direccion')?.value || '—';
+  const zonaEl    = document.getElementById('zona');
+  const zonaText  = zonaEl?.options[zonaEl.selectedIndex]?.text || '—';
+
+  document.getElementById('nvNombre').textContent   = nombre;
+  document.getElementById('nvTelefono').textContent = telefono;
+  document.getElementById('nvDireccion').textContent= direccion;
+  document.getElementById('nvZona').textContent     = zonaText;
+  document.getElementById('nvPago').textContent     = ST.pago || 'Efectivo';
+
+  // ── GPS ──
   if (ST.gpsUrl) {
     document.getElementById('nvGpsRow').style.display = 'flex';
     document.getElementById('nvGpsLink').href = ST.gpsUrl;
   }
 
-  // Items con imagen
-  const PROD = {
-    p2l: { nom:'Chicha ASWA 2 Litros',  img:'aswa de 2 litros 1.png', precio:9 },
-    p3l: { nom:'Chicha ASWA 3 Litros',  img:'aswa de 3 litros.png',   precio:13 },
-    p4l: { nom:'Chicha ASWA 4 Litros',  img:'aswa de 4 litros.png',   precio:15 }
+  // ── NIVEL con badge de color ──
+  const nivel  = ST.cli.nivel || 'BRONCE';
+  const nivelInfo = {
+    BRONCE:   { emo:'🥉', cls:'nnb-bronce',   txt:'🥉 BRONCE' },
+    PLATA:    { emo:'🥈', cls:'nnb-plata',     txt:'🥈 PLATA' },
+    ORO:      { emo:'🥇', cls:'nnb-oro',       txt:'🥇 ORO' },
+    DIAMANTE: { emo:'💎', cls:'nnb-diamante',  txt:'💎 DIAMANTE' }
   };
+  const ni = nivelInfo[nivel] || nivelInfo.BRONCE;
+  const badge = document.getElementById('nvNivelBadge');
+  badge.className = 'nota-nivel-badge ' + ni.cls;
+  badge.textContent = ni.txt;
+
+  // ── CÓDIGO del cliente ──
+  const cod = ST.cli.cod || ST.cli.codigo_referido || '';
+  if (cod) {
+    document.getElementById('nvCodRef').textContent = cod;
+    document.getElementById('nvCodBox').style.display = 'flex';
+  }
+
+  // ── TABLA DE PRODUCTOS ── estilo PDF
+  const PROD = {
+    p2l: { nom:'Chicha ASWA',  sz:'Presentación 2L', img:'aswa de 2 litros 1.png', precio:9  },
+    p3l: { nom:'Chicha ASWA',  sz:'Presentación 3L', img:'aswa de 3 litros.png',   precio:13 },
+    p4l: { nom:'Familiar ASWA',sz:'Familiar 4L',      img:'aswa de 4 litros.png',   precio:15 }
+  };
+  const fallback = 'data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2240%22 height=%2240%22><rect width=%2240%22 height=%2240%22 fill=%22%23fffbeb%22 rx=%228%22/><text x=%2220%22 y=%2228%22 text-anchor=%22middle%22 fill=%22%23c27c00%22 font-size=%2218%22>🫙</text></svg>';
+
   let itemsHtml = '';
   Object.entries(ST.cart).forEach(([k, qty]) => {
     if (qty < 1) return;
     const p = PROD[k];
+    const sub = (qty * p.precio).toFixed(2);
     itemsHtml += `
-      <div class="nota-item">
-        <img src="${p.img}" alt="${p.nom}"
-             onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2244%22 height=%2244%22><rect width=%2244%22 height=%2244%22 fill=%22%231a1a1e%22 rx=%228%22/><text x=%2222%22 y=%2230%22 text-anchor=%22middle%22 fill=%22%23facc15%22 font-size=%2220%22>🫙</text></svg>'">
-        <div class="ni-info">
-          <div class="ni-nom">${p.nom}</div>
-          <div class="ni-sub">Cantidad: ${qty} unidad${qty>1?'es':''}</div>
+      <div class="nota-prod-row">
+        <div class="nota-prod-cell">
+          <img src="${p.img}" alt="${p.sz}" class="nota-prod-img"
+               onerror="this.src='${fallback}'">
+          <div>
+            <div class="nota-prod-nom">${p.sz}</div>
+            <div class="nota-prod-sz">${p.nom}</div>
+          </div>
         </div>
-        <div class="ni-price">S/ ${(qty * p.precio).toFixed(2)}</div>
+        <div class="nota-prod-cant">${qty}</div>
+        <div class="nota-prod-unit">S/ ${p.precio}.00</div>
+        <div class="nota-prod-sub">S/ ${sub}</div>
       </div>`;
   });
-  document.getElementById('nvItems').innerHTML = itemsHtml || '<div style="color:var(--mut);font-size:12px">Sin productos</div>';
+  document.getElementById('nvItems').innerHTML = itemsHtml;
 
-  // Totales
-  const subtotal = ST.raw || 0;
+  // ── TOTALES ──
+  const subtotal = ST.raw      || 0;
   const delivery = ST.delivery || 0;
-  const desc     = subtotal - (ST.final - delivery);
-  document.getElementById('nvSubtotal').textContent = 'S/ ' + subtotal.toFixed(2);
-  document.getElementById('nvDelivery').textContent = delivery > 0 ? 'S/ ' + delivery.toFixed(2) : 'Gratis';
-  document.getElementById('nvTotal').textContent    = 'S/ ' + (ST.final || 0).toFixed(2);
-  document.getElementById('nvPago').textContent     = ST.pago || 'Efectivo';
-  if (desc > 0.01) {
-    document.getElementById('nvDescRow').style.display    = 'flex';
-    document.getElementById('nvDescuento').textContent    = '-S/ ' + desc.toFixed(2) + ' (' + Math.round(desc/subtotal*100) + '%)';
-  }
+  const total    = ST.final    || 0;
+  const desc     = Math.max(0, subtotal - (total - delivery));
 
-  // Código referido
-  if (ST.cli.cod) {
-    document.getElementById('nvRefSection').style.display = 'block';
-    document.getElementById('nvCodRef').textContent       = ST.cli.cod;
+  document.getElementById('nvSubtotal').textContent    = 'S/ ' + subtotal.toFixed(2);
+  document.getElementById('nvDelivery').textContent    = 'S/ ' + delivery.toFixed(2);
+  document.getElementById('nvDeliveryUnit').textContent= 'S/ ' + delivery.toFixed(2);
+  document.getElementById('nvTotal').textContent       = 'S/ ' + total.toFixed(2);
+
+  if (desc > 0.01) {
+    document.getElementById('nvDescRow').style.display = 'flex';
+    document.getElementById('nvDescuento').textContent = '-S/ ' + desc.toFixed(2) +
+      ' (' + Math.round(desc/subtotal*100) + '%)';
   }
 
   document.getElementById('notaVentaModal').classList.add('open');
@@ -2085,117 +2280,223 @@ function cerrarNota() {
 }
 
 function descargarNota() {
-  // Genera un HTML limpio de la nota y lo abre como ventana imprimible
-  const sheet = document.getElementById('notaVentaSheet');
+  const baseUrl  = window.location.origin + window.location.pathname.replace(/[^/]*$/, '');
+  const logoSrc  = baseUrl + 'logo de aswa.jpg';
+  const nivel    = ST.cli.nivel || 'BRONCE';
+  const nivelColors = {
+    BRONCE:   { bg:'#fef3c7', color:'#92400e', border:'#fbbf24', txt:'🥉 BRONCE'   },
+    PLATA:    { bg:'#eff6ff', color:'#1e40af', border:'#93c5fd', txt:'🥈 PLATA'    },
+    ORO:      { bg:'#fffbeb', color:'#b45309', border:'#f59e0b', txt:'🥇 ORO'      },
+    DIAMANTE: { bg:'#f5f3ff', color:'#6d28d9', border:'#c4b5fd', txt:'💎 DIAMANTE' }
+  };
+  const nc = nivelColors[nivel] || nivelColors.BRONCE;
+  const cod = ST.cli.cod || '';
 
-  const printWin = window.open('', '_blank', 'width=480,height=800');
+  // Construir filas de productos
+  const PROD = {
+    p2l: { sz:'Presentación 2L', nom:'Chicha ASWA', img: baseUrl + 'aswa de 2 litros 1.png', precio:9  },
+    p3l: { sz:'Presentación 3L', nom:'Chicha ASWA', img: baseUrl + 'aswa de 3 litros.png',   precio:13 },
+    p4l: { sz:'Familiar 4L',     nom:'Familiar',     img: baseUrl + 'aswa de 4 litros.png',   precio:15 }
+  };
+  let prodRows = '';
+  Object.entries(ST.cart).forEach(([k, qty]) => {
+    if (qty < 1) return;
+    const p   = PROD[k];
+    const sub = (qty * p.precio).toFixed(2);
+    prodRows += `
+      <tr>
+        <td style="padding:10px 8px;border-bottom:1px solid #f3f4f6">
+          <div style="display:flex;align-items:center;gap:10px">
+            <img src="${p.img}" width="44" height="44"
+                 style="border-radius:8px;object-fit:cover;border:1px solid #e5e7eb;flex-shrink:0"
+                 onerror="this.style.display='none'">
+            <div>
+              <div style="font-size:13px;font-weight:700;color:#111">${p.sz}</div>
+              <div style="font-size:11px;color:#9ca3af">${p.nom}</div>
+            </div>
+          </div>
+        </td>
+        <td style="text-align:center;padding:10px 8px;border-bottom:1px solid #f3f4f6;font-size:13px">${qty}</td>
+        <td style="text-align:right;padding:10px 8px;border-bottom:1px solid #f3f4f6;font-size:13px">S/ ${p.precio}.00</td>
+        <td style="text-align:right;padding:10px 8px;border-bottom:1px solid #f3f4f6;font-size:13px;font-weight:800;color:#c27c00">S/ ${sub}</td>
+      </tr>`;
+  });
+
+  const delivery  = ST.delivery || 0;
+  const subtotal  = ST.raw      || 0;
+  const total     = ST.final    || 0;
+  const desc      = Math.max(0, subtotal - (total - delivery));
+  const hasDesc   = desc > 0.01;
+
+  const printWin = window.open('', '_blank', 'width=520,height=900');
   printWin.document.write(`<!DOCTYPE html>
 <html>
 <head>
   <meta charset="UTF-8">
-  <title>Nota de Venta ASWA</title>
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&family=Bebas+Neue&display=swap" rel="stylesheet">
+  <title>Nota de Venta — ASWA</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800;900&display=swap" rel="stylesheet">
   <style>
-    * { margin:0; padding:0; box-sizing:border-box; }
-    body {
-      font-family:'Poppins',sans-serif; background:#fff; color:#111;
-      max-width:400px; margin:0 auto; padding:20px;
-    }
-    .header { text-align:center; border-bottom:3px solid #facc15; padding-bottom:16px; margin-bottom:16px; }
-    .logo { width:70px; height:70px; border-radius:50%; border:3px solid #facc15; object-fit:cover; margin:0 auto 8px; display:block; }
-    .empresa { font-family:'Bebas Neue',cursive; font-size:26px; color:#09090b; letter-spacing:.1em; }
-    .sub { font-size:11px; color:#71717a; }
-    .nv-num { font-size:12px; font-weight:700; margin-top:6px; color:#111; }
-    .section { margin-bottom:14px; }
-    .section h4 { font-size:10px; font-weight:800; color:#b45309; text-transform:uppercase; letter-spacing:.12em; border-bottom:1px solid #e5e7eb; padding-bottom:5px; margin-bottom:8px; }
-    .row { display:flex; justify-content:space-between; padding:4px 0; font-size:12px; border-bottom:1px dashed #f3f4f6; }
-    .row .lbl { color:#6b7280; }
-    .row .val { font-weight:600; text-align:right; max-width:60%; }
-    .item { display:flex; align-items:center; gap:10px; padding:6px 0; border-bottom:1px dashed #f3f4f6; }
-    .item img { width:44px; height:44px; border-radius:8px; object-fit:cover; }
-    .item .iinfo { flex:1; }
-    .item .inom { font-size:12px; font-weight:700; }
-    .item .isub { font-size:10px; color:#6b7280; }
-    .item .iprice { font-size:13px; font-weight:800; color:#b45309; white-space:nowrap; }
-    .total-box { background:#fefce8; border:2px solid #facc15; border-radius:10px; padding:12px; display:flex; justify-content:space-between; align-items:center; margin:12px 0; }
-    .total-box .tlbl { font-size:13px; font-weight:700; }
-    .total-box .tval { font-family:'Bebas Neue',cursive; font-size:30px; color:#b45309; }
-    .ref-box { background:#fefce8; border:1px solid #fde047; border-radius:8px; padding:10px 12px; margin:10px 0; }
-    .ref-box .rlbl { font-size:10px; font-weight:700; color:#b45309; text-transform:uppercase; }
-    .ref-box .rcod { font-family:'Bebas Neue',cursive; font-size:22px; color:#09090b; letter-spacing:.1em; }
-    .ref-box .rdesc { font-size:10px; color:#6b7280; margin-top:2px; }
-    .footer { text-align:center; border-top:1px solid #e5e7eb; padding-top:12px; font-size:11px; color:#6b7280; line-height:1.7; }
-    @media print {
-      body { padding:10px; }
-      button { display:none; }
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{font-family:'Poppins',sans-serif;background:#fff;color:#111;max-width:460px;margin:0 auto;padding:24px 20px}
+
+    /* CABECERA */
+    .header{text-align:center;padding-bottom:18px;border-bottom:3px solid #facc15;margin-bottom:18px}
+    .logo-wrap{width:140px;height:140px;margin:0 auto 14px;border-radius:16px;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,.12)}
+    .logo-wrap img{width:100%;height:100%;object-fit:cover;display:block}
+    .empresa{font-size:20px;font-weight:900;color:#c27c00;text-transform:uppercase;letter-spacing:.04em}
+    .sub{font-size:12px;color:#6b7280;margin-top:4px;line-height:1.7}
+    hr{border:none;border-top:2px solid #facc15;margin:14px 0 10px}
+    .titulo{font-size:16px;font-weight:900;letter-spacing:.16em;color:#111;text-align:center;margin-bottom:6px}
+    .nv-num{font-size:12px;font-weight:700;color:#374151}
+    .nv-fecha{font-size:11px;color:#9ca3af;margin-top:2px}
+
+    /* CLIENTE */
+    .cliente-box{border:1px solid #e5e7eb;border-radius:12px;padding:14px 16px;margin-bottom:16px}
+    .cli-row{display:flex;padding:5px 0;border-bottom:1px dashed #f3f4f6;font-size:13px}
+    .cli-row:last-child{border-bottom:none}
+    .cli-lbl{font-weight:700;color:#374151;min-width:100px;flex-shrink:0}
+    .cli-val{color:#111;flex:1}
+
+    /* BADGE NIVEL */
+    .nivel-badge{display:inline-flex;align-items:center;gap:6px;padding:4px 14px;
+      border-radius:999px;font-size:11px;font-weight:800;text-transform:uppercase;
+      background:${nc.bg};color:${nc.color};border:1.5px solid ${nc.border}}
+
+    /* CÓDIGO */
+    .cod-box{background:#fffbeb;border:2px dashed #f59e0b;border-radius:10px;
+      padding:12px 16px;margin-bottom:16px;display:${cod ? 'block':'none'}}
+    .cod-lbl{font-size:10px;font-weight:800;color:#92400e;text-transform:uppercase;letter-spacing:.1em}
+    .cod-val{font-size:26px;font-weight:900;color:#c27c00;letter-spacing:.12em;margin-top:2px}
+    .cod-desc{font-size:10px;color:#92400e;margin-top:2px}
+
+    /* TABLA */
+    table{width:100%;border-collapse:collapse;margin-bottom:0}
+    thead tr{background:#f9fafb}
+    thead th{padding:8px 8px;font-size:11px;font-weight:800;color:#374151;
+      text-transform:uppercase;letter-spacing:.06em;border:1px solid #e5e7eb}
+    thead th:not(:first-child){text-align:right}
+    tbody tr:last-child td{border-bottom:none}
+    .delivery-row td{background:#f9fafb;font-size:12px;font-weight:600;color:#374151;
+      padding:8px 8px;border:1px solid #e5e7eb;border-top:1px dashed #e5e7eb}
+
+    /* TOTALES */
+    .totales{margin:14px 0 10px}
+    .tot-row{display:flex;justify-content:space-between;padding:5px 14px;
+      border-bottom:1px dashed #f3f4f6;font-size:13px}
+    .tot-row:last-child{border-bottom:none}
+    .tot-lbl{color:#6b7280}
+    .tot-val{font-weight:700}
+
+    /* TOTAL GRANDE */
+    .gran-total{background:#fffbeb;border:2px solid #facc15;border-radius:14px;
+      padding:16px 20px;display:flex;justify-content:space-between;align-items:center;margin:12px 0}
+    .gt-lbl{font-size:14px;font-weight:900;color:#111;text-transform:uppercase;line-height:1.3}
+    .gt-val{font-size:42px;font-weight:900;color:#c27c00;line-height:1}
+
+    /* FOOTER */
+    .footer{text-align:center;border-top:1px dashed #e5e7eb;padding-top:14px;
+      font-size:11px;color:#9ca3af;line-height:1.9;margin-top:14px}
+    .footer strong{color:#c27c00}
+
+    /* BOTÓN IMPRIMIR */
+    .print-btn{display:block;margin:16px auto 0;background:#facc15;color:#000;border:none;
+      padding:12px 32px;border-radius:10px;font-size:14px;font-weight:900;cursor:pointer;
+      font-family:'Poppins',sans-serif;letter-spacing:.04em}
+
+    @media print{
+      .print-btn{display:none}
+      body{padding:10px}
     }
   </style>
 </head>
 <body>
+
+  <!-- CABECERA -->
   <div class="header">
-    <img src="${window.location.origin + window.location.pathname.replace(/[^/]*$/, '')}logo de aswa.jpg"
-         class="logo" alt="ASWA"
-         onerror="this.style.cssText='width:70px;height:70px;border-radius:50%;background:#facc15;display:block;margin:0 auto 8px'">
-    <div class="empresa">La Rica Chicha — ASWA</div>
-    <div class="sub">El oro líquido de la selva 🌽 · Tarapoto, San Martín</div>
+    <div class="logo-wrap">
+      <img src="${logoSrc}" alt="ASWA"
+           onerror="this.parentElement.style.cssText='width:140px;height:140px;background:#facc15;border-radius:16px;display:flex;align-items:center;justify-content:center;font-size:56px;margin:0 auto 14px'">
+    </div>
+    <div class="empresa">LA RICA CHICHA - ASWA</div>
+    <div class="sub">
+      El sabor de mi tierra<br>
+      Tarapoto - San Martín<br>
+      WhatsApp: 947 999 736 / 955 273 229
+    </div>
+    <hr>
+    <div class="titulo">NOTA DE VENTA</div>
     <div class="nv-num">${document.getElementById('nvNumero').textContent}</div>
-    <div class="nv-num" style="color:#6b7280;font-weight:400">${document.getElementById('nvFecha').textContent}</div>
+    <div class="nv-fecha">${document.getElementById('nvFecha').textContent}</div>
   </div>
 
-  <div class="section">
-    <h4>📋 Datos del Cliente</h4>
-    <div class="row"><span class="lbl">Nombre</span><span class="val">${document.getElementById('nvNombre').textContent}</span></div>
-    <div class="row"><span class="lbl">Teléfono</span><span class="val">${document.getElementById('nvTelefono').textContent}</span></div>
-    <div class="row"><span class="lbl">Dirección</span><span class="val">${document.getElementById('nvDireccion').textContent}</span></div>
-    <div class="row"><span class="lbl">Nivel fidelidad</span><span class="val">${document.getElementById('nvNivel').textContent}</span></div>
+  <!-- DATOS CLIENTE -->
+  <div class="cliente-box">
+    <div class="cli-row"><span class="cli-lbl">Cliente:</span><span class="cli-val">${document.getElementById('nvNombre').textContent}</span></div>
+    <div class="cli-row"><span class="cli-lbl">Celular:</span><span class="cli-val">${document.getElementById('nvTelefono').textContent}</span></div>
+    <div class="cli-row"><span class="cli-lbl">Dirección:</span><span class="cli-val">${document.getElementById('nvDireccion').textContent}</span></div>
+    ${ST.gpsUrl ? `<div class="cli-row"><span class="cli-lbl">📍 GPS:</span><span class="cli-val"><a href="${ST.gpsUrl}" style="color:#16a34a;font-weight:700">Ver en Maps →</a></span></div>` : ''}
+    <div class="cli-row"><span class="cli-lbl">Zona:</span><span class="cli-val">${document.getElementById('nvZona').textContent}</span></div>
+    <div class="cli-row"><span class="cli-lbl">Pago:</span><span class="cli-val">${document.getElementById('nvPago').textContent}</span></div>
+    <div class="cli-row">
+      <span class="cli-lbl">Nivel:</span>
+      <span class="cli-val"><span class="nivel-badge">${nc.txt}</span></span>
+    </div>
   </div>
 
-  <div class="section">
-    <h4>🛒 Productos</h4>
-    ${document.getElementById('nvItems').innerHTML
-      .replace(/class="nota-item"/g,'class="item"')
-      .replace(/class="ni-info"/g,'class="iinfo"')
-      .replace(/class="ni-nom"/g,'class="inom"')
-      .replace(/class="ni-sub"/g,'class="isub"')
-      .replace(/class="ni-price"/g,'class="iprice"')
-    }
-  </div>
-
-  <div class="section">
-    <h4>💰 Cobro</h4>
-    <div class="row"><span class="lbl">Subtotal</span><span class="val">${document.getElementById('nvSubtotal').textContent}</span></div>
-    <div class="row"><span class="lbl">Delivery</span><span class="val">${document.getElementById('nvDelivery').textContent}</span></div>
-    ${document.getElementById('nvDescRow').style.display!=='none' ? `<div class="row"><span class="lbl" style="color:#16a34a">Descuento</span><span class="val" style="color:#16a34a">${document.getElementById('nvDescuento').textContent}</span></div>` : ''}
-    <div class="row"><span class="lbl">Forma de pago</span><span class="val">${document.getElementById('nvPago').textContent}</span></div>
-  </div>
-
-  <div class="total-box">
-    <span class="tlbl">TOTAL</span>
-    <span class="tval">${document.getElementById('nvTotal').textContent}</span>
-  </div>
-
-  ${ST.cli.cod ? `
-  <div class="ref-box">
-    <div class="rlbl">🎁 Tu código de referidos</div>
-    <div class="rcod">${ST.cli.cod}</div>
-    <div class="rdesc">Compártelo con amigos · Ambos reciben 5% de descuento</div>
+  <!-- CÓDIGO DEL CLIENTE -->
+  ${cod ? `
+  <div class="cod-box">
+    <div class="cod-lbl">🎁 Tu código personal de descuento</div>
+    <div class="cod-val">${cod}</div>
+    <div class="cod-desc">Compártelo con tus amigos · Ambos reciben 5% de descuento en su primer pedido</div>
   </div>` : ''}
 
+  <!-- TABLA PRODUCTOS -->
+  <table>
+    <thead>
+      <tr>
+        <th style="text-align:left">Producto</th>
+        <th>Cant.</th>
+        <th>P. Unit.</th>
+        <th>Subtotal</th>
+      </tr>
+    </thead>
+    <tbody>
+      ${prodRows}
+      <tr class="delivery-row">
+        <td>Costo de entrega</td>
+        <td style="text-align:right">1</td>
+        <td style="text-align:right">S/ ${delivery.toFixed(2)}</td>
+        <td style="text-align:right;font-weight:800;color:#374151">S/ ${delivery.toFixed(2)}</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- TOTALES -->
+  <div class="totales">
+    <div class="tot-row"><span class="tot-lbl">Subtotal productos</span><span class="tot-val">S/ ${subtotal.toFixed(2)}</span></div>
+    ${hasDesc ? `<div class="tot-row"><span class="tot-lbl" style="color:#16a34a">Descuento aplicado</span><span class="tot-val" style="color:#16a34a">-S/ ${desc.toFixed(2)} (${Math.round(desc/subtotal*100)}%)</span></div>` : ''}
+  </div>
+
+  <!-- TOTAL GRANDE -->
+  <div class="gran-total">
+    <span class="gt-lbl">TOTAL<br>A PAGAR</span>
+    <span class="gt-val">S/ ${total.toFixed(2)}</span>
+  </div>
+
+  <!-- FOOTER -->
   <div class="footer">
     ¡Gracias por tu preferencia! 🌾<br>
-    Chicha de jora artesanal · hecha con amor y maíz del campo<br>
-    <strong>ASWA</strong> · Tarapoto, San Martín, Perú<br>
-    <br>
-    <button onclick="window.print()" style="margin-top:8px;background:#facc15;color:#000;border:none;padding:10px 28px;border-radius:8px;font-size:13px;font-weight:800;cursor:pointer;font-family:'Poppins',sans-serif">
-      🖨️ Imprimir / Guardar PDF
-    </button>
+    Chicha de jora artesanal — hecha con maíz del campo y amor de la selva.<br>
+    <strong>LA RICA CHICHA - ASWA</strong> · Tarapoto, San Martín, Perú<br>
+    <button class="print-btn" onclick="window.print()">🖨️ Imprimir / Guardar como PDF</button>
   </div>
+
 </body>
 </html>`);
   printWin.document.close();
   printWin.focus();
-  // En móvil se da tiempo para cargar las imágenes antes de imprimir
-  setTimeout(() => printWin.print(), 1500);
+  setTimeout(() => printWin.print(), 1800);
 }
 
 /* ── MODALES ── */
