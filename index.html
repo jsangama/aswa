@@ -10,7 +10,21 @@
 
   <!-- ══════════════════════════════════════
        FIREBASE — pedidos-aswa-peru
-  ══════════════════════════════════════ -->
+       
+       SEGURIDAD DE LA API KEY:
+       ─────────────────────────────────────
+       La apiKey de Firebase Web es PÚBLICA por diseño oficial de Google/Firebase.
+       NO es un secreto — está diseñada para estar en el cliente.
+       La seguridad real viene de:
+         ✅ Firestore Security Rules (firestore.rules)
+         ✅ Authorized Domains en Firebase Console
+         ✅ App Check con reCAPTCHA (opcional)
+       
+       Para restringir el dominio:
+         Google Cloud Console → APIs → Browser Key → 
+         Application restrictions → HTTP referrers →
+         Agregar: jsangama.github.io/*
+       ══════════════════════════════════════ -->
   <script type="module">
     import { initializeApp }
       from "https://www.gstatic.com/firebasejs/11.1.0/firebase-app.js";
@@ -20,6 +34,7 @@
     import { getAuth, signInAnonymously, onAuthStateChanged }
       from "https://www.gstatic.com/firebasejs/11.1.0/firebase-auth.js";
 
+    // ── Firebase config (pública por diseño — seguridad en Firestore Rules) ──
     const cfg = {
       apiKey:            "AIzaSyAsAIZEEuE4Ha3xCFgfn8hBTictVi4CTIk",
       authDomain:        "pedidos-aswa-peru.firebaseapp.com",
@@ -249,6 +264,130 @@
       cursor:pointer; margin-top:8px;
       display:flex; align-items:center; justify-content:center; gap:8px;
       font-family:'Poppins',sans-serif;
+    }
+
+    /* ══ CÓDIGO REFERIDO EN BANNER ══ */
+    .cban-ref {
+      background:rgba(250,204,21,.06); border-top:1px solid rgba(250,204,21,.15);
+      padding:10px 16px 12px;
+    }
+    .cref-label { font-size:10px; color:var(--y); font-weight:700; text-transform:uppercase; letter-spacing:.1em; margin-bottom:6px; }
+    .cref-row   { display:flex; align-items:center; gap:8px; }
+    .cref-cod   {
+      flex:1; background:var(--s2); border:1px solid var(--y);
+      color:var(--y); font-family:'Bebas Neue',cursive; font-size:20px;
+      letter-spacing:.15em; padding:8px 12px; border-radius:8px;
+      text-align:center; min-width:0; overflow:hidden; text-overflow:ellipsis;
+    }
+    .cref-copy, .cref-share {
+      flex-shrink:0; border:none; border-radius:8px; padding:8px 12px;
+      font-size:11px; font-weight:800; cursor:pointer;
+      font-family:'Poppins',sans-serif; transition:opacity .15s;
+    }
+    .cref-copy  { background:var(--s2); color:var(--y); border:1px solid var(--y); }
+    .cref-share { background:var(--y); color:#000; }
+    .cref-copy:hover, .cref-share:hover { opacity:.85; }
+
+    /* ══ GPS TIEMPO REAL ══ */
+    .gps-live-box {
+      background:rgba(34,197,94,.07); border:1px solid rgba(34,197,94,.25);
+      border-radius:12px; padding:10px 14px; margin-top:8px;
+      display:none; align-items:center; gap:10px;
+    }
+    .gps-live-box.show { display:flex; }
+    .gps-pulse {
+      width:10px; height:10px; border-radius:50%;
+      background:var(--grn); flex-shrink:0;
+      animation:pulse-gps 1.4s ease-in-out infinite;
+    }
+    @keyframes pulse-gps {
+      0%,100%{ transform:scale(1); opacity:1; }
+      50%    { transform:scale(1.5); opacity:.5; }
+    }
+    .gps-live-info { flex:1; min-width:0; }
+    .gps-live-info .gli-title { font-size:11px; font-weight:700; color:var(--grn); }
+    .gps-live-info .gli-coords { font-size:10px; color:var(--mut); margin-top:1px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .gps-stop-btn {
+      background:rgba(239,68,68,.15); color:var(--red); border:1px solid rgba(239,68,68,.3);
+      border-radius:8px; padding:5px 10px; font-size:10px; font-weight:700;
+      cursor:pointer; font-family:'Poppins',sans-serif; flex-shrink:0;
+    }
+
+    /* ══ NOTA DE VENTA (modal post-confirmación) ══ */
+    .nota-modal {
+      display:none; position:fixed; inset:0; z-index:400;
+      background:rgba(0,0,0,.92); backdrop-filter:blur(16px);
+      align-items:center; justify-content:center; padding:16px;
+    }
+    .nota-modal.open { display:flex; }
+    .nota-sheet {
+      background:var(--s1); border:1px solid var(--brd); border-radius:20px;
+      width:100%; max-width:420px; max-height:92dvh; overflow-y:auto;
+      animation:mup .25s ease;
+    }
+    .nota-top {
+      background:linear-gradient(135deg,#09090b,#1a1a0a);
+      border-bottom:2px solid var(--y); border-radius:20px 20px 0 0;
+      padding:20px; text-align:center;
+    }
+    .nota-logo {
+      width:64px; height:64px; border-radius:50%; border:3px solid var(--y);
+      object-fit:cover; margin:0 auto 10px; display:block;
+    }
+    .nota-empresa { font-family:'Bebas Neue',cursive; font-size:28px; color:var(--y); letter-spacing:.1em; }
+    .nota-sub { font-size:11px; color:var(--mut); }
+    .nota-num { font-size:11px; color:var(--txt); margin-top:6px; font-weight:700; }
+
+    .nota-body { padding:16px; }
+    .nota-section { margin-bottom:14px; }
+    .nota-section h4 {
+      font-size:10px; font-weight:800; color:var(--y);
+      text-transform:uppercase; letter-spacing:.12em;
+      border-bottom:1px solid var(--brd); padding-bottom:6px; margin-bottom:10px;
+    }
+    .nota-row {
+      display:flex; justify-content:space-between; align-items:flex-start;
+      padding:5px 0; font-size:12px; border-bottom:1px dashed rgba(255,255,255,.05);
+    }
+    .nota-row:last-child { border-bottom:none; }
+    .nota-row .nlbl { color:var(--mut); }
+    .nota-row .nval { font-weight:600; text-align:right; max-width:60%; }
+
+    /* Items con imagen */
+    .nota-item {
+      display:flex; align-items:center; gap:10px;
+      padding:8px 0; border-bottom:1px dashed rgba(255,255,255,.05);
+    }
+    .nota-item:last-child { border-bottom:none; }
+    .nota-item img { width:44px; height:44px; border-radius:8px; object-fit:cover; flex-shrink:0; }
+    .nota-item .ni-info { flex:1; }
+    .nota-item .ni-nom { font-size:12px; font-weight:700; }
+    .nota-item .ni-sub { font-size:10px; color:var(--mut); }
+    .nota-item .ni-price { font-size:13px; font-weight:800; color:var(--y); white-space:nowrap; }
+
+    .nota-total-row {
+      background:rgba(250,204,21,.08); border:1px solid rgba(250,204,21,.2);
+      border-radius:10px; padding:12px 14px;
+      display:flex; justify-content:space-between; align-items:center;
+      margin:12px 0;
+    }
+    .nota-total-row .nt-lbl { font-size:13px; font-weight:700; }
+    .nota-total-row .nt-val { font-family:'Bebas Neue',cursive; font-size:32px; color:var(--y); }
+
+    .nota-footer {
+      text-align:center; padding:0 16px 16px; font-size:11px; color:var(--mut); line-height:1.6;
+    }
+    .nota-actions { display:grid; grid-template-columns:1fr 1fr; gap:10px; padding:0 16px 16px; }
+    .nota-btn-dl {
+      background:var(--y); color:#000; border:none;
+      padding:14px; border-radius:12px; font-size:13px; font-weight:800;
+      cursor:pointer; font-family:'Poppins',sans-serif;
+      display:flex; align-items:center; justify-content:center; gap:6px;
+    }
+    .nota-btn-cl {
+      background:var(--s2); color:var(--mut); border:1px solid var(--brd);
+      padding:14px; border-radius:12px; font-size:13px; font-weight:700;
+      cursor:pointer; font-family:'Poppins',sans-serif;
     }
 
     /* ══ PRODUCTO CARDS ══ */
@@ -929,6 +1068,15 @@
       </div>
       <!-- Tags descuentos + vencimientos -->
       <div class="cban-body" id="cbanTags"></div>
+      <!-- Código referido inline -->
+      <div class="cban-ref" id="cbanRef" style="display:none">
+        <div class="cref-label">🎁 Tu código para amigos</div>
+        <div class="cref-row">
+          <span class="cref-cod" id="cbanCod">—</span>
+          <button class="cref-copy" onclick="copiarCodBanner()">Copiar</button>
+          <button class="cref-share" onclick="abrirRef()">Compartir 💛</button>
+        </div>
+      </div>
     </div>
 
     <div class="fld">
@@ -959,15 +1107,24 @@
       </div>
     </div>
     <div class="fld">
-      <button class="btn-gps" id="btnGPS" onclick="compartirUbicacion()">
+      <button class="btn-gps" id="btnGPS" onclick="toggleGPS()">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
              stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
           <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
           <circle cx="12" cy="10" r="3"/>
         </svg>
-        <span id="gpsLabel">COMPARTIR UBICACIÓN GPS</span>
+        <span id="gpsLabel">📡 UBICACIÓN EN TIEMPO REAL</span>
       </button>
       <div class="gps-status" id="gpsStatus"></div>
+      <!-- GPS LIVE — solo se muestra cuando está activo -->
+      <div class="gps-live-box" id="gpsLiveBox">
+        <div class="gps-pulse"></div>
+        <div class="gps-live-info">
+          <div class="gli-title">📍 GPS activo — ubicación en vivo</div>
+          <div class="gli-coords" id="gpsLiveCoords">buscando señal...</div>
+        </div>
+        <button class="gps-stop-btn" onclick="detenerGPS()">✕ Detener</button>
+      </div>
     </div>
     <div class="fld">
       <label>Zona</label>
@@ -1141,25 +1298,56 @@
 <div class="page" id="page-concurso">
   <div class="concurso-page">
 
-    <!-- Card principal del concurso -->
-    <div class="concurso-card" id="concursoCard">
-      <div class="conc-header">
-        <div>
-          <div class="conc-title">🏆 CONCURSO</div>
-          <div class="conc-subtitle" id="concSubtitle">Mejor Foto ASWA · Febrero 2026</div>
+    <!-- Cards de concursos (Foto + Video dinámicos) -->
+    <div id="concursosContainer">
+
+      <!-- Concurso Foto -->
+      <div class="concurso-card" id="concursoFoto" style="margin-bottom:14px">
+        <div class="conc-header">
+          <div>
+            <div class="conc-title">📸 MEJOR FOTO</div>
+            <div class="conc-subtitle" id="concFotoSubtitle">ASWA · cargando...</div>
+          </div>
+          <div style="background:rgba(0,0,0,.25);color:#fff;font-size:10px;font-weight:700;padding:4px 10px;border-radius:999px">
+            FOTO
+          </div>
         </div>
-        <button class="conc-close" onclick="irA('pedir')">✕</button>
+        <div class="conc-premio">
+          <div class="conc-premio-label">🎁 Premio</div>
+          <div class="conc-premio-val" id="concFotoPremio">Pedido Gratis</div>
+        </div>
+        <div class="conc-desc" id="concFotoDesc">Sube tu mejor foto con tu chicha ASWA y gana</div>
+        <div class="conc-meta">
+          <div class="conc-pill">📅 <span id="concFotoFecha">—</span></div>
+          <div class="conc-pill">👥 <span id="concFotoPart">0 participantes</span></div>
+        </div>
+        <button class="btn-participar" onclick="irA('bono')">📸 Participar con foto →</button>
       </div>
-      <div class="conc-premio">
-        <div class="conc-premio-label">🎁 Premio</div>
-        <div class="conc-premio-val" id="concPremio">Pedido Gratis</div>
+
+      <!-- Concurso Video -->
+      <div class="concurso-card" id="concursoVideo"
+           style="background:linear-gradient(135deg,#7c3aed,#2563eb,#0891b2);margin-bottom:14px">
+        <div class="conc-header">
+          <div>
+            <div class="conc-title">🎬 MEJOR VIDEO</div>
+            <div class="conc-subtitle" id="concVideoSubtitle">ASWA · cargando...</div>
+          </div>
+          <div style="background:rgba(0,0,0,.25);color:#fff;font-size:10px;font-weight:700;padding:4px 10px;border-radius:999px">
+            VIDEO
+          </div>
+        </div>
+        <div class="conc-premio">
+          <div class="conc-premio-label">🎁 Premio</div>
+          <div class="conc-premio-val" id="concVideoPremio">Galón Familiar Gratis</div>
+        </div>
+        <div class="conc-desc" id="concVideoDesc">Graba tu reacción probando la chicha ASWA y compártela</div>
+        <div class="conc-meta">
+          <div class="conc-pill">📅 <span id="concVideoFecha">—</span></div>
+          <div class="conc-pill">👥 <span id="concVideoPart">0 participantes</span></div>
+        </div>
+        <button class="btn-participar" onclick="irA('bono')" style="background:#fff;color:#7c3aed">🎬 Participar con video →</button>
       </div>
-      <div class="conc-desc" id="concDesc">Comparte tu mejor momento disfrutando una chicha ASWA</div>
-      <div class="conc-meta">
-        <div class="conc-pill">📅 <span id="concFecha">Hasta 28 feb</span></div>
-        <div class="conc-pill">👥 <span id="concParticipantes">0 participantes</span></div>
-      </div>
-      <button class="btn-participar" onclick="irA('bono')">Participar →</button>
+
     </div>
 
     <!-- Ranking -->
@@ -1329,6 +1517,90 @@
   <button class="bnvo" onclick="location.reload()">Hacer otro pedido</button>
 </div>
 
+<!-- ══════════════ NOTA DE VENTA ══════════════ -->
+<div class="nota-modal" id="notaVentaModal">
+  <div class="nota-sheet" id="notaVentaSheet">
+
+    <!-- Cabecera empresa -->
+    <div class="nota-top">
+      <img src="logo de aswa.jpg" alt="ASWA" class="nota-logo"
+           onerror="this.style.cssText='width:64px;height:64px;border-radius:50%;background:var(--y);display:block;margin:0 auto 10px'">
+      <div class="nota-empresa">La Rica Chicha — ASWA</div>
+      <div class="nota-sub">El oro líquido de la selva 🌽 · Tarapoto, San Martín</div>
+      <div class="nota-num" id="nvNumero">Nota de Venta #—</div>
+      <div class="nota-num" id="nvFecha" style="color:var(--mut);font-weight:400"></div>
+    </div>
+
+    <div class="nota-body">
+
+      <!-- Cliente -->
+      <div class="nota-section">
+        <h4>📋 Datos del Cliente</h4>
+        <div class="nota-row"><span class="nlbl">Nombre</span><span class="nval" id="nvNombre">—</span></div>
+        <div class="nota-row"><span class="nlbl">Teléfono</span><span class="nval" id="nvTelefono">—</span></div>
+        <div class="nota-row"><span class="nlbl">Dirección</span><span class="nval" id="nvDireccion">—</span></div>
+        <div class="nota-row" id="nvGpsRow" style="display:none">
+          <span class="nlbl">📍 Ubicación GPS</span>
+          <a id="nvGpsLink" href="#" target="_blank" style="color:var(--grn);font-size:12px;font-weight:600">Ver en Maps →</a>
+        </div>
+        <div class="nota-row"><span class="nlbl">Nivel</span><span class="nval" id="nvNivel">BRONCE</span></div>
+      </div>
+
+      <!-- Productos con imagen -->
+      <div class="nota-section">
+        <h4>🛒 Productos Pedidos</h4>
+        <div id="nvItems"><!-- generado dinámicamente --></div>
+      </div>
+
+      <!-- Desglose de cobro -->
+      <div class="nota-section">
+        <h4>💰 Resumen de Cobro</h4>
+        <div class="nota-row"><span class="nlbl">Subtotal</span><span class="nval" id="nvSubtotal">S/ 0.00</span></div>
+        <div class="nota-row"><span class="nlbl">Delivery</span><span class="nval" id="nvDelivery">S/ 0.00</span></div>
+        <div class="nota-row" id="nvDescRow" style="display:none">
+          <span class="nlbl" style="color:var(--grn)">Descuento</span>
+          <span class="nval" style="color:var(--grn)" id="nvDescuento">— %</span>
+        </div>
+        <div class="nota-row"><span class="nlbl">Forma de pago</span><span class="nval" id="nvPago">—</span></div>
+      </div>
+
+      <!-- Total -->
+      <div class="nota-total-row">
+        <span class="nt-lbl">TOTAL A PAGAR</span>
+        <span class="nt-val" id="nvTotal">S/ 0.00</span>
+      </div>
+
+      <!-- Código referido si aplica -->
+      <div class="nota-section" id="nvRefSection" style="display:none">
+        <h4>🎁 Tu Código de Referidos</h4>
+        <div class="nota-row"><span class="nlbl">Código personal</span><span class="nval" id="nvCodRef" style="color:var(--y);font-size:14px">—</span></div>
+        <div style="font-size:11px;color:var(--mut);margin-top:4px;line-height:1.6">
+          Comparte este código con tus amigos. Cuando hagan su primer pedido, ¡ambos reciben 5% de descuento! 💛
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Footer -->
+    <div class="nota-footer">
+      ¡Gracias por tu preferencia! 🌾<br>
+      Chicha de jora artesanal — hecha con maíz del campo.<br>
+      <span style="color:var(--y)">ASWA</span> · Tarapoto, San Martín, Perú
+    </div>
+
+    <!-- Botones -->
+    <div class="nota-actions">
+      <button class="nota-btn-dl" onclick="descargarNota()">
+        📥 Descargar PDF
+      </button>
+      <button class="nota-btn-cl" onclick="cerrarNota()">
+        Cerrar
+      </button>
+    </div>
+
+  </div>
+</div>
+
 <!-- TOAST -->
 <div class="tst" id="tst"></div>
 
@@ -1492,6 +1764,14 @@ document.getElementById('telefono').addEventListener('input', async e => {
         tags.push(`<span class="cban-tag warn">⚠️ Bono ${b.valor}% vence ${txt}</span>`);
       });
       tagsEl.innerHTML = tags.join('');
+
+      // Mostrar código referido inline en el banner
+      const cbanRef = document.getElementById('cbanRef');
+      const cbanCod = document.getElementById('cbanCod');
+      if (cod && cbanRef && cbanCod) {
+        cbanCod.textContent = cod;
+        cbanRef.style.display = 'block';
+      }
 
       ban.classList.add('on');
 
@@ -1707,25 +1987,215 @@ async function enviarPedido() {
 async function confirmarEntrega() {
   if (!ST.pedidoFbId) { cerrar('mConfirmar'); location.reload(); return; }
   const btn = document.getElementById('btnConf');
-  btn.disabled = true; btn.textContent = 'Confirmando...';
+  btn.disabled = true; btn.textContent = '⏳ Confirmando...';
   try {
-    const { doc:d, updateDoc:ud } = window.FB;
-    /* Este update activa onPedidoConfirmado en Cloud Functions:
-       → cambia estado a confirmado
-       → activa ciclo 30 días
-       → acumula descuento referidor
-       → genera nota de venta PDF */
+    const { doc:d, updateDoc:ud, serverTimestamp:ts } = window.FB;
     await ud(d(db,'pedidos',ST.pedidoFbId), {
       confirmacion_cliente: true,
-      estado: 'en_reparto'
+      confirmado_at: ts(),
+      estado: 'entregado'
     });
     cerrar('mConfirmar');
-    tst('🎉 ¡Entrega confirmada! Tu descuento está activo', 3500);
-    setTimeout(() => location.reload(), 3700);
+    tst('🎉 ¡Gracias! Descuento activado. Preparando tu nota de venta...', 3000);
+
+    // Pequeña pausa dramática ✨ antes de mostrar la nota
+    setTimeout(() => mostrarNotaVenta(), 1200);
+
   } catch(err) {
     console.error(err);
     btn.disabled = false; btn.textContent = '✅ SÍ, YA RECIBÍ MI PEDIDO';
+    tst('❌ Error al confirmar. Intenta de nuevo.', 3000);
   }
+}
+
+/* ── NOTA DE VENTA ── */
+function mostrarNotaVenta() {
+  const ahora  = new Date();
+  const fechaStr = ahora.toLocaleDateString('es-PE', {
+    weekday:'long', year:'numeric', month:'long', day:'numeric'
+  });
+  const horaStr = ahora.toLocaleTimeString('es-PE', { hour:'2-digit', minute:'2-digit' });
+  const nv = Math.floor(10000 + Math.random() * 90000); // nro provisional
+
+  // Cabecera
+  document.getElementById('nvNumero').textContent = 'Nota de Venta #' + nv;
+  document.getElementById('nvFecha').textContent  = fechaStr + ' · ' + horaStr;
+
+  // Datos cliente
+  document.getElementById('nvNombre').textContent   = ST.cli.nom || document.getElementById('nombre')?.value || '—';
+  document.getElementById('nvTelefono').textContent = ST.cli.tel || document.getElementById('telefono')?.value || '—';
+  document.getElementById('nvDireccion').textContent= document.getElementById('direccion')?.value || '—';
+  document.getElementById('nvNivel').textContent    = (ST.cli.nivel || 'BRONCE') + ' 🏆';
+
+  // GPS
+  if (ST.gpsUrl) {
+    document.getElementById('nvGpsRow').style.display = 'flex';
+    document.getElementById('nvGpsLink').href = ST.gpsUrl;
+  }
+
+  // Items con imagen
+  const PROD = {
+    p2l: { nom:'Chicha ASWA 2 Litros',  img:'aswa de 2 litros 1.png', precio:9 },
+    p3l: { nom:'Chicha ASWA 3 Litros',  img:'aswa de 3 litros.png',   precio:13 },
+    p4l: { nom:'Chicha ASWA 4 Litros',  img:'aswa de 4 litros.png',   precio:15 }
+  };
+  let itemsHtml = '';
+  Object.entries(ST.cart).forEach(([k, qty]) => {
+    if (qty < 1) return;
+    const p = PROD[k];
+    itemsHtml += `
+      <div class="nota-item">
+        <img src="${p.img}" alt="${p.nom}"
+             onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2244%22 height=%2244%22><rect width=%2244%22 height=%2244%22 fill=%22%231a1a1e%22 rx=%228%22/><text x=%2222%22 y=%2230%22 text-anchor=%22middle%22 fill=%22%23facc15%22 font-size=%2220%22>🫙</text></svg>'">
+        <div class="ni-info">
+          <div class="ni-nom">${p.nom}</div>
+          <div class="ni-sub">Cantidad: ${qty} unidad${qty>1?'es':''}</div>
+        </div>
+        <div class="ni-price">S/ ${(qty * p.precio).toFixed(2)}</div>
+      </div>`;
+  });
+  document.getElementById('nvItems').innerHTML = itemsHtml || '<div style="color:var(--mut);font-size:12px">Sin productos</div>';
+
+  // Totales
+  const subtotal = ST.raw || 0;
+  const delivery = ST.delivery || 0;
+  const desc     = subtotal - (ST.final - delivery);
+  document.getElementById('nvSubtotal').textContent = 'S/ ' + subtotal.toFixed(2);
+  document.getElementById('nvDelivery').textContent = delivery > 0 ? 'S/ ' + delivery.toFixed(2) : 'Gratis';
+  document.getElementById('nvTotal').textContent    = 'S/ ' + (ST.final || 0).toFixed(2);
+  document.getElementById('nvPago').textContent     = ST.pago || 'Efectivo';
+  if (desc > 0.01) {
+    document.getElementById('nvDescRow').style.display    = 'flex';
+    document.getElementById('nvDescuento').textContent    = '-S/ ' + desc.toFixed(2) + ' (' + Math.round(desc/subtotal*100) + '%)';
+  }
+
+  // Código referido
+  if (ST.cli.cod) {
+    document.getElementById('nvRefSection').style.display = 'block';
+    document.getElementById('nvCodRef').textContent       = ST.cli.cod;
+  }
+
+  document.getElementById('notaVentaModal').classList.add('open');
+}
+
+function cerrarNota() {
+  document.getElementById('notaVentaModal').classList.remove('open');
+  // Después de cerrar la nota → reload para nuevo pedido
+  setTimeout(() => location.reload(), 300);
+}
+
+function descargarNota() {
+  // Genera un HTML limpio de la nota y lo abre como ventana imprimible
+  const sheet = document.getElementById('notaVentaSheet');
+
+  const printWin = window.open('', '_blank', 'width=480,height=800');
+  printWin.document.write(`<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Nota de Venta ASWA</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&family=Bebas+Neue&display=swap" rel="stylesheet">
+  <style>
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body {
+      font-family:'Poppins',sans-serif; background:#fff; color:#111;
+      max-width:400px; margin:0 auto; padding:20px;
+    }
+    .header { text-align:center; border-bottom:3px solid #facc15; padding-bottom:16px; margin-bottom:16px; }
+    .logo { width:70px; height:70px; border-radius:50%; border:3px solid #facc15; object-fit:cover; margin:0 auto 8px; display:block; }
+    .empresa { font-family:'Bebas Neue',cursive; font-size:26px; color:#09090b; letter-spacing:.1em; }
+    .sub { font-size:11px; color:#71717a; }
+    .nv-num { font-size:12px; font-weight:700; margin-top:6px; color:#111; }
+    .section { margin-bottom:14px; }
+    .section h4 { font-size:10px; font-weight:800; color:#b45309; text-transform:uppercase; letter-spacing:.12em; border-bottom:1px solid #e5e7eb; padding-bottom:5px; margin-bottom:8px; }
+    .row { display:flex; justify-content:space-between; padding:4px 0; font-size:12px; border-bottom:1px dashed #f3f4f6; }
+    .row .lbl { color:#6b7280; }
+    .row .val { font-weight:600; text-align:right; max-width:60%; }
+    .item { display:flex; align-items:center; gap:10px; padding:6px 0; border-bottom:1px dashed #f3f4f6; }
+    .item img { width:44px; height:44px; border-radius:8px; object-fit:cover; }
+    .item .iinfo { flex:1; }
+    .item .inom { font-size:12px; font-weight:700; }
+    .item .isub { font-size:10px; color:#6b7280; }
+    .item .iprice { font-size:13px; font-weight:800; color:#b45309; white-space:nowrap; }
+    .total-box { background:#fefce8; border:2px solid #facc15; border-radius:10px; padding:12px; display:flex; justify-content:space-between; align-items:center; margin:12px 0; }
+    .total-box .tlbl { font-size:13px; font-weight:700; }
+    .total-box .tval { font-family:'Bebas Neue',cursive; font-size:30px; color:#b45309; }
+    .ref-box { background:#fefce8; border:1px solid #fde047; border-radius:8px; padding:10px 12px; margin:10px 0; }
+    .ref-box .rlbl { font-size:10px; font-weight:700; color:#b45309; text-transform:uppercase; }
+    .ref-box .rcod { font-family:'Bebas Neue',cursive; font-size:22px; color:#09090b; letter-spacing:.1em; }
+    .ref-box .rdesc { font-size:10px; color:#6b7280; margin-top:2px; }
+    .footer { text-align:center; border-top:1px solid #e5e7eb; padding-top:12px; font-size:11px; color:#6b7280; line-height:1.7; }
+    @media print {
+      body { padding:10px; }
+      button { display:none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <img src="${window.location.origin + window.location.pathname.replace(/[^/]*$/, '')}logo de aswa.jpg"
+         class="logo" alt="ASWA"
+         onerror="this.style.cssText='width:70px;height:70px;border-radius:50%;background:#facc15;display:block;margin:0 auto 8px'">
+    <div class="empresa">La Rica Chicha — ASWA</div>
+    <div class="sub">El oro líquido de la selva 🌽 · Tarapoto, San Martín</div>
+    <div class="nv-num">${document.getElementById('nvNumero').textContent}</div>
+    <div class="nv-num" style="color:#6b7280;font-weight:400">${document.getElementById('nvFecha').textContent}</div>
+  </div>
+
+  <div class="section">
+    <h4>📋 Datos del Cliente</h4>
+    <div class="row"><span class="lbl">Nombre</span><span class="val">${document.getElementById('nvNombre').textContent}</span></div>
+    <div class="row"><span class="lbl">Teléfono</span><span class="val">${document.getElementById('nvTelefono').textContent}</span></div>
+    <div class="row"><span class="lbl">Dirección</span><span class="val">${document.getElementById('nvDireccion').textContent}</span></div>
+    <div class="row"><span class="lbl">Nivel fidelidad</span><span class="val">${document.getElementById('nvNivel').textContent}</span></div>
+  </div>
+
+  <div class="section">
+    <h4>🛒 Productos</h4>
+    ${document.getElementById('nvItems').innerHTML
+      .replace(/class="nota-item"/g,'class="item"')
+      .replace(/class="ni-info"/g,'class="iinfo"')
+      .replace(/class="ni-nom"/g,'class="inom"')
+      .replace(/class="ni-sub"/g,'class="isub"')
+      .replace(/class="ni-price"/g,'class="iprice"')
+    }
+  </div>
+
+  <div class="section">
+    <h4>💰 Cobro</h4>
+    <div class="row"><span class="lbl">Subtotal</span><span class="val">${document.getElementById('nvSubtotal').textContent}</span></div>
+    <div class="row"><span class="lbl">Delivery</span><span class="val">${document.getElementById('nvDelivery').textContent}</span></div>
+    ${document.getElementById('nvDescRow').style.display!=='none' ? `<div class="row"><span class="lbl" style="color:#16a34a">Descuento</span><span class="val" style="color:#16a34a">${document.getElementById('nvDescuento').textContent}</span></div>` : ''}
+    <div class="row"><span class="lbl">Forma de pago</span><span class="val">${document.getElementById('nvPago').textContent}</span></div>
+  </div>
+
+  <div class="total-box">
+    <span class="tlbl">TOTAL</span>
+    <span class="tval">${document.getElementById('nvTotal').textContent}</span>
+  </div>
+
+  ${ST.cli.cod ? `
+  <div class="ref-box">
+    <div class="rlbl">🎁 Tu código de referidos</div>
+    <div class="rcod">${ST.cli.cod}</div>
+    <div class="rdesc">Compártelo con amigos · Ambos reciben 5% de descuento</div>
+  </div>` : ''}
+
+  <div class="footer">
+    ¡Gracias por tu preferencia! 🌾<br>
+    Chicha de jora artesanal · hecha con amor y maíz del campo<br>
+    <strong>ASWA</strong> · Tarapoto, San Martín, Perú<br>
+    <br>
+    <button onclick="window.print()" style="margin-top:8px;background:#facc15;color:#000;border:none;padding:10px 28px;border-radius:8px;font-size:13px;font-weight:800;cursor:pointer;font-family:'Poppins',sans-serif">
+      🖨️ Imprimir / Guardar PDF
+    </button>
+  </div>
+</body>
+</html>`);
+  printWin.document.close();
+  printWin.focus();
+  // En móvil se da tiempo para cargar las imágenes antes de imprimir
+  setTimeout(() => printWin.print(), 1500);
 }
 
 /* ── MODALES ── */
@@ -1768,6 +2238,14 @@ function abrirRef() {
 
   document.getElementById('mRef').classList.add('on');
 }
+function copiarCodBanner() {
+  const cod = document.getElementById('cbanCod')?.textContent || ST.cli.cod;
+  if (!cod || cod === '—') return tst('Ingresa tu teléfono primero');
+  navigator.clipboard.writeText(cod)
+    .then(() => tst('✅ Código copiado: ' + cod, 2000))
+    .catch(() => tst('Código: ' + cod, 3000));
+}
+
 function copiarCod() {
   const c = ST.cli.cod;
   if (!c) return tst('Ingresa tu teléfono primero 📱');
@@ -1849,79 +2327,116 @@ function tst(msg, dur=2500) {
 }
 
 /* ── INIT ── */
-/* ── GPS — COMPARTIR UBICACIÓN EN TIEMPO REAL ── */
-function compartirUbicacion() {
+/* ── GPS EN TIEMPO REAL — watchPosition ── */
+let GPS_WATCH_ID = null; // ID del watcher activo
+
+function toggleGPS() {
+  if (GPS_WATCH_ID !== null) {
+    detenerGPS();
+  } else {
+    iniciarGPS();
+  }
+}
+
+function iniciarGPS() {
   const btn    = document.getElementById('btnGPS');
   const label  = document.getElementById('gpsLabel');
   const status = document.getElementById('gpsStatus');
+  const liveBox= document.getElementById('gpsLiveBox');
 
-  // ¿Soporta geolocalización?
   if (!navigator.geolocation) {
     btn.classList.add('error');
-    status.className = 'gps-status err';
+    status.className   = 'gps-status err';
     status.textContent = '❌ Tu navegador no soporta GPS. Escribe tu dirección manualmente.';
     return;
   }
 
-  // Estado: buscando
   btn.classList.add('loading');
   btn.disabled = true;
-  label.textContent = 'OBTENIENDO UBICACIÓN...';
-  status.className  = 'gps-status';
-  status.textContent = '📡 Buscando señal GPS...';
+  label.textContent  = '📡 BUSCANDO SEÑAL...';
+  status.className   = 'gps-status';
+  status.textContent = '📡 Activando GPS en tiempo real...';
 
-  navigator.geolocation.getCurrentPosition(
-    // ── ÉXITO ──
+  GPS_WATCH_ID = navigator.geolocation.watchPosition(
+    // ── ACTUALIZACIÓN DE POSICIÓN ──
     (pos) => {
       const lat = pos.coords.latitude.toFixed(6);
       const lng = pos.coords.longitude.toFixed(6);
       const acc = Math.round(pos.coords.accuracy);
 
-      // URL de Google Maps con pin exacto
-      const mapsUrl    = `https://www.google.com/maps?q=${lat},${lng}`;
-      const mapsNavUrl = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`;
+      const mapsUrl = `https://www.google.com/maps?q=${lat},${lng}`;
 
-      // Guardar en el campo dirección
+      // Actualizar estado global (se actualiza en tiempo real)
+      ST.gpsUrl    = mapsUrl;
+      ST.gpsCoords = { lat, lng, acc, ts: Date.now() };
+
+      // Actualizar campo dirección la primera vez
       const dirInput = document.getElementById('direccion');
-      if (!dirInput.value) {
+      if (!dirInput.value || dirInput.value.startsWith('GPS:')) {
         dirInput.value = `GPS: ${lat}, ${lng}`;
       }
 
-      // Guardar en estado global para el mensaje de WhatsApp
-      ST.gpsUrl = mapsUrl;
-      ST.gpsCoords = { lat, lng, acc };
-
-      // UI éxito
-      btn.classList.remove('loading');
+      // UI — primera posición obtenida
+      btn.classList.remove('loading', 'error');
       btn.classList.add('success');
       btn.disabled = false;
-      label.textContent = '✅ UBICACIÓN COMPARTIDA';
-      status.className  = 'gps-status ok';
-      status.innerHTML  = `📍 Precisión: ±${acc}m · <a href="${mapsUrl}" target="_blank" style="color:var(--grn);text-decoration:underline">Ver en Maps</a>`;
+      label.textContent = '🔴 GPS ACTIVO — En vivo';
 
-      tst('📍 Ubicación GPS capturada correctamente', 3000);
+      // Live box visible
+      liveBox.classList.add('show');
+      document.getElementById('gpsLiveCoords').innerHTML =
+        `${lat}, ${lng} · ±${acc}m · <a href="${mapsUrl}" target="_blank" style="color:var(--grn)">Ver en Maps</a>`;
+
+      status.className  = 'gps-status ok';
+      status.textContent = `📍 Actualizando en tiempo real · precisión ±${acc}m`;
     },
 
     // ── ERROR ──
     (err) => {
-      btn.classList.remove('loading');
+      btn.classList.remove('loading', 'success');
       btn.classList.add('error');
       btn.disabled = false;
-      label.textContent = 'COMPARTIR UBICACIÓN GPS';
+      label.textContent = '📡 UBICACIÓN EN TIEMPO REAL';
+      liveBox.classList.remove('show');
+      GPS_WATCH_ID = null;
 
       const msgs = {
-        1: '❌ Permiso denegado. Activa la ubicación en tu navegador.',
-        2: '❌ No se pudo obtener la ubicación. Intenta de nuevo.',
-        3: '❌ Tiempo agotado. Verifica tu conexión GPS.'
+        1: '❌ Permiso denegado. Activa la ubicación en ajustes.',
+        2: '❌ No se pudo obtener ubicación. Intenta de nuevo.',
+        3: '❌ Tiempo agotado. Verifica señal GPS.'
       };
-      status.className  = 'gps-status err';
-      status.textContent = msgs[err.code] || '❌ Error de GPS. Escribe tu dirección.';
-      setTimeout(() => { btn.classList.remove('error'); status.textContent=''; }, 4000);
+      status.className   = 'gps-status err';
+      status.textContent = msgs[err.code] || '❌ Error GPS.';
+      setTimeout(() => { btn.classList.remove('error'); status.textContent = ''; }, 5000);
     },
 
-    // ── OPCIONES ──
-    { enableHighAccuracy: true, timeout: 12000, maximumAge: 0 }
+    // ── OPCIONES tiempo real ──
+    { enableHighAccuracy: true, timeout: 15000, maximumAge: 3000 }
   );
+}
+
+function detenerGPS() {
+  if (GPS_WATCH_ID !== null) {
+    navigator.geolocation.clearWatch(GPS_WATCH_ID);
+    GPS_WATCH_ID = null;
+  }
+  const btn   = document.getElementById('btnGPS');
+  const label = document.getElementById('gpsLabel');
+  const liveBox = document.getElementById('gpsLiveBox');
+
+  btn.classList.remove('loading', 'success', 'error');
+  btn.disabled = false;
+  liveBox.classList.remove('show');
+
+  if (ST.gpsUrl) {
+    label.textContent = '✅ UBICACIÓN GUARDADA';
+    document.getElementById('gpsStatus').className   = 'gps-status ok';
+    document.getElementById('gpsStatus').textContent = '📍 Coordenadas guardadas para tu pedido';
+  } else {
+    label.textContent = '📡 UBICACIÓN EN TIEMPO REAL';
+    document.getElementById('gpsStatus').textContent = '';
+  }
+  tst('📍 GPS detenido — coordenadas guardadas', 2500);
 }
 
 /* ── REDES SOCIALES DESDE FIRESTORE ── */
@@ -2237,39 +2752,87 @@ async function enviarBono() {
 }
 
 /* ── CONCURSO ── */
-async function cargarConcurso() {
-  try {
-    const { doc:d } = window.FB;
-    const snap = await window.FB.getDoc(d(db, 'concursos', 'activo'));
+function mesActual() {
+  const meses = ['Enero','Febrero','Marzo','Abril','Mayo','Junio',
+                 'Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+  const now = new Date();
+  return meses[now.getMonth()] + ' ' + now.getFullYear();
+}
 
-    if (snap.exists()) {
-      const data = snap.data();
-      document.getElementById('concSubtitle').textContent  = data.nombre || 'Mejor Foto ASWA';
-      document.getElementById('concPremio').textContent    = data.premio || 'Pedido Gratis';
-      document.getElementById('concDesc').textContent      = data.descripcion || 'Comparte tu mejor momento';
-      document.getElementById('concParticipantes').textContent = (data.participantes || 0) + ' participantes';
-      if (data.fecha_fin) {
-        const f = new Date(data.fecha_fin.seconds * 1000);
-        document.getElementById('concFecha').textContent = 'Hasta ' + f.toLocaleDateString('es-PE', {day:'numeric',month:'short'});
-      }
-      // Ranking
-      if (data.ranking && data.ranking.length > 0) {
-        const medals = ['gold','silver','bronze'];
-        const html = data.ranking.map((r, i) => `
-          <div class="rank-item">
-            <div class="rank-num ${medals[i]||''}">${i+1}</div>
-            <div class="rank-info">
-              <div class="rank-user">@${r.usuario}</div>
-              <div class="rank-sub">${r.plataforma || ''}</div>
-            </div>
-            <div class="rank-likes">❤️ ${r.likes || 0}</div>
-          </div>`).join('');
-        document.getElementById('rankingLista').innerHTML = html;
+async function cargarConcurso() {
+  const mes = mesActual();
+
+  // Valores por defecto con mes dinámico
+  document.getElementById('concFotoSubtitle').textContent  = 'ASWA · ' + mes;
+  document.getElementById('concVideoSubtitle').textContent = 'ASWA · ' + mes;
+
+  // Calcular último día del mes para la fecha límite
+  const now     = new Date();
+  const ultimoDia = new Date(now.getFullYear(), now.getMonth()+1, 0);
+  const fechaLim  = 'Hasta ' + ultimoDia.getDate() + ' ' +
+    ultimoDia.toLocaleDateString('es-PE', {month:'short'});
+  document.getElementById('concFotoFecha').textContent  = fechaLim;
+  document.getElementById('concVideoFecha').textContent = fechaLim;
+
+  try {
+    const { doc:d, getDocs:gd, collection:col, query:q, where:wh } = window.FB;
+
+    // Cargar concurso foto
+    const snapFoto = await window.FB.getDoc(d(db, 'concursos', BUSINESS_ID + '_foto'));
+    if (snapFoto.exists()) {
+      const df = snapFoto.data();
+      document.getElementById('concFotoSubtitle').textContent = (df.nombre || 'Mejor Foto') + ' · ' + mes;
+      document.getElementById('concFotoPremio').textContent   = df.premio || 'Pedido Gratis';
+      document.getElementById('concFotoDesc').textContent     = df.descripcion || 'Sube tu mejor foto con tu chicha ASWA';
+      document.getElementById('concFotoPart').textContent     = (df.participantes || 0) + ' participantes';
+      if (df.fecha_fin?.seconds) {
+        const f = new Date(df.fecha_fin.seconds*1000);
+        document.getElementById('concFotoFecha').textContent = 'Hasta ' + f.toLocaleDateString('es-PE',{day:'numeric',month:'short'});
       }
     }
+
+    // Cargar concurso video
+    const snapVid = await window.FB.getDoc(d(db, 'concursos', BUSINESS_ID + '_video'));
+    if (snapVid.exists()) {
+      const dv = snapVid.data();
+      document.getElementById('concVideoSubtitle').textContent = (dv.nombre || 'Mejor Video') + ' · ' + mes;
+      document.getElementById('concVideoPremio').textContent   = dv.premio || 'Galón Familiar Gratis';
+      document.getElementById('concVideoDesc').textContent     = dv.descripcion || 'Graba tu reacción probando ASWA';
+      document.getElementById('concVideoPart').textContent     = (dv.participantes || 0) + ' participantes';
+      if (dv.fecha_fin?.seconds) {
+        const f = new Date(dv.fecha_fin.seconds*1000);
+        document.getElementById('concVideoFecha').textContent = 'Hasta ' + f.toLocaleDateString('es-PE',{day:'numeric',month:'short'});
+      }
+    }
+
+    // Ranking combinado (fotos + videos por likes)
+    const snapRank = await gd(q(
+      col(db,'ugc_posts'),
+      wh('businessId','==',BUSINESS_ID),
+      wh('estado','==','aprobado')
+    ));
+    const rankItems = [];
+    snapRank.forEach(d => rankItems.push(d.data()));
+    rankItems.sort((a,b) => (b.likes||0)-(a.likes||0));
+
+    if (rankItems.length > 0) {
+      const medals = ['gold','silver','bronze'];
+      const tipoEmo = { foto:'📸', video:'🎬', reels:'📹', historia:'🎥', review:'⭐' };
+      const html = rankItems.slice(0,5).map((r,i) => `
+        <div class="rank-item">
+          <div class="rank-num ${medals[i]||''}">${i+1}</div>
+          <div class="rank-info">
+            <div class="rank-user">${tipoEmo[r.tipo]||'📸'} @${r.usuario || 'anónimo'}</div>
+            <div class="rank-sub">${r.plataforma || ''} · ${r.tipo || ''}</div>
+          </div>
+          <div class="rank-likes">❤️ ${r.likes || 0}</div>
+        </div>`).join('');
+      document.getElementById('rankingLista').innerHTML = html;
+    }
+
   } catch(err) {
     console.error('Concurso error:', err);
-    // Deja el contenido por defecto
+    // Deja valores por defecto — la pantalla igual se ve bien
   }
 }
 
