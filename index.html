@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <meta name="theme-color" content="#09090b">
-  <meta name="description" content="La Rica Chicha ASWA — Pide tu La chicha de maiz suave amazónico, artesanal de San Martin, Morales.. Delivery a domicilio.">
+  <meta name="description" content="La Rica Chicha ASWA — Pide tu chicha artesanal de maiz suave amazonico en Morales. Delivery a domicilio.">
   <title>La Rica Chicha — ASWA Oficial</title>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700;800&family=Bebas+Neue&display=swap" rel="stylesheet">
 
@@ -482,19 +482,40 @@
 
     /* Botones descarga/cerrar */
     .nota-actions {
-      display:grid; grid-template-columns:1fr 1fr; gap:10px;
-      padding:12px 18px 24px; background:#fff;
+      display:flex; flex-direction:column; gap:10px;
+      padding:12px 18px 28px; background:#fff;
     }
+    .nota-actions-row {
+      display:grid; grid-template-columns:1fr 1fr; gap:10px;
+    }
+    /* Botón descargar — amarillo llamativo */
     .nota-btn-dl {
       background:#facc15; color:#000; border:none;
       padding:15px; border-radius:12px; font-size:14px; font-weight:900;
       cursor:pointer; font-family:'Poppins',sans-serif;
-      display:flex; align-items:center; justify-content:center; gap:6px;
+      display:flex; align-items:center; justify-content:center; gap:7px;
+      box-shadow:0 3px 12px rgba(250,204,21,.45);
     }
-    .nota-btn-cl {
-      background:#f3f4f6; color:#374151; border:1px solid #e5e7eb;
-      padding:15px; border-radius:12px; font-size:14px; font-weight:700;
+    .nota-btn-dl:active { transform:scale(.97); }
+    /* Botón imprimir — azul oscuro */
+    /* Código en modal referidos — color según nivel */
+    .ctxt.nivel-bronce-cod  { color:#d97706; }
+    .ctxt.nivel-plata-cod   { color:#3b82f6; }
+    .ctxt.nivel-oro-cod     { color:#c27c00; }
+    .ctxt.nivel-diamante-cod{ color:#7c3aed; }
+    .nota-btn-pr {
+      background:#1e3a8a; color:#fff; border:none;
+      padding:15px; border-radius:12px; font-size:14px; font-weight:900;
       cursor:pointer; font-family:'Poppins',sans-serif;
+      display:flex; align-items:center; justify-content:center; gap:7px;
+      box-shadow:0 3px 12px rgba(30,58,138,.35);
+    }
+    .nota-btn-pr:active { transform:scale(.97); }
+    /* Botón cerrar — gris pequeño */
+    .nota-btn-cl {
+      background:transparent; color:#9ca3af; border:1px solid #e5e7eb;
+      padding:12px; border-radius:12px; font-size:13px; font-weight:600;
+      cursor:pointer; font-family:'Poppins',sans-serif; width:100%;
     }
 
     /* ══ PRODUCTO CARDS ══ */
@@ -562,6 +583,11 @@
     .ybox img { width:190px; height:190px; border-radius:14px; margin:0 auto 12px; display:block; }
     .ynum { font-family:'Bebas Neue',cursive; font-size:24px; color:var(--y); letter-spacing:.1em; }
     .ybox p { font-size:12px; color:var(--mut); margin-top:4px; }
+    .ybox-tag {
+      display:inline-block; background:var(--y); color:#000;
+      font-family:'Bebas Neue',cursive; font-size:16px; letter-spacing:.08em;
+      padding:5px 16px; border-radius:999px; margin-bottom:14px;
+    }
 
     .vbox {
       background:var(--s1); border:1px solid var(--brd);
@@ -1264,12 +1290,13 @@
         <span class="pic">🏦</span>Transf.</div>
     </div>
 
-    <!-- QR Yape -->
+    <!-- QR Pago (Yape / Plin / Transferencia) -->
     <div class="ybox" id="yapeBox">
-      <img src="yape%20del%20negocio.jpg" alt="QR Yape ASWA"
-           onerror="this.style.display='none'">
+      <div class="ybox-tag" id="yboxTag">📱 YAPE</div>
+      <img src="yape%20del%20negocio.jpg" alt="QR Pago ASWA"
+           onerror="this.style.display='none'" id="yboxImg">
       <div class="ynum">+51 947 999 736</div>
-      <p>Escanea o transfiere al número de arriba</p>
+      <p id="yboxTxt">Escanea el QR o transfiere al número de arriba</p>
     </div>
 
     <!-- Vuelto -->
@@ -1577,9 +1604,21 @@
 
     <!-- CÓDIGO PERSONAL -->
     <div style="font-size:11px;color:var(--mut);text-align:center;margin:12px 0 6px;text-transform:uppercase;letter-spacing:.12em">
-      Tu código para compartir
+      Tu código personal para compartir
     </div>
-    <div class="cfr">
+
+    <!-- Si no hay código: pedir teléfono -->
+    <div id="refSinCod" style="display:none;background:rgba(250,204,21,.07);border:1px solid rgba(250,204,21,.25);border-radius:12px;padding:14px;margin-bottom:12px;text-align:center">
+      <p style="font-size:13px;color:var(--mut);margin-bottom:10px">
+        📱 Ingresa tu celular para ver tu código
+      </p>
+      <input type="tel" id="refTelInput" class="inp" placeholder="Tu número de celular"
+             maxlength="9" inputmode="numeric"
+             style="text-align:center;font-size:18px;letter-spacing:.15em;font-weight:700"
+             oninput="buscarCodPorTel(this.value)">
+    </div>
+
+    <div class="cfr" id="refCodBox">
       <div class="ctxt" id="codModal">ASWA-——</div>
     </div>
 
@@ -1773,16 +1812,21 @@
     <div class="nota-footer">
       ¡Gracias por tu preferencia! 🌾<br>
       Chicha de jora artesanal — hecha con maíz del campo y amor de la selva.<br>
-      <strong>LA RICA CHICHA - ASWA</strong> · Morales San Martín, Perú
+      <strong>LA RICA CHICHA - ASWA</strong> · Morales, San Martín, Perú
     </div>
 
-    <!-- Botones -->
+    <!-- Botones: Descargar | Imprimir | Cerrar -->
     <div class="nota-actions">
-      <button class="nota-btn-dl" onclick="descargarNota()">
-        📥 Descargar PDF
-      </button>
+      <div class="nota-actions-row">
+        <button class="nota-btn-dl" onclick="descargarNotaPDF()">
+          📥 Descargar PDF
+        </button>
+        <button class="nota-btn-pr" onclick="imprimirNota()">
+          🖨️ Imprimir
+        </button>
+      </div>
       <button class="nota-btn-cl" onclick="cerrarNota()">
-        Cerrar
+        ✕ Cerrar nota
       </button>
     </div>
 
@@ -1846,8 +1890,27 @@ function setPago(m) {
   ST.pago = m;
   document.querySelectorAll('.popt').forEach(e => e.classList.remove('on'));
   document.getElementById('pay-'+m).classList.add('on');
-  document.getElementById('yapeBox').classList.toggle('on', m === 'Yape');
+
+  // Mostrar caja de pago digital para Yape, Plin y Transferencia
+  const esDigital = m === 'Yape' || m === 'Plin' || m === 'Transferencia';
+  document.getElementById('yapeBox').classList.toggle('on', esDigital);
   document.getElementById('vueltoBox').style.display = m === 'Efectivo' ? 'block' : 'none';
+
+  if (esDigital) {
+    // Cambiar etiqueta según método seleccionado
+    const tags = {
+      Yape:          '📱 YAPE',
+      Plin:          '💜 PLIN',
+      Transferencia: '🏦 TRANSFERENCIA'
+    };
+    const textos = {
+      Yape:          'Escanea el QR o transfiere al número de arriba',
+      Plin:          'Transfiere por Plin al número de arriba',
+      Transferencia: 'Realiza la transferencia al número o cuenta indicada'
+    };
+    document.getElementById('yboxTag').textContent = tags[m]   || tags.Yape;
+    document.getElementById('yboxTxt').textContent = textos[m] || textos.Yape;
+  }
 }
 function calcVuelto() {
   const p = Number(document.getElementById('pagoCon').value) || 0;
@@ -1954,10 +2017,13 @@ document.getElementById('telefono').addEventListener('input', async e => {
       tagsEl.innerHTML = tags.join('');
 
       // Mostrar código referido inline en el banner
+      // Usar data.codigo_referido del doc de Firestore
+      const codigoCliente = data.codigo_referido || ST.cli.cod || '';
+      if (codigoCliente) ST.cli.cod = codigoCliente;
       const cbanRef = document.getElementById('cbanRef');
       const cbanCod = document.getElementById('cbanCod');
-      if (cod && cbanRef && cbanCod) {
-        cbanCod.textContent = cod;
+      if (codigoCliente && cbanRef && cbanCod) {
+        cbanCod.textContent = codigoCliente;
         // Color del código según nivel
         const codColorMap = {
           BRONCE:'nivel-bronce-cod', PLATA:'nivel-plata-cod',
@@ -1970,9 +2036,30 @@ document.getElementById('telefono').addEventListener('input', async e => {
       ban.classList.add('on');
 
     } else {
-      // Cliente nuevo
+      // Cliente NUEVO — generar código y mostrarlo
       ST.cli.cod = await genCod();
       ST.cli.tel = tel;
+
+      // Mostrar banner de bienvenida a cliente nuevo con su código
+      const head = document.getElementById('cbanHead');
+      head.className = 'cban-head nivel-bronce';
+      document.getElementById('cbanEmo').textContent  = '🌽';
+      document.getElementById('bnNivel').textContent  = 'NUEVO';
+      document.getElementById('bnNom').textContent    = '¡Bienvenido/a a ASWA!';
+      document.getElementById('bnDesc').textContent   = 'Tu primer pedido — empieza a acumular';
+      document.getElementById('cbanProgWrap').style.display = 'none';
+      document.getElementById('cbanTags').innerHTML =
+        '<span class="cban-tag">🎉 Primer pedido</span>';
+
+      // Mostrar código del cliente nuevo en el banner
+      const cbanRef2 = document.getElementById('cbanRef');
+      const cbanCod2 = document.getElementById('cbanCod');
+      if (ST.cli.cod && cbanRef2 && cbanCod2) {
+        cbanCod2.textContent = ST.cli.cod;
+        cbanCod2.className   = 'cref-cod nivel-bronce-cod';
+        cbanRef2.style.display = 'block';
+      }
+      ban.classList.add('on');
     }
 
     if (ST.cli.cod || ST.cli.codigo_referido) {
@@ -2367,7 +2454,7 @@ function cerrarNota() {
   setTimeout(() => location.reload(), 300);
 }
 
-function descargarNota() {
+function _abrirVentanaNota(modoImprimir) {
   const baseUrl  = window.location.origin + window.location.pathname.replace(/[^/]*$/, '');
   const logoSrc  = baseUrl + 'logo de aswa.jpg';
   const nivel    = ST.cli.nivel || 'BRONCE';
@@ -2575,16 +2662,42 @@ function descargarNota() {
   <!-- FOOTER -->
   <div class="footer">
     ¡Gracias por tu preferencia! 🌾<br>
-    Chicha de jora artesanal — hecha con maíz del campo y amor de la selva.<br>
+    Chicha artesanal de maiz suave amazonico — hecha con maíz  del campo y amor de la selva.<br>
     <strong>LA RICA CHICHA - ASWA</strong> · Morales, San Martín, Perú<br>
-    <button class="print-btn" onclick="window.print()">🖨️ Imprimir / Guardar como PDF</button>
+    <div style="display:flex;gap:10px;justify-content:center;margin-top:16px;flex-wrap:wrap">
+      <button class="print-btn" onclick="window.print()"
+              style="background:#1e3a8a;color:#fff;min-width:150px">
+        🖨️ Imprimir
+      </button>
+      <button class="print-btn" onclick="window.print()"
+              style="background:#facc15;color:#000;min-width:150px">
+        📥 Guardar como PDF
+      </button>
+    </div>
   </div>
 
 </body>
 </html>`);
   printWin.document.close();
   printWin.focus();
-  setTimeout(() => printWin.print(), 1800);
+  if (modoImprimir) {
+    // Imprimir: abrir diálogo de impresora automáticamente
+    setTimeout(() => printWin.print(), 1800);
+  }
+  // Si no es modo imprimir → el usuario ve la página y puede
+  // usar Ctrl+S / "Guardar como PDF" desde el menú del navegador
+}
+
+/* ── DESCARGAR PDF (abre ventana sin auto-imprimir) ── */
+function descargarNotaPDF() {
+  _abrirVentanaNota(false);
+  // Pequeña guía para el usuario
+  setTimeout(() => tst('💡 En la ventana: usa el menú ⋮ → Imprimir → Guardar como PDF', 5000), 400);
+}
+
+/* ── IMPRIMIR (abre ventana Y lanza impresora directo) ── */
+function imprimirNota() {
+  _abrirVentanaNota(true);
 }
 
 /* ── MODALES ── */
@@ -2620,7 +2733,22 @@ document.querySelectorAll('.ov').forEach(m => {
 
 /* ── REFERIDOS ── */
 function abrirRef() {
-  if (ST.cli.cod) document.getElementById('codModal').textContent = ST.cli.cod;
+  const sinCodEl  = document.getElementById('refSinCod');
+  const codBoxEl  = document.getElementById('refCodBox');
+  if (ST.cli.cod) {
+    // Ya tiene código — mostrar directamente
+    document.getElementById('codModal').textContent = ST.cli.cod;
+    // Color según nivel
+    const codColorMap = { BRONCE:'nivel-bronce-cod',PLATA:'nivel-plata-cod',ORO:'nivel-oro-cod',DIAMANTE:'nivel-diamante-cod' };
+    document.getElementById('codModal').className = 'ctxt ' + (codColorMap[ST.cli.nivel||'BRONCE']||'nivel-bronce-cod');
+    if (sinCodEl) sinCodEl.style.display = 'none';
+    if (codBoxEl) codBoxEl.style.display = 'block';
+  } else {
+    // Sin código — mostrar campo teléfono
+    if (sinCodEl) sinCodEl.style.display = 'block';
+    if (codBoxEl) codBoxEl.style.display = 'none';
+    document.getElementById('codModal').textContent = 'ASWA-——';
+  }
 
   // Resaltar fila del nivel actual
   ['bronce','plata','oro','diamante'].forEach(n => {
@@ -2652,6 +2780,35 @@ function abrirRef() {
 
   document.getElementById('mRef').classList.add('on');
 }
+/* ── BUSCAR CÓDIGO DESDE EL MODAL REFERIDOS ── */
+async function buscarCodPorTel(tel) {
+  const codBoxEl = document.getElementById('refCodBox');
+  const sinCodEl = document.getElementById('refSinCod');
+  if (tel.length !== 9 || !tel.startsWith('9')) return;
+  try {
+    const { query:q, collection:col, where:wh, getDocs:gd } = window.FB;
+    const snap = await gd(q(col(db,'clientes'), wh('businessId','==',BUSINESS_ID), wh('telefono','==',tel)));
+    let cod = '';
+    if (!snap.empty) {
+      const data = snap.docs[0].data();
+      cod = data.codigo_referido || '';
+      // Llenar ST.cli con datos del cliente
+      ST.cli = { ...data, id: snap.docs[0].id };
+    }
+    if (!cod) cod = await genCod();
+    ST.cli.cod = cod;
+    // Mostrar código
+    document.getElementById('codModal').textContent = cod;
+    const codColorMap = { BRONCE:'nivel-bronce-cod',PLATA:'nivel-plata-cod',ORO:'nivel-oro-cod',DIAMANTE:'nivel-diamante-cod' };
+    document.getElementById('codModal').className = 'ctxt ' + (codColorMap[ST.cli.nivel||'BRONCE']||'nivel-bronce-cod');
+    if (sinCodEl) sinCodEl.style.display = 'none';
+    if (codBoxEl) codBoxEl.style.display = 'block';
+    // Actualizar botón compartir
+    document.getElementById('btnRef').classList.add('on');
+    tst('✅ Tu código: ' + cod, 2500);
+  } catch(e) { console.error(e); }
+}
+
 function copiarCodBanner() {
   const cod = document.getElementById('cbanCod')?.textContent || ST.cli.cod;
   if (!cod || cod === '—') return tst('Ingresa tu teléfono primero');
@@ -2711,7 +2868,7 @@ function compartirCod() {
   const txt =
     saludo + ', ' + extra + ' 👇\n\n'
     + '🌽 *ASWA - La Rica Chicha*\n'
-    + 'La chicha Rica ASWA — Pide tu La chicha de maiz suave amazónico, artesanal de San Martin, Morales..\n'
+    + 'La chicha artesanal de maiz suave amazonico de MODALES.\n'
     + 'Hecha con maíz del campo, fermentada con amor. 🍺\n\n'
     + '🎁 *Te regalo un descuento en tu primera compra:*\n'
     + '━━━━━━━━━━━━━━━━━\n'
