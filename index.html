@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <meta name="theme-color" content="#09090b">
-  <meta name="description" content="La Rica Chicha ASWA — Pide tu La chicha de maiz suave amazónico, artesanal de San Martin, Morales. Delivery a domicilio.">
+  <meta name="description" content="La Rica Chicha ASWA — Pide tu La chicha de maiz suave amazónico, artesanal de San Martin, Morales.. Delivery a domicilio.">
   <title>La Rica Chicha — ASWA Oficial</title>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700;800&family=Bebas+Neue&display=swap" rel="stylesheet">
 
@@ -925,6 +925,10 @@
     .succ.on { display:flex; }
     .semo   { font-size:72px; margin-bottom:16px; animation:pop .4s ease; }
     @keyframes pop { 0%{transform:scale(0)} 70%{transform:scale(1.18)} 100%{transform:scale(1)} }
+    @keyframes pulse-btn {
+      0%,100% { transform:scale(1); box-shadow:0 4px 20px rgba(34,197,94,.5); }
+      50%      { transform:scale(1.06); box-shadow:0 6px 28px rgba(34,197,94,.8); }
+    }
     .sttl   { font-family:'Bebas Neue',cursive; font-size:46px; color:var(--y); letter-spacing:.05em; margin-bottom:8px; }
     .ssub   { font-size:14px; color:var(--mut); margin-bottom:8px; }
     .scod   {
@@ -1597,7 +1601,7 @@
 </div>
 
 <!-- ══════════════ MODAL CONFIRMAR ENTREGA ══════════════ -->
-<div class="ov" id="mConfirmar">
+<div class="ov" id="mConfirmar" onclick="event.stopPropagation()">
   <div class="sheet">
     <div class="hnd"></div>
     <div class="mttl">¿Ya recibiste tu pedido? 🌽</div>
@@ -1612,10 +1616,21 @@
         ✅ SÍ, YA RECIBÍ MI PEDIDO
       </button>
     </div>
-    <button class="bcancel" onclick="cerrar('mConfirmar')">
-      ⏳ Todavía no llegó
+    <button class="bcancel" onclick="minimizarConfirmar()">
+      ⏳ Todavía no llegó — Confirmaré después
     </button>
   </div>
+</div>
+
+<!-- Botón flotante para confirmar después (visible cuando minimizas el modal) -->
+<div id="btnFlotante" style="
+  display:none; position:fixed; bottom:90px; right:16px; z-index:1200;
+  background:#22c55e; color:#000; border:none; border-radius:999px;
+  padding:14px 20px; font-size:13px; font-weight:900; cursor:pointer;
+  font-family:'Poppins',sans-serif; box-shadow:0 4px 20px rgba(34,197,94,.5);
+  animation:pulse-btn 2s infinite;
+" onclick="document.getElementById('mConfirmar').classList.add('on');document.getElementById('btnFlotante').style.display='none'">
+  📦 Confirmar entrega
 </div>
 
 <!-- ══════════════ PANTALLA ÉXITO ══════════════ -->
@@ -1624,16 +1639,21 @@
   <div class="sttl">¡Pedido enviado!</div>
   <p class="ssub">Tu pedido fue enviado a WhatsApp.<br>¡Pronto te contactamos! 🌽</p>
   <div class="scod" id="succCod"></div>
-  <p class="ssub" style="font-size:12px;margin-top:8px;color:var(--mut)">
-    Cuando recibas tu pedido, toca el botón verde 👇
-  </p>
-  <button class="bnvo"
-          style="background:var(--grn);margin-bottom:12px;padding:14px 32px"
-          onclick="document.getElementById('succScreen').classList.remove('on');document.getElementById('mConfirmar').classList.add('on')">
-    📦 Ya recibí — Confirmar entrega
-  </button>
-  <button class="bnvo" onclick="location.reload()" style="background:transparent;color:var(--mut);border:1px solid var(--brd);font-size:14px;padding:12px 32px">
-    Hacer otro pedido
+  <div style="background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.3);border-radius:14px;padding:16px;margin:16px 0;max-width:320px">
+    <p style="font-size:13px;color:#86efac;margin:0 0 12px;line-height:1.6">
+      📦 Cuando recibas tu chicha,<br>
+      toca el botón verde para generar<br>
+      tu <strong style="color:#4ade80">Nota de Venta</strong>
+    </p>
+    <button class="bnvo"
+            style="background:#22c55e;color:#000;width:100%;padding:14px"
+            onclick="irAConfirmar()">
+      📦 Ya recibí — Confirmar entrega
+    </button>
+  </div>
+  <button class="bnvo" onclick="limpiarYRecargar()" 
+          style="background:transparent;color:var(--mut);border:1px solid var(--brd);font-size:13px;padding:10px 28px;margin-top:4px">
+    Nuevo pedido
   </button>
 </div>
 
@@ -1752,8 +1772,8 @@
     <!-- Footer -->
     <div class="nota-footer">
       ¡Gracias por tu preferencia! 🌾<br>
-      Chicha de maiz suave amazónico artesanal — hecha con maíz del campo y amor de la selva.<br>
-      <strong>LA RICA CHICHA - ASWA</strong> · Morales, San Martín, Perú
+      Chicha de jora artesanal — hecha con maíz del campo y amor de la selva.<br>
+      <strong>LA RICA CHICHA - ASWA</strong> · Morales San Martín, Perú
     </div>
 
     <!-- Botones -->
@@ -2141,7 +2161,7 @@ async function enviarPedido() {
     +'<path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/>'
     +'</svg> ENVIAR PEDIDO POR WHATSAPP';
 
-  /* ── Mostrar pantalla éxito ── */
+  /* ── Mostrar pantalla éxito INMEDIATAMENTE ── */
   cerrar('mResumen');
   if (ST.cli.cod) {
     const el = document.getElementById('succCod');
@@ -2150,20 +2170,35 @@ async function enviarPedido() {
   }
   document.getElementById('succScreen').classList.add('on');
 
-  /* ── Después de 5 seg mostrar confirmación de entrega ── */
-  /* Solo si tenemos el ID del pedido en Firestore          */
+  /* ── Guardar estado en sessionStorage para recuperar si vuelven ── */
+  sessionStorage.setItem('aswa_succ_active', '1');
+  sessionStorage.setItem('aswa_cart', JSON.stringify(ST.cart));
+  sessionStorage.setItem('aswa_total', ST.final || 0);
+  sessionStorage.setItem('aswa_delivery', ST.delivery || 0);
+  sessionStorage.setItem('aswa_raw', ST.raw || 0);
+  sessionStorage.setItem('aswa_pago', ST.pago || 'Efectivo');
+  if (ST.cli.nombre || ST.cli.nom) {
+    sessionStorage.setItem('aswa_nombre', ST.cli.nom || ST.cli.nombre || '');
+    sessionStorage.setItem('aswa_tel', ST.cli.tel || ST.cli.telefono || '');
+    sessionStorage.setItem('aswa_nivel', ST.cli.nivel || 'BRONCE');
+    sessionStorage.setItem('aswa_cod', ST.cli.cod || '');
+  }
+
+  /* ── Después de 6 seg mostrar modal confirmación ── */
   const esperar = () => {
     if (ST.pedidoFbId) {
       setTimeout(() => {
-        document.getElementById('succScreen').classList.remove('on');
-        document.getElementById('mConfirmar').classList.add('on');
-      }, 5000);
+        // Solo pasar al modal si succScreen sigue visible
+        if (document.getElementById('succScreen').classList.contains('on')) {
+          document.getElementById('succScreen').classList.remove('on');
+          document.getElementById('mConfirmar').classList.add('on');
+        }
+      }, 6000);
     } else {
-      /* Si aún no tenemos el ID, esperar un poco más */
-      setTimeout(() => esperar(), 500);
+      setTimeout(() => esperar(), 600);
     }
   };
-  setTimeout(() => esperar(), 1000);
+  setTimeout(() => esperar(), 1200);
 }
 
 /* ── CONFIRMAR ENTREGA ── */
@@ -2198,8 +2233,10 @@ async function confirmarEntrega() {
     cerrar('mConfirmar');
     tst('🎉 ¡Entrega confirmada! Preparando tu Nota de Venta...', 3000);
 
-    // Limpiar sessionStorage
-    sessionStorage.removeItem('aswa_pedido_id');
+    // Limpiar TODO el sessionStorage de ASWA
+    ['aswa_pedido_id','aswa_succ_active','aswa_cart','aswa_total',
+     'aswa_delivery','aswa_raw','aswa_pago','aswa_nombre',
+     'aswa_tel','aswa_nivel','aswa_cod'].forEach(k => sessionStorage.removeItem(k));
 
     // Mostrar nota de venta
     setTimeout(() => mostrarNotaVenta(), 1000);
@@ -2278,7 +2315,7 @@ function mostrarNotaVenta() {
   const PROD = {
     p2l: { nom:'Chicha ASWA',  sz:'Presentación 2L', img:'aswa de 2 litros 1.png', precio:9  },
     p3l: { nom:'Chicha ASWA',  sz:'Presentación 3L', img:'aswa de 3 litros.png',   precio:13 },
-    p4l: { nom:'Familiar ASWA',sz:'Familiar 4L',      img:'aswa de 4 litros.png',   precio:15 }
+    p4l: { nom:'Familiar ASWA',sz:'Familiar 4L',      img:'galon familiar de 4 litros.png',   precio:15 }
   };
   const fallback = 'data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2240%22 height=%2240%22><rect width=%2240%22 height=%2240%22 fill=%22%23fffbeb%22 rx=%228%22/><text x=%2220%22 y=%2228%22 text-anchor=%22middle%22 fill=%22%23c27c00%22 font-size=%2218%22>🫙</text></svg>';
 
@@ -2347,7 +2384,7 @@ function descargarNota() {
   const PROD = {
     p2l: { sz:'Presentación 2L', nom:'Chicha ASWA', img: baseUrl + 'aswa de 2 litros 1.png', precio:9  },
     p3l: { sz:'Presentación 3L', nom:'Chicha ASWA', img: baseUrl + 'aswa de 3 litros.png',   precio:13 },
-    p4l: { sz:'Familiar 4L',     nom:'Familiar',     img: baseUrl + 'aswa de 4 litros.png',   precio:15 }
+    p4l: { sz:'Familiar 4L',     nom:'Familiar',     img: baseUrl + 'galon familiar de 4 litros.png',   precio:15 }
   };
   let prodRows = '';
   Object.entries(ST.cart).forEach(([k, qty]) => {
@@ -2472,7 +2509,7 @@ function descargarNota() {
     <div class="sub">
       El sabor de mi tierra<br>
       Morales - San Martín<br>
-      WhatsApp: 947 999 736 / 955 273 229
+      WhatsApp: 955 273 229 / 986 445 531
     </div>
     <hr>
     <div class="titulo">NOTA DE VENTA</div>
@@ -2552,6 +2589,31 @@ function descargarNota() {
 
 /* ── MODALES ── */
 function cerrar(id) { document.getElementById(id).classList.remove('on'); }
+
+/* ── Limpiar todo y recargar para nuevo pedido ── */
+function limpiarYRecargar() {
+  ['aswa_pedido_id','aswa_succ_active','aswa_cart','aswa_total',
+   'aswa_delivery','aswa_raw','aswa_pago','aswa_nombre',
+   'aswa_tel','aswa_nivel','aswa_cod'].forEach(k => sessionStorage.removeItem(k));
+  location.reload();
+}
+
+/* ── Minimizar modal confirmar → muestra botón flotante ── */
+function minimizarConfirmar() {
+  // NO cerramos — solo ocultamos el modal y mostramos botón flotante
+  cerrar('mConfirmar');
+  cerrar('succScreen');
+  // Mostrar botón flotante pulsante para recordar al cliente
+  document.getElementById('btnFlotante').style.display = 'block';
+  tst('⏳ Te recordaremos cuando llegue tu pedido 📦', 3000);
+}
+
+/* ── Ir a confirmar desde la pantalla de éxito ── */
+function irAConfirmar() {
+  document.getElementById('succScreen').classList.remove('on');
+  document.getElementById('btnFlotante').style.display = 'none';
+  document.getElementById('mConfirmar').classList.add('on');
+}
 document.querySelectorAll('.ov').forEach(m => {
   m.addEventListener('click', e => { if (e.target===m) m.classList.remove('on'); });
 });
@@ -2649,7 +2711,7 @@ function compartirCod() {
   const txt =
     saludo + ', ' + extra + ' 👇\n\n'
     + '🌽 *ASWA - La Rica Chicha*\n'
-    + 'La chicha de maiz suave amazónico, artesanal de San Martin, Morales.\n'
+    + 'La chicha Rica ASWA — Pide tu La chicha de maiz suave amazónico, artesanal de San Martin, Morales..\n'
     + 'Hecha con maíz del campo, fermentada con amor. 🍺\n\n'
     + '🎁 *Te regalo un descuento en tu primera compra:*\n'
     + '━━━━━━━━━━━━━━━━━\n'
@@ -3192,13 +3254,42 @@ async function cargarConcurso() {
 document.addEventListener('DOMContentLoaded', () => {
   setPago('Efectivo');
   cargarRedes();
-  cargarNegocio(); // ← SaaS: carga config del negocio desde Firestore
-  // Mostrar barra de pedido al inicio
+  cargarNegocio();
   document.getElementById('fbarPedir').classList.add('show');
-  // Badge de bono (novedad)
   setTimeout(() => {
     document.getElementById('badge-bono').classList.add('show');
   }, 2000);
+
+  // ── Recuperar pedido pendiente de confirmar ──
+  // Si el cliente fue a WhatsApp y volvió, mostrar botón flotante
+  const prevPedId  = sessionStorage.getItem('aswa_pedido_id');
+  const prevActive = sessionStorage.getItem('aswa_succ_active');
+  if (prevPedId && prevActive) {
+    ST.pedidoFbId = prevPedId;
+    // Recuperar datos guardados del pedido
+    try {
+      const prevCart = sessionStorage.getItem('aswa_cart');
+      if (prevCart) ST.cart = JSON.parse(prevCart);
+      ST.final    = parseFloat(sessionStorage.getItem('aswa_total')   || 0);
+      ST.delivery = parseFloat(sessionStorage.getItem('aswa_delivery') || 0);
+      ST.raw      = parseFloat(sessionStorage.getItem('aswa_raw')      || 0);
+      ST.pago     = sessionStorage.getItem('aswa_pago')   || 'Efectivo';
+      ST.cli.nom  = sessionStorage.getItem('aswa_nombre') || '';
+      ST.cli.tel  = sessionStorage.getItem('aswa_tel')    || '';
+      ST.cli.nivel= sessionStorage.getItem('aswa_nivel')  || 'BRONCE';
+      ST.cli.cod  = sessionStorage.getItem('aswa_cod')    || '';
+    } catch(e) {}
+    // Mostrar botón flotante para confirmar entrega
+    setTimeout(() => {
+      const btn = document.getElementById('btnFlotante');
+      if (btn) {
+        btn.style.display = 'block';
+        btn.innerHTML = '📦 Tienes un pedido pendiente<br><small style="font-size:11px;font-weight:700">Confirmar entrega → Nota de Venta</small>';
+        btn.style.padding = '12px 16px';
+        btn.style.lineHeight = '1.4';
+      }
+    }, 1000);
+  }
 });
 </script>
 </body>
