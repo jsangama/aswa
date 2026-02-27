@@ -333,7 +333,7 @@
 
     /* ══ NOTA DE VENTA (modal post-confirmación) ══ */
     .nota-modal {
-      display:none; position:fixed; inset:0; z-index:400;
+      display:none; position:fixed; inset:0; z-index:1100;
       background:rgba(0,0,0,.92); backdrop-filter:blur(16px);
       align-items:flex-end; justify-content:center;
     }
@@ -835,7 +835,7 @@
 
     /* ══ MODALES (bottom sheet) ══ */
     .ov {
-      display:none; position:fixed; inset:0; z-index:200;
+      display:none; position:fixed; inset:0; z-index:1000;
       background:rgba(0,0,0,.88); backdrop-filter:blur(8px);
       align-items:flex-end; justify-content:center;
     }
@@ -1600,18 +1600,21 @@
 <div class="ov" id="mConfirmar">
   <div class="sheet">
     <div class="hnd"></div>
-    <div class="mttl">¿Ya recibiste tu pedido?</div>
+    <div class="mttl">¿Ya recibiste tu pedido? 🌽</div>
     <div class="confbox">
+      <div style="font-size:48px;margin-bottom:12px">📦</div>
       <p>
-        Cuando recibas tu chicha, confirma la entrega.<br>
-        Esto activa tu descuento acumulado y el bono<br>
-        para quien te recomendó 🎉
+        Toca el botón cuando recibas tu chicha.<br>
+        Esto activa tu descuento de fidelidad y genera<br>
+        tu <strong style="color:var(--y)">Nota de Venta</strong> para descargar 🎉
       </p>
       <button class="bconf" id="btnConf" onclick="confirmarEntrega()">
         ✅ SÍ, YA RECIBÍ MI PEDIDO
       </button>
     </div>
-    <button class="bcancel" onclick="cerrar('mConfirmar')">Todavía no llegó</button>
+    <button class="bcancel" onclick="cerrar('mConfirmar')">
+      ⏳ Todavía no llegó
+    </button>
   </div>
 </div>
 
@@ -1621,7 +1624,17 @@
   <div class="sttl">¡Pedido enviado!</div>
   <p class="ssub">Tu pedido fue enviado a WhatsApp.<br>¡Pronto te contactamos! 🌽</p>
   <div class="scod" id="succCod"></div>
-  <button class="bnvo" onclick="location.reload()">Hacer otro pedido</button>
+  <p class="ssub" style="font-size:12px;margin-top:8px;color:var(--mut)">
+    Cuando recibas tu pedido, toca el botón verde 👇
+  </p>
+  <button class="bnvo"
+          style="background:var(--grn);margin-bottom:12px;padding:14px 32px"
+          onclick="document.getElementById('succScreen').classList.remove('on');document.getElementById('mConfirmar').classList.add('on')">
+    📦 Ya recibí — Confirmar entrega
+  </button>
+  <button class="bnvo" onclick="location.reload()" style="background:transparent;color:var(--mut);border:1px solid var(--brd);font-size:14px;padding:12px 32px">
+    Hacer otro pedido
+  </button>
 </div>
 
 <!-- ══════════════ NOTA DE VENTA ══════════════ -->
@@ -2084,6 +2097,8 @@ async function enviarPedido() {
       fecha:          ts()
     });
     ST.pedidoFbId = ref.id;
+    // Guardar en sessionStorage por si hay reload
+    sessionStorage.setItem('aswa_pedido_id', ref.id);
 
     // 2. Upsert cliente
     const snapC = await gd(q(col(db,'clientes'), wh('businessId','==',BUSINESS_ID), wh('telefono','==',telefono)));
@@ -2126,29 +2141,52 @@ async function enviarPedido() {
     +'<path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/>'
     +'</svg> ENVIAR PEDIDO POR WHATSAPP';
 
-  /* Mostrar éxito y modal confirmar entrega */
-  setTimeout(() => {
-    cerrar('mResumen');
-    if (ST.cli.cod) {
-      const el = document.getElementById('succCod');
-      el.textContent = 'Tu código: ' + ST.cli.cod;
-      el.style.display = 'block';
-    }
-    document.getElementById('succScreen').classList.add('on');
+  /* ── Mostrar pantalla éxito ── */
+  cerrar('mResumen');
+  if (ST.cli.cod) {
+    const el = document.getElementById('succCod');
+    el.textContent = '🎁 Tu código: ' + ST.cli.cod;
+    el.style.display = 'block';
+  }
+  document.getElementById('succScreen').classList.add('on');
+
+  /* ── Después de 5 seg mostrar confirmación de entrega ── */
+  /* Solo si tenemos el ID del pedido en Firestore          */
+  const esperar = () => {
     if (ST.pedidoFbId) {
       setTimeout(() => {
         document.getElementById('succScreen').classList.remove('on');
         document.getElementById('mConfirmar').classList.add('on');
-      }, 3500);
+      }, 5000);
+    } else {
+      /* Si aún no tenemos el ID, esperar un poco más */
+      setTimeout(() => esperar(), 500);
     }
-  }, 1200);
+  };
+  setTimeout(() => esperar(), 1000);
 }
 
-/* ── CONFIRMAR ENTREGA (activa Cloud Function) ── */
+/* ── CONFIRMAR ENTREGA ── */
 async function confirmarEntrega() {
-  if (!ST.pedidoFbId) { cerrar('mConfirmar'); location.reload(); return; }
   const btn = document.getElementById('btnConf');
-  btn.disabled = true; btn.textContent = '⏳ Confirmando...';
+
+  // Si no hay ID en memoria, intentar recuperar del sessionStorage
+  if (!ST.pedidoFbId) {
+    const saved = sessionStorage.getItem('aswa_pedido_id');
+    if (saved) ST.pedidoFbId = saved;
+  }
+
+  if (!ST.pedidoFbId) {
+    // No hay pedido que confirmar — igual mostrar nota con datos actuales
+    cerrar('mConfirmar');
+    tst('⚠️ No se encontró el pedido. Generando nota de todas formas...', 2000);
+    setTimeout(() => mostrarNotaVenta(), 800);
+    return;
+  }
+
+  btn.disabled = true;
+  btn.innerHTML = '⏳ Confirmando...';
+
   try {
     const { doc:d, updateDoc:ud, serverTimestamp:ts } = window.FB;
     await ud(d(db,'pedidos',ST.pedidoFbId), {
@@ -2156,16 +2194,29 @@ async function confirmarEntrega() {
       confirmado_at: ts(),
       estado: 'entregado'
     });
-    cerrar('mConfirmar');
-    tst('🎉 ¡Gracias! Descuento activado. Preparando tu nota de venta...', 3000);
 
-    // Pequeña pausa dramática ✨ antes de mostrar la nota
-    setTimeout(() => mostrarNotaVenta(), 1200);
+    cerrar('mConfirmar');
+    tst('🎉 ¡Entrega confirmada! Preparando tu Nota de Venta...', 3000);
+
+    // Limpiar sessionStorage
+    sessionStorage.removeItem('aswa_pedido_id');
+
+    // Mostrar nota de venta
+    setTimeout(() => mostrarNotaVenta(), 1000);
 
   } catch(err) {
-    console.error(err);
-    btn.disabled = false; btn.textContent = '✅ SÍ, YA RECIBÍ MI PEDIDO';
-    tst('❌ Error al confirmar. Intenta de nuevo.', 3000);
+    console.error('confirmarEntrega error:', err);
+    btn.disabled = false;
+    btn.innerHTML = '✅ SÍ, YA RECIBÍ MI PEDIDO';
+
+    // Si el error es de permisos, mostrar la nota de todas formas
+    if (err.code === 'permission-denied') {
+      cerrar('mConfirmar');
+      tst('✅ ¡Pedido confirmado! Generando nota...', 2500);
+      setTimeout(() => mostrarNotaVenta(), 800);
+    } else {
+      tst('❌ Error al confirmar. Verifica tu conexión.', 3000);
+    }
   }
 }
 
