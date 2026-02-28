@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <meta name="theme-color" content="#09090b">
-  <meta name="description" content="La Rica Chicha ASWA — Pide tu chicha artesanal de maiz suave amazonico en Morales. Delivery a domicilio.">
+  <meta name="description" content="La Rica Chicha ASWA — Pide tu chicha artesanal de maiz amazónico en Morales. Delivery a domicilio.">
   <title>La Rica Chicha — ASWA Oficial</title>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700;800&family=Bebas+Neue&display=swap" rel="stylesheet">
 
@@ -1811,7 +1811,7 @@
     <!-- Footer -->
     <div class="nota-footer">
       ¡Gracias por tu preferencia! 🌾<br>
-      Chicha de jora artesanal — hecha con maíz del campo y amor de la selva.<br>
+      Chicha artesanal de maiz amazónico — hecha con maíz del campo y amor de la selva.<br>
       <strong>LA RICA CHICHA - ASWA</strong> · Morales, San Martín, Perú
     </div>
 
@@ -1940,6 +1940,21 @@ document.getElementById('telefono').addEventListener('input', async e => {
   ban.classList.remove('on'); brn.classList.remove('on'); calcTotal();
 
   if (tel.length !== 9 || !tel.startsWith('9')) return;
+
+  // ── Esperar autenticación Firebase antes de buscar ──
+  if (!window.currentUser) {
+    try {
+      await new Promise((res, rej) => {
+        const timeout = setTimeout(() => rej(new Error('auth timeout')), 6000);
+        const unsub = window.auth.onAuthStateChanged(u => {
+          if (u) { clearTimeout(timeout); unsub(); window.currentUser = u; res(); }
+        });
+      });
+    } catch(authErr) {
+      console.warn('Auth no lista, omitiendo búsqueda de cliente');
+      return;
+    }
+  }
 
   try {
     const { query:q, collection:col, where:wh, getDocs:gd } = window.FB;
@@ -2159,18 +2174,44 @@ async function enviarPedido() {
     ? '🏠 '+direccion+'\n'+'📌 *Ubicación GPS:* '+ST.gpsUrl
     : '🏠 '+direccion;
 
+  // ── MENSAJE WHATSAPP — Diseño profesional ──
+  const hora = new Date().toLocaleTimeString('es-PE',{hour:'2-digit',minute:'2-digit'});
+  const nivelEmoji = { BRONCE:'🥉', PLATA:'🥈', ORO:'🥇', DIAMANTE:'💎' };
+  const nivelCliente = ST.cli.nivel || 'BRONCE';
   const msg =
-    '🌽 *NUEVO PEDIDO ASWA '+pid+'*\n\n'
-    +'👤 *'+nombre+'*\n'
-    +'📱 '+telefono+'\n'
-    +lineaUbicacion+'\n'
-    +'📍 '+zonaTexto+'\n\n'
-    +'*PRODUCTOS:*\n'+items+'\n'
-    +(disc>0 ? '🎉 *Descuento '+disc+'%:* −S/ '+(ST.raw*disc/100).toFixed(2)+'\n' : '')
-    +'💰 *TOTAL: S/ '+ST.final.toFixed(2)+'*\n'
-    +'💳 *Pago: '+ST.pago+'*'
-    +(ST.pago==='Efectivo' ? ' | Con S/ '+pagoCon.toFixed(2)+' → Vuelto S/ '+Math.max(0,pagoCon-ST.final).toFixed(2) : '')
-    +(codigoUsado ? '\n🔖 Código referido: '+codigoUsado : '');
+    '━━━━━━━━━━━━━━━━━━━━━\n'
+    +'🌽 *NUEVO PEDIDO ASWA*\n'
+    +'📋 *N° '+pid+'*  •  🕐 '+hora+'\n'
+    +'━━━━━━━━━━━━━━━━━━━━━\n\n'
+
+    +'👤 *CLIENTE*\n'
+    +'  ▸ '+nombre+'\n'
+    +'  ▸ 📱 '+telefono+'\n'
+    +'  ▸ '+nivelEmoji[nivelCliente]+' Nivel '+nivelCliente+'\n'
+    +(codigoUsado ? '  ▸ 🎟️ Ref: `'+codigoUsado+'`\n' : '')
+    +'\n'
+
+    +'🛒 *PRODUCTOS*\n'
+    +'─────────────────────\n'
+    +items
+    +'─────────────────────\n'
+    +(disc>0
+      ? '🎁 Descuento -'+disc+'%:  *−S/ '+(ST.raw*disc/100).toFixed(2)+'*\n'
+      : '')
+    +'💰 *TOTAL:  S/ '+ST.final.toFixed(2)+'*\n\n'
+
+    +'🚴 *ENTREGA*\n'
+    +'  ▸ 🏠 '+direccion+'\n'
+    +(ST.gpsUrl ? '  ▸ 📍 '+ST.gpsUrl+'\n' : '')
+    +'  ▸ 📌 Zona: '+zonaTexto+'\n\n'
+
+    +'💳 *PAGO: '+ST.pago+'*\n'
+    +(ST.pago==='Efectivo'
+      ? '  ▸ Con: S/ '+pagoCon.toFixed(2)
+        +'\n  ▸ Vuelto: *S/ '+Math.max(0,pagoCon-ST.final).toFixed(2)+'*\n'
+      : '')
+    +'\n━━━━━━━━━━━━━━━━━━━━━\n'
+    +'_ASWA · La Rica Chicha · Morales_ 🌿';
 
   /* Enviar a ambos WhatsApp */
   window.open('https://wa.me/'+window.WA1+'?text='+encodeURIComponent(msg), '_blank');
@@ -2346,6 +2387,26 @@ async function confirmarEntrega() {
 
 /* ── NOTA DE VENTA ── */
 function mostrarNotaVenta() {
+  // ── Recuperar datos de sessionStorage si ST fue reseteado ──
+  if (!ST.cart || Object.values(ST.cart).every(q => q < 1)) {
+    try {
+      const savedCart = sessionStorage.getItem('aswa_cart');
+      if (savedCart) ST.cart = JSON.parse(savedCart);
+    } catch(e) {}
+  }
+  if (!ST.final || ST.final < 1) {
+    ST.final    = parseFloat(sessionStorage.getItem('aswa_total')    || 0);
+    ST.delivery = parseFloat(sessionStorage.getItem('aswa_delivery') || 0);
+    ST.raw      = parseFloat(sessionStorage.getItem('aswa_raw')      || 0);
+    ST.pago     = sessionStorage.getItem('aswa_pago') || 'Efectivo';
+  }
+  if (!ST.cli.nom && !ST.cli.nivel) {
+    ST.cli.nom   = sessionStorage.getItem('aswa_nombre') || '';
+    ST.cli.tel   = sessionStorage.getItem('aswa_tel')    || '';
+    ST.cli.nivel = sessionStorage.getItem('aswa_nivel')  || 'BRONCE';
+    ST.cli.cod   = sessionStorage.getItem('aswa_cod')    || '';
+  }
+
   const ahora    = new Date();
   const fechaStr = ahora.toLocaleDateString('es-PE', { day:'2-digit', month:'2-digit', year:'2-digit' });
   const horaStr  = ahora.toLocaleTimeString('es-PE', { hour:'2-digit', minute:'2-digit' });
@@ -2454,7 +2515,7 @@ function cerrarNota() {
   setTimeout(() => location.reload(), 300);
 }
 
-function _abrirVentanaNota(modoImprimir) {
+function _generarHtmlNota() {
   const baseUrl  = window.location.origin + window.location.pathname.replace(/[^/]*$/, '');
   const logoSrc  = baseUrl + 'logo de aswa.jpg';
   const nivel    = ST.cli.nivel || 'BRONCE';
@@ -2503,8 +2564,7 @@ function _abrirVentanaNota(modoImprimir) {
   const desc      = Math.max(0, subtotal - (total - delivery));
   const hasDesc   = desc > 0.01;
 
-  const printWin = window.open('', '_blank', 'width=520,height=900');
-  printWin.document.write(`<!DOCTYPE html>
+  const htmlContent = `
 <html>
 <head>
   <meta charset="UTF-8">
@@ -2662,7 +2722,7 @@ function _abrirVentanaNota(modoImprimir) {
   <!-- FOOTER -->
   <div class="footer">
     ¡Gracias por tu preferencia! 🌾<br>
-    Chicha artesanal de maiz suave amazonico — hecha con maíz  del campo y amor de la selva.<br>
+    Chicha artesanal de maiz amazónico — hecha con maíz del campo y amor de la selva.<br>
     <strong>LA RICA CHICHA - ASWA</strong> · Morales, San Martín, Perú<br>
     <div style="display:flex;gap:10px;justify-content:center;margin-top:16px;flex-wrap:wrap">
       <button class="print-btn" onclick="window.print()"
@@ -2678,26 +2738,33 @@ function _abrirVentanaNota(modoImprimir) {
 
 </body>
 </html>`);
+  return '<!DOCTYPE html>' + htmlContent;
+}
+
+/* ── DESCARGAR PDF — genera blob HTML y lo descarga ── */
+function descargarNotaPDF() {
+  const html = _generarHtmlNota();
+  const blob  = new Blob([html], { type: 'text/html;charset=utf-8' });
+  const url   = URL.createObjectURL(blob);
+  const a     = document.createElement('a');
+  const num   = document.getElementById('nvNumero')?.textContent || 'nota';
+  a.href      = url;
+  a.download  = 'Nota-ASWA-' + num + '.html';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 3000);
+  tst('📥 Archivo descargado. Ábrelo en Chrome y usa Imprimir → Guardar como PDF', 5000);
+}
+
+/* ── IMPRIMIR — abre ventana y lanza impresora directo ── */
+function imprimirNota() {
+  const printWin = window.open('', '_blank', 'width=540,height=920');
+  if (!printWin) { tst('❌ El navegador bloqueó la ventana. Activa los pop-ups.', 3500); return; }
+  printWin.document.write(_generarHtmlNota());
   printWin.document.close();
   printWin.focus();
-  if (modoImprimir) {
-    // Imprimir: abrir diálogo de impresora automáticamente
-    setTimeout(() => printWin.print(), 1800);
-  }
-  // Si no es modo imprimir → el usuario ve la página y puede
-  // usar Ctrl+S / "Guardar como PDF" desde el menú del navegador
-}
-
-/* ── DESCARGAR PDF (abre ventana sin auto-imprimir) ── */
-function descargarNotaPDF() {
-  _abrirVentanaNota(false);
-  // Pequeña guía para el usuario
-  setTimeout(() => tst('💡 En la ventana: usa el menú ⋮ → Imprimir → Guardar como PDF', 5000), 400);
-}
-
-/* ── IMPRIMIR (abre ventana Y lanza impresora directo) ── */
-function imprimirNota() {
-  _abrirVentanaNota(true);
+  setTimeout(() => printWin.print(), 1800);
 }
 
 /* ── MODALES ── */
@@ -2868,7 +2935,7 @@ function compartirCod() {
   const txt =
     saludo + ', ' + extra + ' 👇\n\n'
     + '🌽 *ASWA - La Rica Chicha*\n'
-    + 'La chicha artesanal de maiz suave amazonico de MODALES.\n'
+    + 'La chicha artesanal de maiz amazónico de Morales.\n'
     + 'Hecha con maíz del campo, fermentada con amor. 🍺\n\n'
     + '🎁 *Te regalo un descuento en tu primera compra:*\n'
     + '━━━━━━━━━━━━━━━━━\n'
