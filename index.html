@@ -1843,14 +1843,22 @@
 <script>
 /* ── ESTADO GLOBAL ── */
 const ST = {
-  cart:   { p2l:0, p3l:0, p4l:0 },
-  precio: { p2l:9, p3l:13, p4l:15 },
-  pago:   'Efectivo',
-  raw:0, final:0, delivery:0,
-  disc:   { fid:0, bon:0, ref:0 },
+  cart: { p2l: 0, p3l: 0, p4l: 0 },
+  precio: { p2l: 9, p3l: 13, p4l: 15 },
+  pago: 'Efectivo',
+  raw: 0,
+  final: 0,
+  delivery: 0,
+  disc: { fid: 0, bon: 0, ref: 0 },
   cli: {
-    id:'', tel:'', nom:'', nivel:'BRONCE',
-    pedidos:0, cod:'', bonos:[], consumo:0
+    id: '',
+    tel: '',
+    nom: '',
+    nivel: 'BRONCE',
+    pedidos: 0,
+    cod: '',
+    bonos: [],
+    consumo: 0
   },
   pedidoFbId: null,
   gpsUrl: null,
