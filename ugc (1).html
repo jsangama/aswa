@@ -4,17 +4,16 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <meta name="theme-color" content="#09090b">
-  <title>ASWA — Sistema UGC</title>
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700;800;900&family=Bebas+Neue&display=swap" rel="stylesheet">
+  <meta name="description" content="La Rica Chicha ASWA — Pide tu chicha artesanal de maiz amazónico en Morales. Delivery a domicilio.">
+  <title>La Rica Chicha — ASWA Oficial</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700;800&family=Bebas+Neue&display=swap" rel="stylesheet">
 
-  <!-- FIREBASE -->
   <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-app.js";
-    import { getFirestore, collection, addDoc, getDocs, doc,
-             updateDoc, query, where, orderBy, serverTimestamp, getDoc, deleteDoc }
+    import { initializeApp }
+      from "https://www.gstatic.com/firebasejs/11.1.0/firebase-app.js";
+    import { getFirestore, collection, addDoc, query, where,
+             getDocs, serverTimestamp, doc, updateDoc, getDoc }
       from "https://www.gstatic.com/firebasejs/11.1.0/firebase-firestore.js";
-    import { getStorage, ref, uploadBytes, getDownloadURL }
-      from "https://www.gstatic.com/firebasejs/11.1.0/firebase-storage.js";
     import { getAuth, signInAnonymously, onAuthStateChanged }
       from "https://www.gstatic.com/firebasejs/11.1.0/firebase-auth.js";
 
@@ -26,13 +25,11 @@
       messagingSenderId: "213964983594",
       appId:             "1:213964983594:web:92d761a6e0cce9ddaa253"
     };
-    const app = initializeApp(cfg);
-    window.db      = getFirestore(app);
-    window.storage = getStorage(app);
-    window.auth    = getAuth(app);
-    window.FB = { collection, addDoc, getDocs, doc, updateDoc, query,
-                  where, orderBy, serverTimestamp, getDoc, deleteDoc };
-    window.ST = { ref, uploadBytes, getDownloadURL };
+    const app   = initializeApp(cfg);
+    window.db   = getFirestore(app);
+    window.auth = getAuth(app);
+    window.FB   = { collection, addDoc, query, where, getDocs,
+                    serverTimestamp, doc, updateDoc, getDoc };
     onAuthStateChanged(window.auth, u => {
       if (u) window.currentUser = u;
       else   signInAnonymously(window.auth).catch(console.error);
@@ -40,1164 +37,2762 @@
   </script>
 
   <script>
-    // ── MULTI-NEGOCIO: mismo BUSINESS_ID que index.html ──
     const BUSINESS_ID = "aswa001";
+
+    async function cargarNegocio() {
+      try {
+        const snap = await window.FB.getDoc(
+          window.FB.doc(db, 'negocios', BUSINESS_ID)
+        );
+        if (snap.exists()) {
+          const data = snap.data();
+          if (data.nombre) {
+            const el = document.querySelector('.bname');
+            if (el) el.textContent = data.nombre;
+          }
+          if (data.whatsapp1) window.WA1 = data.whatsapp1;
+          if (data.whatsapp2) window.WA2 = data.whatsapp2;
+          window.NEGOCIO = data;
+        }
+      } catch(e) {
+        console.warn('cargarNegocio:', e.message);
+      }
+    }
+
+    window.WA1 = "51955273229";
+    window.WA2 = "51986445531";
   </script>
 
   <style>
     :root {
-      --bg:    #0a0a0f;
-      --s1:    #12121a;
-      --s2:    #1a1a26;
-      --brd:   #2a2a3a;
-      --y:     #facc15;
-      --y2:    #fde047;
-      --txt:   #f1f0ff;
-      --mut:   #6b6b8a;
-      --grn:   #22c55e;
-      --red:   #ef4444;
-      --pur:   #8b5cf6;
-      --pur2:  #a78bfa;
-      --org:   #f97316;
-      --pink:  #ec4899;
-      --r:     14px;
+      --bg:     #09090b;
+      --s1:     #111113;
+      --s2:     #18181b;
+      --brd:    #27272a;
+      --y:      #facc15;
+      --y2:     #fde047;
+      --txt:    #fafafa;
+      --mut:    #71717a;
+      --grn:    #22c55e;
+      --red:    #ef4444;
+      --pur:    #a855f7;
+      --r:      1.2rem;
     }
-    *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
-    html { scroll-behavior:smooth; }
+    *, *::before, *::after {
+      margin: 0; padding: 0;
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+    html { scroll-behavior: smooth; }
     body {
       font-family: 'Poppins', sans-serif;
       background: var(--bg); color: var(--txt);
-      min-height: 100dvh;
-      background-image: radial-gradient(ellipse at 20% 0%, rgba(139,92,246,.08) 0%, transparent 60%),
-                        radial-gradient(ellipse at 80% 100%, rgba(250,204,21,.05) 0%, transparent 50%);
+      min-height: 100dvh; padding-bottom: 90px;
+      -webkit-font-smoothing: antialiased;
     }
 
     /* ══ HEADER ══ */
-    .site-header {
-      background: rgba(18,18,26,0.9);
+    header {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      background: rgba(9,9,11,0.95);
       backdrop-filter: blur(20px);
       border-bottom: 1px solid var(--brd);
-      position: sticky; top:0; z-index:100;
     }
-    .header-inner {
-      max-width: 900px; margin:0 auto;
-      padding: 16px 20px;
-      display: flex; align-items: center; gap: 14px;
+    .hi {
+      max-width: 430px; margin: 0 auto;
+      padding: 10px 16px;
+      display: flex; align-items: center; gap: 12px;
     }
-    .h-logo {
-      width: 44px; height: 44px; border-radius: 50%;
-      border: 2px solid var(--y); object-fit:cover; flex-shrink:0;
-      background: var(--y);
+    .logo {
+      width: 54px; height: 54px; border-radius: 50%;
+      object-fit: cover; border: 2px solid var(--y); flex-shrink: 0;
     }
-    .h-title { font-family:'Bebas Neue',cursive; font-size:26px; color:var(--y); letter-spacing:.1em; }
-    .h-sub { font-size:10px; color:var(--mut); text-transform:uppercase; letter-spacing:.15em; }
-    .h-back {
-      margin-left:auto; background:var(--s2); border:1px solid var(--brd);
-      color:var(--mut); padding:8px 16px; border-radius:999px;
-      font-size:12px; font-weight:600; cursor:pointer; text-decoration:none;
-      font-family:'Poppins',sans-serif; transition:all .15s;
+    .bname { font-family:'Bebas Neue',cursive; font-size:26px; color:var(--y); letter-spacing:.12em; line-height:1; }
+    .bsub  { font-size:9px; color:var(--mut); font-weight:600; text-transform:uppercase; letter-spacing:.2em; }
+    .btn-ref {
+      margin-left:auto; flex-shrink:0;
+      background: linear-gradient(135deg,#7c3aed,#4f46e5);
+      color:#fff; border:none; padding:8px 14px; border-radius:999px;
+      font-size:11px; font-weight:700; cursor:pointer;
+      display:none; align-items:center; gap:6px; white-space:nowrap;
+      font-family:'Poppins',sans-serif;
     }
-    .h-back:hover { border-color:var(--y); color:var(--y); }
+    .btn-ref.on { display:flex; }
+    .sp { height:86px; }
 
-    /* ══ TABS ══ */
-    .tabs-bar {
-      background: var(--s1); border-bottom: 1px solid var(--brd);
-      position: sticky; top: 77px; z-index: 99;
+    /* ══ LAYOUT ══ */
+    main { max-width:430px; margin:0 auto; padding:20px 16px; }
+    section { margin-bottom:28px; }
+    .stitle {
+      font-size:11px; font-weight:700; color:var(--mut);
+      text-transform:uppercase; letter-spacing:.15em;
+      margin-bottom:14px; display:flex; align-items:center; gap:10px;
     }
-    .tabs-inner {
-      max-width: 900px; margin:0 auto;
-      display: grid; grid-template-columns: repeat(4,1fr);
+    .stitle::after { content:''; flex:1; height:1px; background:var(--brd); }
+
+    /* ══ BANNER CLIENTE ══ */
+    .cban {
+      border-radius:var(--r); padding:0;
+      display:none; flex-direction:column; gap:0;
+      margin-bottom:14px; animation:fi .35s cubic-bezier(.22,1,.36,1);
+      overflow:hidden;
     }
-    .tab-btn {
-      padding: 14px 8px; background:transparent; border:none;
-      color: var(--mut); font-size:12px; font-weight:700;
-      font-family:'Poppins',sans-serif; cursor:pointer;
-      display:flex; align-items:center; justify-content:center; gap:6px;
-      transition: all .15s; border-bottom: 3px solid transparent;
-      white-space:nowrap;
+    .cban.on { display:flex; }
+    @keyframes fi { from{opacity:0;transform:translateY(-8px)} to{opacity:1;transform:none} }
+
+    .cban-head {
+      padding:14px 16px; display:flex; align-items:center; gap:12px;
     }
-    .tab-btn:hover { color:var(--txt); }
-    .tab-btn.active { color:var(--y); border-bottom-color:var(--y); }
-    .tab-btn .cnt {
-      background:var(--red); color:#fff; font-size:9px; font-weight:900;
-      min-width:17px; height:17px; border-radius:999px;
-      display:inline-flex; align-items:center; justify-content:center;
-      padding:0 4px;
+    .cban-emo { font-size:28px; flex-shrink:0; }
+    .cban-nom { font-size:14px; font-weight:800; line-height:1.2; }
+    .cban-sub { font-size:11px; opacity:.8; margin-top:2px; }
+    .cban-pill {
+      margin-left:auto; flex-shrink:0;
+      padding:6px 12px; border-radius:999px;
+      font-size:10px; font-weight:900;
+      text-transform:uppercase; letter-spacing:.1em; white-space:nowrap;
+      border:2px solid rgba(255,255,255,.3);
+      background:rgba(0,0,0,.25); color:#fff;
+    }
+    .cban-prog-wrap {
+      padding:0 16px 4px; background:rgba(0,0,0,.15);
+    }
+    .cban-prog-label {
+      display:flex; justify-content:space-between;
+      font-size:10px; font-weight:600; opacity:.75;
+      padding-top:8px; margin-bottom:5px;
+    }
+    .cban-prog-bar {
+      height:5px; border-radius:999px;
+      background:rgba(255,255,255,.15); overflow:hidden; margin-bottom:10px;
+    }
+    .cban-prog-fill {
+      height:100%; border-radius:999px;
+      background:rgba(255,255,255,.6);
+      transition:width .6s cubic-bezier(.22,1,.36,1);
+    }
+    .cban-body {
+      background:rgba(0,0,0,.2);
+      padding:10px 16px 12px;
+      display:flex; flex-wrap:wrap; gap:6px;
+    }
+    .cban-tag {
+      font-size:11px; font-weight:700;
+      padding:4px 10px; border-radius:999px;
+      background:rgba(255,255,255,.12);
+      color:#fff; white-space:nowrap;
+    }
+    .cban-tag.warn { background:rgba(239,68,68,.3); color:#fca5a5; }
+    .cban-tag.ok   { background:rgba(34,197,94,.25); color:#86efac; }
+
+    .nivel-bronce   { background:linear-gradient(135deg,#92400e,#b45309); color:#fff; box-shadow:0 4px 16px rgba(180,83,9,.3); }
+    .nivel-plata    { background:linear-gradient(135deg,#1e3a8a,#2563eb); color:#fff; box-shadow:0 4px 16px rgba(37,99,235,.3); }
+    .nivel-oro      { background:linear-gradient(135deg,#92400e,#d97706); color:#fff; box-shadow:0 4px 16px rgba(217,119,6,.35); }
+    .nivel-diamante { background:linear-gradient(135deg,#4c1d95,#7c3aed); color:#fff; box-shadow:0 4px 16px rgba(124,58,237,.35); }
+
+    .cref-cod.nivel-bronce-cod   { border-color:#d97706; color:#d97706; }
+    .cref-cod.nivel-plata-cod    { border-color:#3b82f6; color:#3b82f6; }
+    .cref-cod.nivel-oro-cod      { border-color:#f59e0b; color:#f59e0b; }
+    .cref-cod.nivel-diamante-cod { border-color:#a78bfa; color:#a78bfa; }
+
+    .niveles-tabla {
+      background:var(--s2); border:1px solid var(--brd); border-radius:12px;
+      overflow:hidden; margin:10px 0;
+    }
+    .nrow {
+      display:grid; grid-template-columns:2fr 2fr 1fr;
+      padding:9px 14px; font-size:12px; align-items:center;
+      border-bottom:1px solid var(--brd);
+    }
+    .nrow:last-child { border-bottom:none; }
+    .nrow.active { background:rgba(250,204,21,.07); }
+    .nrow .nbadge {
+      font-size:10px; font-weight:800; padding:3px 8px; border-radius:999px;
+      display:inline-flex; align-items:center; gap:4px; width:fit-content;
+    }
+    .nbadge.bronce   { background:#451a03; color:#fed7aa; }
+    .nbadge.plata    { background:#1e293b; color:#bfdbfe; }
+    .nbadge.oro      { background:#422006; color:var(--y); }
+    .nbadge.diamante { background:linear-gradient(135deg,#312e81,#4c1d95); color:#c4b5fd; }
+    .nrow .nped  { font-size:11px; color:var(--mut); }
+    .nrow .ndisc { font-size:13px; font-weight:800; color:var(--grn); text-align:right; }
+    .nrow.active .nped { color:var(--txt); }
+
+    .cfr  { background:var(--bg); border:2px dashed var(--y); border-radius:12px; padding:14px; text-align:center; margin:12px 0; }
+    .bcopy {
+      width:100%; background:var(--y); color:#000; border:none;
+      padding:12px; border-radius:10px; font-size:14px; font-weight:800;
+      cursor:pointer; margin-top:8px; font-family:'Poppins',sans-serif;
+    }
+    .bshr {
+      width:100%; background:#25D366; color:#fff; border:none;
+      padding:14px; border-radius:12px; font-size:14px; font-weight:800;
+      cursor:pointer; margin-top:8px;
+      display:flex; align-items:center; justify-content:center; gap:8px;
+      font-family:'Poppins',sans-serif;
     }
 
-    /* ══ CONTENIDO ══ */
-    .page-wrap { max-width:900px; margin:0 auto; padding:24px 16px 60px; }
-    .tab-content { display:none; }
-    .tab-content.active { display:block; }
+    .cban-ref {
+      background:rgba(250,204,21,.06); border-top:1px solid rgba(250,204,21,.15);
+      padding:10px 16px 12px;
+    }
+    .cref-label { font-size:10px; color:var(--y); font-weight:700; text-transform:uppercase; letter-spacing:.1em; margin-bottom:6px; }
+    .cref-row   { display:flex; align-items:center; gap:8px; }
+    .cref-cod   {
+      flex:1; background:var(--s2); border:1px solid var(--y);
+      color:var(--y); font-family:'Bebas Neue',cursive; font-size:20px;
+      letter-spacing:.15em; padding:8px 12px; border-radius:8px;
+      text-align:center; min-width:0; overflow:hidden; text-overflow:ellipsis;
+    }
+    .cref-copy, .cref-share {
+      flex-shrink:0; border:none; border-radius:8px; padding:8px 12px;
+      font-size:11px; font-weight:800; cursor:pointer;
+      font-family:'Poppins',sans-serif; transition:opacity .15s;
+    }
+    .cref-copy  { background:var(--s2); color:var(--y); border:1px solid var(--y); }
+    .cref-share { background:var(--y); color:#000; }
+    .cref-copy:hover, .cref-share:hover { opacity:.85; }
 
-    /* ══ FORMULARIO BONO ══ */
-    .bono-hero {
-      background: linear-gradient(135deg, #f97316, #ec4899, #8b5cf6);
-      border-radius: 20px; padding: 24px 20px; margin-bottom:24px;
-      text-align:center; position:relative; overflow:hidden;
+    /* ══ GPS TIEMPO REAL ══ */
+    .gps-live-box {
+      background:rgba(34,197,94,.07); border:1px solid rgba(34,197,94,.25);
+      border-radius:12px; padding:10px 14px; margin-top:8px;
+      display:none; align-items:center; gap:10px;
     }
-    .bono-hero::before {
-      content:''; position:absolute; inset:0;
-      background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23fff' fill-opacity='0.04'%3E%3Ccircle cx='30' cy='30' r='20'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+    .gps-live-box.show { display:flex; }
+    .gps-pulse {
+      width:10px; height:10px; border-radius:50%;
+      background:var(--grn); flex-shrink:0;
+      animation:pulse-gps 1.4s ease-in-out infinite;
     }
-    .bono-hero h2 {
-      font-family:'Bebas Neue',cursive; font-size:32px; color:#fff;
-      letter-spacing:.05em; margin-bottom:6px; position:relative;
+    @keyframes pulse-gps {
+      0%,100%{ transform:scale(1); opacity:1; }
+      50%    { transform:scale(1.5); opacity:.5; }
     }
-    .bono-hero p { font-size:13px; color:rgba(255,255,255,.85); position:relative; margin-bottom:14px; }
-    .bono-pills { display:flex; gap:8px; justify-content:center; flex-wrap:wrap; position:relative; }
-    .bpill {
-      background:rgba(0,0,0,.25); color:#fff; border:1px solid rgba(255,255,255,.2);
-      font-size:11px; font-weight:700; padding:6px 14px; border-radius:999px;
-      backdrop-filter:blur(10px);
+    .gps-live-info { flex:1; min-width:0; }
+    .gps-live-info .gli-title { font-size:11px; font-weight:700; color:var(--grn); }
+    .gps-live-info .gli-coords { font-size:10px; color:var(--mut); margin-top:1px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .gps-stop-btn {
+      background:rgba(239,68,68,.15); color:var(--red); border:1px solid rgba(239,68,68,.3);
+      border-radius:8px; padding:5px 10px; font-size:10px; font-weight:700;
+      cursor:pointer; font-family:'Poppins',sans-serif; flex-shrink:0;
     }
 
-    .form-section {
+    /* ══ NOTA DE VENTA ══ */
+    .nota-modal {
+      display:none; position:fixed; inset:0; z-index:1100;
+      background:rgba(0,0,0,.92); backdrop-filter:blur(16px);
+      align-items:flex-end; justify-content:center;
+    }
+    .nota-modal.open { display:flex; }
+    .nota-sheet {
+      background:#fff; border-radius:24px 24px 0 0;
+      width:100%; max-width:480px; max-height:96dvh; overflow-y:auto;
+      animation:mup .3s cubic-bezier(.22,1,.36,1);
+    }
+    .nota-top {
+      background:#fff; border-bottom:3px solid #facc15;
+      padding:28px 20px 18px; text-align:center;
+    }
+    .nota-logo-wrap {
+      width:130px; height:130px; margin:0 auto 14px;
+      border-radius:16px; overflow:hidden;
+      box-shadow:0 4px 20px rgba(0,0,0,.12);
+    }
+    .nota-logo-wrap img { width:100%; height:100%; object-fit:cover; display:block; }
+    .nota-empresa {
+      font-family:'Poppins',sans-serif; font-size:20px; font-weight:900;
+      color:#c27c00; letter-spacing:.02em; text-transform:uppercase;
+    }
+    .nota-sub { font-size:12px; color:#6b7280; margin-top:2px; line-height:1.6; }
+    .nota-divider { border:none; border-top:2px solid #facc15; margin:14px 0 0; }
+    .nota-titulo {
+      font-size:15px; font-weight:900; color:#111; letter-spacing:.12em;
+      text-transform:uppercase; margin:12px 0 4px;
+    }
+    .nota-num { font-size:12px; color:#374151; font-weight:600; }
+    .nota-fecha { font-size:11px; color:#9ca3af; margin-top:2px; }
+    .nota-body { padding:0 18px 8px; background:#fff; }
+    .nota-cliente {
+      border:1px solid #e5e7eb; border-radius:12px;
+      padding:14px 16px; margin:16px 0 12px;
+    }
+    .nc-row {
+      display:flex; padding:5px 0;
+      border-bottom:1px dashed #f3f4f6; font-size:13px;
+    }
+    .nc-row:last-child { border-bottom:none; }
+    .nc-lbl { font-weight:700; color:#374151; min-width:90px; flex-shrink:0; }
+    .nc-val { color:#111; flex:1; }
+    .nota-nivel-badge {
+      display:inline-flex; align-items:center; gap:6px;
+      padding:4px 12px; border-radius:999px;
+      font-size:11px; font-weight:800; text-transform:uppercase;
+      letter-spacing:.08em;
+    }
+    .nnb-bronce   { background:#fef3c7; color:#92400e; border:1px solid #fbbf24; }
+    .nnb-plata    { background:#eff6ff; color:#1e40af; border:1px solid #93c5fd; }
+    .nnb-oro      { background:#fffbeb; color:#b45309; border:1px solid #f59e0b; }
+    .nnb-diamante { background:#f5f3ff; color:#6d28d9; border:1px solid #c4b5fd; }
+    .nota-cod-box {
+      background:#fffbeb; border:1.5px dashed #f59e0b;
+      border-radius:10px; padding:10px 14px; margin:4px 0 12px;
+      display:flex; align-items:center; gap:10px;
+    }
+    .nota-cod-box .ncb-lbl { font-size:10px; font-weight:700; color:#92400e; text-transform:uppercase; letter-spacing:.08em; }
+    .nota-cod-box .ncb-cod { font-family:'Bebas Neue',cursive; font-size:22px; color:#c27c00; letter-spacing:.12em; flex:1; }
+    .nota-cod-box .ncb-desc { font-size:10px; color:#92400e; margin-top:1px; }
+    .nota-tabla-header {
+      display:grid; grid-template-columns:1fr 50px 70px 70px;
+      background:#f9fafb; border:1px solid #e5e7eb;
+      border-radius:8px 8px 0 0; padding:8px 10px;
+      font-size:11px; font-weight:800; color:#374151; text-transform:uppercase;
+      letter-spacing:.06em;
+    }
+    .nota-tabla-header .nth-cant,
+    .nota-tabla-header .nth-unit,
+    .nota-tabla-header .nth-sub  { text-align:right; }
+    .nota-prod-row {
+      display:grid; grid-template-columns:1fr 50px 70px 70px;
+      align-items:center; padding:10px 10px;
+      border:1px solid #e5e7eb; border-top:none;
+      font-size:12px; background:#fff;
+    }
+    .nota-prod-row:last-child { border-radius:0 0 8px 8px; }
+    .nota-prod-img {
+      width:40px; height:40px; border-radius:8px; object-fit:cover;
+      border:1px solid #e5e7eb; flex-shrink:0;
+    }
+    .nota-prod-cell { display:flex; align-items:center; gap:8px; }
+    .nota-prod-nom  { font-size:12px; font-weight:700; color:#111; }
+    .nota-prod-sz   { font-size:10px; color:#9ca3af; }
+    .nota-prod-cant,
+    .nota-prod-unit,
+    .nota-prod-sub  { text-align:right; color:#374151; }
+    .nota-prod-sub  { font-weight:800; color:#c27c00; }
+    .nota-delivery-row {
+      display:grid; grid-template-columns:1fr 50px 70px 70px;
+      align-items:center; padding:8px 10px;
+      border:1px solid #e5e7eb; border-top:1px dashed #e5e7eb;
+      font-size:12px; background:#f9fafb; border-radius:0 0 8px 8px;
+    }
+    .nota-delivery-row .ndl-lbl { font-size:12px; color:#374151; }
+    .nota-delivery-row .ndl-val { text-align:right; font-weight:700; color:#374151; }
+    .nota-totales { margin:14px 0 8px; }
+    .nota-tot-row {
+      display:flex; justify-content:space-between;
+      padding:6px 14px; font-size:13px; border-bottom:1px dashed #f3f4f6;
+    }
+    .nota-tot-row:last-child { border-bottom:none; }
+    .nota-tot-row .ntl { color:#6b7280; }
+    .nota-tot-row .ntv { font-weight:700; color:#111; }
+    .nota-tot-row .ntv.green { color:#16a34a; }
+    .nota-gran-total {
+      background:#fffbeb; border:2px solid #facc15;
+      border-radius:14px; padding:16px 20px; margin:12px 0;
+      display:flex; justify-content:space-between; align-items:center;
+    }
+    .nota-gran-total .ngt-lbl { font-size:14px; font-weight:900; color:#111; text-transform:uppercase; }
+    .nota-gran-total .ngt-val {
+      font-family:'Bebas Neue',cursive; font-size:38px; color:#c27c00; line-height:1;
+    }
+    .nota-footer {
+      text-align:center; padding:12px 18px 18px;
+      font-size:11px; color:#9ca3af; line-height:1.8; background:#fff;
+      border-top:1px dashed #e5e7eb; margin-top:8px;
+    }
+    .nota-footer strong { color:#c27c00; }
+    .nota-actions {
+      display:flex; flex-direction:column; gap:10px;
+      padding:12px 18px 28px; background:#fff;
+    }
+    .nota-actions-row { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+    .nota-btn-dl {
+      background:#facc15; color:#000; border:none;
+      padding:15px; border-radius:12px; font-size:14px; font-weight:900;
+      cursor:pointer; font-family:'Poppins',sans-serif;
+      display:flex; align-items:center; justify-content:center; gap:7px;
+      box-shadow:0 3px 12px rgba(250,204,21,.45);
+    }
+    .nota-btn-dl:active { transform:scale(.97); }
+    .nota-btn-pr {
+      background:#1e3a8a; color:#fff; border:none;
+      padding:15px; border-radius:12px; font-size:14px; font-weight:900;
+      cursor:pointer; font-family:'Poppins',sans-serif;
+      display:flex; align-items:center; justify-content:center; gap:7px;
+      box-shadow:0 3px 12px rgba(30,58,138,.35);
+    }
+    .nota-btn-pr:active { transform:scale(.97); }
+    .nota-btn-cl {
+      background:transparent; color:#9ca3af; border:1px solid #e5e7eb;
+      padding:12px; border-radius:12px; font-size:13px; font-weight:600;
+      cursor:pointer; font-family:'Poppins',sans-serif; width:100%;
+    }
+
+    /* ══ PRODUCTO CARDS ══ */
+    .pc {
       background:var(--s1); border:1px solid var(--brd); border-radius:var(--r);
-      padding:20px; margin-bottom:16px;
+      padding:14px; display:flex; align-items:center; gap:14px;
+      margin-bottom:10px; transition:border-color .2s, background .2s;
     }
-    .form-section-title {
-      font-size:13px; font-weight:800; color:var(--pur2);
-      text-transform:uppercase; letter-spacing:.1em; margin-bottom:16px;
-      display:flex; align-items:center; gap:8px;
+    .pc.on { border-color:var(--y); background:rgba(250,204,21,.04); }
+    .pimg {
+      width:70px; height:70px; border-radius:12px;
+      object-fit:contain; background:#1a1a1e; flex-shrink:0;
     }
-    .form-row { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
-    @media(max-width:480px) { .form-row { grid-template-columns:1fr; } }
+    .pn { font-size:15px; font-weight:700; margin-bottom:2px; }
+    .pd { font-size:11px; color:var(--mut); margin-bottom:4px; }
+    .pp { font-family:'Bebas Neue',cursive; font-size:28px; color:var(--y); line-height:1; }
+    .po { font-size:12px; color:var(--mut); text-decoration:line-through; margin-left:6px; vertical-align:middle; }
+    .qw { display:flex; align-items:center; gap:10px; flex-shrink:0; }
+    .qb {
+      width:36px; height:36px; border:none; border-radius:9px;
+      font-size:20px; font-weight:800; cursor:pointer;
+      display:flex; align-items:center; justify-content:center;
+      transition:transform .1s;
+    }
+    .qb:active { transform:scale(.88); }
+    .qplus  { background:var(--y); color:#000; }
+    .qminus { background:var(--s2); color:var(--txt); }
+    .qn { font-size:18px; font-weight:800; min-width:22px; text-align:center; }
 
-    .field { margin-bottom:14px; }
-    .field:last-child { margin-bottom:0; }
-    .field label {
+    /* ══ INPUTS ══ */
+    .fld { margin-bottom:12px; position:relative; }
+    .fld label {
       display:block; font-size:11px; font-weight:600; color:var(--mut);
       text-transform:uppercase; letter-spacing:.1em; margin-bottom:6px;
     }
-    .field label .req { color:var(--red); margin-left:2px; }
-    .finp {
-      width:100%; background:var(--s2); border:1px solid var(--brd);
-      color:var(--txt); border-radius:10px; padding:12px 14px;
-      font-size:14px; font-family:'Poppins',sans-serif;
+    .inp {
+      width:100%; background:var(--s1); border:1px solid var(--brd);
+      color:var(--txt); border-radius:12px; padding:14px 16px;
+      font-size:15px; font-family:'Poppins',sans-serif;
       transition:border-color .2s; outline:none;
       -webkit-appearance:none; appearance:none;
     }
-    .finp:focus { border-color:var(--pur); }
-    .finp::placeholder { color:var(--mut); }
-    textarea.finp { resize:vertical; min-height:80px; }
+    .inp:focus { border-color:var(--y); }
+    .inp::placeholder { color:var(--mut); }
+    .rst {
+      position:absolute; right:14px; bottom:15px;
+      font-size:11px; font-weight:700; pointer-events:none;
+    }
 
-    /* Upload zone */
-    .upload-zone {
-      border:2px dashed var(--brd); border-radius:12px;
-      padding:32px 20px; text-align:center; cursor:pointer;
-      transition:all .2s; position:relative;
+    /* ══ PAGO ══ */
+    .pgrd { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; }
+    .popt {
+      background:var(--s1); border:2px solid var(--brd); border-radius:12px;
+      padding:10px 4px; text-align:center; font-size:12px; font-weight:600;
+      cursor:pointer; transition:all .15s;
     }
-    .upload-zone:hover { border-color:var(--pur); background:rgba(139,92,246,.04); }
-    .upload-zone.has-file { border-color:var(--grn); background:rgba(34,197,94,.04); }
-    .upload-zone .u-ico { font-size:36px; margin-bottom:8px; display:block; }
-    .upload-zone h4 { font-size:14px; font-weight:700; margin-bottom:4px; }
-    .upload-zone p { font-size:11px; color:var(--mut); }
-    .upload-preview { width:100%; border-radius:10px; margin-top:14px; max-height:220px; object-fit:cover; display:none; }
+    .popt.on { border-color:var(--y); background:rgba(250,204,21,.08); color:var(--y); }
+    .pic { font-size:22px; display:block; margin-bottom:4px; }
 
-    /* Autorización */
-    .auth-box {
-      background:var(--s1); border:1px solid rgba(139,92,246,.3); border-radius:var(--r);
-      padding:18px; margin-bottom:16px;
+    .ybox {
+      display:none; background:var(--s1); border:1px solid var(--brd);
+      border-radius:var(--r); padding:20px; text-align:center; margin-top:12px;
     }
-    .auth-check-row {
-      display:flex; align-items:flex-start; gap:12px; margin-bottom:14px; cursor:pointer;
+    .ybox.on { display:block; }
+    .ybox img { width:190px; height:190px; border-radius:14px; margin:0 auto 12px; display:block; }
+    .ynum { font-family:'Bebas Neue',cursive; font-size:24px; color:var(--y); letter-spacing:.1em; }
+    .ybox p { font-size:12px; color:var(--mut); margin-top:4px; }
+    .ybox-tag {
+      display:inline-block; background:var(--y); color:#000;
+      font-family:'Bebas Neue',cursive; font-size:16px; letter-spacing:.08em;
+      padding:5px 16px; border-radius:999px; margin-bottom:14px;
     }
-    .auth-check-row input[type=checkbox] {
-      width:20px; height:20px; flex-shrink:0; margin-top:1px;
-      accent-color:var(--grn); cursor:pointer;
-    }
-    .auth-check-row strong { color:var(--pur2); }
-    .auth-list {
-      background:var(--s2); border-radius:10px; padding:14px 16px;
-      font-size:12px; color:var(--mut); line-height:2;
-    }
-    .auth-list ul { list-style:none; }
-    .auth-list ul li::before { content:'• '; color:var(--pur2); }
-    .auth-list h5 { font-size:11px; font-weight:700; color:var(--txt); text-transform:uppercase; letter-spacing:.1em; margin-bottom:4px; }
-    .auth-list h5:not(:first-child) { margin-top:10px; }
 
-    .btn-submit {
-      width:100%; background:var(--s2); border:1px solid var(--brd);
-      color:var(--mut); border-radius:14px; padding:18px;
-      font-size:15px; font-weight:800; font-family:'Poppins',sans-serif;
-      cursor:not-allowed; transition:all .2s; letter-spacing:.03em;
+    .vbox {
+      background:var(--s1); border:1px solid var(--brd);
+      border-radius:var(--r); padding:16px; margin-top:12px;
     }
-    .btn-submit.ready {
-      background:linear-gradient(135deg,var(--org),var(--pink));
-      border-color:transparent; color:#fff; cursor:pointer;
-    }
-    .btn-submit.ready:hover { opacity:.9; }
-    .btn-submit.ready:active { transform:scale(.99); }
+    .vlbl { font-size:11px; color:var(--mut); text-transform:uppercase; letter-spacing:.1em; font-weight:600; display:block; margin-bottom:8px; }
+    .vmsg { font-size:14px; font-weight:700; color:var(--y); margin-top:10px; }
 
-    /* ══ ADMIN - SOLICITUDES ══ */
-    .admin-header {
-      display:flex; align-items:center; justify-content:space-between;
-      margin-bottom:20px; flex-wrap:wrap; gap:12px;
+    /* ══ BARRA FLOTANTE ══ */
+    .fbar {
+      position:fixed; bottom:68px; left:0; right:0; z-index:90;
+      background:rgba(9,9,11,.97); border-top:1px solid var(--brd);
+      padding:10px 20px 12px;
+      display:none;
     }
-    .admin-title { font-size:18px; font-weight:800; display:flex; align-items:center; gap:8px; }
+    .fbar.show { display:block; }
+    .fin {
+      max-width:430px; margin:0 auto;
+      display:flex; align-items:center; justify-content:space-between; gap:16px;
+    }
+    .plbl { font-size:10px; color:var(--mut); text-transform:uppercase; letter-spacing:.1em; }
+    .pold { font-size:12px; color:var(--mut); text-decoration:line-through; display:none; }
+    .pbig { font-family:'Bebas Neue',cursive; font-size:38px; color:var(--y); line-height:1; }
+    .bcont {
+      background:var(--y); color:#000; border:none;
+      padding:14px 24px; border-radius:14px;
+      font-size:14px; font-weight:800; cursor:pointer;
+      white-space:nowrap; flex-shrink:0;
+      transition:background .15s, transform .1s;
+      font-family:'Poppins',sans-serif;
+    }
+    .bcont:active { transform:scale(.96); }
+    .bcont:hover  { background:var(--y2); }
 
-    .filter-pills { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:20px; }
-    .fpill {
+    /* ══ NAVEGACIÓN ══ */
+    .bottomnav {
+      position:fixed; bottom:0; left:0; right:0; z-index:100;
+      background:rgba(9,9,11,0.97);
+      backdrop-filter:blur(20px);
+      border-top:1px solid var(--brd);
+      height:68px;
+    }
+    .bnav-inner {
+      max-width:430px; margin:0 auto; height:100%;
+      display:grid; grid-template-columns:repeat(4,1fr);
+    }
+    .bnav-btn {
+      display:flex; flex-direction:column; align-items:center; justify-content:center;
+      gap:4px; border:none; background:transparent; color:var(--mut);
+      font-family:'Poppins',sans-serif; font-size:10px; font-weight:600;
+      cursor:pointer; transition:color .15s; padding:0; position:relative;
+    }
+    .bnav-btn.active { color:var(--y); }
+    .bnav-btn svg { width:22px; height:22px; }
+    .bnav-btn .badge {
+      position:absolute; top:6px; right:calc(50% - 18px);
+      background:var(--red); color:#fff;
+      font-size:9px; font-weight:800;
+      min-width:16px; height:16px; border-radius:999px;
+      display:flex; align-items:center; justify-content:center;
+      padding:0 4px; display:none;
+    }
+    .bnav-btn .badge.show { display:flex; }
+
+    /* ══ PÁGINAS ══ */
+    .page { display:none; }
+    .page.active { display:block; }
+
+    /* ══ GALERÍA ══ */
+    .galeria-hero { text-align:center; padding:28px 16px 20px; }
+    .galeria-hero h2 {
+      font-family:'Bebas Neue',cursive; font-size:42px;
+      letter-spacing:.05em; color:var(--txt);
+      display:flex; align-items:center; justify-content:center; gap:12px;
+    }
+    .galeria-hero p { font-size:13px; color:var(--mut); margin-top:4px; }
+    .gal-filters {
+      display:grid; grid-template-columns:repeat(4,1fr); gap:8px;
+      padding:0 16px 16px; max-width:430px; margin:0 auto;
+    }
+    .gf-btn {
       background:var(--s1); border:1px solid var(--brd); color:var(--mut);
-      padding:7px 14px; border-radius:999px; font-size:12px; font-weight:700;
-      cursor:pointer; transition:all .15s; font-family:'Poppins',sans-serif;
+      border-radius:12px; padding:10px 4px; font-size:11px; font-weight:700;
+      cursor:pointer; text-align:center; transition:all .15s;
+      font-family:'Poppins',sans-serif;
     }
-    .fpill.active { background:var(--pur); border-color:var(--pur); color:#fff; }
-    .fpill .n { margin-left:4px; opacity:.7; }
+    .gf-btn.active { background:var(--y); color:#000; border-color:var(--y); }
+    .gal-grid {
+      display:grid; grid-template-columns:1fr 1fr;
+      gap:8px; padding:0 16px; max-width:430px; margin:0 auto;
+    }
+    .gal-card {
+      background:var(--s1); border:1px solid var(--brd); border-radius:14px;
+      overflow:hidden; position:relative; aspect-ratio:1;
+      cursor:pointer; transition:transform .2s;
+    }
+    .gal-card:hover { transform:scale(.98); }
+    .gal-card img { width:100%; height:100%; object-fit:cover; display:block; }
+    .gal-card .gal-overlay {
+      position:absolute; inset:0;
+      background:linear-gradient(to top, rgba(0,0,0,.7) 0%, transparent 50%);
+    }
+    .gal-card .gal-info { position:absolute; bottom:0; left:0; right:0; padding:10px; }
+    .gal-card .gal-user { font-size:11px; font-weight:700; color:#fff; }
+    .gal-card .gal-likes { font-size:10px; color:rgba(255,255,255,.7); }
+    .gal-card .gal-badge {
+      position:absolute; top:8px; right:8px;
+      background:var(--y); color:#000;
+      font-size:9px; font-weight:800;
+      padding:2px 7px; border-radius:999px;
+    }
+    .gal-empty { text-align:center; padding:48px 16px; color:var(--mut); }
+    .gal-empty .gal-emo { font-size:48px; margin-bottom:12px; }
+    .gal-empty p { font-size:14px; }
 
-    .solicitudes-grid {
-      display:grid; grid-template-columns:repeat(auto-fill, minmax(240px,1fr)); gap:16px;
+    /* ══ BONO ══ */
+    .bono-page { max-width:430px; margin:0 auto; padding:20px 16px 30px; }
+    .bono-header {
+      background:linear-gradient(135deg, rgba(250,204,21,.12), rgba(250,204,21,.04));
+      border:1px solid rgba(250,204,21,.25); border-radius:16px;
+      padding:16px; margin-bottom:20px; text-align:center;
     }
-    .sol-card {
-      background:var(--s1); border:1px solid var(--brd); border-radius:var(--r);
-      overflow:hidden; transition:transform .2s;
+    .bono-header h2 {
+      font-family:'Bebas Neue',cursive; font-size:28px; color:var(--y);
+      letter-spacing:.08em; margin-bottom:6px;
     }
-    .sol-card:hover { transform:translateY(-2px); }
-    .sol-img { width:100%; height:180px; object-fit:cover; display:block; background:var(--s2); }
-    .sol-body { padding:14px; }
-    .sol-badges { display:flex; justify-content:space-between; margin-bottom:10px; }
-    .badge-nuevo { background:#fef9c3; color:#854d0e; font-size:9px; font-weight:800; padding:3px 8px; border-radius:999px; text-transform:uppercase; }
-    .badge-estado {
-      font-size:9px; font-weight:800; padding:3px 8px; border-radius:999px; text-transform:uppercase;
+    .bono-pills { display:flex; gap:8px; justify-content:center; flex-wrap:wrap; margin-top:8px; }
+    .bono-pill {
+      background:rgba(250,204,21,.15); border:1px solid rgba(250,204,21,.3);
+      color:var(--y); font-size:11px; font-weight:700;
+      padding:4px 12px; border-radius:999px;
     }
-    .badge-pendiente  { background:#fef3c7; color:#92400e; }
-    .badge-aprobado   { background:#dcfce7; color:#166534; }
-    .badge-rechazado  { background:#fee2e2; color:#991b1b; }
+    .bono-section {
+      background:var(--s1); border:1px solid var(--brd); border-radius:14px;
+      padding:16px; margin-bottom:14px;
+    }
+    .bono-section-title {
+      font-size:12px; font-weight:700; color:var(--y);
+      text-transform:uppercase; letter-spacing:.1em; margin-bottom:12px;
+    }
+    .bono-inp {
+      width:100%; background:var(--s2); border:1px solid var(--brd);
+      color:var(--txt); border-radius:10px; padding:12px 14px;
+      font-size:14px; font-family:'Poppins',sans-serif;
+      outline:none; margin-bottom:10px; transition:border-color .2s;
+      -webkit-appearance:none; appearance:none;
+    }
+    .bono-inp:focus { border-color:var(--y); }
+    .bono-inp::placeholder { color:var(--mut); }
+    .bono-inp:last-child { margin-bottom:0; }
+    select.bono-inp { cursor:pointer; }
+    textarea.bono-inp { resize:none; height:80px; }
+    .upload-zone {
+      border:2px dashed rgba(250,204,21,.3); border-radius:12px;
+      padding:24px 16px; text-align:center; cursor:pointer;
+      transition:all .2s; margin-top:4px;
+    }
+    .upload-zone:hover { border-color:var(--y); background:rgba(250,204,21,.04); }
+    .upload-zone .uico { font-size:28px; margin-bottom:6px; }
+    .upload-zone p { font-size:12px; color:var(--mut); }
+    .upload-zone.has-file { border-color:var(--grn); background:rgba(34,197,94,.04); }
+    .upload-preview { width:100%; border-radius:10px; margin-top:10px; max-height:200px; object-fit:cover; display:none; }
+    .autorizo-box {
+      background:var(--s1); border:1px solid var(--brd); border-radius:12px;
+      padding:14px; display:flex; align-items:flex-start; gap:12px;
+      margin-bottom:14px;
+    }
+    .autorizo-box input[type=checkbox] {
+      width:18px; height:18px; flex-shrink:0; margin-top:2px;
+      accent-color:var(--y); cursor:pointer;
+    }
+    .autorizo-box p { font-size:11px; color:var(--mut); line-height:1.6; }
+    .autorizo-box strong { color:var(--y); }
+    .btn-enviar-bono {
+      width:100%; background:var(--s2); color:var(--mut);
+      border:1px solid var(--brd); border-radius:14px;
+      padding:16px; font-size:15px; font-weight:800;
+      cursor:not-allowed; font-family:'Poppins',sans-serif;
+      transition:all .2s;
+    }
+    .btn-enviar-bono.ready {
+      background:var(--y); color:#000; border-color:var(--y); cursor:pointer;
+    }
+    .btn-enviar-bono.ready:hover { background:var(--y2); }
 
-    .sol-info { font-size:12px; color:var(--mut); line-height:1.9; margin-bottom:12px; }
-    .sol-info span { color:var(--txt); font-weight:600; }
+    /* ══ CONCURSO ══ */
+    .concurso-page { max-width:430px; margin:0 auto; padding:20px 16px 30px; }
+    .concurso-card {
+      background:linear-gradient(135deg, #ec4899, #f97316, #eab308);
+      border-radius:20px; padding:20px; margin-bottom:16px;
+      position:relative; overflow:hidden;
+    }
+    .concurso-card::before {
+      content:''; position:absolute; top:-30px; right:-30px;
+      width:120px; height:120px; border-radius:50%;
+      background:rgba(255,255,255,.08);
+    }
+    .concurso-card::after {
+      content:''; position:absolute; bottom:-20px; left:-20px;
+      width:80px; height:80px; border-radius:50%;
+      background:rgba(255,255,255,.06);
+    }
+    .conc-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; }
+    .conc-title { font-family:'Bebas Neue',cursive; font-size:30px; color:#fff; letter-spacing:.05em; }
+    .conc-subtitle { font-size:12px; color:rgba(255,255,255,.8); margin-top:-2px; }
+    .conc-premio { background:rgba(0,0,0,.25); border-radius:12px; padding:12px 14px; margin-bottom:12px; }
+    .conc-premio-label { font-size:10px; color:rgba(255,255,255,.7); text-transform:uppercase; letter-spacing:.1em; }
+    .conc-premio-val { font-size:16px; font-weight:800; color:#fff; margin-top:2px; }
+    .conc-desc { font-size:13px; color:rgba(255,255,255,.85); margin-bottom:14px; line-height:1.5; }
+    .conc-meta { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:16px; }
+    .conc-pill {
+      background:rgba(0,0,0,.25); color:#fff;
+      font-size:11px; font-weight:600; padding:4px 12px; border-radius:999px;
+      display:flex; align-items:center; gap:5px;
+    }
+    .btn-participar {
+      width:100%; background:var(--y); color:#000; border:none;
+      padding:16px; border-radius:14px; font-size:15px; font-weight:800;
+      cursor:pointer; font-family:'Poppins',sans-serif;
+      transition:background .15s, transform .1s;
+    }
+    .btn-participar:active { transform:scale(.98); }
+    .conc-ranking {
+      background:var(--s1); border:1px solid var(--brd); border-radius:14px;
+      padding:16px; margin-bottom:14px;
+    }
+    .conc-ranking h3 {
+      font-size:13px; font-weight:700; color:var(--y);
+      text-transform:uppercase; letter-spacing:.1em; margin-bottom:14px;
+    }
+    .rank-item {
+      display:flex; align-items:center; gap:12px;
+      padding:10px 0; border-bottom:1px solid var(--brd);
+    }
+    .rank-item:last-child { border-bottom:none; }
+    .rank-num { font-family:'Bebas Neue',cursive; font-size:22px; color:var(--mut); min-width:28px; text-align:center; }
+    .rank-num.gold   { color:#fbbf24; }
+    .rank-num.silver { color:#94a3b8; }
+    .rank-num.bronze { color:#b45309; }
+    .rank-info { flex:1; }
+    .rank-user { font-size:13px; font-weight:700; }
+    .rank-sub  { font-size:11px; color:var(--mut); }
+    .rank-likes { font-size:14px; font-weight:800; color:var(--y); }
+    .conc-empty { text-align:center; padding:32px 16px; color:var(--mut); }
+    .conc-empty .cemo { font-size:44px; margin-bottom:10px; }
 
-    .sol-actions { display:grid; grid-template-columns:1fr 1fr 1fr; gap:6px; }
-    .sa-btn {
-      padding:8px 4px; border:none; border-radius:8px;
-      font-size:11px; font-weight:700; cursor:pointer;
-      font-family:'Poppins',sans-serif; transition:all .15s;
-      display:flex; align-items:center; justify-content:center; gap:4px;
+    /* ══ MODALES ══ */
+    .ov {
+      display:none; position:fixed; inset:0; z-index:1000;
+      background:rgba(0,0,0,.88); backdrop-filter:blur(8px);
+      align-items:flex-end; justify-content:center;
     }
-    .sa-aprobar  { background:rgba(34,197,94,.15); color:var(--grn); border:1px solid rgba(34,197,94,.3); }
-    .sa-rechazar { background:rgba(239,68,68,.12); color:var(--red); border:1px solid rgba(239,68,68,.3); }
-    .sa-ver      { background:rgba(139,92,246,.15); color:var(--pur2); border:1px solid rgba(139,92,246,.3); }
-    .sa-btn:hover { opacity:.8; transform:scale(.98); }
-
-    .empty-state {
-      text-align:center; padding:60px 20px; color:var(--mut);
+    .ov.on { display:flex; }
+    .sheet {
+      background:var(--s1); width:100%; max-width:430px;
+      border-radius:24px 24px 0 0; padding:20px 20px 36px;
+      max-height:92dvh; overflow-y:auto;
+      animation:up .25s cubic-bezier(.22,1,.36,1);
     }
-    .empty-state .emo { font-size:52px; margin-bottom:12px; display:block; }
-
-    /* ══ GALERÍA UGC ══ */
-    .stats-row {
-      display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-bottom:20px;
-    }
-    @media(max-width:500px) { .stats-row { grid-template-columns:repeat(2,1fr); } }
-    .stat-box {
-      border-radius:var(--r); padding:16px; text-align:center;
-    }
-    .stat-box .sval { font-family:'Bebas Neue',cursive; font-size:36px; line-height:1; margin-bottom:4px; }
-    .stat-box .slbl { font-size:11px; font-weight:600; opacity:.8; }
-    .sb-total  { background:linear-gradient(135deg,#6366f1,#8b5cf6); }
-    .sb-dest   { background:linear-gradient(135deg,#0ea5e9,#6366f1); }
-    .sb-usado  { background:linear-gradient(135deg,#f97316,#ec4899); }
-    .sb-disp   { background:linear-gradient(135deg,#22c55e,#0ea5e9); }
-
-    .gal-ugc-grid {
-      display:grid; grid-template-columns:repeat(auto-fill, minmax(200px,1fr)); gap:12px;
-    }
-    .gug-card {
-      background:var(--s1); border:1px solid var(--brd); border-radius:var(--r);
-      overflow:hidden; position:relative;
-    }
-    .gug-img { width:100%; height:160px; object-fit:cover; display:block; background:var(--s2); }
-    .gug-body { padding:12px; }
-    .gug-user { font-size:12px; font-weight:700; margin-bottom:2px; }
-    .gug-plat { font-size:10px; color:var(--mut); }
-    .gug-meta { display:flex; justify-content:space-between; margin-top:8px; font-size:11px; color:var(--mut); }
-    .gug-badge {
-      position:absolute; top:8px; left:8px;
-      font-size:9px; font-weight:800; padding:3px 8px; border-radius:999px;
-    }
-
-    /* ══ ESTADÍSTICAS ══ */
-    .stats-4 {
-      display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-bottom:20px;
-    }
-    @media(max-width:600px) { .stats-4 { grid-template-columns:repeat(2,1fr); } }
-    .big-stat {
-      border-radius:var(--r); padding:20px; color:#fff;
-    }
-    .big-stat .bs-title { font-size:11px; font-weight:700; opacity:.8; text-transform:uppercase; letter-spacing:.1em; margin-bottom:10px; display:flex; align-items:center; gap:6px; }
-    .big-stat .bs-num { font-family:'Bebas Neue',cursive; font-size:48px; line-height:1; margin-bottom:4px; }
-    .big-stat .bs-sub { font-size:11px; opacity:.75; line-height:1.7; }
-    .bs-purple { background:linear-gradient(135deg,#7c3aed,#6366f1); }
-    .bs-green  { background:linear-gradient(135deg,#059669,#0d9488); }
-    .bs-orange { background:linear-gradient(135deg,#ea580c,#db2777); }
-    .bs-yellow { background:linear-gradient(135deg,#d97706,#f59e0b); }
-
-    .engagement-card {
-      background:var(--s1); border:1px solid var(--brd); border-radius:var(--r);
-      padding:20px; margin-bottom:16px;
-    }
-    .eng-title { font-size:13px; font-weight:800; color:var(--y); margin-bottom:16px; display:flex; align-items:center; gap:8px; }
-    .eng-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; }
-    .eng-item { text-align:center; }
-    .eng-ico { font-size:30px; margin-bottom:6px; }
-    .eng-val { font-family:'Bebas Neue',cursive; font-size:32px; color:var(--txt); line-height:1; }
-    .eng-lbl { font-size:11px; color:var(--mut); margin-top:2px; }
-
-    .plat-card {
-      background:var(--s1); border:1px solid var(--brd); border-radius:var(--r);
-      padding:20px;
-    }
-    .plat-row { display:flex; align-items:center; gap:12px; margin-bottom:12px; }
-    .plat-row:last-child { margin-bottom:0; }
-    .plat-name { font-size:13px; font-weight:700; min-width:90px; }
-    .plat-bar-wrap { flex:1; background:var(--s2); border-radius:999px; height:8px; overflow:hidden; }
-    .plat-bar { height:100%; border-radius:999px; background:linear-gradient(90deg,var(--pur),var(--pur2)); transition:width .6s ease; }
-    .plat-pct { font-size:12px; font-weight:700; color:var(--mut); min-width:36px; text-align:right; }
-
-    /* ══ MODAL VER DETALLE ══ */
-    .modal-ov {
-      display:none; position:fixed; inset:0; z-index:300;
-      background:rgba(0,0,0,.9); backdrop-filter:blur(12px);
-      align-items:center; justify-content:center; padding:20px;
-    }
-    .modal-ov.open { display:flex; }
-    .modal-box {
-      background:var(--s1); border:1px solid var(--brd); border-radius:20px;
-      width:100%; max-width:480px; max-height:90dvh; overflow-y:auto;
-      animation:mup .2s ease;
-    }
+    @keyframes up { from{transform:translateY(50px);opacity:0} to{transform:none;opacity:1} }
     @keyframes mup { from{transform:translateY(20px);opacity:0} to{transform:none;opacity:1} }
-    .modal-img { width:100%; max-height:280px; object-fit:cover; border-radius:20px 20px 0 0; }
-    .modal-body { padding:20px; }
-    .modal-close {
-      position:absolute; top:16px; right:16px;
-      background:rgba(0,0,0,.5); border:none; color:#fff;
-      width:32px; height:32px; border-radius:50%; cursor:pointer;
-      font-size:16px; display:flex; align-items:center; justify-content:center;
+    .hnd { width:40px; height:4px; background:var(--brd); border-radius:2px; margin:0 auto 20px; }
+    .mttl {
+      font-family:'Bebas Neue',cursive; font-size:26px;
+      text-align:center; letter-spacing:.05em; margin-bottom:18px;
     }
-    .mrow { display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid var(--brd); font-size:13px; }
-    .mrow:last-child { border-bottom:none; }
-    .mrow .mlbl { color:var(--mut); }
-    .mrow .mval { font-weight:600; }
+    .rrow {
+      display:flex; justify-content:space-between; align-items:center;
+      padding:10px 0; border-bottom:1px solid var(--brd); font-size:14px;
+    }
+    .rrow.tot { border-bottom:none; padding-top:14px; font-size:18px; font-weight:800; color:var(--y); }
+    .rdesc { color:var(--mut); }
+    .dban {
+      background:rgba(34,197,94,.08); border:1px solid rgba(34,197,94,.2);
+      border-radius:10px; padding:10px 14px; font-size:13px; color:var(--grn);
+      display:none; margin:10px 0;
+    }
+    .dban.on { display:block; }
+    .bws {
+      width:100%; background:#25D366; color:#fff; border:none;
+      padding:18px; border-radius:14px; font-size:16px; font-weight:800;
+      cursor:pointer; display:flex; align-items:center; justify-content:center;
+      gap:8px; margin-top:16px; font-family:'Poppins',sans-serif;
+      transition:background .15s;
+    }
+    .bws:hover    { background:#128C7E; }
+    .bws:disabled { opacity:.6; cursor:not-allowed; }
+    .bcancel {
+      width:100%; background:transparent; border:none;
+      color:var(--mut); font-size:14px; font-weight:600;
+      padding:14px; cursor:pointer; margin-top:4px;
+      font-family:'Poppins',sans-serif;
+    }
+    .rbox { background:var(--s2); border:1px solid var(--brd); border-radius:14px; padding:16px; margin-bottom:14px; }
+    .ctxt { font-family:'Bebas Neue',cursive; font-size:32px; color:var(--y); letter-spacing:.18em; }
+    .ctxt.nivel-bronce-cod   { color:#d97706; }
+    .ctxt.nivel-plata-cod    { color:#3b82f6; }
+    .ctxt.nivel-oro-cod      { color:#c27c00; }
+    .ctxt.nivel-diamante-cod { color:#7c3aed; }
+    .confbox {
+      background:rgba(34,197,94,.06); border:1px solid rgba(34,197,94,.2);
+      border-radius:14px; padding:20px; text-align:center;
+    }
+    .confbox p { font-size:13px; color:var(--mut); margin-bottom:14px; line-height:1.7; }
+    .bconf {
+      background:var(--grn); color:#000; border:none;
+      padding:14px 28px; border-radius:12px;
+      font-size:15px; font-weight:800; cursor:pointer;
+      font-family:'Poppins',sans-serif; transition:background .15s;
+    }
+    .bconf:hover    { background:#16a34a; }
+    .bconf:disabled { opacity:.6; cursor:not-allowed; }
+
+    /* ══ PANTALLA ÉXITO ══ */
+    .succ {
+      display:none; position:fixed; inset:0; z-index:999;
+      background:var(--bg); flex-direction:column;
+      align-items:center; justify-content:center;
+      padding:40px 24px; text-align:center;
+    }
+    .succ.on { display:flex; }
+    .semo   { font-size:72px; margin-bottom:16px; animation:pop .4s ease; }
+    @keyframes pop { 0%{transform:scale(0)} 70%{transform:scale(1.18)} 100%{transform:scale(1)} }
+    @keyframes pulse-btn {
+      0%,100% { transform:scale(1); box-shadow:0 4px 20px rgba(34,197,94,.5); }
+      50%      { transform:scale(1.06); box-shadow:0 6px 28px rgba(34,197,94,.8); }
+    }
+    .sttl   { font-family:'Bebas Neue',cursive; font-size:46px; color:var(--y); letter-spacing:.05em; margin-bottom:8px; }
+    .ssub   { font-size:14px; color:var(--mut); margin-bottom:8px; }
+    .scod   {
+      font-family:'Bebas Neue',cursive; font-size:20px; color:var(--pur);
+      letter-spacing:.1em; background:rgba(168,85,247,.08);
+      border:1px solid rgba(168,85,247,.2);
+      padding:8px 20px; border-radius:999px; margin:12px 0 28px; display:none;
+    }
+    .bnvo {
+      background:var(--y); color:#000; border:none;
+      padding:16px 44px; border-radius:14px;
+      font-size:16px; font-weight:800; cursor:pointer;
+      font-family:'Poppins',sans-serif;
+    }
+
+    /* ══ REDES SOCIALES ══ */
+    .social-section { margin-bottom:28px; }
+    .social-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+    .social-btn {
+      display:flex; align-items:center; gap:10px;
+      background:var(--s1); border:1px solid var(--brd);
+      border-radius:14px; padding:14px 16px;
+      text-decoration:none; color:var(--txt);
+      font-size:13px; font-weight:600;
+      transition:all .2s; cursor:pointer;
+      position:relative; overflow:hidden;
+    }
+    .social-btn:active { transform:scale(.97); }
+    .social-btn .sico {
+      width:36px; height:36px; border-radius:10px;
+      display:flex; align-items:center; justify-content:center;
+      font-size:18px; flex-shrink:0;
+    }
+    .social-btn .sname { font-size:12px; font-weight:700; }
+    .social-btn .ssub  { font-size:10px; color:var(--mut); margin-top:1px; }
+    .sb-facebook { border-color:rgba(24,119,242,.3); }
+    .sb-facebook .sico { background:rgba(24,119,242,.12); color:#1877f2; }
+    .sb-facebook:hover { border-color:#1877f2; background:rgba(24,119,242,.06); }
+    .sb-instagram { border-color:rgba(228,64,95,.3); }
+    .sb-instagram .sico { background:rgba(228,64,95,.12); color:#e4405f; }
+    .sb-instagram:hover { border-color:#e4405f; background:rgba(228,64,95,.06); }
+    .sb-tiktok { border-color:rgba(255,0,80,.3); }
+    .sb-tiktok .sico { background:rgba(255,0,80,.1); color:#ff0050; }
+    .sb-tiktok:hover { border-color:#ff0050; background:rgba(255,0,80,.06); }
+    .sb-x { border-color:rgba(255,255,255,.15); }
+    .sb-x .sico { background:rgba(255,255,255,.06); color:var(--txt); }
+    .sb-x:hover { border-color:var(--txt); background:rgba(255,255,255,.04); }
+    .sb-youtube { border-color:rgba(255,0,0,.3); }
+    .sb-youtube .sico { background:rgba(255,0,0,.1); color:#ff0000; }
+    .sb-youtube:hover { border-color:#ff0000; background:rgba(255,0,0,.06); }
+    .sb-maps {
+      grid-column:1/-1;
+      border-color:rgba(250,204,21,.3);
+      background:linear-gradient(135deg,rgba(250,204,21,.06),rgba(250,204,21,.02));
+    }
+    .sb-maps .sico { background:rgba(250,204,21,.12); color:var(--y); }
+    .sb-maps:hover { border-color:var(--y); background:rgba(250,204,21,.08); }
+    .sb-maps .sname { color:var(--y); }
+    .social-skeleton {
+      background:var(--s1); border:1px solid var(--brd);
+      border-radius:14px; height:66px;
+      animation:shimmer 1.5s infinite;
+    }
+    @keyframes shimmer { 0%,100%{opacity:.4} 50%{opacity:.8} }
+
+    /* ══ BOTÓN GPS ══ */
+    .btn-gps {
+      width:100%; background:var(--s2);
+      border:1px solid var(--brd);
+      color:var(--y); border-radius:14px;
+      padding:16px 20px;
+      font-size:13px; font-weight:800;
+      font-family:'Poppins',sans-serif;
+      letter-spacing:0.08em; cursor:pointer;
+      display:flex; align-items:center; justify-content:center; gap:10px;
+      transition:all .2s;
+      text-transform:uppercase;
+    }
+    .btn-gps:hover  { background:rgba(250,204,21,.08); border-color:var(--y); }
+    .btn-gps:active { transform:scale(.98); }
+    .btn-gps.loading {
+      color:var(--mut); border-color:var(--brd);
+      animation:pulse 1.2s infinite;
+    }
+    .btn-gps.success {
+      color:var(--grn); border-color:rgba(34,197,94,.4);
+      background:rgba(34,197,94,.06);
+    }
+    .btn-gps.error {
+      color:var(--red); border-color:rgba(239,68,68,.3);
+    }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.5} }
+    .gps-status {
+      margin-top:8px; font-size:12px; color:var(--mut);
+      padding:0 4px; min-height:16px;
+      display:flex; align-items:center; gap:6px;
+    }
+    .gps-status.ok  { color:var(--grn); }
+    .gps-status.err { color:var(--red); }
 
     /* ══ TOAST ══ */
-    .toast {
-      position:fixed; bottom:24px; left:50%;
-      transform:translateX(-50%) translateY(10px);
-      background:var(--s1); border:1px solid var(--brd); color:var(--txt);
-      padding:12px 24px; border-radius:999px;
+    .tst {
+      position:fixed; bottom:140px; left:50%;
+      transform:translateX(-50%) translateY(16px);
+      background:var(--s2); color:var(--txt); border:1px solid var(--brd);
+      padding:10px 22px; border-radius:999px;
       font-size:13px; font-weight:600;
-      opacity:0; transition:all .25s; z-index:500;
+      opacity:0; transition:all .28s; z-index:500;
       pointer-events:none; white-space:nowrap;
     }
-    .toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
-    .toast.ok  { background:var(--grn); color:#000; border-color:var(--grn); }
-    .toast.err { background:var(--red); color:#fff; border-color:var(--red); }
-
-    /* ══ LOADING SPINNER ══ */
-    .spinner {
-      display:inline-block; width:20px; height:20px;
-      border:2px solid var(--brd); border-top-color:var(--pur);
-      border-radius:50%; animation:spin .7s linear infinite;
-    }
-    @keyframes spin { to{transform:rotate(360deg)} }
+    .tst.on { opacity:1; transform:translateX(-50%) translateY(0); }
+    .ws-ico { width:20px; height:20px; flex-shrink:0; }
   </style>
 </head>
 <body>
 
 <!-- HEADER -->
-<div class="site-header">
-  <div class="header-inner">
-    <img src="logo de aswa.jpg" alt="ASWA" class="h-logo"
-         onerror="this.style.cssText='width:44px;height:44px;border-radius:50%;background:var(--y);flex-shrink:0'">
+<header>
+  <div class="hi">
+    <img src="logo de aswa.jpg" alt="ASWA" class="logo"
+         onerror="this.style.cssText='width:54px;height:54px;border-radius:50%;background:var(--y);flex-shrink:0'">
     <div>
-      <div class="h-title">🎬 ASWA — Sistema UGC</div>
-      <div class="h-sub">Validación + Galería de Contenido</div>
+      <div class="bname">La Rica Chicha</div>
+      <div class="bsub">ASWA · El oro líquido de la selva</div>
     </div>
-    <a href="index.html" class="h-back">← Volver a la tienda</a>
-  </div>
-</div>
-
-<!-- TABS -->
-<div class="tabs-bar">
-  <div class="tabs-inner">
-    <button class="tab-btn active" onclick="irTab('bono',this)">🎁 Solicitar Bono</button>
-    <button class="tab-btn" onclick="irTab('admin',this)">
-      ⚡ Admin <span class="cnt" id="cnt-pendientes">0</span>
+    <button class="btn-ref" id="btnRef" onclick="abrirRef()">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+        <circle cx="9" cy="7" r="4"/>
+        <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+        <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+      </svg>
+      Refiere y Gana
     </button>
-    <button class="tab-btn" onclick="irTab('galeria',this)">🖼 Galería UGC</button>
-    <button class="tab-btn" onclick="irTab('stats',this)">📊 Estadísticas</button>
   </div>
-</div>
+</header>
+<div class="sp"></div>
 
-<div class="page-wrap">
+<!-- PÁGINA: PEDIR -->
+<div class="page active" id="page-pedir">
+<main>
 
-  <!-- ══════════════════════════════════════
-       TAB 1: SOLICITAR BONO
-  ══════════════════════════════════════ -->
-  <div class="tab-content active" id="tab-bono">
+  <!-- PRODUCTOS -->
+  <section>
+    <div class="stitle">Elige tu presentación</div>
 
-    <!-- Hero -->
-    <div class="bono-hero">
-      <h2>🎉 ¡Comparte tu experiencia ASWA!</h2>
-      <p>Gana descuentos compartiendo tu momento ASWA en redes sociales</p>
-      <div class="bono-pills">
-        <span class="bpill">📸 Foto → +3%</span>
-        <span class="bpill">🎬 Video → +5%</span>
-        <span class="bpill">🎥 Historia → +2%</span>
+    <div class="pc" id="c-p2l">
+      <img src="aswa de 2 litros 1.png" alt="2L" class="pimg"
+           onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2270%22 height=%2270%22><rect width=%2270%22 height=%2270%22 fill=%22%231a1a1e%22 rx=%2212%22/><text x=%2235%22 y=%2244%22 text-anchor=%22middle%22 fill=%22%23facc15%22 font-size=%2228%22>🫙</text></svg>'">
+      <div style="flex:1">
+        <div class="pn">Chicha ASWA</div>
+        <div class="pd">Presentación 2 Litros</div>
+        <div class="pp" id="pr-p2l">S/ 9.00</div>
+      </div>
+      <div class="qw">
+        <button class="qb qminus" onclick="qty('p2l',-1)">−</button>
+        <span class="qn" id="q-p2l">0</span>
+        <button class="qb qplus"  onclick="qty('p2l',+1)">+</button>
       </div>
     </div>
 
-    <!-- Información del cliente -->
-    <div class="form-section">
-      <div class="form-section-title">📋 Información del Cliente</div>
-      <div class="form-row">
-        <div class="field">
-          <label>Nombre Completo <span class="req">*</span></label>
-          <input type="text" id="f-nombre" class="finp" placeholder="Ej: María López" oninput="chkForm()">
-        </div>
-        <div class="field">
-          <label>Teléfono / WhatsApp <span class="req">*</span></label>
-          <input type="tel" id="f-tel" class="finp" placeholder="Ej: 987654321" maxlength="9" inputmode="numeric" oninput="chkForm()">
-        </div>
+    <div class="pc" id="c-p3l">
+      <img src="aswa de 3 litros.png" alt="3L" class="pimg"
+           onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2270%22 height=%2270%22><rect width=%2270%22 height=%2270%22 fill=%22%231a1a1e%22 rx=%2212%22/><text x=%2235%22 y=%2244%22 text-anchor=%22middle%22 fill=%22%23facc15%22 font-size=%2228%22>🫙</text></svg>'">
+      <div style="flex:1">
+        <div class="pn">Chicha ASWA</div>
+        <div class="pd">Presentación 3 Litros</div>
+        <div class="pp" id="pr-p3l">S/ 13.00</div>
       </div>
-      <div class="field">
-        <label>¿Es tu primera compra en ASWA? <span class="req">*</span></label>
-        <select id="f-primera" class="finp" onchange="chkForm()">
-          <option value="">Selecciona una opción</option>
-          <option value="si">Sí, es mi primera vez</option>
-          <option value="no">No, ya soy cliente frecuente</option>
-        </select>
+      <div class="qw">
+        <button class="qb qminus" onclick="qty('p3l',-1)">−</button>
+        <span class="qn" id="q-p3l">0</span>
+        <button class="qb qplus"  onclick="qty('p3l',+1)">+</button>
       </div>
     </div>
 
-    <!-- Contenido de redes -->
-    <div class="form-section">
-      <div class="form-section-title">📱 Contenido de Redes Sociales</div>
-      <div class="form-row">
-        <div class="field">
-          <label>Tipo de Contenido <span class="req">*</span></label>
-          <select id="f-tipo" class="finp" onchange="chkForm()">
-            <option value="">Selecciona el tipo</option>
-            <option value="foto">📸 Foto (+3%)</option>
-            <option value="video">🎬 Video (+5%)</option>
-            <option value="historia">🎥 Historia / Story (+2%)</option>
-            <option value="reels">📹 Reels (+4%)</option>
-            <option value="review">⭐ Reseña escrita (+1%)</option>
-          </select>
-        </div>
-        <div class="field">
-          <label>Plataforma <span class="req">*</span></label>
-          <select id="f-plataforma" class="finp" onchange="chkForm()">
-            <option value="">Selecciona la plataforma</option>
-            <option value="instagram">Instagram</option>
-            <option value="tiktok">TikTok</option>
-            <option value="facebook">Facebook</option>
-            <option value="youtube">YouTube</option>
-            <option value="google">Google Maps</option>
-            <option value="otro">Otro</option>
-          </select>
-        </div>
+    <div class="pc" id="c-p4l">
+      <img src="galon familiar de 4 litros.png" alt="4L" class="pimg"
+           onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2270%22 height=%2270%22><rect width=%2270%22 height=%2270%22 fill=%22%231a1a1e%22 rx=%2212%22/><text x=%2235%22 y=%2244%22 text-anchor=%22middle%22 fill=%22%23facc15%22 font-size=%2228%22>🫙</text></svg>'">
+      <div style="flex:1">
+        <div class="pn">Chicha ASWA Familiar</div>
+        <div class="pd">Presentación 4 Litros</div>
+        <div class="pp" id="pr-p4l">S/ 15.00</div>
       </div>
-      <div class="form-row">
-        <div class="field">
-          <label>Tu Usuario en Redes <span class="req">*</span></label>
-          <input type="text" id="f-usuario" class="finp" placeholder="Ej: @maria.lopez" oninput="chkForm()">
-        </div>
-        <div class="field">
-          <label>Link de tu Publicación <span class="req">*</span></label>
-          <input type="url" id="f-link" class="finp" placeholder="https://instagram.com/p/..." oninput="chkForm()">
-        </div>
+      <div class="qw">
+        <button class="qb qminus" onclick="qty('p4l',-1)">−</button>
+        <span class="qn" id="q-p4l">0</span>
+        <button class="qb qplus"  onclick="qty('p4l',+1)">+</button>
       </div>
-      <div class="field">
-        <label>Tu Mensaje (Caption) <span class="req">*</span></label>
-        <textarea id="f-mensaje" class="finp" placeholder="¿Qué dijiste en tu publicación?" oninput="chkForm()"></textarea>
-      </div>
-      <div class="field">
-        <label>Campaña (opcional)</label>
-        <select id="f-campana" class="finp">
-          <option value="">Sin campaña</option>
-          <option value="febrero2026">Febrero 2026</option>
-          <option value="verano2026">Verano 2026</option>
-          <option value="aniversario">Aniversario ASWA</option>
-        </select>
-      </div>
+    </div>
+  </section>
 
-      <!-- Upload -->
-      <div class="field">
-        <label>Sube tu Captura de Pantalla <span class="req">*</span></label>
-        <div class="upload-zone" id="uploadZone" onclick="document.getElementById('f-foto').click()">
-          <span class="u-ico">📤</span>
-          <h4>Click para subir imagen</h4>
-          <p>JPG, PNG, GIF (Máx 5MB)</p>
-          <input type="file" id="f-foto" accept="image/*" style="display:none" onchange="prevFoto(this)">
+  <!-- DATOS -->
+  <section>
+    <div class="stitle">Tus datos</div>
+
+    <div class="cban" id="cban">
+      <div class="cban-head nivel-bronce" id="cbanHead">
+        <div class="cban-emo" id="cbanEmo">🥉</div>
+        <div>
+          <div class="cban-nom" id="bnNom">¡Hola!</div>
+          <div class="cban-sub" id="bnDesc"></div>
         </div>
-        <img id="fotoPreview" class="upload-preview" alt="preview">
+        <div class="cban-pill" id="bnNivel">BRONCE</div>
+      </div>
+      <div class="cban-prog-wrap" id="cbanProgWrap" style="display:none">
+        <div class="cban-prog-label">
+          <span id="cbanProgLabel">Progreso al siguiente nivel</span>
+          <span id="cbanProgNum"></span>
+        </div>
+        <div class="cban-prog-bar"><div class="cban-prog-fill" id="cbanFill" style="width:0%"></div></div>
+      </div>
+      <div class="cban-body" id="cbanTags"></div>
+      <div class="cban-ref" id="cbanRef" style="display:none">
+        <div class="cref-label">🎁 Tu código para amigos</div>
+        <div class="cref-row">
+          <span class="cref-cod" id="cbanCod">—</span>
+          <button class="cref-copy" onclick="copiarCodBanner()">Copiar</button>
+          <button class="cref-share" onclick="abrirRef()">Compartir 💛</button>
+        </div>
       </div>
     </div>
 
-    <!-- Autorización -->
-    <div class="auth-box">
-      <div class="form-section-title" style="margin-bottom:14px">✅ Autorización de Uso</div>
-      <label class="auth-check-row">
-        <input type="checkbox" id="f-autorizo" onchange="chkForm()">
-        <p style="font-size:13px;line-height:1.6">
-          <strong>AUTORIZO A ASWA</strong> a usar esta imagen/video en sus redes sociales, publicidad y materiales promocionales.
-        </p>
+    <div class="fld">
+      <label>Teléfono</label>
+      <input type="tel" id="telefono" class="inp" maxlength="9"
+             placeholder="9XXXXXXXX" inputmode="numeric" autocomplete="tel">
+    </div>
+    <div class="fld">
+      <label>Nombre completo</label>
+      <input type="text" id="nombre" class="inp"
+             placeholder="¿Cómo te llamamos?" autocomplete="name">
+    </div>
+    <div class="fld">
+      <label>Código referido
+        <span style="color:var(--mut);font-weight:400;text-transform:none;font-size:10px"> (opcional)</span>
       </label>
-      <div class="auth-list">
-        <h5>Entiendo que:</h5>
-        <ul>
-          <li>Mi nombre/usuario será mencionado al repostear</li>
-          <li>ASWA puede editar el contenido (colores, texto, recorte)</li>
-          <li>Puedo solicitar la eliminación en cualquier momento</li>
-          <li>No recibiré compensación adicional más allá del bono</li>
-          <li>Esta autorización es válida indefinidamente</li>
-        </ul>
-        <h5>Declaro que:</h5>
-        <ul>
-          <li>Soy mayor de 18 años</li>
-          <li>Tengo derechos sobre el contenido compartido</li>
-          <li>El contenido es auténtico y positivo</li>
-          <li>No infringe derechos de terceros</li>
-        </ul>
+      <input type="text" id="codigoUsado" class="inp" maxlength="13"
+             placeholder="ASWA-XXXXXXXX"
+             style="text-transform:uppercase;letter-spacing:.05em">
+      <span class="rst" id="rst"></span>
+    </div>
+    <div class="fld">
+      <label>Dirección de entrega</label>
+      <input type="text" id="direccion" class="inp"
+             placeholder="Calle, número, referencia" autocomplete="street-address">
+      <div style="font-size:11px;color:var(--mut);margin-top:6px;padding:0 4px">
+        ¿No aparece tu dirección? Puedes escribirla manualmente.
       </div>
     </div>
 
-    <button class="btn-submit" id="btnSubmitBono" onclick="enviarBono()">
-      ✅ ENVIAR SOLICITUD DE BONO
+    <!-- ══ BOTÓN GPS — CORREGIDO ══ -->
+    <div class="fld">
+      <button class="btn-gps" id="btnGPS" onclick="toggleGPS()">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
+             stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
+          <circle cx="12" cy="10" r="3"/>
+        </svg>
+        <span id="gpsLabel">📡 UBICACIÓN EN TIEMPO REAL</span>
+      </button>
+      <div class="gps-status" id="gpsStatus"></div>
+      <div class="gps-live-box" id="gpsLiveBox">
+        <div class="gps-pulse"></div>
+        <div class="gps-live-info">
+          <div class="gli-title">📍 GPS activo — ubicación en vivo</div>
+          <div class="gli-coords" id="gpsLiveCoords">buscando señal...</div>
+        </div>
+        <button class="gps-stop-btn" onclick="detenerGPS()">✕ Detener</button>
+      </div>
+    </div>
+
+    <div class="fld">
+      <label>Zona</label>
+      <select id="zona" class="inp" onchange="calcTotal()">
+        <option value="">Selecciona tu zona</option>
+        <option value="3">Morales — S/ 3.00</option>
+        <option value="4">Tarapoto — S/ 4.00</option>
+        <option value="5">Banda de Shilcayo — S/ 5.00</option>
+        <option value="0">Recojo en local — Gratis</option>
+        <option value="10">A nivel nacional — S/ 10.00</option>
+      </select>
+    </div>
+  </section>
+
+  <!-- PAGO -->
+  <section>
+    <div class="stitle">Método de pago</div>
+    <div class="pgrd">
+      <div class="popt on" id="pay-Efectivo"      onclick="setPago('Efectivo')">
+        <span class="pic">💵</span>Efectivo</div>
+      <div class="popt"    id="pay-Yape"          onclick="setPago('Yape')">
+        <span class="pic">📱</span>Yape</div>
+      <div class="popt"    id="pay-Plin"          onclick="setPago('Plin')">
+        <span class="pic">💜</span>Plin</div>
+      <div class="popt"    id="pay-Transferencia" onclick="setPago('Transferencia')">
+        <span class="pic">🏦</span>Transf.</div>
+    </div>
+    <div class="ybox" id="yapeBox">
+      <div class="ybox-tag" id="yboxTag">📱 YAPE</div>
+      <img src="yape%20del%20negocio.jpg" alt="QR Pago ASWA"
+           onerror="this.style.display='none'" id="yboxImg">
+      <div class="ynum">+51 947 999 736</div>
+      <p id="yboxTxt">Escanea el QR o transfiere al número de arriba</p>
+    </div>
+    <div class="vbox" id="vueltoBox">
+      <span class="vlbl">¿Con cuánto pagarás?</span>
+      <input type="number" id="pagoCon" class="inp"
+             placeholder="S/ 0.00" inputmode="decimal" oninput="calcVuelto()">
+      <div class="vmsg" id="vmsg">Vuelto: S/ 0.00</div>
+    </div>
+  </section>
+
+  <!-- REDES SOCIALES -->
+  <section class="social-section">
+    <div class="stitle">Encuéntranos</div>
+    <div id="socialGrid" class="social-grid">
+      <div class="social-skeleton"></div>
+      <div class="social-skeleton"></div>
+      <div class="social-skeleton"></div>
+      <div class="social-skeleton"></div>
+      <div class="social-skeleton" style="grid-column:1/-1"></div>
+    </div>
+  </section>
+
+</main>
+</div><!-- /page-pedir -->
+
+<!-- PÁGINA: GALERÍA -->
+<div class="page" id="page-galeria">
+  <div class="galeria-hero">
+    <h2>📸 GALERÍA</h2>
+    <p>Momentos de nuestra comunidad</p>
+  </div>
+  <div class="gal-filters">
+    <button class="gf-btn active" onclick="filtrarGal('todos',this)">Todos</button>
+    <button class="gf-btn" onclick="filtrarGal('destacados',this)">⭐ Destacados</button>
+    <button class="gf-btn" onclick="filtrarGal('recientes',this)">🕐 Recientes</button>
+    <button class="gf-btn" onclick="filtrarGal('populares',this)">🔥 Populares</button>
+  </div>
+  <div class="gal-grid" id="galGrid">
+    <div style="grid-column:1/-1" class="gal-empty">
+      <div class="gal-emo">📸</div>
+      <p>Cargando galería...</p>
+    </div>
+  </div>
+</div>
+
+<!-- PÁGINA: BONO -->
+<div class="page" id="page-bono">
+  <div class="bono-page">
+    <div class="bono-header">
+      <h2>🤳 COMPARTE Y GANA</h2>
+      <p style="font-size:12px;color:var(--mut)">Sube tu contenido y gana descuentos</p>
+      <div class="bono-pills">
+        <span class="bono-pill">📸 Foto +2%</span>
+        <span class="bono-pill">🎬 Video +4%</span>
+        <span class="bono-pill">📹 Reels +2%</span>
+      </div>
+    </div>
+    <div class="bono-section">
+      <div class="bono-section-title">Tu Info</div>
+      <input type="text"   id="b-nombre"   class="bono-inp" placeholder="Nombre">
+      <input type="tel"    id="b-celular"  class="bono-inp" placeholder="Celular" maxlength="9" inputmode="numeric">
+      <select id="b-primera" class="bono-inp">
+        <option value="">¿Primera compra?</option>
+        <option value="si">Sí, es mi primera vez</option>
+        <option value="no">No, ya soy cliente</option>
+      </select>
+    </div>
+    <div class="bono-section">
+      <div class="bono-section-title">Contenido</div>
+      <select id="b-tipo" class="bono-inp" onchange="actualizarBonoPill()">
+        <option value="">Tipo de contenido</option>
+        <option value="foto">📸 Foto</option>
+        <option value="video">🎬 Video</option>
+        <option value="reels">📹 Reels / Story</option>
+        <option value="review">⭐ Reseña escrita</option>
+      </select>
+      <select id="b-plataforma" class="bono-inp">
+        <option value="">Plataforma</option>
+        <option value="instagram">Instagram</option>
+        <option value="tiktok">TikTok</option>
+        <option value="facebook">Facebook</option>
+        <option value="youtube">YouTube</option>
+        <option value="google">Google Maps</option>
+        <option value="otro">Otro</option>
+      </select>
+      <input type="text" id="b-usuario"  class="bono-inp" placeholder="Tu usuario @">
+      <input type="url"  id="b-link"     class="bono-inp" placeholder="Link publicación">
+      <textarea          id="b-mensaje"  class="bono-inp" placeholder="Tu mensaje / experiencia con ASWA"></textarea>
+      <select id="b-campana" class="bono-inp">
+        <option value="">Sin campaña</option>
+        <option value="febrero2026">Febrero 2026</option>
+        <option value="verano2026">Verano 2026</option>
+      </select>
+      <div class="upload-zone" id="uploadZone" onclick="document.getElementById('b-foto').click()">
+        <div class="uico">📁</div>
+        <p>Toca para subir imagen o video</p>
+        <input type="file" id="b-foto" accept="image/*,video/*" style="display:none" onchange="previsualizarArchivo(this)">
+      </div>
+      <img id="uploadPreview" class="upload-preview" alt="preview">
+    </div>
+    <div class="autorizo-box">
+      <input type="checkbox" id="b-autorizo" onchange="checkBonoReady()">
+      <p>
+        <strong>AUTORIZO A ASWA</strong><br>
+        Uso de imagen en redes, publicidad y materiales.
+        Puedo solicitar eliminación. Mayor de 18 años.
+      </p>
+    </div>
+    <button class="btn-enviar-bono" id="btnEnviarBono" onclick="enviarBono()">ENVIAR</button>
+  </div>
+</div>
+
+<!-- PÁGINA: CONCURSO -->
+<div class="page" id="page-concurso">
+  <div class="concurso-page">
+    <div id="concursosContainer">
+      <div class="concurso-card" id="concursoFoto" style="margin-bottom:14px">
+        <div class="conc-header">
+          <div>
+            <div class="conc-title">📸 MEJOR FOTO</div>
+            <div class="conc-subtitle" id="concFotoSubtitle">ASWA · cargando...</div>
+          </div>
+          <div style="background:rgba(0,0,0,.25);color:#fff;font-size:10px;font-weight:700;padding:4px 10px;border-radius:999px">FOTO</div>
+        </div>
+        <div class="conc-premio">
+          <div class="conc-premio-label">🎁 Premio</div>
+          <div class="conc-premio-val" id="concFotoPremio">Pedido Gratis</div>
+        </div>
+        <div class="conc-desc" id="concFotoDesc">Sube tu mejor foto con tu chicha ASWA y gana</div>
+        <div class="conc-meta">
+          <div class="conc-pill">📅 <span id="concFotoFecha">—</span></div>
+          <div class="conc-pill">👥 <span id="concFotoPart">0 participantes</span></div>
+        </div>
+        <button class="btn-participar" onclick="irA('bono')">📸 Participar con foto →</button>
+      </div>
+      <div class="concurso-card" id="concursoVideo"
+           style="background:linear-gradient(135deg,#7c3aed,#2563eb,#0891b2);margin-bottom:14px">
+        <div class="conc-header">
+          <div>
+            <div class="conc-title">🎬 MEJOR VIDEO</div>
+            <div class="conc-subtitle" id="concVideoSubtitle">ASWA · cargando...</div>
+          </div>
+          <div style="background:rgba(0,0,0,.25);color:#fff;font-size:10px;font-weight:700;padding:4px 10px;border-radius:999px">VIDEO</div>
+        </div>
+        <div class="conc-premio">
+          <div class="conc-premio-label">🎁 Premio</div>
+          <div class="conc-premio-val" id="concVideoPremio">Galón Familiar Gratis</div>
+        </div>
+        <div class="conc-desc" id="concVideoDesc">Graba tu reacción probando la chicha ASWA y compártela</div>
+        <div class="conc-meta">
+          <div class="conc-pill">📅 <span id="concVideoFecha">—</span></div>
+          <div class="conc-pill">👥 <span id="concVideoPart">0 participantes</span></div>
+        </div>
+        <button class="btn-participar" onclick="irA('bono')" style="background:#fff;color:#7c3aed">🎬 Participar con video →</button>
+      </div>
+    </div>
+    <div class="conc-ranking">
+      <h3>🏅 Ranking actual</h3>
+      <div id="rankingLista">
+        <div class="conc-empty">
+          <div class="cemo">🏆</div>
+          <p>Sé el primero en participar</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- BARRA FLOTANTE -->
+<div class="fbar" id="fbarPedir">
+  <div class="fin">
+    <div>
+      <div class="plbl">Total a pagar</div>
+      <div class="pold" id="pold"></div>
+      <div class="pbig" id="pbig">S/ 0.00</div>
+    </div>
+    <button class="bcont" onclick="abrirResumen()">CONTINUAR →</button>
+  </div>
+</div>
+
+<!-- NAVEGACIÓN -->
+<nav class="bottomnav">
+  <div class="bnav-inner">
+    <button class="bnav-btn active" id="nav-pedir" onclick="irA('pedir')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/>
+        <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>
+      </svg>
+      Pedir
     </button>
-
+    <button class="bnav-btn" id="nav-bono" onclick="irA('bono')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="2" y="7" width="20" height="14" rx="2" ry="2"/>
+        <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/>
+      </svg>
+      Bono
+      <span class="badge show" id="badge-bono">!</span>
+    </button>
+    <button class="bnav-btn" id="nav-galeria" onclick="irA('galeria')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="3" y="3" width="18" height="18" rx="2"/>
+        <circle cx="8.5" cy="8.5" r="1.5"/>
+        <polyline points="21 15 16 10 5 21"/>
+      </svg>
+      Galería
+    </button>
+    <button class="bnav-btn" id="nav-concurso" onclick="irA('concurso')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="8" r="6"/>
+        <path d="M15.477 12.89L17 22l-5-3-5 3 1.523-9.11"/>
+      </svg>
+      Concurso
+    </button>
   </div>
+</nav>
 
-  <!-- ══════════════════════════════════════
-       TAB 2: ADMIN - SOLICITUDES
-  ══════════════════════════════════════ -->
-  <div class="tab-content" id="tab-admin">
+<!-- MODAL RESUMEN -->
+<div class="ov" id="mResumen">
+  <div class="sheet">
+    <div class="hnd"></div>
+    <div class="mttl">Resumen del pedido</div>
+    <div id="resLista"></div>
+    <div class="dban" id="dban"></div>
+    <button class="bws" id="btnEnviar" onclick="enviarPedido()">
+      <svg class="ws-ico" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/>
+      </svg>
+      ENVIAR PEDIDO POR WHATSAPP
+    </button>
+    <button class="bcancel" onclick="cerrar('mResumen')">← Volver y editar</button>
+  </div>
+</div>
 
-    <div class="admin-header">
-      <div class="admin-title">⚡ Solicitudes de Bonos</div>
-      <button onclick="cargarAdmin()" style="background:var(--s2);border:1px solid var(--brd);color:var(--mut);padding:8px 16px;border-radius:999px;font-size:12px;cursor:pointer;font-family:'Poppins',sans-serif">
-        🔄 Actualizar
+<!-- MODAL REFERIDOS -->
+<div class="ov" id="mRef">
+  <div class="sheet">
+    <div class="hnd"></div>
+    <div class="mttl" style="color:var(--pur)">🎁 Regala un Descuento</div>
+    <div style="font-size:11px;color:var(--mut);text-transform:uppercase;letter-spacing:.1em;font-weight:700;margin-bottom:8px">
+      🏆 Tu nivel actual y beneficios
+    </div>
+    <div class="niveles-tabla">
+      <div class="nrow" id="nrow-bronce">
+        <span class="nbadge bronce">🥉 BRONCE</span>
+        <span class="nped">0 – 4 pedidos</span>
+        <span class="ndisc">0%</span>
+      </div>
+      <div class="nrow" id="nrow-plata">
+        <span class="nbadge plata">🥈 PLATA</span>
+        <span class="nped">5 – 9 pedidos</span>
+        <span class="ndisc">10%</span>
+      </div>
+      <div class="nrow" id="nrow-oro">
+        <span class="nbadge oro">🥇 ORO</span>
+        <span class="nped">10 – 19 pedidos</span>
+        <span class="ndisc">15%</span>
+      </div>
+      <div class="nrow" id="nrow-diamante">
+        <span class="nbadge diamante">💎 DIAMANTE</span>
+        <span class="nped">20+ pedidos</span>
+        <span class="ndisc">20%</span>
+      </div>
+    </div>
+    <div style="font-size:11px;color:var(--mut);text-align:center;margin:12px 0 6px;text-transform:uppercase;letter-spacing:.12em">
+      Tu código personal para compartir
+    </div>
+    <div id="refSinCod" style="display:none;background:rgba(250,204,21,.07);border:1px solid rgba(250,204,21,.25);border-radius:12px;padding:14px;margin-bottom:12px;text-align:center">
+      <p style="font-size:13px;color:var(--mut);margin-bottom:10px">
+        📱 Ingresa tu celular para ver tu código
+      </p>
+      <input type="tel" id="refTelInput" class="inp" placeholder="Tu número de celular"
+             maxlength="9" inputmode="numeric"
+             style="text-align:center;font-size:18px;letter-spacing:.15em;font-weight:700"
+             oninput="buscarCodPorTel(this.value)">
+    </div>
+    <div class="cfr" id="refCodBox">
+      <div class="ctxt" id="codModal">ASWA-——</div>
+    </div>
+    <div id="refVencAlert" style="display:none;background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);border-radius:10px;padding:10px 14px;font-size:12px;color:#fca5a5;text-align:center;margin-bottom:10px">
+      ⏰ <span id="refVencTxt"></span>
+    </div>
+    <button class="bcopy" onclick="copiarCod()">📋 COPIAR MI CÓDIGO</button>
+    <button class="bshr" id="btnCompartir" onclick="compartirCod()">
+      <svg class="ws-ico" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/>
+      </svg>
+      ENVIAR A MIS AMIGOS / FAMILIA 💛
+    </button>
+    <button class="bcancel" onclick="cerrar('mRef')">Cerrar</button>
+  </div>
+</div>
+
+<!-- MODAL CONFIRMAR ENTREGA -->
+<div class="ov" id="mConfirmar" onclick="event.stopPropagation()">
+  <div class="sheet">
+    <div class="hnd"></div>
+    <div class="mttl">¿Ya recibiste tu pedido? 🌽</div>
+    <div class="confbox">
+      <div style="font-size:48px;margin-bottom:12px">📦</div>
+      <p>
+        Toca el botón cuando recibas tu chicha.<br>
+        Esto activa tu descuento de fidelidad y genera<br>
+        tu <strong style="color:var(--y)">Nota de Venta</strong> para descargar 🎉
+      </p>
+      <button class="bconf" id="btnConf" onclick="confirmarEntrega()">
+        ✅ SÍ, YA RECIBÍ MI PEDIDO
       </button>
     </div>
-
-    <div class="filter-pills">
-      <button class="fpill active" onclick="filtrarAdmin('todas',this)">Todas <span class="n" id="n-todas">0</span></button>
-      <button class="fpill" onclick="filtrarAdmin('pendiente',this)">Pendientes <span class="n" id="n-pend">0</span></button>
-      <button class="fpill" onclick="filtrarAdmin('aprobado',this)">Aprobadas <span class="n" id="n-apr">0</span></button>
-      <button class="fpill" onclick="filtrarAdmin('rechazado',this)">Rechazadas <span class="n" id="n-rech">0</span></button>
-      <button class="fpill" onclick="filtrarAdmin('nuevo',this)">Clientes Nuevos <span class="n" id="n-nuevo">0</span></button>
-    </div>
-
-    <div class="solicitudes-grid" id="solGrid">
-      <div class="empty-state" style="grid-column:1/-1">
-        <span class="emo">⏳</span>
-        <p>Cargando solicitudes...</p>
-      </div>
-    </div>
+    <button class="bcancel" onclick="minimizarConfirmar()">
+      ⏳ Todavía no llegó — Confirmaré después
+    </button>
   </div>
+</div>
 
-  <!-- ══════════════════════════════════════
-       TAB 3: GALERÍA UGC
-  ══════════════════════════════════════ -->
-  <div class="tab-content" id="tab-galeria">
+<!-- Botón flotante confirmar -->
+<div id="btnFlotante" style="
+  display:none; position:fixed; bottom:90px; right:16px; z-index:1200;
+  background:#22c55e; color:#000; border:none; border-radius:999px;
+  padding:14px 20px; font-size:13px; font-weight:900; cursor:pointer;
+  font-family:'Poppins',sans-serif; box-shadow:0 4px 20px rgba(34,197,94,.5);
+  animation:pulse-btn 2s infinite;
+" onclick="document.getElementById('mConfirmar').classList.add('on');document.getElementById('btnFlotante').style.display='none'">
+  📦 Confirmar entrega
+</div>
 
-    <div class="admin-header">
-      <div class="admin-title">🖼 Galería de Contenido UGC</div>
-      <button onclick="cargarGaleriaUGC()" style="background:var(--s2);border:1px solid var(--brd);color:var(--mut);padding:8px 16px;border-radius:999px;font-size:12px;cursor:pointer;font-family:'Poppins',sans-serif">
-        🔄 Actualizar
-      </button>
-    </div>
-
-    <!-- Métricas -->
-    <div class="stats-row">
-      <div class="stat-box sb-total"><div class="sval" id="g-total">0</div><div class="slbl">Total Contenidos</div></div>
-      <div class="stat-box sb-dest"><div class="sval" id="g-dest">0</div><div class="slbl">Destacados</div></div>
-      <div class="stat-box sb-usado"><div class="sval" id="g-usado">0</div><div class="slbl">Ya Usados</div></div>
-      <div class="stat-box sb-disp"><div class="sval" id="g-disp">0</div><div class="slbl">Disponibles</div></div>
-    </div>
-
-    <div class="filter-pills">
-      <button class="fpill active" onclick="filtrarGalUGC('todos',this)">Todos</button>
-      <button class="fpill" onclick="filtrarGalUGC('destacados',this)">⭐ Destacados</button>
-      <button class="fpill" onclick="filtrarGalUGC('disponibles',this)">🟢 Disponibles</button>
-      <button class="fpill" onclick="filtrarGalUGC('usados',this)">✅ Ya Usados</button>
-    </div>
-
-    <div class="gal-ugc-grid" id="galUGCGrid">
-      <div class="empty-state" style="grid-column:1/-1">
-        <span class="emo">🖼</span>
-        <p>Cargando galería...</p>
-      </div>
-    </div>
+<!-- PANTALLA ÉXITO -->
+<div class="succ" id="succScreen">
+  <div class="semo">✅</div>
+  <div class="sttl">¡Pedido enviado!</div>
+  <p class="ssub">Tu pedido fue enviado a WhatsApp.<br>¡Pronto te contactamos! 🌽</p>
+  <div class="scod" id="succCod"></div>
+  <div style="background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.3);border-radius:14px;padding:16px;margin:16px 0;max-width:320px">
+    <p style="font-size:13px;color:#86efac;margin:0 0 12px;line-height:1.6">
+      📦 Cuando recibas tu chicha,<br>
+      toca el botón verde para generar<br>
+      tu <strong style="color:#4ade80">Nota de Venta</strong>
+    </p>
+    <button class="bnvo" style="background:#22c55e;color:#000;width:100%;padding:14px" onclick="irAConfirmar()">
+      📦 Ya recibí — Confirmar entrega
+    </button>
   </div>
+  <button class="bnvo" onclick="limpiarYRecargar()"
+          style="background:transparent;color:var(--mut);border:1px solid var(--brd);font-size:13px;padding:10px 28px;margin-top:4px">
+    Nuevo pedido
+  </button>
+</div>
 
-  <!-- ══════════════════════════════════════
-       TAB 4: ESTADÍSTICAS
-  ══════════════════════════════════════ -->
-  <div class="tab-content" id="tab-stats">
-    <div class="admin-header">
-      <div class="admin-title">📊 Estadísticas del Sistema</div>
-      <button onclick="cargarStats()" style="background:var(--s2);border:1px solid var(--brd);color:var(--mut);padding:8px 16px;border-radius:999px;font-size:12px;cursor:pointer;font-family:'Poppins',sans-serif">
-        🔄 Actualizar
-      </button>
+<!-- NOTA DE VENTA -->
+<div class="nota-modal" id="notaVentaModal">
+  <div class="nota-sheet" id="notaVentaSheet">
+    <div class="nota-top">
+      <div class="nota-logo-wrap">
+        <img src="logo de aswa.jpg" alt="ASWA"
+             onerror="this.parentElement.style.cssText='width:130px;height:130px;background:#facc15;border-radius:16px;display:flex;align-items:center;justify-content:center;font-size:48px;margin:0 auto'">
+      </div>
+      <div class="nota-empresa">LA RICA CHICHA - ASWA</div>
+      <div class="nota-sub">
+        El sabor de mi tierra<br>
+        Morales - San Martín<br>
+        WhatsApp: 955 273 229 / 986 445 531
+      </div>
+      <hr class="nota-divider">
+      <div class="nota-titulo">NOTA DE VENTA</div>
+      <div class="nota-num" id="nvNumero">N° Nota: —</div>
+      <div class="nota-fecha" id="nvFecha"></div>
     </div>
-
-    <div class="stats-4">
-      <div class="big-stat bs-purple">
-        <div class="bs-title">📅 Este Mes</div>
-        <div class="bs-num" id="st-total">0</div>
-        <div class="bs-sub" id="st-breakdown">Contenidos recibidos</div>
-      </div>
-      <div class="big-stat bs-green">
-        <div class="bs-title">👥 Participación</div>
-        <div class="bs-sub" id="st-part" style="font-size:14px;margin-top:4px;line-height:2">
-          Clientes Nuevos: 0<br>Clientes Recurrentes: 0
+    <div class="nota-body">
+      <div class="nota-cliente">
+        <div class="nc-row"><span class="nc-lbl">Cliente:</span><span class="nc-val" id="nvNombre">—</span></div>
+        <div class="nc-row"><span class="nc-lbl">Celular:</span><span class="nc-val" id="nvTelefono">—</span></div>
+        <div class="nc-row"><span class="nc-lbl">Dirección:</span><span class="nc-val" id="nvDireccion">—</span></div>
+        <div class="nc-row" id="nvGpsRow" style="display:none">
+          <span class="nc-lbl">📍 GPS:</span>
+          <a id="nvGpsLink" href="#" target="_blank" style="color:#16a34a;font-weight:700;font-size:12px">Ver ubicación →</a>
+        </div>
+        <div class="nc-row"><span class="nc-lbl">Zona:</span><span class="nc-val" id="nvZona">—</span></div>
+        <div class="nc-row"><span class="nc-lbl">Pago:</span><span class="nc-val" id="nvPago">—</span></div>
+        <div class="nc-row">
+          <span class="nc-lbl">Nivel:</span>
+          <span class="nc-val"><span class="nota-nivel-badge nnb-bronce" id="nvNivelBadge">🥉 BRONCE</span></span>
         </div>
       </div>
-      <div class="big-stat bs-orange">
-        <div class="bs-title">📱 Plataformas</div>
-        <div class="bs-sub" id="st-plat" style="font-size:13px;margin-top:4px;line-height:2">
-          Cargando...
+      <div class="nota-cod-box" id="nvCodBox" style="display:none">
+        <div>
+          <div class="ncb-lbl">🎁 Tu código personal de descuento</div>
+          <div class="ncb-cod" id="nvCodRef">—</div>
+          <div class="ncb-desc">Compártelo · Tus amigos y tú reciben 5% de descuento</div>
         </div>
       </div>
-      <div class="big-stat bs-yellow">
-        <div class="bs-title">💰 ROI de Contenido</div>
-        <div class="bs-sub" id="st-roi" style="font-size:13px;margin-top:4px;line-height:2">
-          Calculando...
+      <div class="nota-tabla-header">
+        <span class="nth-prod">Producto</span>
+        <span class="nth-cant" style="text-align:right">Cant.</span>
+        <span class="nth-unit" style="text-align:right">P. Unit.</span>
+        <span class="nth-sub"  style="text-align:right">Subtotal</span>
+      </div>
+      <div id="nvItems"></div>
+      <div class="nota-delivery-row">
+        <span class="ndl-lbl">Costo de entrega</span>
+        <span style="text-align:right;font-size:12px;color:#374151">1</span>
+        <span class="ndl-val" id="nvDeliveryUnit">S/ 0.00</span>
+        <span class="ndl-val" id="nvDelivery">S/ 0.00</span>
+      </div>
+      <div class="nota-totales">
+        <div class="nota-tot-row" id="nvDescRow" style="display:none">
+          <span class="ntl">Descuento aplicado</span>
+          <span class="ntv green" id="nvDescuento">—</span>
         </div>
+        <div class="nota-tot-row">
+          <span class="ntl">Subtotal productos</span>
+          <span class="ntv" id="nvSubtotal">S/ 0.00</span>
+        </div>
+      </div>
+      <div class="nota-gran-total">
+        <span class="ngt-lbl">TOTAL<br>A PAGAR</span>
+        <span class="ngt-val" id="nvTotal">S/ 0.00</span>
       </div>
     </div>
-
-    <div class="engagement-card">
-      <div class="eng-title">💡 Engagement Promedio</div>
-      <div class="eng-grid">
-        <div class="eng-item">
-          <div class="eng-ico">❤️</div>
-          <div class="eng-val" id="st-likes">0</div>
-          <div class="eng-lbl">Likes promedio</div>
-        </div>
-        <div class="eng-item">
-          <div class="eng-ico">💬</div>
-          <div class="eng-val" id="st-comments">0</div>
-          <div class="eng-lbl">Comentarios promedio</div>
-        </div>
-        <div class="eng-item">
-          <div class="eng-ico">🔄</div>
-          <div class="eng-val" id="st-shares">0</div>
-          <div class="eng-lbl">Compartidos promedio</div>
-        </div>
-      </div>
+    <div class="nota-footer">
+      ¡Gracias por tu preferencia! 🌾<br>
+      Chicha artesanal de maiz amazónico — hecha con maíz del campo y amor de la selva.<br>
+      <strong>LA RICA CHICHA - ASWA</strong> · Morales, San Martín, Perú
     </div>
-
-    <div class="plat-card">
-      <div class="eng-title">📱 Distribución por Plataforma</div>
-      <div id="platBars">
-        <div style="color:var(--mut);font-size:13px">Cargando...</div>
+    <div class="nota-actions">
+      <div class="nota-actions-row">
+        <button class="nota-btn-dl" onclick="descargarNotaPDF()">📥 Descargar PDF</button>
+        <button class="nota-btn-pr" onclick="imprimirNota()">🖨️ Imprimir</button>
       </div>
-    </div>
-  </div>
-
-</div><!-- /page-wrap -->
-
-<!-- MODAL VER DETALLE -->
-<div class="modal-ov" id="modalDetalle">
-  <div class="modal-box" style="position:relative">
-    <button class="modal-close" onclick="cerrarModal()">✕</button>
-    <img id="mdImg" src="" alt="" class="modal-img" onerror="this.style.display='none'">
-    <div class="modal-body">
-      <div class="mrow"><span class="mlbl">Cliente</span><span class="mval" id="mdNom">—</span></div>
-      <div class="mrow"><span class="mlbl">Teléfono</span><span class="mval" id="mdTel">—</span></div>
-      <div class="mrow"><span class="mlbl">Usuario</span><span class="mval" id="mdUsuario">—</span></div>
-      <div class="mrow"><span class="mlbl">Plataforma</span><span class="mval" id="mdPlat">—</span></div>
-      <div class="mrow"><span class="mlbl">Tipo</span><span class="mval" id="mdTipo">—</span></div>
-      <div class="mrow"><span class="mlbl">Link</span>
-        <a id="mdLink" href="#" target="_blank" style="color:var(--pur2);font-size:12px;word-break:break-all">Ver publicación</a>
-      </div>
-      <div class="mrow" style="display:block;padding:12px 0">
-        <div class="mlbl" style="margin-bottom:6px">Mensaje</div>
-        <div id="mdMsg" style="font-size:13px;line-height:1.6;color:var(--txt)">—</div>
-      </div>
-      <div style="display:flex;gap:8px;margin-top:12px" id="mdActions"></div>
+      <button class="nota-btn-cl" onclick="cerrarNota()">✕ Cerrar nota</button>
     </div>
   </div>
 </div>
 
 <!-- TOAST -->
-<div class="toast" id="toast"></div>
+<div class="tst" id="tst"></div>
 
 <script>
-/* ── TABS ── */
-function irTab(id, btn) {
-  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
-  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-  document.getElementById('tab-' + id).classList.add('active');
-  btn.classList.add('active');
-
-  if (id === 'admin')   cargarAdmin();
-  if (id === 'galeria') cargarGaleriaUGC();
-  if (id === 'stats')   cargarStats();
-}
-
 /* ══════════════════════════════════════
-   TAB 1: BONO - FORMULARIO
+   ESTADO GLOBAL
 ══════════════════════════════════════ */
-function chkForm() {
-  const nom  = document.getElementById('f-nombre').value.trim();
-  const tel  = document.getElementById('f-tel').value.trim();
-  const pri  = document.getElementById('f-primera').value;
-  const tipo = document.getElementById('f-tipo').value;
-  const plat = document.getElementById('f-plataforma').value;
-  const usu  = document.getElementById('f-usuario').value.trim();
-  const lnk  = document.getElementById('f-link').value.trim();
-  const msg  = document.getElementById('f-mensaje').value.trim();
-  const auth = document.getElementById('f-autorizo').checked;
-  const foto = document.getElementById('f-foto').files[0];
+const ST = {
+  cart:      { p2l: 0, p3l: 0, p4l: 0 },
+  precio:    { p2l: 9, p3l: 13, p4l: 15 },
+  pago:      'Efectivo',
+  raw:       0,
+  final:     0,
+  delivery:  0,
+  disc:      { fid: 0, bon: 0, ref: 0 },
+  cli:       { id:'', tel:'', nom:'', nivel:'BRONCE', pedidos:0, cod:'', bonos:[], consumo:0 },
+  pedidoFbId: null,
+  gpsUrl:    null,
+  gpsCoords: null,
+  _gpsWatchId: null,
+  _enviando:   false,
+};
 
-  const ok = nom && tel.length === 9 && pri && tipo && plat && usu && lnk && msg && auth && foto;
-  document.getElementById('btnSubmitBono').classList.toggle('ready', !!ok);
+/* ── CARRITO ── */
+function qty(id, d) {
+  ST.cart[id] = Math.max(0, ST.cart[id] + d);
+  document.getElementById('q-' + id).textContent = ST.cart[id];
+  document.getElementById('c-' + id).classList.toggle('on', ST.cart[id] > 0);
+  calcTotal();
 }
 
-function prevFoto(input) {
-  const file = input.files[0];
-  if (!file) return;
-  const zone = document.getElementById('uploadZone');
-  const prev = document.getElementById('fotoPreview');
-  zone.classList.add('has-file');
-  zone.querySelector('h4').textContent = file.name;
-  const reader = new FileReader();
-  reader.onload = e => { prev.src = e.target.result; prev.style.display = 'block'; };
-  reader.readAsDataURL(file);
-  chkForm();
+function calcTotal() {
+  const base = ST.cart.p2l*9 + ST.cart.p3l*13 + ST.cart.p4l*15;
+  ST.delivery = Number(document.getElementById('zona').value) || 0;
+  ST.raw      = base + ST.delivery;
+  const disc  = Math.min(50, ST.disc.fid + ST.disc.bon + ST.disc.ref);
+  ST.final    = +(ST.raw * (1 - disc/100)).toFixed(2);
+
+  document.getElementById('pbig').textContent = 'S/ ' + ST.final.toFixed(2);
+  const oel = document.getElementById('pold');
+  if (disc > 0 && ST.raw > 0) { oel.textContent = 'S/ '+ST.raw.toFixed(2); oel.style.display='block'; }
+  else oel.style.display = 'none';
+
+  ['p2l','p3l','p4l'].forEach(id => {
+    const b = ST.precio[id], f = +(b*(1-disc/100)).toFixed(2);
+    document.getElementById('pr-'+id).innerHTML = disc > 0
+      ? 'S/ '+f.toFixed(2)+' <span class="po">S/ '+b.toFixed(2)+'</span>'
+      : 'S/ '+b.toFixed(2);
+  });
 }
 
-async function enviarBono() {
-  const btn = document.getElementById('btnSubmitBono');
-  if (!btn.classList.contains('ready')) return;
-  btn.disabled = true; btn.textContent = '⏳ Enviando...';
+/* ── PAGO ── */
+function setPago(m) {
+  ST.pago = m;
+  document.querySelectorAll('.popt').forEach(e => e.classList.remove('on'));
+  document.getElementById('pay-'+m).classList.add('on');
+  const esDigital = m === 'Yape' || m === 'Plin' || m === 'Transferencia';
+  document.getElementById('yapeBox').classList.toggle('on', esDigital);
+  document.getElementById('vueltoBox').style.display = m === 'Efectivo' ? 'block' : 'none';
+  if (esDigital) {
+    const tags   = { Yape:'📱 YAPE', Plin:'💜 PLIN', Transferencia:'🏦 TRANSFERENCIA' };
+    const textos = {
+      Yape:'Escanea el QR o transfiere al número de arriba',
+      Plin:'Transfiere por Plin al número de arriba',
+      Transferencia:'Realiza la transferencia al número o cuenta indicada'
+    };
+    document.getElementById('yboxTag').textContent = tags[m]   || tags.Yape;
+    document.getElementById('yboxTxt').textContent = textos[m] || textos.Yape;
+  }
+}
 
-  const nombre     = document.getElementById('f-nombre').value.trim();
-  const telefono   = document.getElementById('f-tel').value.trim();
-  const primera    = document.getElementById('f-primera').value;
-  const tipo       = document.getElementById('f-tipo').value;
-  const plataforma = document.getElementById('f-plataforma').value;
-  const usuario    = document.getElementById('f-usuario').value.trim();
-  const link       = document.getElementById('f-link').value.trim();
-  const mensaje    = document.getElementById('f-mensaje').value.trim();
-  const campana    = document.getElementById('f-campana').value;
-  const foto       = document.getElementById('f-foto').files[0];
+function calcVuelto() {
+  const p = Number(document.getElementById('pagoCon').value) || 0;
+  document.getElementById('vmsg').textContent = 'Vuelto: S/ ' + Math.max(0, p - ST.final).toFixed(2);
+}
 
-  // Mapa de bonos por tipo
-  const bonoMap = { foto:3, video:5, historia:2, reels:4, review:1 };
-  const bonoPct = bonoMap[tipo] || 2;
+/* ── GENERAR CÓDIGO ── */
+async function genCod() {
+  if (!window.currentUser) {
+    await new Promise(res => {
+      const u = window.auth.onAuthStateChanged(usr => { if(usr){ window.currentUser=usr; u(); res(); }});
+    });
+  }
+  return 'ASWA-' + window.currentUser.uid.slice(-8).toUpperCase()
+    .replace(/O/g,'0').replace(/I/g,'1').replace(/L/g,'1');
+}
+
+/* ── BUSCAR CLIENTE ── */
+document.getElementById('telefono').addEventListener('input', async e => {
+  const tel = e.target.value.trim();
+  const ban = document.getElementById('cban');
+  const brn = document.getElementById('btnRef');
+  ST.disc.fid = 0; ST.disc.bon = 0;
+  ST.cli = { id:'',tel:'',nom:'',nivel:'BRONCE',pedidos:0,cod:'',bonos:[],consumo:0 };
+  ban.classList.remove('on'); brn.classList.remove('on'); calcTotal();
+  if (tel.length !== 9 || !tel.startsWith('9')) return;
+
+  if (!window.currentUser) {
+    try {
+      await new Promise((res, rej) => {
+        const timeout = setTimeout(() => rej(new Error('auth timeout')), 6000);
+        const unsub = window.auth.onAuthStateChanged(u => {
+          if (u) { clearTimeout(timeout); unsub(); window.currentUser = u; res(); }
+        });
+      });
+    } catch(authErr) { return; }
+  }
 
   try {
-    let media_url = '';
+    const { query:q, collection:col, where:wh, getDocs:gd } = window.FB;
+    const snap = await gd(q(col(db,'clientes'), wh('businessId','==',BUSINESS_ID), wh('telefono','==',tel)));
 
-    // Subir foto a Firebase Storage
-    if (foto) {
-      const { ref: r, uploadBytes: ub, getDownloadURL: gdu } = window.ST;
-      const storRef = r(window.storage, `ugc/${Date.now()}_${foto.name}`);
-      const snap    = await ub(storRef, foto);
-      media_url     = await gdu(snap.ref);
+    if (!snap.empty) {
+      const data = snap.docs[0].data();
+      ST.cli = { ...data, id: snap.docs[0].id };
+      const p = data.pedidos_totales || 0;
+      let nivel='BRONCE', fid=0, emo='🥉', nivelClass='nivel-bronce';
+      let pedSig=5;
+      if      (p>=20){ nivel='DIAMANTE'; fid=20; emo='💎'; nivelClass='nivel-diamante'; pedSig=null; }
+      else if (p>=10){ nivel='ORO';      fid=15; emo='🥇'; nivelClass='nivel-oro';      pedSig=20; }
+      else if (p>=5) { nivel='PLATA';    fid=10; emo='🥈'; nivelClass='nivel-plata';    pedSig=10; }
+      ST.cli.nivel = nivel; ST.disc.fid = fid;
+
+      const now   = new Date();
+      const bonos = (data.bonos_activos||[]).filter(b => !b.expira || new Date(b.expira)>now);
+      ST.disc.bon = Math.min(30, bonos.reduce((a,b) => a+b.valor, 0));
+
+      if (data.nombre && !document.getElementById('nombre').value)
+        document.getElementById('nombre').value = data.nombre;
+
+      const head = document.getElementById('cbanHead');
+      head.className = 'cban-head ' + nivelClass;
+      document.getElementById('cbanEmo').textContent  = emo;
+      document.getElementById('bnNivel').textContent  = nivel;
+      document.getElementById('bnNom').textContent    = '¡Hola, ' + data.nombre + '! 👋';
+      const nivelDesc = { BRONCE:'Sigue pidiendo para subir de nivel', PLATA:'¡Cliente de confianza!', ORO:'¡Cliente VIP!', DIAMANTE:'¡Leyenda ASWA! 🌽' };
+      document.getElementById('bnDesc').textContent = nivelDesc[nivel];
+
+      const progWrap = document.getElementById('cbanProgWrap');
+      if (pedSig !== null) {
+        progWrap.style.display = 'block';
+        const nivelAnterior = { PLATA:5, ORO:10, DIAMANTE:20 };
+        const limInf  = nivel==='BRONCE' ? 0 : nivelAnterior[{ BRONCE:'PLATA', PLATA:'ORO', ORO:'DIAMANTE' }[nivel]] || 0;
+        const pct     = Math.min(100, Math.round((p - limInf) / (pedSig - limInf) * 100));
+        document.getElementById('cbanFill').style.width    = pct + '%';
+        document.getElementById('cbanProgLabel').textContent = `Camino a ${({BRONCE:'PLATA 🥈', PLATA:'ORO 🥇', ORO:'DIAMANTE 💎'})[nivel]}`;
+        document.getElementById('cbanProgNum').textContent   = `${p}/${pedSig} pedidos`;
+      } else {
+        progWrap.style.display = 'none';
+      }
+
+      const tagsEl = document.getElementById('cbanTags');
+      const tags   = [];
+      if (fid > 0) tags.push(`<span class="cban-tag ok">🏆 ${fid}% fidelidad</span>`);
+      if (ST.disc.bon > 0) tags.push(`<span class="cban-tag ok">🎁 ${ST.disc.bon}% bonos activos</span>`);
+      tags.push(`<span class="cban-tag">${p} pedido${p!==1?'s':''} acumulado${p!==1?'s':''}</span>`);
+
+      const bonosAlerta = bonos.filter(b => {
+        if (!b.expira) return false;
+        const dias = (new Date(b.expira) - now) / 86400000;
+        return dias <= 3 && dias >= 0;
+      });
+      bonosAlerta.forEach(b => {
+        const dias = Math.ceil((new Date(b.expira) - now) / 86400000);
+        const txt  = dias === 0 ? 'hoy' : dias === 1 ? 'mañana' : `en ${dias} días`;
+        tags.push(`<span class="cban-tag warn">⚠️ Bono ${b.valor}% vence ${txt}</span>`);
+      });
+      tagsEl.innerHTML = tags.join('');
+
+      const codigoCliente = data.codigo_referido || ST.cli.cod || '';
+      if (codigoCliente) ST.cli.cod = codigoCliente;
+      const cbanRef = document.getElementById('cbanRef');
+      const cbanCod = document.getElementById('cbanCod');
+      if (codigoCliente && cbanRef && cbanCod) {
+        cbanCod.textContent = codigoCliente;
+        const codColorMap = { BRONCE:'nivel-bronce-cod', PLATA:'nivel-plata-cod', ORO:'nivel-oro-cod', DIAMANTE:'nivel-diamante-cod' };
+        cbanCod.className = 'cref-cod ' + (codColorMap[nivel] || 'nivel-bronce-cod');
+        cbanRef.style.display = 'block';
+      }
+      ban.classList.add('on');
+
+    } else {
+      ST.cli.cod = await genCod();
+      ST.cli.tel = tel;
+      const head = document.getElementById('cbanHead');
+      head.className = 'cban-head nivel-bronce';
+      document.getElementById('cbanEmo').textContent  = '🌽';
+      document.getElementById('bnNivel').textContent  = 'NUEVO';
+      document.getElementById('bnNom').textContent    = '¡Bienvenido/a a ASWA!';
+      document.getElementById('bnDesc').textContent   = 'Tu primer pedido — empieza a acumular';
+      document.getElementById('cbanProgWrap').style.display = 'none';
+      document.getElementById('cbanTags').innerHTML = '<span class="cban-tag">🎉 Primer pedido</span>';
+      const cbanRef2 = document.getElementById('cbanRef');
+      const cbanCod2 = document.getElementById('cbanCod');
+      if (ST.cli.cod && cbanRef2 && cbanCod2) {
+        cbanCod2.textContent = ST.cli.cod;
+        cbanCod2.className   = 'cref-cod nivel-bronce-cod';
+        cbanRef2.style.display = 'block';
+      }
+      ban.classList.add('on');
     }
 
-    const { addDoc:ad, collection:col, serverTimestamp:ts } = window.FB;
-    await ad(col(db, 'ugc_posts'), {
-      businessId: BUSINESS_ID,
-      nombre, telefono, primera_compra: primera,
-      tipo, plataforma, usuario, link_publicacion: link,
-      texto: mensaje, campana,
-      media_url,
-      bono_pct:    bonoPct,
-      estado:      'pendiente',
-      es_nuevo:    primera === 'si',
-      likes:       0, comentarios:0, compartidos:0,
-      destacado:   false, usado:false,
-      created_at:  ts()
-    });
-
-    toast('✅ ¡Solicitud enviada! Te contactamos en 24-48hs', 'ok', 5000);
-
-    // Reset form
-    document.getElementById('tab-bono').querySelectorAll('.finp').forEach(el => {
-      el.tagName === 'SELECT' ? el.selectedIndex = 0 : el.value = '';
-    });
-    document.getElementById('f-autorizo').checked = false;
-    document.getElementById('fotoPreview').style.display = 'none';
-    document.getElementById('uploadZone').classList.remove('has-file');
-    document.getElementById('uploadZone').querySelector('h4').textContent = 'Click para subir imagen';
-    btn.classList.remove('ready');
-
-  } catch(err) {
-    console.error(err);
-    toast('❌ Error al enviar. Intenta de nuevo.', 'err');
-  }
-
-  btn.disabled = false; btn.textContent = '✅ ENVIAR SOLICITUD DE BONO';
-}
-
-/* ══════════════════════════════════════
-   TAB 2: ADMIN - SOLICITUDES
-══════════════════════════════════════ */
-let allSolicitudes = [];
-
-async function cargarAdmin() {
-  const grid = document.getElementById('solGrid');
-  grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1"><span class="spinner"></span><p style="margin-top:12px">Cargando...</p></div>';
-
-  try {
-    const { getDocs:gd, collection:col, query:q, orderBy:ob } = window.FB;
-    const snap = await gd(q(col(db,'ugc_posts'), wh('businessId','==',BUSINESS_ID), ob('created_at','desc')));
-
-    allSolicitudes = [];
-    snap.forEach(d => allSolicitudes.push({ id: d.id, ...d.data() }));
-
-    // Contadores
-    const tots   = allSolicitudes.length;
-    const pend   = allSolicitudes.filter(s => s.estado === 'pendiente').length;
-    const apr    = allSolicitudes.filter(s => s.estado === 'aprobado').length;
-    const rech   = allSolicitudes.filter(s => s.estado === 'rechazado').length;
-    const nuevo  = allSolicitudes.filter(s => s.es_nuevo).length;
-
-    document.getElementById('n-todas').textContent  = tots;
-    document.getElementById('n-pend').textContent   = pend;
-    document.getElementById('n-apr').textContent    = apr;
-    document.getElementById('n-rech').textContent   = rech;
-    document.getElementById('n-nuevo').textContent  = nuevo;
-    document.getElementById('cnt-pendientes').textContent = pend;
-
-    renderAdmin(allSolicitudes);
-
-  } catch(err) {
-    console.error(err);
-    grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1"><span class="emo">❌</span><p>Error al cargar. Verifica permisos Firestore.</p></div>';
-  }
-}
-
-function renderAdmin(lista) {
-  const grid = document.getElementById('solGrid');
-  if (!lista.length) {
-    grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1"><span class="emo">📭</span><p>No hay solicitudes aquí</p></div>';
-    return;
-  }
-
-  const tipoBonoMap = { foto:'(+3%)', video:'(+5%)', historia:'(+2%)', reels:'(+4%)', review:'(+1%)' };
-
-  grid.innerHTML = lista.map(s => {
-    const fecha = s.created_at?.seconds
-      ? new Date(s.created_at.seconds*1000).toLocaleDateString('es-PE')
-      : '—';
-    const estadoClass = { pendiente:'badge-pendiente', aprobado:'badge-aprobado', rechazado:'badge-rechazado' }[s.estado] || '';
-    const esNuevo = s.es_nuevo ? '<span class="badge-nuevo">⭐ Nuevo</span>' : '<span></span>';
-    const imgTag = s.media_url
-      ? `<img src="${s.media_url}" class="sol-img" alt="ugc" onerror="this.style.background='var(--s2)';this.removeAttribute('src')">`
-      : `<div class="sol-img" style="display:flex;align-items:center;justify-content:center;font-size:48px">📸</div>`;
-
-    return `
-      <div class="sol-card" id="card-${s.id}">
-        ${imgTag}
-        <div class="sol-body">
-          <div class="sol-badges">
-            ${esNuevo}
-            <span class="badge-estado ${estadoClass}">${s.estado?.toUpperCase()}</span>
-          </div>
-          <div class="sol-info">
-            <div>Cliente: <span>${s.nombre || '—'}</span></div>
-            <div>Teléfono: <span>${s.telefono || '—'}</span></div>
-            <div>Usuario: <span>${s.usuario || '—'}</span></div>
-            <div>Plataforma: <span>${s.plataforma || '—'}</span></div>
-            <div>Tipo: <span>${s.tipo || '—'} ${tipoBonoMap[s.tipo]||''}</span></div>
-            <div>Fecha: <span>${fecha}</span></div>
-          </div>
-          <div class="sol-actions">
-            <button class="sa-btn sa-aprobar"  onclick="accionSol('${s.id}','aprobado')">✓ Aprobar</button>
-            <button class="sa-btn sa-rechazar" onclick="accionSol('${s.id}','rechazado')">✗ Rechazar</button>
-            <button class="sa-btn sa-ver"      onclick="verDetalle('${s.id}')">👁 Ver</button>
-          </div>
-        </div>
-      </div>`;
-  }).join('');
-}
-
-function filtrarAdmin(filtro, btn) {
-  document.querySelectorAll('.filter-pills .fpill').forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
-  let lista = allSolicitudes;
-  if (filtro === 'nuevo')    lista = allSolicitudes.filter(s => s.es_nuevo);
-  else if (filtro !== 'todas') lista = allSolicitudes.filter(s => s.estado === filtro);
-  renderAdmin(lista);
-}
-
-async function accionSol(id, nuevoEstado) {
-  try {
-    const { doc:d, updateDoc:ud, serverTimestamp:ts } = window.FB;
-    const extra = nuevoEstado === 'aprobado'
-      ? { aprobado_at: ts(), usado: false, destacado: false }
-      : { rechazado_at: ts() };
-    await ud(d(db, 'ugc_posts', id), { estado: nuevoEstado, ...extra });
-
-    // Actualizar en memoria
-    const idx = allSolicitudes.findIndex(s => s.id === id);
-    if (idx !== -1) allSolicitudes[idx].estado = nuevoEstado;
-
-    const card = document.getElementById('card-' + id);
-    if (card) {
-      const badge = card.querySelector('.badge-estado');
-      const estadoClass = { aprobado:'badge-aprobado', rechazado:'badge-rechazado' };
-      badge.className = 'badge-estado ' + (estadoClass[nuevoEstado]||'');
-      badge.textContent = nuevoEstado.toUpperCase();
+    if (ST.cli.cod || ST.cli.codigo_referido) {
+      const cod = ST.cli.cod || ST.cli.codigo_referido;
+      ST.cli.cod = cod;
+      brn.classList.add('on');
+      document.getElementById('codModal').textContent = cod;
     }
+    calcTotal();
 
-    const msg = nuevoEstado === 'aprobado' ? '✅ Solicitud aprobada' : '❌ Solicitud rechazada';
-    toast(msg, nuevoEstado === 'aprobado' ? 'ok' : 'err');
-
-    // Actualizar contadores
-    const pend = allSolicitudes.filter(s => s.estado === 'pendiente').length;
-    document.getElementById('cnt-pendientes').textContent = pend;
-    document.getElementById('n-pend').textContent = pend;
-
-  } catch(err) {
-    console.error(err);
-    toast('❌ Error al actualizar', 'err');
-  }
-}
-
-function verDetalle(id) {
-  const s = allSolicitudes.find(x => x.id === id);
-  if (!s) return;
-  const fecha = s.created_at?.seconds
-    ? new Date(s.created_at.seconds*1000).toLocaleDateString('es-PE')
-    : '—';
-
-  const img = document.getElementById('mdImg');
-  img.src = s.media_url || '';
-  img.style.display = s.media_url ? 'block' : 'none';
-
-  document.getElementById('mdNom').textContent     = s.nombre || '—';
-  document.getElementById('mdTel').textContent     = s.telefono || '—';
-  document.getElementById('mdUsuario').textContent = s.usuario || '—';
-  document.getElementById('mdPlat').textContent    = s.plataforma || '—';
-  document.getElementById('mdTipo').textContent    = s.tipo || '—';
-  document.getElementById('mdMsg').textContent     = s.texto || '—';
-
-  const lnk = document.getElementById('mdLink');
-  lnk.href = s.link_publicacion || '#';
-  lnk.textContent = s.link_publicacion ? 'Ver publicación →' : 'Sin link';
-
-  document.getElementById('mdActions').innerHTML = `
-    <button class="sa-btn sa-aprobar"  style="flex:1;padding:12px" onclick="accionSol('${id}','aprobado');cerrarModal()">✓ Aprobar</button>
-    <button class="sa-btn sa-rechazar" style="flex:1;padding:12px" onclick="accionSol('${id}','rechazado');cerrarModal()">✗ Rechazar</button>`;
-
-  document.getElementById('modalDetalle').classList.add('open');
-}
-function cerrarModal() { document.getElementById('modalDetalle').classList.remove('open'); }
-document.getElementById('modalDetalle').addEventListener('click', e => {
-  if (e.target === document.getElementById('modalDetalle')) cerrarModal();
+  } catch(err) { console.error('Error buscando cliente:', err); }
 });
 
-/* ══════════════════════════════════════
-   TAB 3: GALERÍA UGC
-══════════════════════════════════════ */
-let allGaleria = [];
+/* ── VALIDAR CÓDIGO REFERIDO ── */
+let rtmr;
+document.getElementById('codigoUsado').addEventListener('input', e => {
+  clearTimeout(rtmr);
+  const cod = e.target.value.trim().toUpperCase();
+  const el  = document.getElementById('rst');
+  if (cod.length < 8) { el.textContent=''; ST.disc.ref=0; calcTotal(); return; }
+  el.textContent = '⏳';
+  rtmr = setTimeout(async () => {
+    try {
+      const { query:q, collection:col, where:wh, getDocs:gd } = window.FB;
+      const snap = await gd(q(col(db,'clientes'), wh('businessId','==',BUSINESS_ID), wh('codigo_referido','==',cod)));
+      if (!snap.empty && snap.docs[0].id !== ST.cli.id) {
+        el.textContent='✓ +5%'; el.style.color='var(--grn)'; ST.disc.ref=5;
+      } else if (snap.docs[0]?.id === ST.cli.id) {
+        el.textContent='⚠ Tu código'; el.style.color='#f59e0b'; ST.disc.ref=0;
+      } else {
+        el.textContent='✗ Inválido'; el.style.color='var(--red)'; ST.disc.ref=0;
+      }
+    } catch { el.textContent=''; ST.disc.ref=0; }
+    calcTotal();
+  }, 600);
+});
 
-async function cargarGaleriaUGC() {
-  const grid = document.getElementById('galUGCGrid');
-  grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1"><span class="spinner"></span><p style="margin-top:12px">Cargando...</p></div>';
+/* ── RESUMEN ── */
+function abrirResumen() {
+  if (ST.final <= 0)    return tst('Selecciona al menos un producto 🛒');
+  const tel = document.getElementById('telefono').value.trim();
+  const nom = document.getElementById('nombre').value.trim();
+  const dis = document.getElementById('zona').value;
+  if (tel.length !== 9) return tst('Ingresa tu número de teléfono 📱');
+  if (!nom)             return tst('Ingresa tu nombre completo');
+  if (!dis)             return tst('Selecciona tu zona de entrega 📍');
 
-  try {
-    const { getDocs:gd, collection:col, query:q, where:wh, orderBy:ob } = window.FB;
-    const snap = await gd(q(col(db,'ugc_posts'), wh('businessId','==',BUSINESS_ID), wh('estado','==','aprobado'), ob('created_at','desc')));
+  const lista = document.getElementById('resLista'); lista.innerHTML = '';
+  const row = (a,b,cls='') =>
+    lista.insertAdjacentHTML('beforeend',
+      '<div class="rrow '+cls+'"><span>'+a+'</span><span>'+b+'</span></div>');
 
-    allGaleria = [];
-    snap.forEach(d => allGaleria.push({ id: d.id, ...d.data() }));
+  if (ST.cart.p2l) row(ST.cart.p2l+'× ASWA 2L',          'S/ '+(ST.cart.p2l*9).toFixed(2));
+  if (ST.cart.p3l) row(ST.cart.p3l+'× ASWA 3L',          'S/ '+(ST.cart.p3l*13).toFixed(2));
+  if (ST.cart.p4l) row(ST.cart.p4l+'× ASWA 4L Familiar', 'S/ '+(ST.cart.p4l*15).toFixed(2));
+  if (ST.delivery) row('Delivery',                         'S/ '+ST.delivery.toFixed(2));
 
-    // Métricas
-    const total = allGaleria.length;
-    const dest  = allGaleria.filter(s => s.destacado).length;
-    const usado = allGaleria.filter(s => s.usado).length;
-    const disp  = total - usado;
-    document.getElementById('g-total').textContent = total;
-    document.getElementById('g-dest').textContent  = dest;
-    document.getElementById('g-usado').textContent = usado;
-    document.getElementById('g-disp').textContent  = disp;
+  const disc = Math.min(50, ST.disc.fid+ST.disc.bon+ST.disc.ref);
+  const db2  = document.getElementById('dban');
+  if (disc > 0) {
+    const pts=[];
+    if(ST.disc.fid) pts.push(ST.disc.fid+'% fidelidad');
+    if(ST.disc.bon) pts.push(ST.disc.bon+'% bonos');
+    if(ST.disc.ref) pts.push(ST.disc.ref+'% referido');
+    db2.textContent = '🎉 Descuento '+disc+'% ('+pts.join(' + ')+') aplicado';
+    db2.classList.add('on');
+    row('Descuento '+disc+'%','−S/ '+(ST.raw*disc/100).toFixed(2),'rdesc');
+  } else db2.classList.remove('on');
+  row('<strong>TOTAL</strong>','<strong>S/ '+ST.final.toFixed(2)+'</strong>','tot');
 
-    renderGaleriaUGC(allGaleria);
-
-  } catch(err) {
-    console.error(err);
-    grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1"><span class="emo">📭</span><p>Aún no hay contenido aprobado</p></div>';
-    document.getElementById('g-total').textContent = '0';
-    document.getElementById('g-dest').textContent  = '0';
-    document.getElementById('g-usado').textContent = '0';
-    document.getElementById('g-disp').textContent  = '0';
-  }
+  document.getElementById('mResumen').classList.add('on');
 }
 
-function renderGaleriaUGC(lista) {
-  const grid = document.getElementById('galUGCGrid');
-  if (!lista.length) {
-    grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1"><span class="emo">🖼</span><p>No hay contenido en esta categoría</p></div>';
+/* ══════════════════════════════════════
+   ENVIAR PEDIDO — BUG 1 CORREGIDO
+   (btn.innerHTML = ... estaba roto)
+══════════════════════════════════════ */
+async function enviarPedido() {
+  if (ST._enviando) return;
+  ST._enviando = true;
+
+  const btn = document.getElementById('btnEnviar');
+  btn.disabled = true; btn.textContent = 'Enviando...';
+
+  const telefono    = document.getElementById('telefono').value.trim();
+  const nombre      = document.getElementById('nombre').value.trim();
+  const direccion   = document.getElementById('direccion').value.trim() || 'No especificada';
+  const zonaSel     = document.getElementById('zona');
+  const zonaTexto   = zonaSel.options[zonaSel.selectedIndex]?.text || '';
+  const codigoUsado = document.getElementById('codigoUsado').value.trim().toUpperCase();
+  const pagoCon     = Number(document.getElementById('pagoCon').value) || ST.final;
+  const disc        = Math.min(50, ST.disc.fid+ST.disc.bon+ST.disc.ref);
+  const pid         = '#'+Date.now().toString(36).slice(-6).toUpperCase();
+
+  let items = '';
+  if (ST.cart.p2l) items += '• '+ST.cart.p2l+'× ASWA 2L → S/ '+(ST.cart.p2l*9).toFixed(2)+'\n';
+  if (ST.cart.p3l) items += '• '+ST.cart.p3l+'× ASWA 3L → S/ '+(ST.cart.p3l*13).toFixed(2)+'\n';
+  if (ST.cart.p4l) items += '• '+ST.cart.p4l+'× ASWA 4L Familiar → S/ '+(ST.cart.p4l*15).toFixed(2)+'\n';
+
+  const hora = new Date().toLocaleTimeString('es-PE',{hour:'2-digit',minute:'2-digit'});
+  const nivelEmoji = { BRONCE:'🥉', PLATA:'🥈', ORO:'🥇', DIAMANTE:'💎' };
+  const nivelCliente = ST.cli.nivel || 'BRONCE';
+
+  const msg =
+    '━━━━━━━━━━━━━━━━━━━━━\n'
+    +'🌽 *NUEVO PEDIDO ASWA*\n'
+    +'📋 *N° '+pid+'*  •  🕐 '+hora+'\n'
+    +'━━━━━━━━━━━━━━━━━━━━━\n\n'
+    +'👤 *CLIENTE*\n'
+    +'  ▸ '+nombre+'\n'
+    +'  ▸ 📱 '+telefono+'\n'
+    +'  ▸ '+(nivelEmoji[nivelCliente]||'🥉')+' Nivel '+nivelCliente+'\n'
+    +(codigoUsado ? '  ▸ 🎟️ Ref: `'+codigoUsado+'`\n' : '')
+    +'\n'
+    +'🛒 *PRODUCTOS*\n'
+    +'─────────────────────\n'
+    +items
+    +'─────────────────────\n'
+    +(disc>0 ? '🎁 Descuento -'+disc+'%:  *−S/ '+(ST.raw*disc/100).toFixed(2)+'*\n' : '')
+    +'💰 *TOTAL:  S/ '+ST.final.toFixed(2)+'*\n\n'
+    +'🚴 *ENTREGA*\n'
+    +'  ▸ 🏠 '+direccion+'\n'
+    +(ST.gpsUrl ? '  ▸ 📍 '+ST.gpsUrl+'\n' : '')
+    +'  ▸ 📌 Zona: '+zonaTexto+'\n\n'
+    +'💳 *PAGO: '+ST.pago+'*\n'
+    +(ST.pago==='Efectivo'
+      ? '  ▸ Con: S/ '+pagoCon.toFixed(2)+'\n  ▸ Vuelto: *S/ '+Math.max(0,pagoCon-ST.final).toFixed(2)+'*\n'
+      : '')
+    +'\n━━━━━━━━━━━━━━━━━━━━━\n'
+    +'_ASWA · La Rica Chicha · Morales_ 🌿';
+
+  window.open('https://wa.me/'+window.WA1+'?text='+encodeURIComponent(msg), '_blank');
+  setTimeout(() => window.open('https://wa.me/'+window.WA2+'?text='+encodeURIComponent(msg), '_blank'), 900);
+
+  try {
+    const { addDoc:ad, collection:col, query:q, where:wh,
+            getDocs:gd, doc:d, updateDoc:ud, serverTimestamp:ts } = window.FB;
+
+    const ref = await ad(col(db,'pedidos'), {
+      businessId: BUSINESS_ID,
+      nombre, telefono, direccion,
+      distrito:       zonaTexto,
+      items:          { ...ST.cart },
+      subtotal:       ST.raw,
+      delivery:       ST.delivery,
+      descuento_pct:  disc,
+      descuento_amt:  +(ST.raw*disc/100).toFixed(2),
+      total:          ST.final,
+      pago:           ST.pago,
+      pago_con:       pagoCon,
+      vuelto:         Math.max(0, pagoCon-ST.final),
+      codigo_usado:   codigoUsado || null,
+      nivel_cliente:  ST.cli.nivel || 'BRONCE',
+      estado:         'Pendiente',
+      confirmacion_cliente: false,
+      gps_url:        ST.gpsUrl || null,
+      gps_coords:     ST.gpsCoords || null,
+      fecha:          ts()
+    });
+    ST.pedidoFbId = ref.id;
+    sessionStorage.setItem('aswa_pedido_id', ref.id);
+
+    const snapC = await gd(q(col(db,'clientes'), wh('businessId','==',BUSINESS_ID), wh('telefono','==',telefono)));
+    const codFin = ST.cli.cod || await genCod();
+    const cdata  = {
+      businessId: BUSINESS_ID,
+      nombre, telefono,
+      nivel:           ST.cli.nivel || 'BRONCE',
+      pedidos_totales: (ST.cli.pedidos||0) + 1,
+      total_consumo:   (ST.cli.consumo||0) + ST.final,
+      ultimo_pedido:   ts(),
+      codigo_referido: codFin,
+      bonos_activos:   ST.cli.bonos || []
+    };
+    if (!snapC.empty) await ud(d(db,'clientes',snapC.docs[0].id), cdata);
+    else              await ad(col(db,'clientes'), cdata);
+
+    if (codigoUsado && ST.disc.ref > 0) {
+      const snapR = await gd(q(col(db,'clientes'), wh('businessId','==',BUSINESS_ID), wh('codigo_referido','==',codigoUsado)));
+      if (!snapR.empty) {
+        const rd  = snapR.docs[0].data();
+        const exp = new Date(); exp.setDate(exp.getDate()+30);
+        await ud(d(db,'clientes',snapR.docs[0].id), {
+          bonos_activos: [...(rd.bonos_activos||[]), {
+            tipo:'referido', valor:5, origen:telefono,
+            fecha: new Date().toISOString(), expira: exp.toISOString()
+          }],
+          referidos: [...(rd.referidos||[]), telefono]
+        });
+      }
+    }
+
+  } catch(err) { console.error('Firebase error:', err); }
+
+  /* ── BUG 1 CORREGIDO: btn.innerHTML ahora usa una sola cadena válida ── */
+  ST._enviando = false;
+  btn.disabled = false;
+  btn.innerHTML =
+    '<svg class="ws-ico" viewBox="0 0 24 24" fill="currentColor">'
+    +'<path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/>'
+    +'</svg> ENVIAR PEDIDO POR WHATSAPP';
+
+  cerrar('mResumen');
+  if (ST.cli.cod) {
+    const el = document.getElementById('succCod');
+    el.textContent = '🎁 Tu código: ' + ST.cli.cod;
+    el.style.display = 'block';
+  }
+  document.getElementById('succScreen').classList.add('on');
+
+  sessionStorage.setItem('aswa_succ_active', '1');
+  sessionStorage.setItem('aswa_cart',     JSON.stringify(ST.cart));
+  sessionStorage.setItem('aswa_total',    ST.final    || 0);
+  sessionStorage.setItem('aswa_delivery', ST.delivery || 0);
+  sessionStorage.setItem('aswa_raw',      ST.raw      || 0);
+  sessionStorage.setItem('aswa_pago',     ST.pago     || 'Efectivo');
+  if (ST.cli.nom || ST.cli.nombre) {
+    sessionStorage.setItem('aswa_nombre', ST.cli.nom   || ST.cli.nombre   || '');
+    sessionStorage.setItem('aswa_tel',    ST.cli.tel   || ST.cli.telefono || '');
+    sessionStorage.setItem('aswa_nivel',  ST.cli.nivel || 'BRONCE');
+    sessionStorage.setItem('aswa_cod',    ST.cli.cod   || '');
+  }
+
+  const esperar = () => {
+    if (ST.pedidoFbId) {
+      setTimeout(() => {
+        if (document.getElementById('succScreen').classList.contains('on')) {
+          document.getElementById('succScreen').classList.remove('on');
+          document.getElementById('mConfirmar').classList.add('on');
+        }
+      }, 6000);
+    } else {
+      setTimeout(() => esperar(), 600);
+    }
+  };
+  setTimeout(() => esperar(), 1200);
+}
+
+/* ── CONFIRMAR ENTREGA ── */
+async function confirmarEntrega() {
+  const btn = document.getElementById('btnConf');
+  if (!ST.pedidoFbId) {
+    const saved = sessionStorage.getItem('aswa_pedido_id');
+    if (saved) ST.pedidoFbId = saved;
+  }
+  if (!ST.pedidoFbId) {
+    cerrar('mConfirmar');
+    tst('⚠️ No se encontró el pedido. Generando nota de todas formas...', 2000);
+    setTimeout(() => mostrarNotaVenta(), 800);
     return;
   }
-  grid.innerHTML = lista.map(s => {
-    const badgeColor = s.destacado ? '#fbbf24' : s.usado ? '#22c55e' : '#8b5cf6';
-    const badgeTxt   = s.destacado ? '⭐ Destacado' : s.usado ? '✅ Usado' : '🟢 Disponible';
-    return `
-      <div class="gug-card">
-        ${s.media_url ? `<img src="${s.media_url}" class="gug-img" loading="lazy" onerror="this.style.background='var(--s2)';this.removeAttribute('src')">` : '<div class="gug-img" style="display:flex;align-items:center;justify-content:center;font-size:40px">📸</div>'}
-        <span class="gug-badge" style="background:${badgeColor}20;color:${badgeColor};border:1px solid ${badgeColor}40">${badgeTxt}</span>
-        <div class="gug-body">
-          <div class="gug-user">@${s.usuario || 'anónimo'}</div>
-          <div class="gug-plat">${s.plataforma || ''} · ${s.tipo || ''}</div>
-          <div class="gug-meta">
-            <span>❤️ ${s.likes || 0}</span>
-            <span>💬 ${s.comentarios || 0}</span>
-          </div>
-          <div style="display:flex;gap:6px;margin-top:10px">
-            <button onclick="toggleDestacado('${s.id}',${!s.destacado})"
-              style="flex:1;background:rgba(251,191,36,.1);border:1px solid rgba(251,191,36,.3);color:#fbbf24;padding:6px;border-radius:8px;font-size:10px;font-weight:700;cursor:pointer;font-family:'Poppins',sans-serif">
-              ${s.destacado ? '★ Quitar' : '☆ Destacar'}
-            </button>
-            <button onclick="toggleUsado('${s.id}',${!s.usado})"
-              style="flex:1;background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.3);color:var(--grn);padding:6px;border-radius:8px;font-size:10px;font-weight:700;cursor:pointer;font-family:'Poppins',sans-serif">
-              ${s.usado ? '↩ Marcar libre' : '✓ Marcar usado'}
-            </button>
-          </div>
-        </div>
-      </div>`;
-  }).join('');
-}
-
-function filtrarGalUGC(filtro, btn) {
-  document.querySelectorAll('#tab-galeria .filter-pills .fpill').forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
-  let lista = allGaleria;
-  if (filtro === 'destacados')  lista = allGaleria.filter(s => s.destacado);
-  if (filtro === 'disponibles') lista = allGaleria.filter(s => !s.usado);
-  if (filtro === 'usados')      lista = allGaleria.filter(s => s.usado);
-  renderGaleriaUGC(lista);
-}
-
-async function toggleDestacado(id, val) {
+  btn.disabled = true; btn.innerHTML = '⏳ Confirmando...';
   try {
-    const { doc:d, updateDoc:ud } = window.FB;
-    await ud(d(db,'ugc_posts',id), { destacado: val });
-    const idx = allGaleria.findIndex(s => s.id === id);
-    if (idx !== -1) allGaleria[idx].destacado = val;
-    renderGaleriaUGC(allGaleria);
-    toast(val ? '⭐ Marcado como destacado' : 'Removido de destacados', 'ok');
-  } catch(e) { toast('❌ Error', 'err'); }
-}
-
-async function toggleUsado(id, val) {
-  try {
-    const { doc:d, updateDoc:ud } = window.FB;
-    await ud(d(db,'ugc_posts',id), { usado: val });
-    const idx = allGaleria.findIndex(s => s.id === id);
-    if (idx !== -1) allGaleria[idx].usado = val;
-    renderGaleriaUGC(allGaleria);
-    toast(val ? '✅ Marcado como usado' : '🟢 Marcado como disponible', 'ok');
-  } catch(e) { toast('❌ Error', 'err'); }
-}
-
-/* ══════════════════════════════════════
-   TAB 4: ESTADÍSTICAS
-══════════════════════════════════════ */
-async function cargarStats() {
-  try {
-    const { getDocs:gd, collection:col, query:q, orderBy:ob } = window.FB;
-    const snap = await gd(q(col(db,'ugc_posts'), wh('businessId','==',BUSINESS_ID), ob('created_at','desc')));
-
-    const todos = [];
-    snap.forEach(d => todos.push({ id:d.id, ...d.data() }));
-
-    // Filtrar este mes
-    const now   = new Date();
-    const inicio = new Date(now.getFullYear(), now.getMonth(), 1);
-    const esteMes = todos.filter(s => s.created_at?.seconds && new Date(s.created_at.seconds*1000) >= inicio);
-
-    const total   = esteMes.length;
-    const aprobados  = esteMes.filter(s => s.estado === 'aprobado').length;
-    const rechazados = esteMes.filter(s => s.estado === 'rechazado').length;
-    const pendientes = esteMes.filter(s => s.estado === 'pendiente').length;
-    const nuevos     = esteMes.filter(s => s.es_nuevo).length;
-    const recurrentes= total - nuevos;
-
-    document.getElementById('st-total').textContent = total;
-    document.getElementById('st-breakdown').innerHTML =
-      `Contenidos recibidos<br>
-       ✅ Aprobados: ${aprobados} (${total?Math.round(aprobados/total*100):0}%)<br>
-       ❌ Rechazados: ${rechazados}<br>
-       ⏳ Pendientes: ${pendientes}`;
-
-    document.getElementById('st-part').innerHTML =
-      `Clientes Nuevos: <strong>${nuevos} (${total?Math.round(nuevos/total*100):0}%)</strong><br>
-       Clientes Recurrentes: <strong>${recurrentes} (${total?Math.round(recurrentes/total*100):0}%)</strong>`;
-
-    // Plataformas
-    const platCount = {};
-    esteMes.forEach(s => { if (s.plataforma) platCount[s.plataforma] = (platCount[s.plataforma]||0)+1; });
-    const sortedPlat = Object.entries(platCount).sort((a,b)=>b[1]-a[1]);
-    document.getElementById('st-plat').innerHTML = sortedPlat.slice(0,3).map(([p,n]) =>
-      `${p}: <strong>${n} (${Math.round(n/total*100)}%)</strong>`
-    ).join('<br>') || 'Sin datos aún';
-
-    // ROI
-    const costoBonos = aprobados * 5; // Estimado S/ 5 por bono
-    const valorContent = aprobados * 80; // S/ 80 valor promedio contenido orgánico
-    const roi = costoBonos > 0 ? Math.round((valorContent - costoBonos) / costoBonos * 100) : 0;
-    document.getElementById('st-roi').innerHTML =
-      `Costo Descuentos: <strong>S/ ${costoBonos}</strong><br>
-       Valor Contenido: <strong>S/ ${valorContent} ⭐</strong><br>
-       ROI: <strong style="font-size:16px;color:var(--y)">${roi}% 🚀</strong>`;
-
-    // Engagement
-    const aprobadosList = todos.filter(s => s.estado === 'aprobado');
-    const avgLikes   = aprobadosList.length ? Math.round(aprobadosList.reduce((s,x)=>s+(x.likes||0),0)/aprobadosList.length) : 0;
-    const avgComm    = aprobadosList.length ? Math.round(aprobadosList.reduce((s,x)=>s+(x.comentarios||0),0)/aprobadosList.length) : 0;
-    const avgShares  = aprobadosList.length ? Math.round(aprobadosList.reduce((s,x)=>s+(x.compartidos||0),0)/aprobadosList.length) : 0;
-    document.getElementById('st-likes').textContent    = avgLikes;
-    document.getElementById('st-comments').textContent = avgComm;
-    document.getElementById('st-shares').textContent   = avgShares;
-
-    // Barras plataformas
-    const maxN = sortedPlat.length ? sortedPlat[0][1] : 1;
-    document.getElementById('platBars').innerHTML = sortedPlat.map(([p,n]) => `
-      <div class="plat-row">
-        <div class="plat-name">${p.charAt(0).toUpperCase()+p.slice(1)}</div>
-        <div class="plat-bar-wrap"><div class="plat-bar" style="width:${Math.round(n/maxN*100)}%"></div></div>
-        <div class="plat-pct">${Math.round(n/total*100)}%</div>
-      </div>`).join('') || '<div style="color:var(--mut);font-size:13px">Sin datos todavía</div>';
-
+    const { doc:d, updateDoc:ud, serverTimestamp:ts } = window.FB;
+    await ud(d(db,'pedidos',ST.pedidoFbId), {
+      confirmacion_cliente: true, confirmado_at: ts(), estado: 'entregado'
+    });
+    cerrar('mConfirmar');
+    tst('🎉 ¡Entrega confirmada! Preparando tu Nota de Venta...', 3000);
+    ['aswa_pedido_id','aswa_succ_active','aswa_cart','aswa_total',
+     'aswa_delivery','aswa_raw','aswa_pago','aswa_nombre',
+     'aswa_tel','aswa_nivel','aswa_cod'].forEach(k => sessionStorage.removeItem(k));
+    setTimeout(() => mostrarNotaVenta(), 1000);
   } catch(err) {
-    console.error(err);
-    toast('Error cargando estadísticas', 'err');
+    console.error('confirmarEntrega error:', err);
+    btn.disabled = false; btn.innerHTML = '✅ SÍ, YA RECIBÍ MI PEDIDO';
+    if (err.code === 'permission-denied') {
+      cerrar('mConfirmar');
+      tst('✅ ¡Pedido confirmado! Generando nota...', 2500);
+      setTimeout(() => mostrarNotaVenta(), 800);
+    } else {
+      tst('❌ Error al confirmar. Verifica tu conexión.', 3000);
+    }
   }
+}
+
+/* ── NOTA DE VENTA ── */
+function mostrarNotaVenta() {
+  if (!ST.cart || Object.values(ST.cart).every(q => q < 1)) {
+    try { const s = sessionStorage.getItem('aswa_cart'); if(s) ST.cart = JSON.parse(s); } catch(e) {}
+  }
+  if (!ST.final || ST.final < 1) {
+    ST.final    = parseFloat(sessionStorage.getItem('aswa_total')    || 0);
+    ST.delivery = parseFloat(sessionStorage.getItem('aswa_delivery') || 0);
+    ST.raw      = parseFloat(sessionStorage.getItem('aswa_raw')      || 0);
+    ST.pago     = sessionStorage.getItem('aswa_pago') || 'Efectivo';
+  }
+  if (!ST.cli.nom && !ST.cli.nivel) {
+    ST.cli.nom   = sessionStorage.getItem('aswa_nombre') || '';
+    ST.cli.tel   = sessionStorage.getItem('aswa_tel')    || '';
+    ST.cli.nivel = sessionStorage.getItem('aswa_nivel')  || 'BRONCE';
+    ST.cli.cod   = sessionStorage.getItem('aswa_cod')    || '';
+  }
+
+  const ahora    = new Date();
+  const fechaStr = ahora.toLocaleDateString('es-PE', { day:'2-digit', month:'2-digit', year:'2-digit' });
+  const horaStr  = ahora.toLocaleTimeString('es-PE', { hour:'2-digit', minute:'2-digit' });
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  let nv = ''; for (let i=0; i<10; i++) nv += chars[Math.floor(Math.random()*chars.length)];
+
+  document.getElementById('nvNumero').textContent = 'N° Nota: ' + nv;
+  document.getElementById('nvFecha').textContent  = 'Fecha: ' + fechaStr + ', ' + horaStr;
+
+  const nombre    = ST.cli.nom    || document.getElementById('nombre')?.value    || '—';
+  const telefono  = ST.cli.tel    || document.getElementById('telefono')?.value  || '—';
+  const direccion = document.getElementById('direccion')?.value || '—';
+  const zonaEl    = document.getElementById('zona');
+  const zonaText  = zonaEl?.options[zonaEl.selectedIndex]?.text || '—';
+
+  document.getElementById('nvNombre').textContent    = nombre;
+  document.getElementById('nvTelefono').textContent  = telefono;
+  document.getElementById('nvDireccion').textContent = direccion;
+  document.getElementById('nvZona').textContent      = zonaText;
+  document.getElementById('nvPago').textContent      = ST.pago || 'Efectivo';
+
+  if (ST.gpsUrl) {
+    document.getElementById('nvGpsRow').style.display = 'flex';
+    document.getElementById('nvGpsLink').href = ST.gpsUrl;
+  }
+
+  const nivel = ST.cli.nivel || 'BRONCE';
+  const nivelInfo = {
+    BRONCE:   { cls:'nnb-bronce',   txt:'🥉 BRONCE'   },
+    PLATA:    { cls:'nnb-plata',    txt:'🥈 PLATA'    },
+    ORO:      { cls:'nnb-oro',      txt:'🥇 ORO'      },
+    DIAMANTE: { cls:'nnb-diamante', txt:'💎 DIAMANTE' }
+  };
+  const ni = nivelInfo[nivel] || nivelInfo.BRONCE;
+  const badge = document.getElementById('nvNivelBadge');
+  badge.className = 'nota-nivel-badge ' + ni.cls;
+  badge.textContent = ni.txt;
+
+  const cod = ST.cli.cod || ST.cli.codigo_referido || '';
+  if (cod) { document.getElementById('nvCodRef').textContent = cod; document.getElementById('nvCodBox').style.display = 'flex'; }
+
+  const PROD = {
+    p2l: { nom:'Chicha ASWA', sz:'Presentación 2L', img:'aswa de 2 litros 1.png',      precio:9  },
+    p3l: { nom:'Chicha ASWA', sz:'Presentación 3L', img:'aswa de 3 litros.png',         precio:13 },
+    p4l: { nom:'Familiar ASWA', sz:'Familiar 4L',   img:'galon familiar de 4 litros.png', precio:15 }
+  };
+  const fallback = 'data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2240%22 height=%2240%22><rect width=%2240%22 height=%2240%22 fill=%22%23fffbeb%22 rx=%228%22/><text x=%2220%22 y=%2228%22 text-anchor=%22middle%22 fill=%22%23c27c00%22 font-size=%2218%22>🫙</text></svg>';
+
+  let itemsHtml = '';
+  Object.entries(ST.cart).forEach(([k, qty]) => {
+    if (qty < 1) return;
+    const p = PROD[k]; const sub = (qty * p.precio).toFixed(2);
+    itemsHtml += `
+      <div class="nota-prod-row">
+        <div class="nota-prod-cell">
+          <img src="${p.img}" alt="${p.sz}" class="nota-prod-img" onerror="this.src='${fallback}'">
+          <div><div class="nota-prod-nom">${p.sz}</div><div class="nota-prod-sz">${p.nom}</div></div>
+        </div>
+        <div class="nota-prod-cant">${qty}</div>
+        <div class="nota-prod-unit">S/ ${p.precio}.00</div>
+        <div class="nota-prod-sub">S/ ${sub}</div>
+      </div>`;
+  });
+  document.getElementById('nvItems').innerHTML = itemsHtml;
+
+  const subtotal = ST.raw      || 0;
+  const delivery = ST.delivery || 0;
+  const total    = ST.final    || 0;
+  const desc     = Math.max(0, subtotal - (total - delivery));
+  document.getElementById('nvSubtotal').textContent    = 'S/ ' + subtotal.toFixed(2);
+  document.getElementById('nvDelivery').textContent    = 'S/ ' + delivery.toFixed(2);
+  document.getElementById('nvDeliveryUnit').textContent= 'S/ ' + delivery.toFixed(2);
+  document.getElementById('nvTotal').textContent       = 'S/ ' + total.toFixed(2);
+  if (desc > 0.01) {
+    document.getElementById('nvDescRow').style.display = 'flex';
+    document.getElementById('nvDescuento').textContent = '-S/ ' + desc.toFixed(2) + ' (' + Math.round(desc/subtotal*100) + '%)';
+  }
+  document.getElementById('notaVentaModal').classList.add('open');
+}
+
+function cerrarNota() {
+  document.getElementById('notaVentaModal').classList.remove('open');
+  setTimeout(() => location.reload(), 300);
+}
+
+function _generarHtmlNota() {
+  const baseUrl = window.location.origin + window.location.pathname.replace(/[^/]*$/, '');
+  const logoSrc = baseUrl + 'logo de aswa.jpg';
+  const nivel   = ST.cli.nivel || 'BRONCE';
+  const nivelColors = {
+    BRONCE:   { bg:'#fef3c7', color:'#92400e', border:'#fbbf24', txt:'🥉 BRONCE'   },
+    PLATA:    { bg:'#eff6ff', color:'#1e40af', border:'#93c5fd', txt:'🥈 PLATA'    },
+    ORO:      { bg:'#fffbeb', color:'#b45309', border:'#f59e0b', txt:'🥇 ORO'      },
+    DIAMANTE: { bg:'#f5f3ff', color:'#6d28d9', border:'#c4b5fd', txt:'💎 DIAMANTE' }
+  };
+  const nc  = nivelColors[nivel] || nivelColors.BRONCE;
+  const cod = ST.cli.cod || '';
+  const PROD = {
+    p2l: { sz:'Presentación 2L', nom:'Chicha ASWA', img:baseUrl+'aswa de 2 litros 1.png',      precio:9  },
+    p3l: { sz:'Presentación 3L', nom:'Chicha ASWA', img:baseUrl+'aswa de 3 litros.png',         precio:13 },
+    p4l: { sz:'Familiar 4L',     nom:'Familiar',     img:baseUrl+'galon familiar de 4 litros.png', precio:15 }
+  };
+  let prodRows = '';
+  Object.entries(ST.cart).forEach(([k, qty]) => {
+    if (qty < 1) return;
+    const p = PROD[k]; const sub = (qty * p.precio).toFixed(2);
+    prodRows += `<tr>
+      <td style="padding:10px 8px;border-bottom:1px solid #f3f4f6">
+        <div style="display:flex;align-items:center;gap:10px">
+          <img src="${p.img}" width="44" height="44" style="border-radius:8px;object-fit:cover;border:1px solid #e5e7eb;flex-shrink:0" onerror="this.style.display='none'">
+          <div><div style="font-size:13px;font-weight:700;color:#111">${p.sz}</div><div style="font-size:11px;color:#9ca3af">${p.nom}</div></div>
+        </div>
+      </td>
+      <td style="text-align:center;padding:10px 8px;border-bottom:1px solid #f3f4f6;font-size:13px">${qty}</td>
+      <td style="text-align:right;padding:10px 8px;border-bottom:1px solid #f3f4f6;font-size:13px">S/ ${p.precio}.00</td>
+      <td style="text-align:right;padding:10px 8px;border-bottom:1px solid #f3f4f6;font-size:13px;font-weight:800;color:#c27c00">S/ ${sub}</td>
+    </tr>`;
+  });
+  const delivery = ST.delivery || 0;
+  const subtotal = ST.raw      || 0;
+  const total    = ST.final    || 0;
+  const desc     = Math.max(0, subtotal - (total - delivery));
+  const hasDesc  = desc > 0.01;
+
+  return `<!DOCTYPE html><html><head>
+<meta charset="UTF-8"><title>Nota de Venta — ASWA</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Poppins',sans-serif;background:#fff;color:#111;max-width:460px;margin:0 auto;padding:24px 20px}
+.header{text-align:center;padding-bottom:18px;border-bottom:3px solid #facc15;margin-bottom:18px}
+.logo-wrap{width:140px;height:140px;margin:0 auto 14px;border-radius:16px;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,.12)}
+.logo-wrap img{width:100%;height:100%;object-fit:cover;display:block}
+.empresa{font-size:20px;font-weight:900;color:#c27c00;text-transform:uppercase;letter-spacing:.04em}
+.sub{font-size:12px;color:#6b7280;margin-top:4px;line-height:1.7}
+hr{border:none;border-top:2px solid #facc15;margin:14px 0 10px}
+.titulo{font-size:16px;font-weight:900;letter-spacing:.16em;color:#111;text-align:center;margin-bottom:6px}
+.cliente-box{border:1px solid #e5e7eb;border-radius:12px;padding:14px 16px;margin-bottom:16px}
+.cli-row{display:flex;padding:5px 0;border-bottom:1px dashed #f3f4f6;font-size:13px}
+.cli-row:last-child{border-bottom:none}
+.cli-lbl{font-weight:700;color:#374151;min-width:100px;flex-shrink:0}
+.cli-val{color:#111;flex:1}
+.nivel-badge{display:inline-flex;align-items:center;gap:6px;padding:4px 14px;border-radius:999px;font-size:11px;font-weight:800;text-transform:uppercase;background:${nc.bg};color:${nc.color};border:1.5px solid ${nc.border}}
+.cod-box{background:#fffbeb;border:2px dashed #f59e0b;border-radius:10px;padding:12px 16px;margin-bottom:16px;display:${cod?'block':'none'}}
+.cod-val{font-size:26px;font-weight:900;color:#c27c00;letter-spacing:.12em;margin-top:2px}
+table{width:100%;border-collapse:collapse;margin-bottom:0}
+thead tr{background:#f9fafb}
+thead th{padding:8px;font-size:11px;font-weight:800;color:#374151;text-transform:uppercase;border:1px solid #e5e7eb}
+thead th:not(:first-child){text-align:right}
+.delivery-row td{background:#f9fafb;font-size:12px;font-weight:600;color:#374151;padding:8px;border:1px solid #e5e7eb;border-top:1px dashed #e5e7eb}
+.totales{margin:14px 0 10px}
+.tot-row{display:flex;justify-content:space-between;padding:5px 14px;border-bottom:1px dashed #f3f4f6;font-size:13px}
+.tot-row:last-child{border-bottom:none}
+.gran-total{background:#fffbeb;border:2px solid #facc15;border-radius:14px;padding:16px 20px;display:flex;justify-content:space-between;align-items:center;margin:12px 0}
+.gt-lbl{font-size:14px;font-weight:900;color:#111;text-transform:uppercase;line-height:1.3}
+.gt-val{font-size:42px;font-weight:900;color:#c27c00;line-height:1}
+.footer{text-align:center;border-top:1px dashed #e5e7eb;padding-top:14px;font-size:11px;color:#9ca3af;line-height:1.9;margin-top:14px}
+.footer strong{color:#c27c00}
+.print-btn{display:block;margin:16px auto 0;background:#facc15;color:#000;border:none;padding:12px 32px;border-radius:10px;font-size:14px;font-weight:900;cursor:pointer;font-family:'Poppins',sans-serif}
+@media print{.print-btn{display:none}body{padding:10px}}
+</style></head><body>
+<div class="header">
+<div class="logo-wrap"><img src="${logoSrc}" alt="ASWA" onerror="this.style.display='none'"></div>
+<div class="empresa">LA RICA CHICHA - ASWA</div>
+<div class="sub">El sabor de mi tierra<br>Morales - San Martín<br>WhatsApp: 955 273 229 / 986 445 531</div>
+<hr><div class="titulo">NOTA DE VENTA</div>
+<div style="font-size:12px;font-weight:700;color:#374151">${document.getElementById('nvNumero').textContent}</div>
+<div style="font-size:11px;color:#9ca3af;margin-top:2px">${document.getElementById('nvFecha').textContent}</div>
+</div>
+<div class="cliente-box">
+<div class="cli-row"><span class="cli-lbl">Cliente:</span><span class="cli-val">${document.getElementById('nvNombre').textContent}</span></div>
+<div class="cli-row"><span class="cli-lbl">Celular:</span><span class="cli-val">${document.getElementById('nvTelefono').textContent}</span></div>
+<div class="cli-row"><span class="cli-lbl">Dirección:</span><span class="cli-val">${document.getElementById('nvDireccion').textContent}</span></div>
+${ST.gpsUrl ? `<div class="cli-row"><span class="cli-lbl">📍 GPS:</span><span class="cli-val"><a href="${ST.gpsUrl}" style="color:#16a34a;font-weight:700">Ver en Maps →</a></span></div>` : ''}
+<div class="cli-row"><span class="cli-lbl">Zona:</span><span class="cli-val">${document.getElementById('nvZona').textContent}</span></div>
+<div class="cli-row"><span class="cli-lbl">Pago:</span><span class="cli-val">${document.getElementById('nvPago').textContent}</span></div>
+<div class="cli-row"><span class="cli-lbl">Nivel:</span><span class="cli-val"><span class="nivel-badge">${nc.txt}</span></span></div>
+</div>
+${cod ? `<div class="cod-box"><div style="font-size:10px;font-weight:800;color:#92400e;text-transform:uppercase;letter-spacing:.1em">🎁 Tu código personal de descuento</div><div class="cod-val">${cod}</div><div style="font-size:10px;color:#92400e;margin-top:2px">Compártelo con tus amigos · Ambos reciben 5% de descuento</div></div>` : ''}
+<table><thead><tr><th style="text-align:left">Producto</th><th>Cant.</th><th>P. Unit.</th><th>Subtotal</th></tr></thead>
+<tbody>${prodRows}
+<tr class="delivery-row"><td>Costo de entrega</td><td style="text-align:right">1</td><td style="text-align:right">S/ ${delivery.toFixed(2)}</td><td style="text-align:right;font-weight:800;color:#374151">S/ ${delivery.toFixed(2)}</td></tr>
+</tbody></table>
+<div class="totales">
+<div class="tot-row"><span style="color:#6b7280">Subtotal productos</span><span style="font-weight:700">S/ ${subtotal.toFixed(2)}</span></div>
+${hasDesc ? `<div class="tot-row"><span style="color:#16a34a">Descuento aplicado</span><span style="font-weight:700;color:#16a34a">-S/ ${desc.toFixed(2)} (${Math.round(desc/subtotal*100)}%)</span></div>` : ''}
+</div>
+<div class="gran-total"><span class="gt-lbl">TOTAL<br>A PAGAR</span><span class="gt-val">S/ ${total.toFixed(2)}</span></div>
+<div class="footer">¡Gracias por tu preferencia! 🌾<br>Chicha artesanal de maiz amazónico<br><strong>LA RICA CHICHA - ASWA</strong> · Morales, San Martín, Perú
+<div style="display:flex;gap:10px;justify-content:center;margin-top:16px;flex-wrap:wrap">
+<button class="print-btn" onclick="window.print()" style="background:#1e3a8a;color:#fff;min-width:150px">🖨️ Imprimir</button>
+<button class="print-btn" onclick="window.print()" style="background:#facc15;color:#000;min-width:150px">📥 Guardar PDF</button>
+</div></div></body></html>`;
+}
+
+function descargarNotaPDF() {
+  const html = _generarHtmlNota();
+  const blob = new Blob([html], { type:'text/html;charset=utf-8' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href = url; a.download = 'Nota-ASWA-'+document.getElementById('nvNumero').textContent+'.html';
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 3000);
+  tst('📥 Ábrelo en Chrome y usa Imprimir → Guardar como PDF', 5000);
+}
+
+function imprimirNota() {
+  const printWin = window.open('', '_blank', 'width=540,height=920');
+  if (!printWin) { tst('❌ El navegador bloqueó la ventana. Activa los pop-ups.', 3500); return; }
+  printWin.document.write(_generarHtmlNota());
+  printWin.document.close(); printWin.focus();
+  setTimeout(() => printWin.print(), 1800);
+}
+
+/* ── MODALES ── */
+function cerrar(id) { document.getElementById(id).classList.remove('on'); }
+function limpiarYRecargar() {
+  ['aswa_pedido_id','aswa_succ_active','aswa_cart','aswa_total',
+   'aswa_delivery','aswa_raw','aswa_pago','aswa_nombre',
+   'aswa_tel','aswa_nivel','aswa_cod'].forEach(k => sessionStorage.removeItem(k));
+  location.reload();
+}
+function minimizarConfirmar() {
+  cerrar('mConfirmar'); cerrar('succScreen');
+  document.getElementById('btnFlotante').style.display = 'block';
+  tst('⏳ Te recordaremos cuando llegue tu pedido 📦', 3000);
+}
+function irAConfirmar() {
+  document.getElementById('succScreen').classList.remove('on');
+  document.getElementById('btnFlotante').style.display = 'none';
+  document.getElementById('mConfirmar').classList.add('on');
+}
+document.querySelectorAll('.ov').forEach(m => {
+  m.addEventListener('click', e => { if (e.target===m) m.classList.remove('on'); });
+});
+
+/* ── REFERIDOS ── */
+function abrirRef() {
+  const sinCodEl = document.getElementById('refSinCod');
+  const codBoxEl = document.getElementById('refCodBox');
+  if (ST.cli.cod) {
+    document.getElementById('codModal').textContent = ST.cli.cod;
+    const codColorMap = { BRONCE:'nivel-bronce-cod', PLATA:'nivel-plata-cod', ORO:'nivel-oro-cod', DIAMANTE:'nivel-diamante-cod' };
+    document.getElementById('codModal').className = 'ctxt ' + (codColorMap[ST.cli.nivel||'BRONCE']||'nivel-bronce-cod');
+    if (sinCodEl) sinCodEl.style.display = 'none';
+    if (codBoxEl) codBoxEl.style.display = 'block';
+  } else {
+    if (sinCodEl) sinCodEl.style.display = 'block';
+    if (codBoxEl) codBoxEl.style.display = 'none';
+    document.getElementById('codModal').textContent = 'ASWA-——';
+  }
+  ['bronce','plata','oro','diamante'].forEach(n => {
+    const row = document.getElementById('nrow-' + n);
+    if (row) row.classList.toggle('active', n === (ST.cli.nivel||'BRONCE').toLowerCase());
+  });
+  const bonos    = ST.cli.bonos || [];
+  const now      = new Date();
+  const proxBono = bonos.filter(b=>b.expira).map(b=>({...b,_dias:(new Date(b.expira)-now)/86400000})).filter(b=>b._dias>=0).sort((a,b)=>a._dias-b._dias)[0];
+  const alertEl  = document.getElementById('refVencAlert');
+  const alertTx  = document.getElementById('refVencTxt');
+  if (proxBono) {
+    const dias = Math.ceil(proxBono._dias);
+    const txt  = dias===0?'hoy al final del día':dias===1?'mañana':`en ${dias} días`;
+    alertTx.textContent = `Tu bono de ${proxBono.valor}% vence ${txt}. ¡Compártelo antes de que expire!`;
+    alertEl.style.display = 'block';
+  } else { alertEl.style.display = 'none'; }
+  document.getElementById('mRef').classList.add('on');
+}
+
+async function buscarCodPorTel(tel) {
+  const codBoxEl = document.getElementById('refCodBox');
+  const sinCodEl = document.getElementById('refSinCod');
+  if (tel.length !== 9 || !tel.startsWith('9')) return;
+  try {
+    const { query:q, collection:col, where:wh, getDocs:gd } = window.FB;
+    const snap = await gd(q(col(db,'clientes'), wh('businessId','==',BUSINESS_ID), wh('telefono','==',tel)));
+    let cod = '';
+    if (!snap.empty) { const data = snap.docs[0].data(); cod = data.codigo_referido||''; ST.cli = { ...data, id: snap.docs[0].id }; }
+    if (!cod) cod = await genCod();
+    ST.cli.cod = cod;
+    document.getElementById('codModal').textContent = cod;
+    const codColorMap = { BRONCE:'nivel-bronce-cod', PLATA:'nivel-plata-cod', ORO:'nivel-oro-cod', DIAMANTE:'nivel-diamante-cod' };
+    document.getElementById('codModal').className = 'ctxt ' + (codColorMap[ST.cli.nivel||'BRONCE']||'nivel-bronce-cod');
+    if (sinCodEl) sinCodEl.style.display = 'none';
+    if (codBoxEl) codBoxEl.style.display = 'block';
+    document.getElementById('btnRef').classList.add('on');
+    tst('✅ Tu código: ' + cod, 2500);
+  } catch(e) { console.error(e); }
+}
+
+function copiarCodBanner() {
+  const cod = document.getElementById('cbanCod')?.textContent || ST.cli.cod;
+  if (!cod || cod === '—') return tst('Ingresa tu teléfono primero');
+  navigator.clipboard.writeText(cod).then(() => tst('✅ Código copiado: '+cod, 2000)).catch(() => tst('Código: '+cod, 3000));
+}
+function copiarCod() {
+  const c = ST.cli.cod;
+  if (!c) return tst('Ingresa tu teléfono primero 📱');
+  navigator.clipboard.writeText(c).then(() => tst('¡Código copiado! 📋', 2000));
+}
+function compartirCod() {
+  const cod = ST.cli.cod;
+  if (!cod) return tst('Ingresa tu teléfono primero 📱');
+  const saludos  = ['Hola amigo/a 😄','Oe prima/o 🫶','Hermano/a, escucha esto 👇','Causa, tengo algo para ti 🎁','Bro/Sis, mira lo que encontré 👀'];
+  const saludoExtra = ['te quiero contar algo que me alegró el día 🌞','me acordé de ti y quería compartirte esto 💛','sé que te va a encantar esto 😋'];
+  const cierres  = ['Ya me dirás cómo te fue. ¡Un abrazo! 🫂','Te juro que está riquisísima. ¡Provecho! 🥂','Avísame cuando la pidas que yo ya soy fan 😂'];
+  const rand = arr => arr[Math.floor(Math.random()*arr.length)];
+  const nivelMsg = { BRONCE:'', PLATA:'\n\n💡 Yo ya tengo descuento del 10%.', ORO:'\n\n🥇 Yo ya estoy en nivel ORO (15%).', DIAMANTE:'\n\n💎 Yo ya soy DIAMANTE con 20%.' }[ST.cli.nivel||'BRONCE'] || '';
+  const txt =
+    rand(saludos)+', '+rand(saludoExtra)+' 👇\n\n'
+    +'🌽 *ASWA - La Rica Chicha*\nLa chicha artesanal de maiz amazónico de Morales. 🍺\n\n'
+    +'🎁 *Te regalo un descuento:*\n━━━━━━━━━━━━━━━\n   Código: *'+cod+'*\n   Descuento: *5% en tu pedido*\n   Válido: *30 días*\n━━━━━━━━━━━━━━━\n\n'
+    +'👇 Pide ahora:\nhttps://jsangama.github.io/aswa\n'+nivelMsg+'\n\n'+rand(cierres);
+  if (navigator.share) {
+    navigator.share({ title:'Descuento ASWA 🌽', text:txt }).catch(() => window.open('https://wa.me/?text='+encodeURIComponent(txt),'_blank'));
+  } else {
+    window.open('https://wa.me/?text='+encodeURIComponent(txt),'_blank');
+  }
+  tst('¡Mensaje listo para enviar! 💛', 2500);
 }
 
 /* ── TOAST ── */
-function toast(msg, tipo='', dur=3000) {
-  const t = document.getElementById('toast');
-  t.textContent = msg;
-  t.className = 'toast show' + (tipo ? ' ' + tipo : '');
-  clearTimeout(t._tmr);
-  t._tmr = setTimeout(() => t.className = 'toast', dur);
+function tst(msg, dur=2500) {
+  const t = document.getElementById('tst');
+  t.textContent = msg; t.className = 'tst on';
+  setTimeout(() => t.className = 'tst', dur);
+}
+
+/* ══════════════════════════════════════
+   GPS EN TIEMPO REAL — CORREGIDO
+   
+   FIXES APLICADOS:
+   1. Verificación explícita de soporte HTTPS
+   2. Mensaje de error claro cuando no hay permisos
+   3. Manejo correcto del watchPosition
+   4. Compatibilidad con iOS (requiere interacción del usuario)
+══════════════════════════════════════ */
+function toggleGPS() {
+  if (ST._gpsWatchId !== null) {
+    detenerGPS();
+  } else {
+    iniciarGPS();
+  }
+}
+
+function iniciarGPS() {
+  const btn    = document.getElementById('btnGPS');
+  const label  = document.getElementById('gpsLabel');
+  const status = document.getElementById('gpsStatus');
+  const liveBox= document.getElementById('gpsLiveBox');
+
+  /* ── FIX 1: Verificar soporte del navegador ── */
+  if (!('geolocation' in navigator)) {
+    btn.classList.add('error');
+    status.className   = 'gps-status err';
+    status.textContent = '❌ Tu navegador no soporta GPS. Escribe tu dirección manualmente.';
+    return;
+  }
+
+  /* ── FIX 2: En iOS Safari necesita HTTPS — advertir si no ── */
+  if (location.protocol !== 'https:' && location.hostname !== 'localhost') {
+    btn.classList.add('error');
+    status.className   = 'gps-status err';
+    status.textContent = '❌ El GPS requiere conexión segura (HTTPS).';
+    return;
+  }
+
+  /* ── Estado visual: cargando ── */
+  btn.classList.remove('success', 'error');
+  btn.classList.add('loading');
+  btn.disabled = true;
+  label.textContent  = '📡 BUSCANDO SEÑAL...';
+  status.className   = 'gps-status';
+  status.textContent = '📡 Solicitando permiso de ubicación...';
+
+  /* ── FIX 3: Primero intentar getCurrentPosition para obtener el permiso
+             antes de lanzar watchPosition (más confiable en móviles) ── */
+  navigator.geolocation.getCurrentPosition(
+    /* Éxito → lanzar watchPosition */
+    () => {
+      status.textContent = '✅ Permiso concedido. Iniciando rastreo...';
+
+      ST._gpsWatchId = navigator.geolocation.watchPosition(
+        /* Actualización en tiempo real */
+        (pos) => {
+          const lat = pos.coords.latitude.toFixed(6);
+          const lng = pos.coords.longitude.toFixed(6);
+          const acc = Math.round(pos.coords.accuracy);
+          const mapsUrl = 'https://www.google.com/maps?q=' + lat + ',' + lng;
+
+          ST.gpsUrl    = mapsUrl;
+          ST.gpsCoords = { lat, lng, acc, ts: Date.now() };
+
+          /* Actualizar campo dirección la primera vez */
+          const dirInput = document.getElementById('direccion');
+          if (!dirInput.value || dirInput.value.startsWith('GPS:')) {
+            dirInput.value = 'GPS: ' + lat + ', ' + lng;
+          }
+
+          btn.classList.remove('loading', 'error');
+          btn.classList.add('success');
+          btn.disabled = false;
+          label.textContent = '🔴 GPS ACTIVO — En vivo';
+
+          liveBox.classList.add('show');
+          document.getElementById('gpsLiveCoords').innerHTML =
+            lat + ', ' + lng + ' · ±' + acc + 'm · '
+            + '<a href="' + mapsUrl + '" target="_blank" style="color:var(--grn)">Ver en Maps</a>';
+
+          status.className   = 'gps-status ok';
+          status.textContent = '📍 Actualizando en tiempo real · precisión ±' + acc + 'm';
+        },
+
+        /* Error en watchPosition */
+        (err) => {
+          _gpsError(err, btn, label, liveBox, status);
+        },
+
+        { enableHighAccuracy: true, timeout: 15000, maximumAge: 3000 }
+      );
+    },
+
+    /* Error al pedir permiso → mostrar mensaje claro */
+    (err) => {
+      _gpsError(err, btn, label, liveBox, status);
+    },
+
+    { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+  );
+}
+
+/* ── FIX 4: Función centralizada de manejo de errores GPS ── */
+function _gpsError(err, btn, label, liveBox, status) {
+  btn.classList.remove('loading', 'success');
+  btn.classList.add('error');
+  btn.disabled = false;
+  label.textContent = '📡 UBICACIÓN EN TIEMPO REAL';
+  liveBox.classList.remove('show');
+  ST._gpsWatchId = null;
+
+  const msgs = {
+    1: '❌ Permiso denegado. Ve a Ajustes → Sitios → Ubicación y permite el acceso.',
+    2: '❌ No se pudo determinar la ubicación. Verifica que el GPS esté activado.',
+    3: '❌ Tiempo agotado. Asegúrate de tener señal GPS o Wi-Fi activo.'
+  };
+  status.className   = 'gps-status err';
+  status.textContent = msgs[err.code] || '❌ Error GPS desconocido (código ' + err.code + ').';
+
+  /* Limpiar estado de error después de 8 segundos */
+  setTimeout(() => {
+    btn.classList.remove('error');
+    status.textContent = '';
+    status.className   = 'gps-status';
+  }, 8000);
+}
+
+function detenerGPS() {
+  if (ST._gpsWatchId !== null) {
+    navigator.geolocation.clearWatch(ST._gpsWatchId);
+    ST._gpsWatchId = null;
+  }
+  const btn     = document.getElementById('btnGPS');
+  const label   = document.getElementById('gpsLabel');
+  const liveBox = document.getElementById('gpsLiveBox');
+
+  btn.classList.remove('loading', 'success', 'error');
+  btn.disabled = false;
+  liveBox.classList.remove('show');
+
+  if (ST.gpsUrl) {
+    label.textContent = '✅ UBICACIÓN GUARDADA';
+    document.getElementById('gpsStatus').className   = 'gps-status ok';
+    document.getElementById('gpsStatus').textContent = '📍 Coordenadas guardadas para tu pedido';
+  } else {
+    label.textContent = '📡 UBICACIÓN EN TIEMPO REAL';
+    document.getElementById('gpsStatus').textContent = '';
+    document.getElementById('gpsStatus').className   = 'gps-status';
+  }
+  tst('📍 GPS detenido — coordenadas guardadas', 2500);
+}
+
+/* ── REDES SOCIALES ── */
+async function cargarRedes() {
+  const grid = document.getElementById('socialGrid');
+  const REDES = [
+    { key:'facebook',  clase:'sb-facebook',  nombre:'Facebook',  sub:'Síguenos',
+      ico:`<svg width="18" height="18" viewBox="0 0 24 24" fill="#1877f2"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>` },
+    { key:'instagram', clase:'sb-instagram', nombre:'Instagram', sub:'@aswa.laricachicha',
+      ico:`<svg width="18" height="18" viewBox="0 0 24 24" fill="#e4405f"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 1 0 0 12.324 6.162 6.162 0 0 0 0-12.324zM12 16a4 4 0 1 1 0-8 4 4 0 0 1 0 8zm6.406-11.845a1.44 1.44 0 1 0 0 2.881 1.44 1.44 0 0 0 0-2.881z"/></svg>` },
+    { key:'tiktok',    clase:'sb-tiktok',    nombre:'TikTok',    sub:'Síguenos',
+      ico:`<svg width="18" height="18" viewBox="0 0 24 24" fill="#ff0050"><path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-2.88 2.5 2.89 2.89 0 0 1-2.89-2.89 2.89 2.89 0 0 1 2.89-2.89c.28 0 .54.04.79.1V9.01a6.33 6.33 0 0 0-.79-.05 6.34 6.34 0 0 0-6.34 6.34 6.34 6.34 0 0 0 6.34 6.34 6.34 6.34 0 0 0 6.33-6.34V8.69a8.18 8.18 0 0 0 4.78 1.52V6.76a4.85 4.85 0 0 1-1.01-.07z"/></svg>` },
+    { key:'youtube',   clase:'sb-youtube',   nombre:'YouTube',   sub:'Mira nuestros videos',
+      ico:`<svg width="18" height="18" viewBox="0 0 24 24" fill="#ff0000"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>` }
+  ];
+  const MAPS_ICO = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#facc15" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>`;
+
+  try {
+    const snap = await window.FB.getDoc(window.FB.doc(db, 'business_settings', 'aswa'));
+    const data = snap.exists() ? snap.data() : {};
+    let html = '';
+    REDES.forEach(r => {
+      const url = data[r.key];
+      if (!url) return;
+      html += `<a href="${url}" target="_blank" rel="noopener noreferrer" class="social-btn ${r.clase}"><div class="sico">${r.ico}</div><div><div class="sname">${r.nombre}</div><div class="ssub">${r.sub}</div></div></a>`;
+    });
+    const mapsUrl = data.maps;
+    if (mapsUrl) {
+      const navUrl = mapsUrl.includes('/dir/') ? mapsUrl : 'https://www.google.com/maps/dir/?api=1&destination=-6.4760847,-76.387505';
+      html += `<a href="${navUrl}" target="_blank" rel="noopener noreferrer" class="social-btn sb-maps"><div class="sico">${MAPS_ICO}</div><div><div class="sname">Ver en Google Maps</div><div class="ssub">Cómo llegar → Navegación GPS</div></div></a>`;
+    }
+    grid.innerHTML = html || '<p style="color:var(--mut);font-size:13px;text-align:center;grid-column:1/-1;padding:10px">Próximamente en redes sociales 🌽</p>';
+  } catch(err) {
+    console.error('Error cargando redes:', err);
+    grid.innerHTML = `
+      <a href="https://www.facebook.com/profile.php?id=100052222886761" target="_blank" rel="noopener" class="social-btn sb-facebook">
+        <div class="sico"><svg width="18" height="18" viewBox="0 0 24 24" fill="#1877f2"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg></div>
+        <div><div class="sname">Facebook</div><div class="ssub">Síguenos</div></div>
+      </a>
+      <a href="https://www.instagram.com/aswa.laricachicha/?hl=es-la" target="_blank" rel="noopener" class="social-btn sb-instagram">
+        <div class="sico"><svg width="18" height="18" viewBox="0 0 24 24" fill="#e4405f"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 1 0 0 12.324 6.162 6.162 0 0 0 0-12.324zM12 16a4 4 0 1 1 0-8 4 4 0 0 1 0 8zm6.406-11.845a1.44 1.44 0 1 0 0 2.881 1.44 1.44 0 0 0 0-2.881z"/></svg></div>
+        <div><div class="sname">Instagram</div><div class="ssub">@aswa.laricachicha</div></div>
+      </a>
+      <a href="https://www.google.com/maps/dir/?api=1&destination=-6.4760847,-76.387505" target="_blank" rel="noopener" class="social-btn sb-maps" style="grid-column:1/-1">
+        <div class="sico">${MAPS_ICO}</div>
+        <div><div class="sname" style="color:var(--y)">Ver en Google Maps</div><div class="ssub">Cómo llegar → Navegación GPS</div></div>
+      </a>`;
+  }
+}
+
+/* ── NAVEGACIÓN ── */
+function irA(pagina) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.bnav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('page-' + pagina).classList.add('active');
+  document.getElementById('nav-' + pagina).classList.add('active');
+  const fbar = document.getElementById('fbarPedir');
+  fbar.classList.toggle('show', pagina === 'pedir');
+  if (pagina === 'bono') document.getElementById('badge-bono').classList.remove('show');
+  if (pagina === 'galeria')  cargarGaleria('todos');
+  if (pagina === 'concurso') cargarConcurso();
+  window.scrollTo(0, 0);
+}
+
+/* ── GALERÍA ── */
+async function cargarGaleria(filtro) {
+  const grid = document.getElementById('galGrid');
+  grid.innerHTML = '<div style="grid-column:1/-1" class="gal-empty"><div class="gal-emo">⏳</div><p>Cargando...</p></div>';
+  try {
+    const { getDocs: getD, query: makeQ, where: fw, orderBy: ob, limit: lm } =
+      await import("https://www.gstatic.com/firebasejs/11.1.0/firebase-firestore.js");
+    const colRef = window.FB.collection(db, 'ugc_posts');
+    let snap;
+    if (filtro === 'todos' || filtro === 'destacados') {
+      const filters = [fw('businessId','==',BUSINESS_ID), fw('estado','==','aprobado')];
+      if (filtro === 'destacados') filters.push(fw('destacado','==',true));
+      snap = await getD(makeQ(colRef, ...filters));
+    } else if (filtro === 'recientes') {
+      snap = await getD(makeQ(colRef, fw('estado','==','aprobado'), ob('created_at','desc'), lm(20)));
+    } else {
+      snap = await getD(makeQ(colRef, fw('estado','==','aprobado'), ob('likes','desc'), lm(20)));
+    }
+    if (snap.empty) { grid.innerHTML = '<div style="grid-column:1/-1" class="gal-empty"><div class="gal-emo">📸</div><p>Aún no hay fotos en esta categoría.<br>¡Sé el primero!</p></div>'; return; }
+    grid.innerHTML = '';
+    snap.forEach(d => {
+      const data = d.data();
+      if (!data.media_url) return;
+      const isDestacado = data.destacado ? '<span class="gal-badge">⭐</span>' : '';
+      grid.insertAdjacentHTML('beforeend', `
+        <div class="gal-card">
+          <img src="${data.media_url}" alt="foto ASWA" loading="lazy" onerror="this.parentElement.style.display='none'">
+          <div class="gal-overlay"></div>
+          ${isDestacado}
+          <div class="gal-info">
+            <div class="gal-user">@${data.usuario || data.telefono?.slice(-4) || 'anon'}</div>
+            <div class="gal-likes">❤️ ${data.likes || 0}</div>
+          </div>
+        </div>`);
+    });
+  } catch(err) {
+    console.error('Galería error:', err);
+    grid.innerHTML = '<div style="grid-column:1/-1" class="gal-empty"><div class="gal-emo">📸</div><p>La galería se llenará con fotos de nuestra comunidad.</p></div>';
+  }
+}
+
+function filtrarGal(filtro, btn) {
+  document.querySelectorAll('.gf-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  cargarGaleria(filtro);
+}
+
+/* ── BONO ── */
+function actualizarBonoPill() { checkBonoReady(); }
+function previsualizarArchivo(input) {
+  const file = input.files[0]; if (!file) return;
+  const zone = document.getElementById('uploadZone');
+  const prev = document.getElementById('uploadPreview');
+  zone.classList.add('has-file'); zone.querySelector('p').textContent = file.name;
+  if (file.type.startsWith('image/')) {
+    const reader = new FileReader();
+    reader.onload = e => { prev.src = e.target.result; prev.style.display = 'block'; };
+    reader.readAsDataURL(file);
+  }
+  checkBonoReady();
+}
+function checkBonoReady() {
+  const nom  = document.getElementById('b-nombre').value.trim();
+  const cel  = document.getElementById('b-celular').value.trim();
+  const tipo = document.getElementById('b-tipo').value;
+  const auth = document.getElementById('b-autorizo').checked;
+  const btn  = document.getElementById('btnEnviarBono');
+  btn.classList.toggle('ready', !!(nom && cel.length===9 && tipo && auth));
+}
+['b-nombre','b-celular','b-tipo','b-plataforma'].forEach(id => {
+  const el = document.getElementById(id); if (el) el.addEventListener('input', checkBonoReady);
+});
+async function enviarBono() {
+  const btn = document.getElementById('btnEnviarBono');
+  if (!btn.classList.contains('ready')) return;
+  btn.textContent = 'Enviando...'; btn.disabled = true;
+  try {
+    const { addDoc:ad, collection:col, serverTimestamp:ts } = window.FB;
+    await ad(col(db,'ugc_posts'), {
+      businessId: BUSINESS_ID,
+      nombre:     document.getElementById('b-nombre').value.trim(),
+      telefono:   document.getElementById('b-celular').value.trim(),
+      primera_compra: document.getElementById('b-primera').value,
+      tipo:       document.getElementById('b-tipo').value,
+      plataforma: document.getElementById('b-plataforma').value,
+      usuario:    document.getElementById('b-usuario').value.trim(),
+      link_publicacion: document.getElementById('b-link').value.trim(),
+      texto:      document.getElementById('b-mensaje').value.trim(),
+      campana:    document.getElementById('b-campana').value,
+      estado: 'pendiente', likes: 0, destacado: false, created_at: ts()
+    });
+    document.getElementById('page-bono').innerHTML = `
+      <div style="max-width:430px;margin:0 auto;padding:60px 24px;text-align:center">
+        <div style="font-size:64px;margin-bottom:16px">🎉</div>
+        <div style="font-family:'Bebas Neue',cursive;font-size:36px;color:var(--y);letter-spacing:.05em;margin-bottom:8px">¡RECIBIDO!</div>
+        <p style="font-size:14px;color:var(--mut);line-height:1.7;margin-bottom:28px">Tu contenido está en revisión.<br>En 24-48hs te notificamos por WhatsApp.</p>
+        <button onclick="irA('pedir')" style="background:var(--y);color:#000;border:none;padding:16px 36px;border-radius:14px;font-size:15px;font-weight:800;cursor:pointer;font-family:'Poppins',sans-serif">← Volver a pedir</button>
+      </div>`;
+    tst('✅ ¡Contenido enviado! Revisaremos en 24-48hs', 4000);
+  } catch(err) {
+    console.error(err); btn.textContent = 'ENVIAR'; btn.disabled = false;
+    tst('❌ Error al enviar. Intenta de nuevo.', 3000);
+  }
+}
+
+/* ── CONCURSO ── */
+function mesActual() {
+  const meses = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+  const now = new Date();
+  return meses[now.getMonth()] + ' ' + now.getFullYear();
+}
+async function cargarConcurso() {
+  const mes = mesActual();
+  document.getElementById('concFotoSubtitle').textContent  = 'ASWA · ' + mes;
+  document.getElementById('concVideoSubtitle').textContent = 'ASWA · ' + mes;
+  const now = new Date();
+  const ultimoDia = new Date(now.getFullYear(), now.getMonth()+1, 0);
+  const fechaLim  = 'Hasta ' + ultimoDia.getDate() + ' ' + ultimoDia.toLocaleDateString('es-PE',{month:'short'});
+  document.getElementById('concFotoFecha').textContent  = fechaLim;
+  document.getElementById('concVideoFecha').textContent = fechaLim;
+  try {
+    const { getDocs:gd, collection:col, where:wh, query:q } = window.FB;
+    const snapFoto = await window.FB.getDoc(window.FB.doc(db,'concursos',BUSINESS_ID+'_foto'));
+    if (snapFoto.exists()) {
+      const df = snapFoto.data();
+      document.getElementById('concFotoSubtitle').textContent = (df.nombre||'Mejor Foto')+' · '+mes;
+      document.getElementById('concFotoPremio').textContent   = df.premio||'Pedido Gratis';
+      document.getElementById('concFotoDesc').textContent     = df.descripcion||'Sube tu mejor foto con tu chicha ASWA';
+      document.getElementById('concFotoPart').textContent     = (df.participantes||0)+' participantes';
+      if (df.fecha_fin?.seconds) { const f=new Date(df.fecha_fin.seconds*1000); document.getElementById('concFotoFecha').textContent='Hasta '+f.toLocaleDateString('es-PE',{day:'numeric',month:'short'}); }
+    }
+    const snapVid = await window.FB.getDoc(window.FB.doc(db,'concursos',BUSINESS_ID+'_video'));
+    if (snapVid.exists()) {
+      const dv = snapVid.data();
+      document.getElementById('concVideoSubtitle').textContent = (dv.nombre||'Mejor Video')+' · '+mes;
+      document.getElementById('concVideoPremio').textContent   = dv.premio||'Galón Familiar Gratis';
+      document.getElementById('concVideoDesc').textContent     = dv.descripcion||'Graba tu reacción probando ASWA';
+      document.getElementById('concVideoPart').textContent     = (dv.participantes||0)+' participantes';
+      if (dv.fecha_fin?.seconds) { const f=new Date(dv.fecha_fin.seconds*1000); document.getElementById('concVideoFecha').textContent='Hasta '+f.toLocaleDateString('es-PE',{day:'numeric',month:'short'}); }
+    }
+    const snapRank = await gd(q(col(db,'ugc_posts'), wh('businessId','==',BUSINESS_ID), wh('estado','==','aprobado')));
+    const rankItems = [];
+    snapRank.forEach(d => rankItems.push(d.data()));
+    rankItems.sort((a,b) => (b.likes||0)-(a.likes||0));
+    if (rankItems.length > 0) {
+      const medals = ['gold','silver','bronze'];
+      const tipoEmo = { foto:'📸', video:'🎬', reels:'📹', historia:'🎥', review:'⭐' };
+      document.getElementById('rankingLista').innerHTML = rankItems.slice(0,5).map((r,i) => `
+        <div class="rank-item">
+          <div class="rank-num ${medals[i]||''}">${i+1}</div>
+          <div class="rank-info">
+            <div class="rank-user">${tipoEmo[r.tipo]||'📸'} @${r.usuario||'anónimo'}</div>
+            <div class="rank-sub">${r.plataforma||''} · ${r.tipo||''}</div>
+          </div>
+          <div class="rank-likes">❤️ ${r.likes||0}</div>
+        </div>`).join('');
+    }
+  } catch(err) { console.error('Concurso error:', err); }
 }
 
 /* ── INIT ── */
 document.addEventListener('DOMContentLoaded', () => {
-  // Cargar conteo de pendientes al abrir
-  (async () => {
+  setPago('Efectivo');
+  cargarRedes();
+  cargarNegocio();
+  document.getElementById('fbarPedir').classList.add('show');
+  setTimeout(() => { document.getElementById('badge-bono').classList.add('show'); }, 2000);
+
+  /* Recuperar pedido pendiente de confirmar */
+  const prevPedId  = sessionStorage.getItem('aswa_pedido_id');
+  const prevActive = sessionStorage.getItem('aswa_succ_active');
+  if (prevPedId && prevActive) {
+    ST.pedidoFbId = prevPedId;
     try {
-      const { getDocs:gd, collection:col, query:q, where:wh } = window.FB;
-      const snap = await gd(q(col(db,'ugc_posts'), wh('businessId','==',BUSINESS_ID), wh('estado','==','pendiente')));
-      const n = snap.size;
-      if (n > 0) document.getElementById('cnt-pendientes').textContent = n;
+      const savedCart = sessionStorage.getItem('aswa_cart');
+      if (savedCart) ST.cart = JSON.parse(savedCart);
+      ST.final    = parseFloat(sessionStorage.getItem('aswa_total')    || 0);
+      ST.delivery = parseFloat(sessionStorage.getItem('aswa_delivery') || 0);
+      ST.raw      = parseFloat(sessionStorage.getItem('aswa_raw')      || 0);
+      ST.pago     = sessionStorage.getItem('aswa_pago')   || 'Efectivo';
+      ST.cli.nom  = sessionStorage.getItem('aswa_nombre') || '';
+      ST.cli.tel  = sessionStorage.getItem('aswa_tel')    || '';
+      ST.cli.nivel= sessionStorage.getItem('aswa_nivel')  || 'BRONCE';
+      ST.cli.cod  = sessionStorage.getItem('aswa_cod')    || '';
     } catch(e) {}
-  })();
+    setTimeout(() => {
+      const btn = document.getElementById('btnFlotante');
+      if (btn) {
+        btn.style.display = 'block';
+        btn.innerHTML = '📦 Tienes un pedido pendiente<br><small style="font-size:11px;font-weight:700">Confirmar entrega → Nota de Venta</small>';
+        btn.style.padding = '12px 16px';
+        btn.style.lineHeight = '1.4';
+      }
+    }, 1000);
+  }
 });
 </script>
 </body>
