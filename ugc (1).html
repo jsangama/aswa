@@ -1864,33 +1864,66 @@ async function enviarPedido() {
   const nivelEmoji = { BRONCE:'🥉', PLATA:'🥈', ORO:'🥇', DIAMANTE:'💎' };
   const nivelCliente = ST.cli.nivel || 'BRONCE';
 
+  const fechaHoy = new Date().toLocaleDateString('es-PE',{day:'2-digit',month:'2-digit',year:'numeric'});
+  const nivelStars = { BRONCE:'⭐', PLATA:'⭐⭐', ORO:'⭐⭐⭐', DIAMANTE:'💎💎💎' };
+  const pagoIco    = { Efectivo:'💵', Yape:'📲', Plin:'💜', Transferencia:'🏦' };
+
   const msg =
-    '━━━━━━━━━━━━━━━━━━━━━\n'
-    +'🌽 *NUEVO PEDIDO ASWA*\n'
-    +'📋 *N° '+pid+'*  •  🕐 '+hora+'\n'
-    +'━━━━━━━━━━━━━━━━━━━━━\n\n'
-    +'👤 *CLIENTE*\n'
-    +'  ▸ '+nombre+'\n'
-    +'  ▸ 📱 '+telefono+'\n'
-    +'  ▸ '+(nivelEmoji[nivelCliente]||'🥉')+' Nivel '+nivelCliente+'\n'
-    +(codigoUsado ? '  ▸ 🎟️ Ref: `'+codigoUsado+'`\n' : '')
-    +'\n'
-    +'🛒 *PRODUCTOS*\n'
-    +'─────────────────────\n'
-    +items
-    +'─────────────────────\n'
-    +(disc>0 ? '🎁 Descuento -'+disc+'%:  *−S/ '+(ST.raw*disc/100).toFixed(2)+'*\n' : '')
-    +'💰 *TOTAL:  S/ '+ST.final.toFixed(2)+'*\n\n'
-    +'🚴 *ENTREGA*\n'
-    +'  ▸ 🏠 '+direccion+'\n'
-    +(ST.gpsUrl ? '  ▸ 📍 '+ST.gpsUrl+'\n' : '')
-    +'  ▸ 📌 Zona: '+zonaTexto+'\n\n'
-    +'💳 *PAGO: '+ST.pago+'*\n'
-    +(ST.pago==='Efectivo'
-      ? '  ▸ Con: S/ '+pagoCon.toFixed(2)+'\n  ▸ Vuelto: *S/ '+Math.max(0,pagoCon-ST.final).toFixed(2)+'*\n'
+    '🌽『 *NUEVO PEDIDO* 』🌽\n'
+    +'*LA RICA CHICHA — ASWA*\n'
+    +'```' + '━'.repeat(22) + '```\n'
+    +'🗓 *Fecha:* '+fechaHoy+'   🕐 *Hora:* '+hora+'\n'
+    +'🔢 *Pedido N°:* `'+pid+'`\n\n'
+
+    +'┌─────────────────────\n'
+    +'│ 👤 *DATOS DEL CLIENTE*\n'
+    +'├─────────────────────\n'
+    +'│ 🙋 *Nombre:*  '+nombre+'\n'
+    +'│ 📱 *Celular:* '+telefono+'\n'
+    +'│ '+(nivelEmoji[nivelCliente]||'🥉')+' *Nivel:*   '+nivelCliente+' '+(nivelStars[nivelCliente]||'')+'\n'
+    +(codigoUsado ? '│ 🎟 *Ref usado:* `'+codigoUsado+'`\n' : '')
+    +'└─────────────────────\n\n'
+
+    +'┌─────────────────────\n'
+    +'│ 🛒 *PRODUCTOS PEDIDOS*\n'
+    +'├─────────────────────\n'
+    +items.split('\n').filter(Boolean).map(l => '│ '+l).join('\n')+'\n'
+    +'├─────────────────────\n'
+    +(disc>0
+      ? '│ 🎁 *Descuento -'+disc+'%:*  `-S/ '+(ST.raw*disc/100).toFixed(2)+'`\n'
+        +'│ 🚚 *Delivery:*      `+S/ '+ST.delivery.toFixed(2)+'`\n'
+        +'├─────────────────────\n'
+      : '│ 🚚 *Delivery:*  `+S/ '+ST.delivery.toFixed(2)+'`\n'
+        +'├─────────────────────\n')
+    +'│ 💰 *TOTAL A PAGAR:*\n'
+    +'│      ╔══════════════╗\n'
+    +'│      ║  *S/ '+ST.final.toFixed(2).padStart(7)+' PEN*  ║\n'
+    +'│      ╚══════════════╝\n'
+    +'└─────────────────────\n\n'
+
+    +'┌─────────────────────\n'
+    +'│ 🏍 *DATOS DE ENTREGA*\n'
+    +'├─────────────────────\n'
+    +'│ 🏠 *Dirección:*\n'
+    +'│     '+direccion+'\n'
+    +(ST.gpsUrl
+      ? '│ 📍 *GPS en tiempo real:*\n│     '+ST.gpsUrl+'\n'
       : '')
-    +'\n━━━━━━━━━━━━━━━━━━━━━\n'
-    +'_ASWA · La Rica Chicha · Morales_ 🌿';
+    +'│ 📌 *Zona:*  '+zonaTexto+'\n'
+    +'└─────────────────────\n\n'
+
+    +'┌─────────────────────\n'
+    +'│ '+(pagoIco[ST.pago]||'💳')+' *MÉTODO DE PAGO: '+ST.pago.toUpperCase()+'*\n'
+    +(ST.pago==='Efectivo'
+      ? '├─────────────────────\n'
+        +'│ 💵 *Paga con:*  S/ '+pagoCon.toFixed(2)+'\n'
+        +'│ 🔄 *Su vuelto:* *S/ '+Math.max(0,pagoCon-ST.final).toFixed(2)+'*\n'
+      : '')
+    +'└─────────────────────\n\n'
+
+    +'```✅ Pedido recibido — procesando...```\n'
+    +'_🌿 ASWA · La Rica Chicha · Morales, San Martín_\n'
+    +'_📞 955 273 229 / 986 445 531_';
 
   window.open('https://wa.me/'+window.WA1+'?text='+encodeURIComponent(msg), '_blank');
   setTimeout(() => window.open('https://wa.me/'+window.WA2+'?text='+encodeURIComponent(msg), '_blank'), 900);
