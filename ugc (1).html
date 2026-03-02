@@ -2450,59 +2450,62 @@ function iniciarGPS() {
   status.className   = 'gps-status';
   status.textContent = '📡 Solicitando permiso de ubicación...';
 
-  /* ── FIX 3: Primero intentar getCurrentPosition para obtener el permiso
-             antes de lanzar watchPosition (más confiable en móviles) ── */
+  /* Función para aplicar posición a la UI */
+  function _aplicarPos(pos) {
+    const lat     = pos.coords.latitude.toFixed(6);
+    const lng     = pos.coords.longitude.toFixed(6);
+    const acc     = Math.round(pos.coords.accuracy);
+    const mapsUrl = 'https://www.google.com/maps?q=' + lat + ',' + lng;
+    ST.gpsUrl     = mapsUrl;
+    ST.gpsCoords  = { lat, lng, acc, ts: Date.now() };
+    const dirInput = document.getElementById('direccion');
+    if (!dirInput.value || dirInput.value.startsWith('GPS:'))
+      dirInput.value = 'GPS: ' + lat + ', ' + lng;
+    btn.classList.remove('loading','error');
+    btn.classList.add('success');
+    btn.disabled      = false;
+    label.textContent = '\uD83D\uDD34 GPS ACTIVO — En vivo';
+    liveBox.classList.add('show');
+    document.getElementById('gpsLiveCoords').innerHTML =
+      lat+', '+lng+' \u00b7 \u00b1'+acc+'m \u00b7 '
+      +'<a href="'+mapsUrl+'" target="_blank" style="color:var(--grn)">Ver en Maps</a>';
+    status.className   = 'gps-status ok';
+    status.textContent = '\uD83D\uDCCD Ubicacion activa \u00b7 precision \u00b1'+acc+'m';
+  }
+
+  /* PASO 1: posicion rapida con red/WiFi - en Android es inmediata */
   navigator.geolocation.getCurrentPosition(
-    /* Éxito → lanzar watchPosition */
-    () => {
-      status.textContent = '✅ Permiso concedido. Iniciando rastreo...';
-
+    (pos) => {
+      _aplicarPos(pos);
+      status.textContent = '\uD83D\uDCE1 Ubicacion obtenida \u00b7 mejorando con GPS...';
+      /* PASO 2: watch de alta precision para refinar */
       ST._gpsWatchId = navigator.geolocation.watchPosition(
-        /* Actualización en tiempo real */
-        (pos) => {
-          const lat = pos.coords.latitude.toFixed(6);
-          const lng = pos.coords.longitude.toFixed(6);
-          const acc = Math.round(pos.coords.accuracy);
-          const mapsUrl = 'https://www.google.com/maps?q=' + lat + ',' + lng;
-
-          ST.gpsUrl    = mapsUrl;
-          ST.gpsCoords = { lat, lng, acc, ts: Date.now() };
-
-          /* Actualizar campo dirección la primera vez */
-          const dirInput = document.getElementById('direccion');
-          if (!dirInput.value || dirInput.value.startsWith('GPS:')) {
-            dirInput.value = 'GPS: ' + lat + ', ' + lng;
-          }
-
-          btn.classList.remove('loading', 'error');
-          btn.classList.add('success');
-          btn.disabled = false;
-          label.textContent = '🔴 GPS ACTIVO — En vivo';
-
-          liveBox.classList.add('show');
-          document.getElementById('gpsLiveCoords').innerHTML =
-            lat + ', ' + lng + ' · ±' + acc + 'm · '
-            + '<a href="' + mapsUrl + '" target="_blank" style="color:var(--grn)">Ver en Maps</a>';
-
-          status.className   = 'gps-status ok';
-          status.textContent = '📍 Actualizando en tiempo real · precisión ±' + acc + 'm';
-        },
-
-        /* Error en watchPosition */
-        (err) => {
-          _gpsError(err, btn, label, liveBox, status);
-        },
-
-        { enableHighAccuracy: true, timeout: 15000, maximumAge: 3000 }
+        (pos2) => { _aplicarPos(pos2); },
+        ()     => { /* falla watch pero ya hay coords - ignorar */ },
+        { enableHighAccuracy: true, timeout: 30000, maximumAge: 5000 }
       );
     },
-
-    /* Error al pedir permiso → mostrar mensaje claro */
     (err) => {
-      _gpsError(err, btn, label, liveBox, status);
+      if (err.code === 3) {
+        /* Timeout - reintentar sin precision alta */
+        status.textContent = '\uD83D\uDCE1 Reintentando con señal de red...';
+        navigator.geolocation.getCurrentPosition(
+          (pos) => {
+            _aplicarPos(pos);
+            ST._gpsWatchId = navigator.geolocation.watchPosition(
+              (pos2) => { _aplicarPos(pos2); },
+              ()     => {},
+              { enableHighAccuracy: false, timeout: 30000, maximumAge: 15000 }
+            );
+          },
+          (err2) => { _gpsError(err2, btn, label, liveBox, status); },
+          { enableHighAccuracy: false, timeout: 20000, maximumAge: 60000 }
+        );
+      } else {
+        _gpsError(err, btn, label, liveBox, status);
+      }
     },
-
-    { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+    { enableHighAccuracy: false, timeout: 8000, maximumAge: 60000 }
   );
 }
 
