@@ -38,6 +38,9 @@
 
   <script>
     const BUSINESS_ID = "aswa001";
+    // ══ PIN DEL DELIVERISTA — cámbialo cuando quieras ══
+    // Este PIN solo lo conoce el negocio y sus deliveristas
+    const DELIVERY_PIN = "8521";
 
     async function cargarNegocio() {
       try {
@@ -933,11 +936,137 @@
       background:var(--s2); color:var(--txt); border:1px solid var(--brd);
       padding:10px 22px; border-radius:999px;
       font-size:13px; font-weight:600;
-      opacity:0; transition:all .28s; z-index:500;
+      opacity:0; transition:all .28s; z-index:1500;
       pointer-events:none; white-space:nowrap;
     }
     .tst.on { opacity:1; transform:translateX(-50%) translateY(0); }
     .ws-ico { width:20px; height:20px; flex-shrink:0; }
+
+    /* ══════════════════════════════════════
+       NUEVO: PANEL DELIVERISTA
+    ══════════════════════════════════════ */
+
+    /* Botón secreto deliverista — esquina inferior izquierda, discreto */
+    #btnDeliverista {
+      position:fixed; bottom:90px; left:16px; z-index:1200;
+      background:var(--s2); color:var(--mut);
+      border:1px solid var(--brd); border-radius:999px;
+      padding:10px 16px; font-size:11px; font-weight:700;
+      cursor:pointer; font-family:'Poppins',sans-serif;
+      display:flex; align-items:center; gap:6px;
+      transition:all .2s; opacity:0.6;
+    }
+    #btnDeliverista:hover { opacity:1; border-color:var(--y); color:var(--y); }
+
+    /* Modal deliverista */
+    .dlv-modal {
+      display:none; position:fixed; inset:0; z-index:1300;
+      background:rgba(0,0,0,.95); backdrop-filter:blur(16px);
+      align-items:center; justify-content:center; padding:20px;
+    }
+    .dlv-modal.open { display:flex; }
+    .dlv-sheet {
+      background:var(--s1); border:1px solid var(--brd);
+      border-radius:24px; width:100%; max-width:400px;
+      padding:28px 24px; animation:pop .3s cubic-bezier(.22,1,.36,1);
+    }
+    .dlv-logo {
+      text-align:center; margin-bottom:20px;
+    }
+    .dlv-logo .dlv-ico { font-size:48px; }
+    .dlv-logo h2 {
+      font-family:'Bebas Neue',cursive; font-size:28px; color:var(--y);
+      letter-spacing:.08em; margin-top:8px;
+    }
+    .dlv-logo p { font-size:12px; color:var(--mut); margin-top:4px; }
+
+    /* Step 1: PIN */
+    .dlv-step { display:none; }
+    .dlv-step.active { display:block; }
+
+    .dlv-pin-grid {
+      display:grid; grid-template-columns:repeat(3,1fr); gap:10px;
+      margin:16px 0;
+    }
+    .dlv-pin-btn {
+      background:var(--s2); border:1px solid var(--brd);
+      color:var(--txt); border-radius:14px; padding:18px;
+      font-size:22px; font-weight:800; cursor:pointer;
+      font-family:'Poppins',sans-serif; text-align:center;
+      transition:all .1s; user-select:none;
+    }
+    .dlv-pin-btn:active { background:var(--y); color:#000; transform:scale(.93); }
+    .dlv-pin-display {
+      display:flex; justify-content:center; gap:12px;
+      margin-bottom:16px;
+    }
+    .dlv-pin-dot {
+      width:16px; height:16px; border-radius:50%;
+      background:var(--brd); transition:background .2s;
+    }
+    .dlv-pin-dot.filled { background:var(--y); }
+    .dlv-pin-error {
+      text-align:center; color:var(--red); font-size:13px; font-weight:700;
+      margin-top:8px; min-height:20px;
+    }
+
+    /* Step 2: Buscar pedido */
+    .dlv-pedido-card {
+      background:var(--s2); border:1px solid rgba(34,197,94,.3);
+      border-radius:14px; padding:16px; margin:14px 0;
+    }
+    .dlv-pedido-card .dpc-row {
+      display:flex; justify-content:space-between;
+      padding:5px 0; border-bottom:1px solid var(--brd);
+      font-size:13px;
+    }
+    .dlv-pedido-card .dpc-row:last-child { border-bottom:none; }
+    .dlv-pedido-card .dpc-lbl { color:var(--mut); font-weight:600; }
+    .dlv-pedido-card .dpc-val { color:var(--txt); font-weight:700; text-align:right; flex:1; margin-left:12px; }
+    .dlv-pedido-card .dpc-val.green { color:var(--grn); }
+    .dlv-pedido-card .dpc-val.yellow { color:var(--y); }
+
+    .dlv-warn {
+      background:rgba(239,68,68,.1); border:1px solid rgba(239,68,68,.3);
+      border-radius:10px; padding:10px 14px;
+      font-size:12px; color:#fca5a5; text-align:center;
+      margin-top:10px; display:none;
+    }
+    .dlv-warn.show { display:block; }
+
+    .dlv-btn-confirm {
+      width:100%; background:var(--grn); color:#000; border:none;
+      padding:16px; border-radius:14px; font-size:15px; font-weight:800;
+      cursor:pointer; font-family:'Poppins',sans-serif;
+      transition:all .15s; margin-top:14px;
+      display:flex; align-items:center; justify-content:center; gap:8px;
+    }
+    .dlv-btn-confirm:hover { background:#16a34a; }
+    .dlv-btn-confirm:disabled { opacity:.5; cursor:not-allowed; }
+
+    .dlv-btn-cancel {
+      width:100%; background:transparent; color:var(--mut);
+      border:none; padding:12px; font-size:13px; font-weight:600;
+      cursor:pointer; font-family:'Poppins',sans-serif; margin-top:4px;
+    }
+
+    /* Step 3: Éxito deliverista */
+    .dlv-success {
+      text-align:center; padding:10px 0;
+    }
+    .dlv-success .ds-ico { font-size:64px; margin-bottom:12px; animation:pop .4s ease; }
+    .dlv-success h3 {
+      font-family:'Bebas Neue',cursive; font-size:32px; color:var(--grn);
+      letter-spacing:.05em; margin-bottom:8px;
+    }
+    .dlv-success p { font-size:13px; color:var(--mut); line-height:1.7; }
+
+    /* Banner de espera del cliente — aparece en pantalla de éxito */
+    .dlv-waiting-banner {
+      background:rgba(250,204,21,.08); border:1px solid rgba(250,204,21,.25);
+      border-radius:12px; padding:12px 14px; margin-top:14px;
+      font-size:12px; color:var(--y); text-align:center; line-height:1.6;
+    }
   </style>
 </head>
 <body>
@@ -1077,7 +1206,6 @@
       </div>
     </div>
 
-    <!-- ══ BOTÓN GPS — CORREGIDO ══ -->
     <div class="fld">
       <button class="btn-gps" id="btnGPS" onclick="toggleGPS()">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
@@ -1421,37 +1549,184 @@
   </div>
 </div>
 
-<!-- MODAL CONFIRMAR ENTREGA -->
+<!-- ══════════════════════════════════════
+     MODAL CONFIRMAR ENTREGA (CLIENTE)
+     Solo activo DESPUÉS de que el deliverista confirmó
+══════════════════════════════════════ -->
 <div class="ov" id="mConfirmar" onclick="event.stopPropagation()">
   <div class="sheet">
     <div class="hnd"></div>
     <div class="mttl">¿Ya recibiste tu pedido? 🌽</div>
-    <div class="confbox">
+
+    <!-- Estado: esperando al deliverista -->
+    <div id="confEsperando" style="display:none">
+      <div style="text-align:center;padding:20px 0">
+        <div style="font-size:48px;margin-bottom:12px">🏍️</div>
+        <p style="font-size:14px;font-weight:700;color:var(--txt);margin-bottom:8px">Tu pedido está en camino</p>
+        <p style="font-size:13px;color:var(--mut);line-height:1.7">
+          El deliverista aún no ha confirmado la entrega.<br>
+          Cuando llegue tu chicha, él registrará la entrega<br>
+          y tú podrás confirmarla aquí. 🌽
+        </p>
+        <div style="background:rgba(250,204,21,.08);border:1px solid rgba(250,204,21,.2);border-radius:12px;padding:12px 14px;margin-top:16px;font-size:12px;color:var(--y)">
+          🔒 Por seguridad, solo puedes confirmar<br>cuando el deliverista registre la entrega
+        </div>
+      </div>
+    </div>
+
+    <!-- Estado: deliverista ya confirmó — cliente puede confirmar -->
+    <div class="confbox" id="confListo" style="display:none">
       <div style="font-size:48px;margin-bottom:12px">📦</div>
       <p>
-        Toca el botón cuando recibas tu chicha.<br>
-        Esto activa tu descuento de fidelidad y genera<br>
-        tu <strong style="color:var(--y)">Nota de Venta</strong> para descargar 🎉
+        ✅ El deliverista confirmó que entregó tu chicha.<br>
+        Toca el botón para verificar y generar<br>
+        tu <strong style="color:var(--y)">Nota de Venta</strong> 🎉
       </p>
       <button class="bconf" id="btnConf" onclick="confirmarEntrega()">
         ✅ SÍ, YA RECIBÍ MI PEDIDO
       </button>
     </div>
+
     <button class="bcancel" onclick="minimizarConfirmar()">
       ⏳ Todavía no llegó — Confirmaré después
     </button>
   </div>
 </div>
 
-<!-- Botón flotante confirmar -->
+<!-- Botón flotante confirmar (cliente) -->
 <div id="btnFlotante" style="
   display:none; position:fixed; bottom:90px; right:16px; z-index:1200;
   background:#22c55e; color:#000; border:none; border-radius:999px;
   padding:14px 20px; font-size:13px; font-weight:900; cursor:pointer;
   font-family:'Poppins',sans-serif; box-shadow:0 4px 20px rgba(34,197,94,.5);
   animation:pulse-btn 2s infinite;
-" onclick="document.getElementById('mConfirmar').classList.add('on');document.getElementById('btnFlotante').style.display='none'">
+" onclick="abrirConfirmarCliente()">
   📦 Confirmar entrega
+</div>
+
+<!-- ══════════════════════════════════════
+     BOTÓN DELIVERISTA (discreto)
+══════════════════════════════════════ -->
+<button id="btnDeliverista" onclick="abrirPanelDeliverista()">
+  🏍️ Soy deliverista
+</button>
+
+<!-- ══════════════════════════════════════
+     MODAL PANEL DELIVERISTA
+══════════════════════════════════════ -->
+<div class="dlv-modal" id="mDeliverista">
+  <div class="dlv-sheet">
+
+    <div class="dlv-logo">
+      <div class="dlv-ico">🏍️</div>
+      <h2>PANEL DELIVERISTA</h2>
+      <p>ASWA · La Rica Chicha</p>
+    </div>
+
+    <!-- STEP 1: Ingresar PIN -->
+    <div class="dlv-step active" id="dlvStep1">
+      <div style="font-size:13px;color:var(--mut);text-align:center;margin-bottom:14px">
+        Ingresa el PIN del negocio para continuar
+      </div>
+      <div class="dlv-pin-display" id="dlvPinDisplay">
+        <div class="dlv-pin-dot" id="dot0"></div>
+        <div class="dlv-pin-dot" id="dot1"></div>
+        <div class="dlv-pin-dot" id="dot2"></div>
+        <div class="dlv-pin-dot" id="dot3"></div>
+      </div>
+      <div class="dlv-pin-grid">
+        <button class="dlv-pin-btn" onclick="pinPress('1')">1</button>
+        <button class="dlv-pin-btn" onclick="pinPress('2')">2</button>
+        <button class="dlv-pin-btn" onclick="pinPress('3')">3</button>
+        <button class="dlv-pin-btn" onclick="pinPress('4')">4</button>
+        <button class="dlv-pin-btn" onclick="pinPress('5')">5</button>
+        <button class="dlv-pin-btn" onclick="pinPress('6')">6</button>
+        <button class="dlv-pin-btn" onclick="pinPress('7')">7</button>
+        <button class="dlv-pin-btn" onclick="pinPress('8')">8</button>
+        <button class="dlv-pin-btn" onclick="pinPress('9')">9</button>
+        <button class="dlv-pin-btn" onclick="pinPress('borrar')" style="font-size:18px">⌫</button>
+        <button class="dlv-pin-btn" onclick="pinPress('0')">0</button>
+        <button class="dlv-pin-btn" onclick="cerrarDeliverista()" style="font-size:14px;color:var(--mut)">✕</button>
+      </div>
+      <div class="dlv-pin-error" id="dlvPinError"></div>
+    </div>
+
+    <!-- STEP 2: Buscar y confirmar pedido -->
+    <div class="dlv-step" id="dlvStep2">
+      <div style="font-size:13px;color:var(--mut);text-align:center;margin-bottom:16px">
+        Busca el pedido por celular del cliente
+      </div>
+      <div class="fld">
+        <label style="color:var(--mut)">Celular del cliente</label>
+        <input type="tel" id="dlvTelCliente" class="inp" maxlength="9"
+               placeholder="9XXXXXXXX" inputmode="numeric"
+               oninput="buscarPedidoDeliverista(this.value)">
+      </div>
+      <div id="dlvBuscando" style="display:none;text-align:center;padding:12px;font-size:13px;color:var(--mut)">
+        ⏳ Buscando pedido...
+      </div>
+      <div id="dlvPedidoCard" style="display:none">
+        <div class="dlv-pedido-card">
+          <div class="dpc-row">
+            <span class="dpc-lbl">👤 Cliente</span>
+            <span class="dpc-val" id="dlvNombreCliente">—</span>
+          </div>
+          <div class="dpc-row">
+            <span class="dpc-lbl">📍 Dirección</span>
+            <span class="dpc-val" id="dlvDirCliente">—</span>
+          </div>
+          <div class="dpc-row">
+            <span class="dpc-lbl">🛒 Pedido</span>
+            <span class="dpc-val" id="dlvItemsCliente">—</span>
+          </div>
+          <div class="dpc-row">
+            <span class="dpc-lbl">💰 Total</span>
+            <span class="dpc-val yellow" id="dlvTotalCliente">—</span>
+          </div>
+          <div class="dpc-row">
+            <span class="dpc-lbl">💳 Pago</span>
+            <span class="dpc-val" id="dlvPagoCliente">—</span>
+          </div>
+          <div class="dpc-row">
+            <span class="dpc-lbl">📦 Estado</span>
+            <span class="dpc-val green" id="dlvEstadoCliente">—</span>
+          </div>
+        </div>
+        <div class="dlv-warn" id="dlvWarnYaConfirmado">
+          ⚠️ Este pedido ya fue confirmado anteriormente.
+        </div>
+        <button class="dlv-btn-confirm" id="dlvBtnConfirmar" onclick="deliveristaConfirmarEntrega()">
+          ✅ CONFIRMAR QUE ENTREGUÉ
+        </button>
+      </div>
+      <div id="dlvNoPedido" style="display:none;text-align:center;padding:16px;background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.2);border-radius:12px;font-size:13px;color:#fca5a5">
+        ❌ No se encontró un pedido activo para ese número.<br>
+        <span style="font-size:11px;color:var(--mut);margin-top:4px;display:block">Verifica el celular del cliente</span>
+      </div>
+      <button class="dlv-btn-cancel" onclick="dlvVolverStep1()">← Volver</button>
+    </div>
+
+    <!-- STEP 3: Éxito deliverista -->
+    <div class="dlv-step" id="dlvStep3">
+      <div class="dlv-success">
+        <div class="ds-ico">✅</div>
+        <h3>¡ENTREGA REGISTRADA!</h3>
+        <p>
+          La entrega fue confirmada exitosamente.<br>
+          El cliente recibirá una notificación por<br>
+          WhatsApp para verificar la recepción.
+        </p>
+        <div class="dlv-waiting-banner">
+          ⏳ Esperando confirmación del cliente para<br>
+          registrar como <strong>venta real</strong> en el sistema
+        </div>
+        <button class="dlv-btn-confirm" onclick="cerrarDeliverista()" style="margin-top:20px;background:var(--y);color:#000">
+          🏍️ Listo — Cerrar panel
+        </button>
+      </div>
+    </div>
+
+  </div>
 </div>
 
 <!-- PANTALLA ÉXITO -->
@@ -1462,12 +1737,12 @@
   <div class="scod" id="succCod"></div>
   <div style="background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.3);border-radius:14px;padding:16px;margin:16px 0;max-width:320px">
     <p style="font-size:13px;color:#86efac;margin:0 0 12px;line-height:1.6">
-      📦 Cuando recibas tu chicha,<br>
-      toca el botón verde para generar<br>
-      tu <strong style="color:#4ade80">Nota de Venta</strong>
+      📦 Cuando el deliverista llegue y registre la entrega,<br>
+      te avisaremos para confirmar que recibiste tu chicha.<br>
+      <strong style="color:#4ade80">¡Solo así se genera tu Nota de Venta!</strong> 🔒
     </p>
     <button class="bnvo" style="background:#22c55e;color:#000;width:100%;padding:14px" onclick="irAConfirmar()">
-      📦 Ya recibí — Confirmar entrega
+      📦 Ya llegó — Confirmar ahora
     </button>
   </div>
   <button class="bnvo" onclick="limpiarYRecargar()"
@@ -1583,6 +1858,300 @@ const ST = {
   _gpsWatchId: null,
   _enviando:   false,
 };
+
+/* ══════════════════════════════════════
+   PANEL DELIVERISTA — LÓGICA COMPLETA
+══════════════════════════════════════ */
+let dlvPinActual    = '';
+let dlvPedidoActual = null; // guarda el doc de Firebase encontrado
+
+function abrirPanelDeliverista() {
+  dlvPinActual    = '';
+  dlvPedidoActual = null;
+  dlvReset();
+  document.getElementById('mDeliverista').classList.add('open');
+}
+
+function cerrarDeliverista() {
+  document.getElementById('mDeliverista').classList.remove('open');
+  dlvPinActual    = '';
+  dlvPedidoActual = null;
+}
+
+function dlvReset() {
+  // Resetear todos los steps
+  document.querySelectorAll('.dlv-step').forEach(s => s.classList.remove('active'));
+  document.getElementById('dlvStep1').classList.add('active');
+  dlvPinActual = '';
+  actualizarPinDots();
+  document.getElementById('dlvPinError').textContent = '';
+  document.getElementById('dlvTelCliente').value = '';
+  document.getElementById('dlvPedidoCard').style.display = 'none';
+  document.getElementById('dlvNoPedido').style.display   = 'none';
+  document.getElementById('dlvBuscando').style.display   = 'none';
+}
+
+function dlvVolverStep1() {
+  dlvPinActual = '';
+  dlvPedidoActual = null;
+  document.querySelectorAll('.dlv-step').forEach(s => s.classList.remove('active'));
+  document.getElementById('dlvStep1').classList.add('active');
+  actualizarPinDots();
+  document.getElementById('dlvPinError').textContent = '';
+}
+
+/* ── PIN ── */
+function pinPress(v) {
+  if (v === 'borrar') {
+    dlvPinActual = dlvPinActual.slice(0, -1);
+    actualizarPinDots();
+    document.getElementById('dlvPinError').textContent = '';
+    return;
+  }
+  if (dlvPinActual.length >= 4) return;
+  dlvPinActual += v;
+  actualizarPinDots();
+
+  if (dlvPinActual.length === 4) {
+    // Vibración táctil
+    if (navigator.vibrate) navigator.vibrate([30]);
+    setTimeout(() => verificarPin(), 200);
+  }
+}
+
+function actualizarPinDots() {
+  for (let i = 0; i < 4; i++) {
+    const dot = document.getElementById('dot' + i);
+    dot.classList.toggle('filled', i < dlvPinActual.length);
+  }
+}
+
+function verificarPin() {
+  if (dlvPinActual === DELIVERY_PIN) {
+    // PIN correcto → ir al step 2
+    document.querySelectorAll('.dlv-step').forEach(s => s.classList.remove('active'));
+    document.getElementById('dlvStep2').classList.add('active');
+    document.getElementById('dlvTelCliente').focus();
+    tst('🔓 PIN correcto — busca el pedido', 2000);
+  } else {
+    // PIN incorrecto
+    document.getElementById('dlvPinError').textContent = '❌ PIN incorrecto. Intenta de nuevo.';
+    if (navigator.vibrate) navigator.vibrate([80, 40, 80]);
+    // Shake animation
+    const display = document.getElementById('dlvPinDisplay');
+    display.style.animation = 'none';
+    setTimeout(() => {
+      display.style.animation = 'shake .4s ease';
+    }, 10);
+    dlvPinActual = '';
+    actualizarPinDots();
+  }
+}
+
+// Agregar animación shake al CSS dinámicamente
+const shakeStyle = document.createElement('style');
+shakeStyle.textContent = '@keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-8px)}40%{transform:translateX(8px)}60%{transform:translateX(-6px)}80%{transform:translateX(6px)}}';
+document.head.appendChild(shakeStyle);
+
+/* ── BUSCAR PEDIDO (deliverista) ── */
+let dlvBuscarTimer;
+async function buscarPedidoDeliverista(tel) {
+  const cardEl   = document.getElementById('dlvPedidoCard');
+  const noEl     = document.getElementById('dlvNoPedido');
+  const buscEl   = document.getElementById('dlvBuscando');
+  cardEl.style.display = 'none';
+  noEl.style.display   = 'none';
+  dlvPedidoActual = null;
+
+  if (tel.length !== 9 || !tel.startsWith('9')) return;
+
+  buscEl.style.display = 'block';
+  clearTimeout(dlvBuscarTimer);
+  dlvBuscarTimer = setTimeout(async () => {
+    try {
+      const { query: q, collection: col, where: wh, getDocs: gd } = window.FB;
+      // Buscar pedido más reciente en estado Pendiente o en_camino para ese teléfono
+      const snap = await gd(q(
+        col(db, 'pedidos'),
+        wh('businessId', '==', BUSINESS_ID),
+        wh('telefono', '==', tel)
+      ));
+
+      if (snap.empty) {
+        buscEl.style.display = 'none';
+        noEl.style.display   = 'block';
+        return;
+      }
+
+      // Filtrar pedidos válidos (que no estén ya completados)
+      const pedidosValidos = [];
+      snap.forEach(d => {
+        const data = d.data();
+        const estado = data.estado || 'Pendiente';
+        if (estado !== 'entregado') {
+          pedidosValidos.push({ id: d.id, ...data });
+        }
+      });
+
+      if (pedidosValidos.length === 0) {
+        buscEl.style.display = 'none';
+        noEl.style.display   = 'block';
+        return;
+      }
+
+      // Tomar el más reciente
+      pedidosValidos.sort((a, b) => {
+        const ta = a.fecha?.seconds || 0;
+        const tb = b.fecha?.seconds || 0;
+        return tb - ta;
+      });
+      const pedido = pedidosValidos[0];
+      dlvPedidoActual = pedido;
+
+      // Mostrar info del pedido
+      const items = pedido.items || {};
+      const itemsTxt = [
+        items.p2l ? items.p2l + '× 2L' : '',
+        items.p3l ? items.p3l + '× 3L' : '',
+        items.p4l ? items.p4l + '× 4L' : ''
+      ].filter(Boolean).join(', ') || '—';
+
+      document.getElementById('dlvNombreCliente').textContent = pedido.nombre  || '—';
+      document.getElementById('dlvDirCliente').textContent    = pedido.direccion || '—';
+      document.getElementById('dlvItemsCliente').textContent  = itemsTxt;
+      document.getElementById('dlvTotalCliente').textContent  = 'S/ ' + (pedido.total || 0).toFixed(2);
+      document.getElementById('dlvPagoCliente').textContent   = pedido.pago   || 'Efectivo';
+      document.getElementById('dlvEstadoCliente').textContent = pedido.estado || 'Pendiente';
+
+      const yaConfirmadoDlv = pedido.confirmacion_deliverista === true;
+      const warnEl = document.getElementById('dlvWarnYaConfirmado');
+      const btnConf = document.getElementById('dlvBtnConfirmar');
+      if (yaConfirmadoDlv) {
+        warnEl.classList.add('show');
+        btnConf.disabled = true;
+        btnConf.textContent = '✅ Ya confirmaste esta entrega';
+      } else {
+        warnEl.classList.remove('show');
+        btnConf.disabled = false;
+        btnConf.textContent = '✅ CONFIRMAR QUE ENTREGUÉ';
+      }
+
+      buscEl.style.display  = 'none';
+      cardEl.style.display  = 'block';
+
+    } catch(err) {
+      console.error('buscarPedidoDeliverista:', err);
+      buscEl.style.display = 'none';
+      noEl.style.display   = 'block';
+    }
+  }, 700);
+}
+
+/* ── DELIVERISTA CONFIRMA ENTREGA ── */
+async function deliveristaConfirmarEntrega() {
+  if (!dlvPedidoActual) return;
+  const btn = document.getElementById('dlvBtnConfirmar');
+  btn.disabled = true;
+  btn.textContent = '⏳ Registrando...';
+
+  try {
+    const { doc: d, updateDoc: ud, serverTimestamp: ts } = window.FB;
+
+    // 1. Actualizar estado en Firebase: deliverista confirmó
+    await ud(d(db, 'pedidos', dlvPedidoActual.id), {
+      confirmacion_deliverista: true,
+      deliverista_at:           ts(),
+      estado:                   'entregado_por_deliverista'
+    });
+
+    // 2. Notificar al cliente por WhatsApp
+    const telCliente = dlvPedidoActual.telefono;
+    const nomCliente = dlvPedidoActual.nombre || 'cliente';
+    const totalPedido = (dlvPedidoActual.total || 0).toFixed(2);
+    const items = dlvPedidoActual.items || {};
+    const itemsTxt = [
+      items.p2l ? items.p2l + '× Chicha 2L' : '',
+      items.p3l ? items.p3l + '× Chicha 3L' : '',
+      items.p4l ? items.p4l + '× Chicha 4L Familiar' : ''
+    ].filter(Boolean).join('\n• ');
+
+    const appUrl = window.location.href;
+    const msgCliente =
+      '🌽 *ASWA — Tu chicha llegó* 🌽\n\n'
+      + 'Hola *' + nomCliente + '* 👋\n\n'
+      + 'Tu deliverista confirmó que entregó tu pedido. '
+      + 'Por favor verifica que recibiste todo:\n\n'
+      + '• ' + itemsTxt + '\n'
+      + '💰 Total: *S/ ' + totalPedido + '*\n\n'
+      + '━━━━━━━━━━━━━━━\n'
+      + '✅ *IMPORTANTE:* Para completar tu registro\n'
+      + 'y generar tu *Nota de Venta*, abre la app\n'
+      + 'y toca el botón verde 📦\n\n'
+      + appUrl + '\n\n'
+      + '_🔒 Solo las entregas verificadas por ambas partes_\n'
+      + '_quedan registradas como ventas reales en ASWA_\n\n'
+      + '¡Gracias por tu preferencia! 🌾\n'
+      + '_La Rica Chicha · ASWA · Morales_';
+
+    // Abrir WhatsApp al número del cliente
+    window.open(
+      'https://wa.me/51' + telCliente + '?text=' + encodeURIComponent(msgCliente),
+      '_blank'
+    );
+
+    // 3. Ir al step 3 (éxito)
+    document.querySelectorAll('.dlv-step').forEach(s => s.classList.remove('active'));
+    document.getElementById('dlvStep3').classList.add('active');
+
+    tst('🎉 Entrega registrada — notificando al cliente', 3000);
+
+  } catch(err) {
+    console.error('deliveristaConfirmarEntrega:', err);
+    btn.disabled = false;
+    btn.textContent = '✅ CONFIRMAR QUE ENTREGUÉ';
+
+    if (err.code === 'permission-denied') {
+      tst('❌ Sin permiso. Verifica la conexión.', 3000);
+    } else {
+      tst('❌ Error al registrar. Intenta de nuevo.', 3000);
+    }
+  }
+}
+
+/* ── ABRIR CONFIRMACIÓN CLIENTE ── */
+async function abrirConfirmarCliente() {
+  const mConf = document.getElementById('mConfirmar');
+  const confEsp = document.getElementById('confEsperando');
+  const confList = document.getElementById('confListo');
+
+  mConf.classList.add('on');
+
+  // Verificar si el deliverista ya confirmó
+  const pedidoId = ST.pedidoFbId || sessionStorage.getItem('aswa_pedido_id');
+  if (!pedidoId) {
+    // No hay pedido en memoria, mostrar sin bloqueo (edge case)
+    confEsp.style.display  = 'none';
+    confList.style.display = 'block';
+    return;
+  }
+
+  try {
+    const snap = await window.FB.getDoc(window.FB.doc(db, 'pedidos', pedidoId));
+    if (snap.exists()) {
+      const data = snap.data();
+      const dlvConfirmado = data.confirmacion_deliverista === true;
+      confEsp.style.display  = dlvConfirmado ? 'none'  : 'block';
+      confList.style.display = dlvConfirmado ? 'block' : 'none';
+    } else {
+      confEsp.style.display  = 'none';
+      confList.style.display = 'block';
+    }
+  } catch(err) {
+    // Si falla la lectura, permitir continuar
+    confEsp.style.display  = 'none';
+    confList.style.display = 'block';
+  }
+}
 
 /* ── CARRITO ── */
 function qty(id, d) {
@@ -1834,10 +2403,7 @@ function abrirResumen() {
   document.getElementById('mResumen').classList.add('on');
 }
 
-/* ══════════════════════════════════════
-   ENVIAR PEDIDO — BUG 1 CORREGIDO
-   (btn.innerHTML = ... estaba roto)
-══════════════════════════════════════ */
+/* ── ENVIAR PEDIDO ── */
 async function enviarPedido() {
   if (ST._enviando) return;
   ST._enviando = true;
@@ -1908,7 +2474,10 @@ async function enviarPedido() {
         +'🔄 *Vuelto:* *S/ '+Math.max(0,pagoCon-ST.final).toFixed(2)+'*\n'
       : '')
     +'\n'+sep+'\n'
-    +'✅ _Pedido confirmado — en camino_ 🏍\n'
+    +'⚠️ _Para registrar como VENTA REAL:_\n'
+    +'_1️⃣ Deliverista confirma entrega (PIN)_\n'
+    +'_2️⃣ Cliente verifica recepción en app_\n'
+    +'✅ _Recién ahí se genera la Nota de Venta_ 🔒\n'
     +'_🌿 ASWA · La Rica Chicha · Morales_\n'
     +'_📞 955 273 229 / 986 445 531_';
 
@@ -1935,7 +2504,10 @@ async function enviarPedido() {
       codigo_usado:   codigoUsado || null,
       nivel_cliente:  ST.cli.nivel || 'BRONCE',
       estado:         'Pendiente',
-      confirmacion_cliente: false,
+      confirmacion_deliverista: false,   // 🆕 Deliverista aún no confirmó
+      confirmacion_cliente:     false,   // Cliente aún no confirmó
+      deliverista_at:           null,
+      confirmado_at:            null,
       gps_url:        ST.gpsUrl || null,
       gps_coords:     ST.gpsCoords || null,
       fecha:          ts()
@@ -1975,7 +2547,6 @@ async function enviarPedido() {
 
   } catch(err) { console.error('Firebase error:', err); }
 
-  /* ── BUG 1 CORREGIDO: btn.innerHTML ahora usa una sola cadena válida ── */
   ST._enviando = false;
   btn.disabled = false;
   btn.innerHTML =
@@ -2004,22 +2575,16 @@ async function enviarPedido() {
     sessionStorage.setItem('aswa_cod',    ST.cli.cod   || '');
   }
 
-  const esperar = () => {
-    if (ST.pedidoFbId) {
-      setTimeout(() => {
-        if (document.getElementById('succScreen').classList.contains('on')) {
-          document.getElementById('succScreen').classList.remove('on');
-          document.getElementById('mConfirmar').classList.add('on');
-        }
-      }, 6000);
-    } else {
-      setTimeout(() => esperar(), 600);
+  // Mostrar botón flotante después de 8 segundos
+  setTimeout(() => {
+    if (document.getElementById('succScreen').classList.contains('on')) {
+      document.getElementById('succScreen').classList.remove('on');
+      document.getElementById('btnFlotante').style.display = 'block';
     }
-  };
-  setTimeout(() => esperar(), 1200);
+  }, 8000);
 }
 
-/* ── CONFIRMAR ENTREGA ── */
+/* ── CONFIRMAR ENTREGA (CLIENTE) ── */
 async function confirmarEntrega() {
   const btn = document.getElementById('btnConf');
   if (!ST.pedidoFbId) {
@@ -2028,31 +2593,47 @@ async function confirmarEntrega() {
   }
   if (!ST.pedidoFbId) {
     cerrar('mConfirmar');
-    tst('⚠️ No se encontró el pedido. Generando nota de todas formas...', 2000);
-    setTimeout(() => mostrarNotaVenta(), 800);
+    tst('⚠️ No se encontró el pedido.', 2000);
     return;
   }
+
   btn.disabled = true; btn.innerHTML = '⏳ Confirmando...';
+
   try {
+    // Verificar una vez más que el deliverista confirmó (seguridad doble)
+    const snapCheck = await window.FB.getDoc(window.FB.doc(db, 'pedidos', ST.pedidoFbId));
+    if (snapCheck.exists()) {
+      const dataCheck = snapCheck.data();
+      if (!dataCheck.confirmacion_deliverista) {
+        btn.disabled = false;
+        btn.innerHTML = '✅ SÍ, YA RECIBÍ MI PEDIDO';
+        tst('🔒 El deliverista aún no registró la entrega. Pídele que lo haga.', 4000);
+        return;
+      }
+    }
+
     const { doc:d, updateDoc:ud, serverTimestamp:ts } = window.FB;
+    // 🆕 Solo aquí se marca como "entregado" real → VENTA REAL en Firebase
     await ud(d(db,'pedidos',ST.pedidoFbId), {
-      confirmacion_cliente: true, confirmado_at: ts(), estado: 'entregado'
+      confirmacion_cliente: true,
+      confirmado_at:        ts(),
+      estado:               'entregado'    // ← VENTA REAL registrada
     });
+
     cerrar('mConfirmar');
-    tst('🎉 ¡Entrega confirmada! Preparando tu Nota de Venta...', 3000);
+    tst('🎉 ¡Entrega confirmada! Generando tu Nota de Venta...', 3000);
     ['aswa_pedido_id','aswa_succ_active','aswa_cart','aswa_total',
      'aswa_delivery','aswa_raw','aswa_pago','aswa_nombre',
      'aswa_tel','aswa_nivel','aswa_cod'].forEach(k => sessionStorage.removeItem(k));
     setTimeout(() => mostrarNotaVenta(), 1000);
+
   } catch(err) {
     console.error('confirmarEntrega error:', err);
     btn.disabled = false; btn.innerHTML = '✅ SÍ, YA RECIBÍ MI PEDIDO';
     if (err.code === 'permission-denied') {
-      cerrar('mConfirmar');
-      tst('✅ ¡Pedido confirmado! Generando nota...', 2500);
-      setTimeout(() => mostrarNotaVenta(), 800);
+      tst('❌ Sin permisos. Verifica tu conexión.', 3000);
     } else {
-      tst('❌ Error al confirmar. Verifica tu conexión.', 3000);
+      tst('❌ Error al confirmar. Intenta de nuevo.', 3000);
     }
   }
 }
@@ -2231,6 +2812,7 @@ thead th:not(:first-child){text-align:right}
 .gran-total{background:#fffbeb;border:2px solid #facc15;border-radius:14px;padding:16px 20px;display:flex;justify-content:space-between;align-items:center;margin:12px 0}
 .gt-lbl{font-size:14px;font-weight:900;color:#111;text-transform:uppercase;line-height:1.3}
 .gt-val{font-size:42px;font-weight:900;color:#c27c00;line-height:1}
+.verificado-badge{background:#dcfce7;border:1px solid #86efac;border-radius:10px;padding:8px 14px;font-size:11px;color:#166534;font-weight:700;text-align:center;margin-bottom:14px}
 .footer{text-align:center;border-top:1px dashed #e5e7eb;padding-top:14px;font-size:11px;color:#9ca3af;line-height:1.9;margin-top:14px}
 .footer strong{color:#c27c00}
 .print-btn{display:block;margin:16px auto 0;background:#facc15;color:#000;border:none;padding:12px 32px;border-radius:10px;font-size:14px;font-weight:900;cursor:pointer;font-family:'Poppins',sans-serif}
@@ -2244,6 +2826,7 @@ thead th:not(:first-child){text-align:right}
 <div style="font-size:12px;font-weight:700;color:#374151">${document.getElementById('nvNumero').textContent}</div>
 <div style="font-size:11px;color:#9ca3af;margin-top:2px">${document.getElementById('nvFecha').textContent}</div>
 </div>
+<div class="verificado-badge">✅ ENTREGA VERIFICADA — Deliverista + Cliente confirmaron</div>
 <div class="cliente-box">
 <div class="cli-row"><span class="cli-lbl">Cliente:</span><span class="cli-val">${document.getElementById('nvNombre').textContent}</span></div>
 <div class="cli-row"><span class="cli-lbl">Celular:</span><span class="cli-val">${document.getElementById('nvTelefono').textContent}</span></div>
@@ -2300,12 +2883,12 @@ function limpiarYRecargar() {
 function minimizarConfirmar() {
   cerrar('mConfirmar'); cerrar('succScreen');
   document.getElementById('btnFlotante').style.display = 'block';
-  tst('⏳ Te recordaremos cuando llegue tu pedido 📦', 3000);
+  tst('⏳ Confirma cuando recibas tu chicha 📦', 3000);
 }
 function irAConfirmar() {
   document.getElementById('succScreen').classList.remove('on');
   document.getElementById('btnFlotante').style.display = 'none';
-  document.getElementById('mConfirmar').classList.add('on');
+  abrirConfirmarCliente();
 }
 document.querySelectorAll('.ov').forEach(m => {
   m.addEventListener('click', e => { if (e.target===m) m.classList.remove('on'); });
@@ -2403,21 +2986,10 @@ function tst(msg, dur=2500) {
   setTimeout(() => t.className = 'tst', dur);
 }
 
-/* ══════════════════════════════════════
-   GPS EN TIEMPO REAL — CORREGIDO
-   
-   FIXES APLICADOS:
-   1. Verificación explícita de soporte HTTPS
-   2. Mensaje de error claro cuando no hay permisos
-   3. Manejo correcto del watchPosition
-   4. Compatibilidad con iOS (requiere interacción del usuario)
-══════════════════════════════════════ */
+/* ── GPS ── */
 function toggleGPS() {
-  if (ST._gpsWatchId !== null) {
-    detenerGPS();
-  } else {
-    iniciarGPS();
-  }
+  if (ST._gpsWatchId !== null) detenerGPS();
+  else iniciarGPS();
 }
 
 function iniciarGPS() {
@@ -2426,136 +2998,68 @@ function iniciarGPS() {
   const status = document.getElementById('gpsStatus');
   const liveBox= document.getElementById('gpsLiveBox');
 
-  /* ── FIX 1: Verificar soporte del navegador ── */
   if (!('geolocation' in navigator)) {
     btn.classList.add('error');
     status.className   = 'gps-status err';
-    status.textContent = '❌ Tu navegador no soporta GPS. Escribe tu dirección manualmente.';
+    status.textContent = '❌ Tu navegador no soporta GPS.';
     return;
   }
-
-  /* ── FIX 2: En iOS Safari necesita HTTPS — advertir si no ── */
   if (location.protocol !== 'https:' && location.hostname !== 'localhost') {
     btn.classList.add('error');
     status.className   = 'gps-status err';
-    status.textContent = '❌ El GPS requiere conexión segura (HTTPS).';
+    status.textContent = '❌ El GPS requiere HTTPS.';
     return;
   }
 
-  /* ── Estado visual: cargando ── */
-  btn.classList.remove('success', 'error');
-  btn.classList.add('loading');
-  btn.disabled = true;
-  label.textContent  = '📡 BUSCANDO SEÑAL...';
-  status.className   = 'gps-status';
-  status.textContent = '📡 Solicitando permiso de ubicación...';
+  btn.classList.remove('success','error'); btn.classList.add('loading');
+  btn.disabled = true; label.textContent = '📡 BUSCANDO SEÑAL...';
+  status.className = 'gps-status'; status.textContent = '📡 Solicitando permiso...';
 
-  /* Función para aplicar posición a la UI */
   function _aplicarPos(pos) {
-    const lat     = pos.coords.latitude.toFixed(6);
-    const lng     = pos.coords.longitude.toFixed(6);
-    const acc     = Math.round(pos.coords.accuracy);
-    const mapsUrl = 'https://www.google.com/maps?q=' + lat + ',' + lng;
-    ST.gpsUrl     = mapsUrl;
-    ST.gpsCoords  = { lat, lng, acc, ts: Date.now() };
+    const lat = pos.coords.latitude.toFixed(6);
+    const lng = pos.coords.longitude.toFixed(6);
+    const acc = Math.round(pos.coords.accuracy);
+    const mapsUrl = 'https://www.google.com/maps?q='+lat+','+lng;
+    ST.gpsUrl = mapsUrl; ST.gpsCoords = { lat,lng,acc,ts:Date.now() };
     const dirInput = document.getElementById('direccion');
-    if (!dirInput.value || dirInput.value.startsWith('GPS:'))
-      dirInput.value = 'GPS: ' + lat + ', ' + lng;
-    btn.classList.remove('loading','error');
-    btn.classList.add('success');
-    btn.disabled      = false;
-    label.textContent = '\uD83D\uDD34 GPS ACTIVO — En vivo';
+    if (!dirInput.value || dirInput.value.startsWith('GPS:')) dirInput.value = 'GPS: '+lat+', '+lng;
+    btn.classList.remove('loading','error'); btn.classList.add('success');
+    btn.disabled = false; label.textContent = '🔴 GPS ACTIVO — En vivo';
     liveBox.classList.add('show');
-    document.getElementById('gpsLiveCoords').innerHTML =
-      lat+', '+lng+' \u00b7 \u00b1'+acc+'m \u00b7 '
-      +'<a href="'+mapsUrl+'" target="_blank" style="color:var(--grn)">Ver en Maps</a>';
-    status.className   = 'gps-status ok';
-    status.textContent = '\uD83D\uDCCD Ubicacion activa \u00b7 precision \u00b1'+acc+'m';
+    document.getElementById('gpsLiveCoords').innerHTML = lat+', '+lng+' · ±'+acc+'m · <a href="'+mapsUrl+'" target="_blank" style="color:var(--grn)">Ver en Maps</a>';
+    status.className = 'gps-status ok'; status.textContent = '📍 Ubicación activa · ±'+acc+'m';
   }
 
-  /* PASO 1: posicion rapida con red/WiFi - en Android es inmediata */
   navigator.geolocation.getCurrentPosition(
-    (pos) => {
+    pos => {
       _aplicarPos(pos);
-      status.textContent = '\uD83D\uDCE1 Ubicacion obtenida \u00b7 mejorando con GPS...';
-      /* PASO 2: watch de alta precision para refinar */
       ST._gpsWatchId = navigator.geolocation.watchPosition(
-        (pos2) => { _aplicarPos(pos2); },
-        ()     => { /* falla watch pero ya hay coords - ignorar */ },
-        { enableHighAccuracy: true, timeout: 30000, maximumAge: 5000 }
+        pos2 => _aplicarPos(pos2), () => {},
+        { enableHighAccuracy:true, timeout:30000, maximumAge:5000 }
       );
     },
-    (err) => {
-      if (err.code === 3) {
-        /* Timeout - reintentar sin precision alta */
-        status.textContent = '\uD83D\uDCE1 Reintentando con señal de red...';
-        navigator.geolocation.getCurrentPosition(
-          (pos) => {
-            _aplicarPos(pos);
-            ST._gpsWatchId = navigator.geolocation.watchPosition(
-              (pos2) => { _aplicarPos(pos2); },
-              ()     => {},
-              { enableHighAccuracy: false, timeout: 30000, maximumAge: 15000 }
-            );
-          },
-          (err2) => { _gpsError(err2, btn, label, liveBox, status); },
-          { enableHighAccuracy: false, timeout: 20000, maximumAge: 60000 }
-        );
-      } else {
-        _gpsError(err, btn, label, liveBox, status);
-      }
-    },
-    { enableHighAccuracy: false, timeout: 8000, maximumAge: 60000 }
+    err => _gpsError(err, btn, label, liveBox, status),
+    { enableHighAccuracy:false, timeout:8000, maximumAge:60000 }
   );
 }
 
-/* ── FIX 4: Función centralizada de manejo de errores GPS ── */
 function _gpsError(err, btn, label, liveBox, status) {
-  btn.classList.remove('loading', 'success');
-  btn.classList.add('error');
-  btn.disabled = false;
-  label.textContent = '📡 UBICACIÓN EN TIEMPO REAL';
-  liveBox.classList.remove('show');
-  ST._gpsWatchId = null;
-
-  const msgs = {
-    1: '❌ Permiso denegado. Ve a Ajustes → Sitios → Ubicación y permite el acceso.',
-    2: '❌ No se pudo determinar la ubicación. Verifica que el GPS esté activado.',
-    3: '❌ Tiempo agotado. Asegúrate de tener señal GPS o Wi-Fi activo.'
-  };
-  status.className   = 'gps-status err';
-  status.textContent = msgs[err.code] || '❌ Error GPS desconocido (código ' + err.code + ').';
-
-  /* Limpiar estado de error después de 8 segundos */
-  setTimeout(() => {
-    btn.classList.remove('error');
-    status.textContent = '';
-    status.className   = 'gps-status';
-  }, 8000);
+  btn.classList.remove('loading','success'); btn.classList.add('error'); btn.disabled = false;
+  label.textContent = '📡 UBICACIÓN EN TIEMPO REAL'; liveBox.classList.remove('show'); ST._gpsWatchId = null;
+  const msgs = { 1:'❌ Permiso denegado. Ve a Ajustes → Sitios → Ubicación.', 2:'❌ No se pudo obtener la ubicación.', 3:'❌ Tiempo agotado. Verifica tu señal GPS.' };
+  status.className = 'gps-status err'; status.textContent = msgs[err.code] || '❌ Error GPS.';
+  setTimeout(() => { btn.classList.remove('error'); status.textContent=''; status.className='gps-status'; }, 8000);
 }
 
 function detenerGPS() {
-  if (ST._gpsWatchId !== null) {
-    navigator.geolocation.clearWatch(ST._gpsWatchId);
-    ST._gpsWatchId = null;
-  }
-  const btn     = document.getElementById('btnGPS');
-  const label   = document.getElementById('gpsLabel');
-  const liveBox = document.getElementById('gpsLiveBox');
-
-  btn.classList.remove('loading', 'success', 'error');
-  btn.disabled = false;
-  liveBox.classList.remove('show');
-
+  if (ST._gpsWatchId !== null) { navigator.geolocation.clearWatch(ST._gpsWatchId); ST._gpsWatchId = null; }
+  const btn=document.getElementById('btnGPS'), label=document.getElementById('gpsLabel'), liveBox=document.getElementById('gpsLiveBox');
+  btn.classList.remove('loading','success','error'); btn.disabled=false; liveBox.classList.remove('show');
   if (ST.gpsUrl) {
-    label.textContent = '✅ UBICACIÓN GUARDADA';
-    document.getElementById('gpsStatus').className   = 'gps-status ok';
-    document.getElementById('gpsStatus').textContent = '📍 Coordenadas guardadas para tu pedido';
-  } else {
-    label.textContent = '📡 UBICACIÓN EN TIEMPO REAL';
-    document.getElementById('gpsStatus').textContent = '';
-    document.getElementById('gpsStatus').className   = 'gps-status';
-  }
+    label.textContent='✅ UBICACIÓN GUARDADA';
+    document.getElementById('gpsStatus').className='gps-status ok';
+    document.getElementById('gpsStatus').textContent='📍 Coordenadas guardadas';
+  } else { label.textContent='📡 UBICACIÓN EN TIEMPO REAL'; document.getElementById('gpsStatus').textContent=''; document.getElementById('gpsStatus').className='gps-status'; }
   tst('📍 GPS detenido — coordenadas guardadas', 2500);
 }
 
@@ -2573,14 +3077,12 @@ async function cargarRedes() {
       ico:`<svg width="18" height="18" viewBox="0 0 24 24" fill="#ff0000"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>` }
   ];
   const MAPS_ICO = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#facc15" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>`;
-
   try {
     const snap = await window.FB.getDoc(window.FB.doc(db, 'business_settings', 'aswa'));
     const data = snap.exists() ? snap.data() : {};
     let html = '';
     REDES.forEach(r => {
-      const url = data[r.key];
-      if (!url) return;
+      const url = data[r.key]; if (!url) return;
       html += `<a href="${url}" target="_blank" rel="noopener noreferrer" class="social-btn ${r.clase}"><div class="sico">${r.ico}</div><div><div class="sname">${r.nombre}</div><div class="ssub">${r.sub}</div></div></a>`;
     });
     const mapsUrl = data.maps;
@@ -2590,7 +3092,6 @@ async function cargarRedes() {
     }
     grid.innerHTML = html || '<p style="color:var(--mut);font-size:13px;text-align:center;grid-column:1/-1;padding:10px">Próximamente en redes sociales 🌽</p>';
   } catch(err) {
-    console.error('Error cargando redes:', err);
     grid.innerHTML = `
       <a href="https://www.facebook.com/profile.php?id=100052222886761" target="_blank" rel="noopener" class="social-btn sb-facebook">
         <div class="sico"><svg width="18" height="18" viewBox="0 0 24 24" fill="#1877f2"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg></div>
@@ -2639,17 +3140,15 @@ async function cargarGaleria(filtro) {
     } else {
       snap = await getD(makeQ(colRef, fw('estado','==','aprobado'), ob('likes','desc'), lm(20)));
     }
-    if (snap.empty) { grid.innerHTML = '<div style="grid-column:1/-1" class="gal-empty"><div class="gal-emo">📸</div><p>Aún no hay fotos en esta categoría.<br>¡Sé el primero!</p></div>'; return; }
+    if (snap.empty) { grid.innerHTML = '<div style="grid-column:1/-1" class="gal-empty"><div class="gal-emo">📸</div><p>Aún no hay fotos. ¡Sé el primero!</p></div>'; return; }
     grid.innerHTML = '';
     snap.forEach(d => {
-      const data = d.data();
-      if (!data.media_url) return;
+      const data = d.data(); if (!data.media_url) return;
       const isDestacado = data.destacado ? '<span class="gal-badge">⭐</span>' : '';
       grid.insertAdjacentHTML('beforeend', `
         <div class="gal-card">
           <img src="${data.media_url}" alt="foto ASWA" loading="lazy" onerror="this.parentElement.style.display='none'">
-          <div class="gal-overlay"></div>
-          ${isDestacado}
+          <div class="gal-overlay"></div>${isDestacado}
           <div class="gal-info">
             <div class="gal-user">@${data.usuario || data.telefono?.slice(-4) || 'anon'}</div>
             <div class="gal-likes">❤️ ${data.likes || 0}</div>
@@ -2657,38 +3156,28 @@ async function cargarGaleria(filtro) {
         </div>`);
     });
   } catch(err) {
-    console.error('Galería error:', err);
     grid.innerHTML = '<div style="grid-column:1/-1" class="gal-empty"><div class="gal-emo">📸</div><p>La galería se llenará con fotos de nuestra comunidad.</p></div>';
   }
 }
 
 function filtrarGal(filtro, btn) {
   document.querySelectorAll('.gf-btn').forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
-  cargarGaleria(filtro);
+  btn.classList.add('active'); cargarGaleria(filtro);
 }
 
 /* ── BONO ── */
 function actualizarBonoPill() { checkBonoReady(); }
 function previsualizarArchivo(input) {
   const file = input.files[0]; if (!file) return;
-  const zone = document.getElementById('uploadZone');
-  const prev = document.getElementById('uploadPreview');
+  const zone = document.getElementById('uploadZone'), prev = document.getElementById('uploadPreview');
   zone.classList.add('has-file'); zone.querySelector('p').textContent = file.name;
-  if (file.type.startsWith('image/')) {
-    const reader = new FileReader();
-    reader.onload = e => { prev.src = e.target.result; prev.style.display = 'block'; };
-    reader.readAsDataURL(file);
-  }
+  if (file.type.startsWith('image/')) { const r = new FileReader(); r.onload = e => { prev.src = e.target.result; prev.style.display='block'; }; r.readAsDataURL(file); }
   checkBonoReady();
 }
 function checkBonoReady() {
-  const nom  = document.getElementById('b-nombre').value.trim();
-  const cel  = document.getElementById('b-celular').value.trim();
-  const tipo = document.getElementById('b-tipo').value;
-  const auth = document.getElementById('b-autorizo').checked;
-  const btn  = document.getElementById('btnEnviarBono');
-  btn.classList.toggle('ready', !!(nom && cel.length===9 && tipo && auth));
+  const nom=document.getElementById('b-nombre').value.trim(), cel=document.getElementById('b-celular').value.trim();
+  const tipo=document.getElementById('b-tipo').value, auth=document.getElementById('b-autorizo').checked;
+  document.getElementById('btnEnviarBono').classList.toggle('ready', !!(nom && cel.length===9 && tipo && auth));
 }
 ['b-nombre','b-celular','b-tipo','b-plataforma'].forEach(id => {
   const el = document.getElementById(id); if (el) el.addEventListener('input', checkBonoReady);
@@ -2720,10 +3209,7 @@ async function enviarBono() {
         <button onclick="irA('pedir')" style="background:var(--y);color:#000;border:none;padding:16px 36px;border-radius:14px;font-size:15px;font-weight:800;cursor:pointer;font-family:'Poppins',sans-serif">← Volver a pedir</button>
       </div>`;
     tst('✅ ¡Contenido enviado! Revisaremos en 24-48hs', 4000);
-  } catch(err) {
-    console.error(err); btn.textContent = 'ENVIAR'; btn.disabled = false;
-    tst('❌ Error al enviar. Intenta de nuevo.', 3000);
-  }
+  } catch(err) { btn.textContent = 'ENVIAR'; btn.disabled = false; tst('❌ Error al enviar.', 3000); }
 }
 
 /* ── CONCURSO ── */
@@ -2736,9 +3222,8 @@ async function cargarConcurso() {
   const mes = mesActual();
   document.getElementById('concFotoSubtitle').textContent  = 'ASWA · ' + mes;
   document.getElementById('concVideoSubtitle').textContent = 'ASWA · ' + mes;
-  const now = new Date();
-  const ultimoDia = new Date(now.getFullYear(), now.getMonth()+1, 0);
-  const fechaLim  = 'Hasta ' + ultimoDia.getDate() + ' ' + ultimoDia.toLocaleDateString('es-PE',{month:'short'});
+  const now = new Date(), ultimoDia = new Date(now.getFullYear(), now.getMonth()+1, 0);
+  const fechaLim = 'Hasta ' + ultimoDia.getDate() + ' ' + ultimoDia.toLocaleDateString('es-PE',{month:'short'});
   document.getElementById('concFotoFecha').textContent  = fechaLim;
   document.getElementById('concVideoFecha').textContent = fechaLim;
   try {
@@ -2748,7 +3233,7 @@ async function cargarConcurso() {
       const df = snapFoto.data();
       document.getElementById('concFotoSubtitle').textContent = (df.nombre||'Mejor Foto')+' · '+mes;
       document.getElementById('concFotoPremio').textContent   = df.premio||'Pedido Gratis';
-      document.getElementById('concFotoDesc').textContent     = df.descripcion||'Sube tu mejor foto con tu chicha ASWA';
+      document.getElementById('concFotoDesc').textContent     = df.descripcion||'Sube tu mejor foto con ASWA';
       document.getElementById('concFotoPart').textContent     = (df.participantes||0)+' participantes';
       if (df.fecha_fin?.seconds) { const f=new Date(df.fecha_fin.seconds*1000); document.getElementById('concFotoFecha').textContent='Hasta '+f.toLocaleDateString('es-PE',{day:'numeric',month:'short'}); }
     }
@@ -2810,7 +3295,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const btn = document.getElementById('btnFlotante');
       if (btn) {
         btn.style.display = 'block';
-        btn.innerHTML = '📦 Tienes un pedido pendiente<br><small style="font-size:11px;font-weight:700">Confirmar entrega → Nota de Venta</small>';
+        btn.innerHTML = '📦 Tienes un pedido pendiente<br><small style="font-size:11px;font-weight:700">Confirmar cuando llegue →</small>';
         btn.style.padding = '12px 16px';
         btn.style.lineHeight = '1.4';
       }
