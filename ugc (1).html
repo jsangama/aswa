@@ -6,7 +6,10 @@
   <meta name="theme-color" content="#09090b">
   <meta name="description" content="La Rica Chicha ASWA — Pide tu chicha artesanal de maiz amazónico en Morales. Delivery a domicilio.">
   <title>La Rica Chicha — ASWA Oficial</title>
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700;800&family=Bebas+Neue&display=swap" rel="stylesheet">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700;800&family=Bebas+Neue&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+  <noscript><link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700;800&family=Bebas+Neue&display=swap" rel="stylesheet"></noscript>
 
   <script type="module">
     import { initializeApp }
@@ -2435,16 +2438,14 @@ async function enviarPedido() {
   const nivelStars = { BRONCE:'⭐', PLATA:'⭐⭐', ORO:'⭐⭐⭐', DIAMANTE:'💎💎💎' };
   const sep = '➖'.repeat(11);
 
-  // Construir línea de productos estilo imagen 1
+  // ── Mensaje WhatsApp — formato imagen 1 ──
   let itemsLineas = '';
   if (ST.cart.p2l) itemsLineas += '  • '+ST.cart.p2l+'× ASWA 2L → S/ '+(ST.cart.p2l*9).toFixed(2)+'\n';
   if (ST.cart.p3l) itemsLineas += '  • '+ST.cart.p3l+'× ASWA 3L → S/ '+(ST.cart.p3l*13).toFixed(2)+'\n';
   if (ST.cart.p4l) itemsLineas += '  • '+ST.cart.p4l+'× ASWA 4L Familiar → S/ '+(ST.cart.p4l*15).toFixed(2)+'\n';
 
-  // Total sin delivery ni descuento (solo productos)
-  const subtotalProductos = ST.cart.p2l*9 + ST.cart.p3l*13 + ST.cart.p4l*15;
-
   const divider = '━━━━━━━━━━━━━━━━━━━━━━\n';
+  const nivelLine = (nivelEmoji[nivelCliente]||'🥉')+' Nivel '+nivelCliente;
 
   const msg =
     '🌿 *NUEVO PEDIDO ASWA*\n'
@@ -2454,15 +2455,15 @@ async function enviarPedido() {
     +'👤 *CLIENTE*\n'
     +'  ▸ '+nombre+'\n'
     +'  ▸ 📲 '+telefono+'\n'
-    +'  ▸ '+(nivelEmoji[nivelCliente]||'🥉')+' Nivel '+nivelCliente+'\n'
+    +'  ▸ '+nivelLine+'\n'
     +(codigoUsado ? '  ▸ 🎟 Ref: '+codigoUsado+'\n' : '')
     +divider
 
     +'🛒 *PRODUCTOS*\n'
     +itemsLineas
+    +(disc>0 ? '\n  🎁 Descuento -'+disc+'%:  −S/ '+(ST.raw*disc/100).toFixed(2)+'\n' : '')
     +divider
 
-    +(disc>0 ? '🎁 *Descuento -'+disc+'%:*  −S/ '+(ST.raw*disc/100).toFixed(2)+'\n' : '')
     +'💰 *TOTAL:  S/ '+ST.final.toFixed(2)+'*\n'
     +divider
 
@@ -2478,7 +2479,14 @@ async function enviarPedido() {
         +'  ▸ *Vuelto: S/ '+Math.max(0,pagoCon-ST.final).toFixed(2)+'*\n'
       : '')
     +'\n'
-    +'_ASWA · La Rica Chicha · Morales_ 🌿';
+    +divider
+    +'⚠️ *Para registrar como VENTA REAL:*\n'
+    +'  1️⃣ Deliverista confirma entrega (PIN)\n'
+    +'  2️⃣ Cliente verifica recepción en app\n'
+    +'  ✅ Recién ahí se genera la Nota de Venta 🔒\n'
+    +'\n'
+    +'_ASWA · La Rica Chicha · Morales_ 🌿\n'
+    +'_📞 955 273 229 / 986 445 531_';
 
   window.open('https://wa.me/'+window.WA1+'?text='+encodeURIComponent(msg), '_blank');
   setTimeout(() => window.open('https://wa.me/'+window.WA2+'?text='+encodeURIComponent(msg), '_blank'), 900);
@@ -3029,16 +3037,32 @@ function iniciarGPS() {
     status.className = 'gps-status ok'; status.textContent = '📍 Ubicación activa · ±'+acc+'m';
   }
 
+  // PASO 1: posición cacheada (instantáneo en celular Android/iOS)
   navigator.geolocation.getCurrentPosition(
     pos => {
       _aplicarPos(pos);
+      // PASO 2: mejorar con GPS real sin bloquear UI
       ST._gpsWatchId = navigator.geolocation.watchPosition(
-        pos2 => _aplicarPos(pos2), () => {},
-        { enableHighAccuracy:true, timeout:30000, maximumAge:5000 }
+        pos2 => _aplicarPos(pos2),
+        () => { /* silencioso — ya tenemos coords */ },
+        { enableHighAccuracy: true, timeout: 20000, maximumAge: 0 }
       );
     },
-    err => _gpsError(err, btn, label, liveBox, status),
-    { enableHighAccuracy:false, timeout:8000, maximumAge:60000 }
+    () => {
+      // Si no hay caché, pedir GPS directo
+      navigator.geolocation.getCurrentPosition(
+        pos => {
+          _aplicarPos(pos);
+          ST._gpsWatchId = navigator.geolocation.watchPosition(
+            pos2 => _aplicarPos(pos2), () => {},
+            { enableHighAccuracy: true, timeout: 20000, maximumAge: 0 }
+          );
+        },
+        err2 => _gpsError(err2, btn, label, liveBox, status),
+        { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
+      );
+    },
+    { enableHighAccuracy: false, timeout: 5000, maximumAge: 60000 }
   );
 }
 
