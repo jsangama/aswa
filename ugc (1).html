@@ -2435,51 +2435,50 @@ async function enviarPedido() {
   const nivelStars = { BRONCE:'⭐', PLATA:'⭐⭐', ORO:'⭐⭐⭐', DIAMANTE:'💎💎💎' };
   const sep = '➖'.repeat(11);
 
+  // Construir línea de productos estilo imagen 1
+  let itemsLineas = '';
+  if (ST.cart.p2l) itemsLineas += '  • '+ST.cart.p2l+'× ASWA 2L → S/ '+(ST.cart.p2l*9).toFixed(2)+'\n';
+  if (ST.cart.p3l) itemsLineas += '  • '+ST.cart.p3l+'× ASWA 3L → S/ '+(ST.cart.p3l*13).toFixed(2)+'\n';
+  if (ST.cart.p4l) itemsLineas += '  • '+ST.cart.p4l+'× ASWA 4L Familiar → S/ '+(ST.cart.p4l*15).toFixed(2)+'\n';
+
+  // Total sin delivery ni descuento (solo productos)
+  const subtotalProductos = ST.cart.p2l*9 + ST.cart.p3l*13 + ST.cart.p4l*15;
+
+  const divider = '━━━━━━━━━━━━━━━━━━━━━━\n';
+
   const msg =
-    '🌽🌽🌽 *NUEVO PEDIDO* 🌽🌽🌽\n'
-    +'*🏪 LA RICA CHICHA — ASWA*\n'
-    +sep+'\n'
-    +'📋 *N°* `'+pid+'`\n'
-    +'🗓 *Fecha:* '+fechaHoy+'  🕐 '+hora+'\n'
-    +sep+'\n\n'
+    '🌿 *NUEVO PEDIDO ASWA*\n'
+    +'🪪 N° *'+pid+'*  •  🕐 '+hora+'\n'
+    +divider
 
     +'👤 *CLIENTE*\n'
-    +'🙋 *Nombre:* '+nombre+'\n'
-    +'📱 *Celular:* '+telefono+'\n'
-    +(nivelEmoji[nivelCliente]||'🥉')+' *Nivel:* '+nivelCliente+' '+(nivelStars[nivelCliente]||'')+'\n'
-    +(codigoUsado ? '🎟 *Ref usado:* `'+codigoUsado+'`\n' : '')
-    +'\n'+sep+'\n\n'
+    +'  ▸ '+nombre+'\n'
+    +'  ▸ 📲 '+telefono+'\n'
+    +'  ▸ '+(nivelEmoji[nivelCliente]||'🥉')+' Nivel '+nivelCliente+'\n'
+    +(codigoUsado ? '  ▸ 🎟 Ref: '+codigoUsado+'\n' : '')
+    +divider
 
     +'🛒 *PRODUCTOS*\n'
-    +items
-    +sep+'\n'
-    +(disc>0
-      ? '🎁 *Descuento -'+disc+'%:*   _−S/ '+(ST.raw*disc/100).toFixed(2)+'_\n'
-      : '')
-    +'🚚 *Delivery:*   _+S/ '+ST.delivery.toFixed(2)+'_\n'
-    +sep+'\n'
-    +'💰 *TOTAL A PAGAR*\n'
-    +'> 🟡 *S/ '+ST.final.toFixed(2)+' PEN*\n'
-    +sep+'\n\n'
+    +itemsLineas
+    +divider
 
-    +'📍 *ENTREGA*\n'
-    +'🏠 *Dirección:* '+direccion+'\n'
-    +(ST.gpsUrl ? '📡 *GPS:* '+ST.gpsUrl+'\n' : '')
-    +'📌 *Zona:* '+zonaTexto+'\n'
-    +'\n'+sep+'\n\n'
+    +(disc>0 ? '🎁 *Descuento -'+disc+'%:*  −S/ '+(ST.raw*disc/100).toFixed(2)+'\n' : '')
+    +'💰 *TOTAL:  S/ '+ST.final.toFixed(2)+'*\n'
+    +divider
+
+    +'🚚 *ENTREGA*\n'
+    +'  ▸ 🏠 '+direccion+'\n'
+    +(ST.gpsUrl ? '  ▸ 📍 '+ST.gpsUrl+'\n' : '')
+    +'  ▸ 📌 Zona: '+zonaTexto+'\n'
+    +divider
 
     +(pagoIco[ST.pago]||'💳')+' *PAGO: '+ST.pago.toUpperCase()+'*\n'
     +(ST.pago==='Efectivo'
-      ? '💵 *Paga con:* S/ '+pagoCon.toFixed(2)+'\n'
-        +'🔄 *Vuelto:* *S/ '+Math.max(0,pagoCon-ST.final).toFixed(2)+'*\n'
+      ? '  ▸ Con: S/ '+pagoCon.toFixed(2)+'\n'
+        +'  ▸ *Vuelto: S/ '+Math.max(0,pagoCon-ST.final).toFixed(2)+'*\n'
       : '')
-    +'\n'+sep+'\n'
-    +'⚠️ _Para registrar como VENTA REAL:_\n'
-    +'_1️⃣ Deliverista confirma entrega (PIN)_\n'
-    +'_2️⃣ Cliente verifica recepción en app_\n'
-    +'✅ _Recién ahí se genera la Nota de Venta_ 🔒\n'
-    +'_🌿 ASWA · La Rica Chicha · Morales_\n'
-    +'_📞 955 273 229 / 986 445 531_';
+    +'\n'
+    +'_ASWA · La Rica Chicha · Morales_ 🌿';
 
   window.open('https://wa.me/'+window.WA1+'?text='+encodeURIComponent(msg), '_blank');
   setTimeout(() => window.open('https://wa.me/'+window.WA2+'?text='+encodeURIComponent(msg), '_blank'), 900);
