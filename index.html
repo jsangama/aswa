@@ -1084,13 +1084,102 @@
       transform:translateX(-50%) translateY(16px);
       background:var(--s2); color:var(--txt); border:1px solid var(--brd);
       padding:10px 22px; border-radius:999px;
-      font-size:13px; font-weight:600;
+      font-size:13px; font-weight:600; 
       opacity:0; transition:all .28s; z-index:500;
       pointer-events:none; white-space:nowrap;
     }
     .tst.on { opacity:1; transform:translateX(-50%) translateY(0); }
 
-    /* SVG WhatsApp inline reutilizable */
+    /* ══ PANEL DELIVERISTA ══ */
+	.dlv-modal {
+	  display:none; position:fixed; inset:0; z-index:1300;
+	  background:rgba(0,0,0,.95); backdrop-filter:blur(12px);
+	  align-items:center; justify-content:center;
+	}
+	.dlv-modal.open { display:flex; }
+	.dlv-sheet {
+	  background:var(--s1); border:1px solid var(--brd);
+	  border-radius:24px; padding:28px 24px; width:90%; max-width:360px;
+	  text-align:center; animation:pop .3s cubic-bezier(.22,1,.36,1);
+	}
+	.dlv-title {
+	  font-family:'Bebas Neue',cursive; font-size:28px;
+	  color:var(--y); letter-spacing:.08em; margin-bottom:4px;
+	}
+	.dlv-sub { font-size:12px; color:var(--mut); margin-bottom:24px; }
+
+	/* PIN display */
+	.dlv-pin-display {
+	  display:flex; justify-content:center; gap:12px; margin-bottom:20px;
+	}
+	.dlv-pin-dot {
+	  width:16px; height:16px; border-radius:50%;
+	  border:2px solid var(--brd); background:transparent;
+	  transition:all .15s;
+	}
+	.dlv-pin-dot.filled { background:var(--y); border-color:var(--y); }
+	.dlv-pin-dot.error  { background:var(--red); border-color:var(--red); }
+
+	/* Teclado PIN */
+	.dlv-keypad {
+	  display:grid; grid-template-columns:repeat(3,1fr);
+	  gap:10px; margin-bottom:16px;
+	}
+	.dlv-key {
+	  background:var(--s2); border:1px solid var(--brd);
+	  border-radius:14px; padding:16px; font-size:20px; font-weight:700;
+	  cursor:pointer; font-family:'Poppins',sans-serif; color:var(--txt);
+	  transition:all .12s;
+	}
+	.dlv-key:active { transform:scale(.92); background:var(--brd); }
+	.dlv-key.del { font-size:16px; color:var(--mut); }
+	.dlv-key.empty { background:transparent; border-color:transparent; cursor:default; }
+
+	/* Step 2 — buscar pedido */
+	.dlv-step { display:none; }
+	.dlv-step.active { display:block; }
+	.dlv-result {
+	  background:rgba(34,197,94,.07); border:1px solid rgba(34,197,94,.25);
+	  border-radius:14px; padding:16px; margin:16px 0; text-align:left;
+	}
+	.dlv-result-row { display:flex; justify-content:space-between; font-size:13px; padding:4px 0; }
+	.dlv-result-lbl { color:var(--mut); }
+	.dlv-result-val { font-weight:700; color:var(--txt); }
+	.dlv-btn {
+	  width:100%; background:var(--y); color:#000; border:none;
+	  padding:14px; border-radius:12px; font-size:14px; font-weight:800;
+	  cursor:pointer; font-family:'Poppins',sans-serif; margin-top:8px;
+	  transition:background .15s;
+	}
+	.dlv-btn:hover { background:var(--y2); }
+	.dlv-btn.grn { background:var(--grn); color:#000; }
+	.dlv-btn.grn:hover { background:#16a34a; }
+	.dlv-btn-cancel {
+	  width:100%; background:transparent; border:none;
+	  color:var(--mut); font-size:13px; font-weight:600;
+	  padding:10px; cursor:pointer; font-family:'Poppins',sans-serif; margin-top:4px;
+	}
+
+	/* Botón flotante deliverista */
+	#btnDeliverista {
+	  position:fixed; bottom:90px; left:16px; z-index:1200;
+	  background:var(--s2); border:1px solid var(--brd);
+	  color:var(--mut); border-radius:999px;
+	  padding:10px 16px; font-size:11px; font-weight:700;
+	  cursor:pointer; font-family:'Poppins',sans-serif;
+	  display:flex; align-items:center; gap:6px;
+	  transition:all .2s; opacity:.6;
+	}
+	#btnDeliverista:hover { opacity:1; border-color:var(--y); color:var(--y); }
+
+	@keyframes shake {
+	  0%,100%{transform:translateX(0)}
+	  20%,60%{transform:translateX(-6px)}
+	  40%,80%{transform:translateX(6px)}
+	}
+	.dlv-sheet.shake { animation:shake .4s ease; }
+	
+	/* SVG WhatsApp inline reutilizable */
     .ws-ico { width:20px; height:20px; flex-shrink:0; }
   </style>
 </head>
@@ -1828,6 +1917,69 @@
       <button class="nota-btn-cl" onclick="cerrarNota()">
         ✕ Cerrar nota
       </button>
+    </div>
+
+  </div>
+</div>
+
+<!-- ══════════════ BOTÓN DELIVERISTA ══════════════ -->
+<button id="btnDeliverista" onclick="abrirPanelDeliverista()">🏍️ Soy deliverista</button>
+
+<!-- ══════════════ MODAL PANEL DELIVERISTA ══════════════ -->
+<div class="dlv-modal" id="dlvModal">
+  <div class="dlv-sheet" id="dlvSheet">
+
+    <!-- STEP 1: PIN -->
+    <div class="dlv-step active" id="dlvStep1">
+      <div class="dlv-title">🏍️ PANEL DELIVERY</div>
+      <div class="dlv-sub">Ingresa tu PIN de acceso</div>
+      <div class="dlv-pin-display">
+        <div class="dlv-pin-dot" id="pd0"></div>
+        <div class="dlv-pin-dot" id="pd1"></div>
+        <div class="dlv-pin-dot" id="pd2"></div>
+        <div class="dlv-pin-dot" id="pd3"></div>
+      </div>
+      <div class="dlv-keypad">
+        <button class="dlv-key" onclick="pinPress('1')">1</button>
+        <button class="dlv-key" onclick="pinPress('2')">2</button>
+        <button class="dlv-key" onclick="pinPress('3')">3</button>
+        <button class="dlv-key" onclick="pinPress('4')">4</button>
+        <button class="dlv-key" onclick="pinPress('5')">5</button>
+        <button class="dlv-key" onclick="pinPress('6')">6</button>
+        <button class="dlv-key" onclick="pinPress('7')">7</button>
+        <button class="dlv-key" onclick="pinPress('8')">8</button>
+        <button class="dlv-key" onclick="pinPress('9')">9</button>
+        <div class="dlv-key empty"></div>
+        <button class="dlv-key" onclick="pinPress('0')">0</button>
+        <button class="dlv-key del" onclick="pinDel()">⌫</button>
+      </div>
+      <button class="dlv-btn-cancel" onclick="cerrarDeliverista()">Cancelar</button>
+    </div>
+
+    <!-- STEP 2: BUSCAR PEDIDO -->
+    <div class="dlv-step" id="dlvStep2">
+      <div class="dlv-title">🔍 BUSCAR PEDIDO</div>
+      <div class="dlv-sub">Ingresa el celular del cliente</div>
+      <input type="tel" id="dlvTelCliente" class="inp"
+             placeholder="9XXXXXXXX" maxlength="9" inputmode="numeric"
+             style="text-align:center;font-size:20px;letter-spacing:.15em;font-weight:700;margin-bottom:12px">
+      <button class="dlv-btn" onclick="buscarPedidoDeliverista()">🔍 BUSCAR PEDIDO</button>
+      <div id="dlvResultado" style="display:none">
+        <div class="dlv-result" id="dlvResultBox"></div>
+        <button class="dlv-btn grn" onclick="deliveristaConfirmarEntrega()">✅ CONFIRMAR ENTREGA</button>
+      </div>
+      <div id="dlvNoEncontrado" style="display:none;color:var(--red);font-size:13px;margin:12px 0">
+        ❌ No se encontró pedido activo con ese número
+      </div>
+      <button class="dlv-btn-cancel" onclick="cerrarDeliverista()">Cerrar</button>
+    </div>
+
+    <!-- STEP 3: ÉXITO -->
+    <div class="dlv-step" id="dlvStep3">
+      <div style="font-size:56px;margin-bottom:12px">✅</div>
+      <div class="dlv-title">¡ENTREGADO!</div>
+      <div class="dlv-sub" id="dlvSuccMsg">Entrega registrada correctamente</div>
+      <button class="dlv-btn" onclick="cerrarDeliverista()" style="margin-top:20px">Cerrar</button>
     </div>
 
   </div>
@@ -3522,6 +3674,150 @@ document.addEventListener('DOMContentLoaded', () => {
     }, 1000);
   }
 });
+/* ══════════════════════════════════════
+   PANEL DELIVERISTA
+══════════════════════════════════════ */
+const DELIVERY_PIN = "8521";
+let dlvPinIngresado = '';
+let dlvPedidoActual = null;
+
+function abrirPanelDeliverista() {
+  dlvPinIngresado = '';
+  dlvPedidoActual = null;
+  actualizarDots();
+  document.querySelectorAll('.dlv-step').forEach(s => s.classList.remove('active'));
+  document.getElementById('dlvStep1').classList.add('active');
+  document.getElementById('dlvTelCliente').value = '';
+  document.getElementById('dlvResultado').style.display = 'none';
+  document.getElementById('dlvNoEncontrado').style.display = 'none';
+  document.getElementById('dlvModal').classList.add('open');
+}
+
+function cerrarDeliverista() {
+  document.getElementById('dlvModal').classList.remove('open');
+}
+
+function pinPress(v) {
+  if (dlvPinIngresado.length >= 4) return;
+  dlvPinIngresado += v;
+  actualizarDots();
+  if (dlvPinIngresado.length === 4) setTimeout(() => verificarPin(), 150);
+}
+
+function pinDel() {
+  dlvPinIngresado = dlvPinIngresado.slice(0, -1);
+  actualizarDots();
+}
+
+function actualizarDots() {
+  for (let i = 0; i < 4; i++) {
+    const dot = document.getElementById('pd' + i);
+    dot.classList.remove('filled', 'error');
+    if (i < dlvPinIngresado.length) dot.classList.add('filled');
+  }
+}
+
+function verificarPin() {
+  if (dlvPinIngresado === DELIVERY_PIN) {
+    document.querySelectorAll('.dlv-step').forEach(s => s.classList.remove('active'));
+    document.getElementById('dlvStep2').classList.add('active');
+  } else {
+    for (let i = 0; i < 4; i++) document.getElementById('pd' + i).classList.add('error');
+    const sheet = document.getElementById('dlvSheet');
+    sheet.classList.add('shake');
+    setTimeout(() => {
+      sheet.classList.remove('shake');
+      dlvPinIngresado = '';
+      actualizarDots();
+    }, 500);
+  }
+}
+
+async function buscarPedidoDeliverista() {
+  const tel = document.getElementById('dlvTelCliente').value.trim();
+  if (tel.length !== 9) return tst('Ingresa un número válido de 9 dígitos', 2000);
+
+  document.getElementById('dlvResultado').style.display = 'none';
+  document.getElementById('dlvNoEncontrado').style.display = 'none';
+
+  try {
+    const { query:q, collection:col, where:wh, getDocs:gd } = window.FB;
+    const snap = await gd(q(
+      col(db, 'pedidos'),
+      wh('businessId', '==', BUSINESS_ID),
+      wh('telefono', '==', tel),
+      wh('estado', '==', 'Pendiente')
+    ));
+
+    if (snap.empty) {
+      document.getElementById('dlvNoEncontrado').style.display = 'block';
+      return;
+    }
+
+    const docs = snap.docs.sort((a, b) =>
+      (b.data().fecha?.seconds || 0) - (a.data().fecha?.seconds || 0)
+    );
+    const pedDoc = docs[0];
+    const ped = pedDoc.data();
+    dlvPedidoActual = { id: pedDoc.id, ...ped };
+
+    const items = ped.items || {};
+    const nombres = { p2l:'2L', p3l:'3L', p4l:'4L Familiar' };
+    const itemsTxt = Object.entries(items)
+      .filter(([,qty]) => qty > 0)
+      .map(([k,qty]) => qty + '× ASWA ' + (nombres[k] || k))
+      .join(', ') || '—';
+
+    const gpsRow = ped.gps_url
+      ? '<div class="dlv-result-row"><span class="dlv-result-lbl">📍 GPS</span><span class="dlv-result-val"><a href="' + ped.gps_url + '" target="_blank" style="color:var(--grn)">Ver →</a></span></div>'
+      : '';
+
+    document.getElementById('dlvResultBox').innerHTML =
+      '<div class="dlv-result-row"><span class="dlv-result-lbl">Cliente</span><span class="dlv-result-val">' + (ped.nombre || '—') + '</span></div>' +
+      '<div class="dlv-result-row"><span class="dlv-result-lbl">Teléfono</span><span class="dlv-result-val">' + (ped.telefono || tel) + '</span></div>' +
+      '<div class="dlv-result-row"><span class="dlv-result-lbl">Dirección</span><span class="dlv-result-val">' + (ped.direccion || '—') + '</span></div>' +
+      '<div class="dlv-result-row"><span class="dlv-result-lbl">Pedido</span><span class="dlv-result-val">' + itemsTxt + '</span></div>' +
+      '<div class="dlv-result-row"><span class="dlv-result-lbl">Total</span><span class="dlv-result-val" style="color:var(--y)">S/ ' + (ped.total || 0).toFixed(2) + '</span></div>' +
+      '<div class="dlv-result-row"><span class="dlv-result-lbl">Pago</span><span class="dlv-result-val">' + (ped.pago || '—') + '</span></div>' +
+      gpsRow;
+
+    document.getElementById('dlvResultado').style.display = 'block';
+
+  } catch(err) {
+    console.error('buscarPedidoDeliverista:', err);
+    tst('❌ Error al buscar el pedido', 2500);
+  }
+}
+
+async function deliveristaConfirmarEntrega() {
+  if (!dlvPedidoActual) return;
+  try {
+    const { doc:d, updateDoc:ud, serverTimestamp:ts } = window.FB;
+    await ud(d(db, 'pedidos', dlvPedidoActual.id), {
+      estado: 'en_camino',
+      confirmacion_deliverista: true,
+      deliverista_at: ts()
+    });
+
+    const link = 'https://jsangama.github.io/aswa';
+    const msg = '🏍️ *¡Tu pedido ASWA ya está en camino!*\n\n'
+      + 'Hola ' + (dlvPedidoActual.nombre || '') + ', tu chicha está llegando 🌽\n\n'
+      + '📦 Cuando lo recibas, confirma la entrega en:\n' + link + '\n\n'
+      + 'Esto activa tu descuento de fidelidad y genera tu Nota de Venta ✅';
+
+    window.open('https://wa.me/51' + dlvPedidoActual.telefono + '?text=' + encodeURIComponent(msg), '_blank');
+
+    document.getElementById('dlvSuccMsg').textContent =
+      'Entrega registrada para ' + (dlvPedidoActual.nombre || 'el cliente') + '. Se notificó por WhatsApp.';
+    document.querySelectorAll('.dlv-step').forEach(s => s.classList.remove('active'));
+    document.getElementById('dlvStep3').classList.add('active');
+    dlvPedidoActual = null;
+
+  } catch(err) {
+    console.error('deliveristaConfirmarEntrega:', err);
+    tst('❌ Error al confirmar. Verifica conexión.', 3000);
+  }
+}
 </script>
 </body>
 </html>
