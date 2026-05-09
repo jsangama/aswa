@@ -1,0 +1,31 @@
+{
+  "name": "aswa-la-rica-chicha",
+  "version": "1.0.0",
+  "description": "App de delivery ASWA - La Rica Chicha",
+  "private": true,
+  "scripts": {
+    "test":         "jest",
+    "test:watch":   "jest --watch",
+    "test:coverage": "jest --coverage"
+  },
+  "jest": {
+    "testEnvironment": "jsdom",
+    "testMatch": [
+      "**/tests/**/*.test.js"
+    ],
+    "collectCoverageFrom": [
+      "js/**/*.js"
+    ],
+    "coverageThreshold": {
+      "global": {
+        "lines":     80,
+        "functions": 80,
+        "branches":  70
+      }
+    }
+  },
+  "devDependencies": {
+    "jest":                  "^29.7.0",
+    "jest-environment-jsdom": "^29.7.0"
+  }
+}
