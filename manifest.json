@@ -1,0 +1,44 @@
+{
+  "name": "ASWA - La Rica Chicha",
+  "short_name": "ASWA",
+  "description": "Chicha natural a domicilio en Morales, Tarapoto y Banda de Shilcayo",
+  "start_url": "/aswa/",
+  "scope": "/aswa/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#09090b",
+  "theme_color": "#facc15",
+  "lang": "es-PE",
+  "icons": [
+    {
+      "src": "/aswa/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/aswa/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": [
+    "food",
+    "shopping"
+  ],
+  "shortcuts": [
+    {
+      "name": "Hacer pedido",
+      "short_name": "Pedir",
+      "description": "Haz tu pedido de chicha ASWA",
+      "url": "/aswa/?action=pedir",
+      "icons": [
+        {
+          "src": "/aswa/icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
+    }
+  ]
+}
