@@ -1,22 +1,27 @@
 /**
- * js/login.js
- *
- * Lógica de autenticación extraída del HTML inline.
- * Se exporta con module.exports para que Jest pueda importarla.
- *
- * En el HTML, carga este archivo así:
- *   <script src="js/login.js"></script>
- * (en el navegador, module.exports se ignora silenciosamente)
+ * Legacy login helpers used by Jest and optional browser login wiring.
  */
 
-const ADMIN_PIN = '8521';
+function getConfig() {
+  if (typeof window !== 'undefined' && window.ASWA_CONFIG) {
+    return window.ASWA_CONFIG;
+  }
 
-const ADMIN_CREDENTIALS = {
-  admin:    'ASWA2025Admin#',
-  delivery: 'ASWA2025Delivery#',
-};
+  if (typeof global !== 'undefined' && global.ASWA_CONFIG) {
+    return global.ASWA_CONFIG;
+  }
 
-// ── Visibilidad del overlay ───────────────────────────────────────────────
+  return {};
+}
+
+function getAdminCredentials() {
+  const config = getConfig();
+  return config.ADMIN_CREDENTIALS || {};
+}
+
+function getAdminPin() {
+  return getConfig().ADMIN_PIN || getConfig().DELIVERY_PIN || '';
+}
 
 function showAdminLogin() {
   document.getElementById('adminLogin').style.display = 'flex';
@@ -28,8 +33,6 @@ function closeAdminLogin() {
   clearLoginForm();
 }
 
-// ── Limpieza de campos ────────────────────────────────────────────────────
-
 function clearLoginForm() {
   document.getElementById('adminUser').value = '';
   document.getElementById('adminPass').value = '';
@@ -37,19 +40,15 @@ function clearLoginForm() {
 }
 
 function clearPinInputs() {
-  for (let i = 1; i <= 4; i++) {
+  for (let i = 1; i <= 4; i += 1) {
     document.getElementById(`pin${i}`).value = '';
   }
 }
-
-// ── Toggle de contraseña ──────────────────────────────────────────────────
 
 function togglePassword() {
   const passInput = document.getElementById('adminPass');
   passInput.type = passInput.type === 'password' ? 'text' : 'password';
 }
-
-// ── Navegación entre formularios ──────────────────────────────────────────
 
 function showPinLogin() {
   document.getElementById('loginForm').style.display = 'none';
@@ -64,8 +63,6 @@ function showNormalLogin() {
   document.getElementById('adminUser').focus();
 }
 
-// ── Login usuario / contraseña ────────────────────────────────────────────
-
 function doAdminLogin() {
   const user = document.getElementById('adminUser').value.trim();
   const pass = document.getElementById('adminPass').value;
@@ -74,7 +71,7 @@ function doAdminLogin() {
     return { success: false, reason: 'empty_fields' };
   }
 
-  if (ADMIN_CREDENTIALS[user] === pass) {
+  if (getAdminCredentials()[user] === pass) {
     closeAdminLogin();
     return { success: true, role: user };
   }
@@ -82,8 +79,6 @@ function doAdminLogin() {
   document.getElementById('adminPass').value = '';
   return { success: false, reason: 'invalid_credentials' };
 }
-
-// ── Verificación de PIN ───────────────────────────────────────────────────
 
 function verifyPin() {
   const pin =
@@ -96,7 +91,7 @@ function verifyPin() {
     return { success: false, reason: 'incomplete_pin' };
   }
 
-  if (pin === ADMIN_PIN) {
+  if (pin === getAdminPin()) {
     closeAdminLogin();
     return { success: true };
   }
@@ -104,8 +99,6 @@ function verifyPin() {
   clearPinInputs();
   return { success: false, reason: 'wrong_pin' };
 }
-
-// ── Navegación por teclado en el PIN ─────────────────────────────────────
 
 function movePinFocus(current) {
   const currentInput = document.getElementById(`pin${current}`);
@@ -118,21 +111,19 @@ function movePinFocus(current) {
 }
 
 function handlePinBackspace(event, current) {
-  if (event.key === 'Backspace') {
-    const currentInput = document.getElementById(`pin${current}`);
-    if (currentInput.value === '' && current > 1) {
-      event.preventDefault();
-      document.getElementById(`pin${current - 1}`).focus();
-    }
+  if (event.key !== 'Backspace') return;
+
+  const currentInput = document.getElementById(`pin${current}`);
+  if (currentInput.value === '' && current > 1) {
+    event.preventDefault();
+    document.getElementById(`pin${current - 1}`).focus();
   }
 }
 
-// ── Exportación (para Jest) ───────────────────────────────────────────────
-
 if (typeof module !== 'undefined' && module.exports) {
   module.exports = {
-    ADMIN_PIN,
-    ADMIN_CREDENTIALS,
+    getAdminCredentials,
+    getAdminPin,
     showAdminLogin,
     closeAdminLogin,
     clearLoginForm,

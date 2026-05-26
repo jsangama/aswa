@@ -7,6 +7,15 @@
  */
 
 function setupDOM() {
+  window.ASWA_CONFIG = {
+    ADMIN_PIN: '1234',
+    DELIVERY_PIN: '1234',
+    ADMIN_CREDENTIALS: {
+      admin: 'test-admin-password',
+      delivery: 'test-delivery-password',
+    },
+  };
+
   document.body.innerHTML = `
     <div id="adminLogin" style="display:none;">
 
