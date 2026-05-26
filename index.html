@@ -2266,6 +2266,10 @@
       </div>
       <!-- Tags ofertas + vencimientos -->
       <div class="cban-body" id="cbanTags"></div>
+      <button id="cbanTutorialBtn" type="button" onclick="tutAbrirVideo('basico')"
+              style="display:none;margin-top:10px;width:100%;border:1px solid rgba(250,204,21,.4);background:rgba(250,204,21,.12);color:#fde68a;border-radius:10px;padding:10px 12px;font-size:12px;font-weight:800;cursor:pointer">
+        Ver como hacer tu pedido
+      </button>
       <!-- Código referido inline -->
       <div class="cban-ref" id="cbanRef" style="display:none">
         <div class="cref-label">🎁 Tu código para amigos</div>
@@ -3074,6 +3078,29 @@
   </div>
 
   <!-- ══ TAB: BÁSICO ══ -->
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:20px">
+    <button type="button" onclick="tutAbrirVideo('basico')" style="text-align:left;border:1px solid var(--brd);background:var(--s1);color:#fff;border-radius:14px;padding:12px;cursor:pointer">
+      <div style="font-size:18px;margin-bottom:6px">▶</div>
+      <div style="font-size:12px;font-weight:800;line-height:1.35">Como hacer tu pedido</div>
+      <div style="font-size:10px;color:var(--mut);margin-top:4px">Ideal para clientes nuevos</div>
+    </button>
+    <button type="button" onclick="tutAbrirVideo('refresca')" style="text-align:left;border:1px solid var(--brd);background:var(--s1);color:#fff;border-radius:14px;padding:12px;cursor:pointer">
+      <div style="font-size:18px;margin-bottom:6px">▶</div>
+      <div style="font-size:12px;font-weight:800;line-height:1.35">Refresca tu dia con ASWA</div>
+      <div style="font-size:10px;color:var(--mut);margin-top:4px">Presentaciones y tamanos</div>
+    </button>
+    <button type="button" onclick="tutAbrirVideo('preparacion')" style="text-align:left;border:1px solid var(--brd);background:var(--s1);color:#fff;border-radius:14px;padding:12px;cursor:pointer">
+      <div style="font-size:18px;margin-bottom:6px">▶</div>
+      <div style="font-size:12px;font-weight:800;line-height:1.35">Preparacion tradicional</div>
+      <div style="font-size:10px;color:var(--mut);margin-top:4px">Chicha de San Martin</div>
+    </button>
+    <button type="button" onclick="tutAbrirVideo('entrega')" style="text-align:left;border:1px solid var(--brd);background:var(--s1);color:#fff;border-radius:14px;padding:12px;cursor:pointer">
+      <div style="font-size:18px;margin-bottom:6px">▶</div>
+      <div style="font-size:12px;font-weight:800;line-height:1.35">Asi entregamos tu pedido</div>
+      <div style="font-size:10px;color:var(--mut);margin-top:4px">Proceso de delivery ASWA</div>
+    </button>
+  </div>
+
   <div id="tut-basico" class="tut-content">
 
     <!-- Video embed placeholder -->
@@ -4629,6 +4656,7 @@ document.getElementById('telefono').addEventListener('input', async e => {
   ST.disc.fid = 0; ST.disc.bon = 0;
   ST.cli = { id:'',tel:'',nom:'',nivel:'BRONCE',pedidos:0,cod:'',bonos:[],consumo:0 };
   ban.classList.remove('on'); brn.classList.remove('on'); calcTotal();
+  tutMostrarBotonPedido(false);
 
   if (tel.length !== 9 || !tel.startsWith('9')) return;
 
@@ -4739,6 +4767,7 @@ document.getElementById('telefono').addEventListener('input', async e => {
         cbanRef.style.display = 'block';
       }
 
+      tutMostrarBotonPedido(true);
       ban.classList.add('on');
 
     } else {
@@ -4765,7 +4794,9 @@ document.getElementById('telefono').addEventListener('input', async e => {
         cbanCod2.className   = 'cref-cod nivel-bronce-cod';
         cbanRef2.style.display = 'block';
       }
+      tutMostrarBotonPedido(false);
       ban.classList.add('on');
+      tutAbrirPedidoClienteNuevo(tel);
     }
 
     if (ST.cli.cod || ST.cli.codigo_referido) {
@@ -12546,11 +12577,14 @@ function _admPinVerificar() {
 
 // YouTube video IDs por sección (pega tus IDs cuando tengas los videos)
 const TUTORIAL_VIDEOS = {
-  basico   : '', // Ej: 'dQw4w9WgXcQ'
+  basico   : 'yyWMogx2UYs',
   pago     : '',
   gps      : '',
   bonos    : '',
   referidos: '',
+  refresca : '7Z5Bx1A6CHI',
+  preparacion: 'nTBhbaIuM7U',
+  entrega  : 'opk1oa4sv9k',
 };
 
 function tutSetTab(btn, tab) {
@@ -12579,6 +12613,9 @@ function tutAbrirVideo(seccion) {
     gps: 'Cómo compartir tu ubicación GPS',
     bonos: 'Cómo ganar bonos y descuentos',
     referidos: 'Sistema de referidos',
+    refresca: 'Refresca tu dia con ASWA',
+    preparacion: 'Como se prepara la chicha de la selva',
+    entrega: 'Asi entregamos tus pedidos en ASWA',
   };
   titulo.textContent = titulos[seccion] || 'Video instructivo';
   const videoId = TUTORIAL_VIDEOS[seccion];
@@ -12610,6 +12647,20 @@ function tutCerrarVideo() {
   const frame = document.getElementById('tutVideoFrame');
   const iframe = frame.querySelector('iframe');
   if (iframe) iframe.src = iframe.src;
+}
+
+function tutMostrarBotonPedido(mostrar) {
+  const btn = document.getElementById('cbanTutorialBtn');
+  if (btn) btn.style.display = mostrar ? 'block' : 'none';
+}
+
+function tutAbrirPedidoClienteNuevo(tel) {
+  const key = 'aswa_tutorial_pedido_visto_' + (tel || 'nuevo');
+  try {
+    if (sessionStorage.getItem(key) === '1') return;
+    sessionStorage.setItem(key, '1');
+  } catch (_) {}
+  setTimeout(() => tutAbrirVideo('basico'), 600);
 }
 
 function tutToggleFAQ(item) {
