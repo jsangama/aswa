@@ -2244,10 +2244,28 @@
   <!-- DATOS -->
   <section>
     <div class="stitle">Tus datos</div>
-    <button id="btnTutorialPedido" type="button" onclick="tutAbrirVideo('inicio')"
+    <button id="btnTutorialPedido" type="button" onclick="tutToggleTutorialPedido()"
             style="width:100%;margin:0 0 14px;border:0;background:linear-gradient(135deg,#facc15,#f59e0b);color:#111;border-radius:12px;padding:12px 14px;font-size:13px;font-weight:900;cursor:pointer;text-align:center;box-shadow:0 10px 24px rgba(250,204,21,.18)">
       ▶ Ver tutorial para hacer tu pedido
     </button>
+
+    <div id="tutorialPedidoInline" style="display:block;margin:0 0 16px;background:#050505;border:1px solid rgba(250,204,21,.28);border-radius:14px;overflow:hidden;box-shadow:0 12px 28px rgba(0,0,0,.24)">
+      <div style="padding:10px 12px;border-bottom:1px solid rgba(255,255,255,.08)">
+        <div style="font-size:12px;font-weight:900;color:#facc15">Tutorial ASWA</div>
+        <div style="font-size:11px;color:var(--mut);margin-top:2px">Mira como hacer tu pedido sin salir de la app</div>
+      </div>
+      <div style="width:100%;max-width:360px;margin:0 auto;background:#000;aspect-ratio:9/16">
+        <iframe
+          src="https://www.youtube-nocookie.com/embed/fQbZiTTD88g?rel=0&playsinline=1&modestbranding=1"
+          title="Tutorial para hacer tu pedido ASWA"
+          loading="lazy"
+          frameborder="0"
+          allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+          referrerpolicy="strict-origin-when-cross-origin"
+          allowfullscreen
+          style="display:block;width:100%;height:100%;border:0;background:#000"></iframe>
+      </div>
+    </div>
 
     <!-- Banner cliente reconocido -->
     <div class="cban" id="cban">
@@ -12622,6 +12640,10 @@ function tutSetTab(btn, tab) {
 }
 
 function tutAbrirVideo(seccion) {
+  if (seccion === 'inicio') {
+    tutToggleTutorialPedido(true);
+    return;
+  }
   const modal = document.getElementById('tutVideoModal');
   const frame = document.getElementById('tutVideoFrame');
   const titulo = document.getElementById('tutVideoTitulo');
@@ -12716,10 +12738,18 @@ function tutMostrarBotonPedido(mostrar) {
   if (btn) btn.style.display = mostrar ? 'block' : 'none';
 }
 
+function tutToggleTutorialPedido(forzarMostrar = null) {
+  const box = document.getElementById('tutorialPedidoInline');
+  if (!box) return;
+  const mostrar = forzarMostrar === null ? box.style.display === 'none' : forzarMostrar;
+  box.style.display = mostrar ? 'block' : 'none';
+  if (mostrar) box.scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+
 function tutAbrirTutorialInicioSiNuevo() {
   if (lsGet('tel') || lsGet('tutorial_inicio_visto') === '1') return;
   lsSet('tutorial_inicio_visto', '1');
-  tutAbrirVideo('inicio');
+  tutToggleTutorialPedido(true);
 }
 
 function tutAbrirPedidoClienteNuevo(tel) {
@@ -12728,7 +12758,7 @@ function tutAbrirPedidoClienteNuevo(tel) {
     if (sessionStorage.getItem(key) === '1') return;
     sessionStorage.setItem(key, '1');
   } catch (_) {}
-  setTimeout(() => tutAbrirVideo('inicio'), 600);
+  setTimeout(() => tutToggleTutorialPedido(true), 600);
 }
 
 function tutToggleFAQ(item) {
