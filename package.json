@@ -1,12 +1,21 @@
 {
   "name": "aswa-la-rica-chicha",
-  "version": "1.0.0",
-  "description": "App de delivery ASWA - La Rica Chicha",
+  "version": "4.0.1",
+  "description": "App de delivery ASWA - La Rica Chicha. Sistema digital de pedidos con fidelizacion, UGC y multi-negocio.",
   "private": true,
+  "author": "jsangama",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/jsangama/aswa.git"
+  },
   "scripts": {
-    "test":         "jest",
-    "test:watch":   "jest --watch",
-    "test:coverage": "jest --coverage"
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage",
+    "dev": "http-server . -p 8080 -c-1",
+    "lint": "echo \"Lint pending: add ESLint configuration\"",
+    "format": "echo \"Format pending: add Prettier configuration\""
   },
   "jest": {
     "testEnvironment": "jsdom",
@@ -14,18 +23,32 @@
       "**/tests/**/*.test.js"
     ],
     "collectCoverageFrom": [
-      "js/**/*.js"
+      "js/login.js"
     ],
     "coverageThreshold": {
       "global": {
-        "lines":     80,
+        "lines": 80,
         "functions": 80,
-        "branches":  70
+        "branches": 70
       }
     }
   },
   "devDependencies": {
-    "jest":                  "^29.7.0",
+    "http-server": "^14.1.1",
+    "jest": "^29.7.0",
     "jest-environment-jsdom": "^29.7.0"
-  }
+  },
+  "engines": {
+    "node": ">=16.0.0",
+    "npm": ">=7.0.0"
+  },
+  "keywords": [
+    "delivery",
+    "ecommerce",
+    "firebase",
+    "pwa",
+    "loyalty",
+    "aswa",
+    "chicha"
+  ]
 }

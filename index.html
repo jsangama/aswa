@@ -55,6 +55,8 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 
+  <script src="js/app-config.js"></script>
+
   <script type="module">
     import { initializeApp }
       from "https://www.gstatic.com/firebasejs/11.1.0/firebase-app.js";
@@ -67,14 +69,10 @@
     import { getStorage, ref, uploadBytes, getDownloadURL }
       from "https://www.gstatic.com/firebasejs/11.1.0/firebase-storage.js";
 
-    const cfg = {
-      apiKey:            "AIzaSyAsAIZEEuE4Ha3xCFgfn8hBTictVi4CTIk",
-      authDomain:        "pedidos-aswa-peru.firebaseapp.com",
-      projectId:         "pedidos-aswa-peru",
-      storageBucket:     "pedidos-aswa-peru.appspot.com",
-      messagingSenderId: "213964983594",
-      appId:             "1:213964983594:web:92d761a6e0cce9ddaa253"
-    };
+    const cfg = window.ASWA_CONFIG?.FIREBASE;
+    if (!cfg?.apiKey) {
+      throw new Error('Firebase config missing. Check js/app-config.js.');
+    }
     const app    = initializeApp(cfg);
     window.db    = getFirestore(app);
     window.auth  = getAuth(app);
@@ -144,13 +142,13 @@
     // ── Identificador del negocio ──
     // Para agregar otro negocio, solo cambia este valor
     // Futuro: obtener desde URL (?b=aswa001), subdominio (aswa.laricachicha.com) o login
-    const BUSINESS_ID = "aswa001";
+    const BUSINESS_ID = window.ASWA_CONFIG?.BUSINESS_ID || "aswa001";
 
     // 🔐 CREDENCIALES — login modal rápido (complementa el sistema Firestore)
     // ⚠️ CAMBIAR antes de producción
     const CREDENTIALS = {
-      admin:    { password: 'ASWA@Admin2026#',   role: 'admin',    name: 'Administrador' },
-      delivery: { password: 'ASWA@Dlv2026#',     role: 'delivery', name: 'Deliverista'   }
+      admin:    { password: window.ASWA_CONFIG?.ADMIN_CREDENTIALS?.admin || '',    role: 'admin',    name: 'Administrador' },
+      delivery: { password: window.ASWA_CONFIG?.ADMIN_CREDENTIALS?.delivery || '', role: 'delivery', name: 'Deliverista'   }
     };
     window.CREDENTIALS = CREDENTIALS;
 
@@ -3653,7 +3651,7 @@
     <div class="nota-top">
       <!-- Logo grande cuadrado como en el PDF -->
       <div class="nota-logo-wrap">
-        <img src="logo de aswa.jpg" alt="ASWA"
+        <img src="assets/images/products/logo de aswa.jpg" alt="ASWA"
              onerror="this.parentElement.style.cssText='width:130px;height:130px;background:#facc15;border-radius:16px;display:flex;align-items:center;justify-content:center;font-size:48px;margin:0 auto'">
       </div>
       <!-- Nombre en dorado como en el PDF -->
@@ -4467,7 +4465,7 @@ const METODOS_PAGO = {
   Interbank: {
     ico:'🟢', titulo:'INTERBANK', hCls:'h-interbank',
     sub:'Transferencia bancaria · Cuenta Soles',
-    qr:'Captura de pantalla 2026-03-09 234917.png', num:null,
+    qr:'assets/images/misc/Captura de pantalla 2026-03-09 234917.png', num:null,
     nota:'<strong>1.</strong> Transfiere desde cualquier banco usando el CCI<br><strong>2.</strong> O usa Plin desde la app Interbank<br><strong>3.</strong> Captura el voucher y súbelo ↓',
     tabla:true, cuenta:'8983297623941', cci:'00389801329762394149', swift:null, digital:true
   },
@@ -5342,7 +5340,7 @@ function cerrarNota() {
 
 function _generarHtmlNota() {
   const baseUrl  = window.location.origin + window.location.pathname.replace(/[^/]*$/, '');
-  const logoSrc  = baseUrl + 'logo de aswa.jpg';
+  const logoSrc  = baseUrl + 'assets/images/products/logo de aswa.jpg';
   const nivel    = ST.cli.nivel || 'BRONCE';
   const nivelColors = {
     BRONCE:   { bg:'#fef3c7', color:'#92400e', border:'#fbbf24', txt:'🥉 BRONCE'   },
@@ -7501,7 +7499,7 @@ function _admChequearBloqueo(tipo) {
    DELIVERISTA — LOGIN
 ══════════════════════════════════════ */
 /* ══ DELIVERISTA — LOGIN PIN (de archivo 5) ══ */
-const DELIVERY_PIN = "7391"; // ← PIN Deliverista
+const DELIVERY_PIN = window.ASWA_CONFIG?.DELIVERY_PIN || ""; // ← PIN Deliverista
 let dlvPinIngresado = '';
 
 function abrirPanelDeliverista() {
@@ -8239,7 +8237,7 @@ function _actualizarTrackUI(ped, pedidoId) {
   if (estado === 'en_camino' && Notification.permission === 'granted') {
     new Notification('🏍️ ¡Tu ASWA ya viene!', {
       body: 'El deliverista salió hacia tu dirección',
-      icon: 'logo de aswa.jpg'
+      icon: 'assets/images/products/logo de aswa.jpg'
     });
   }
 
@@ -9307,8 +9305,8 @@ async function enviarNotificacionLocal(titulo, opciones = {}) {
   if (!permitido) return;
   
   const defaults = {
-    icon: '/icon-192.png',
-    badge: '/icon-192.png',
+    icon: 'assets/images/icons/icon-192.png',
+    badge: 'assets/images/icons/icon-192.png',
     vibrate: [200, 100, 200],
     tag: 'aswa-notification',
     requireInteraction: false
@@ -9634,7 +9632,7 @@ function _esc(str) {
 
 // ── _getDeliveryPin [from index.html]
 function _getDeliveryPin() {
-  return window._DELIVERY_PIN_OVERRIDE || '8521';
+  return window._DELIVERY_PIN_OVERRIDE || window.ASWA_CONFIG?.DELIVERY_PIN || '';
 }
 
 // ── mostrarPinRapido [from ASWA_FINAL_V2]
@@ -10414,7 +10412,7 @@ function iniciarPagoCulqi() {
     modal:    true,
     numeric:  false,
     style: {
-      logo:         'logo de aswa.jpg',
+      logo:         'assets/images/products/logo de aswa.jpg',
       bannerColor:  '#09090b',
       buttonText:   `Pagar S/ ${total.toFixed(2)}`,
       buttonSize:   'large',
@@ -12086,11 +12084,8 @@ function _limpiarFoto(){
 // ── Login Mejorado con PIN ──
 
 // Variables globales
-const ADMIN_PIN = '8521'; // PIN rápido solo para admin
-const ADMIN_CREDENTIALS = {
-  admin:    'ASWA@Admin2026#',
-  delivery: 'ASWA@Dlv2026#'
-};
+const ADMIN_PIN = window.ASWA_CONFIG?.ADMIN_PIN || ''; // PIN rápido solo para admin
+const ADMIN_CREDENTIALS = window.ASWA_CONFIG?.ADMIN_CREDENTIALS || {};
 
 // Mostrar login
 function showAdminLogin() {
@@ -12444,7 +12439,7 @@ Premio: ${premio}`)) return;
 // ════════════════════════════════════════
 // ADMIN PIN KEYBOARD
 // ════════════════════════════════════════
-const ADMIN_PIN_4 = '8521'; // ← PIN Admin (solo administrador)
+const ADMIN_PIN_4 = window.ASWA_CONFIG?.ADMIN_PIN || ''; // ← PIN Admin (solo administrador)
 let _admPinBuffer = '';
 
 function admSetMode(mode) {

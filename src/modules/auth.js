@@ -1,17 +1,19 @@
 /**
- * ASWA Auth Module
- * 
- * Gestiona autenticación de admin y deliveristas.
- * PIN para deliveristas, contraseña para admin.
- * 
- * @module auth
+ * ASWA Auth Module.
+ *
+ * Credentials are read from window.ASWA_CONFIG so secrets can live in an
+ * ignored local config file during development.
  */
 
 export const AUTH_MODES = {
   ADMIN: 'admin',
   DELIVERY: 'delivery',
-  NONE: 'none'
+  NONE: 'none',
 };
+
+function getConfig() {
+  return window.ASWA_CONFIG || {};
+}
 
 export class AuthManager {
   constructor() {
@@ -19,37 +21,16 @@ export class AuthManager {
     this.user = null;
   }
 
-  /**
-   * Verificar credenciales del admin
-   */
   verifyAdminPassword(password) {
-    const adminPassword = window.ASWA_CONFIG?.ADMIN_PASSWORD;
-    
-    if (!adminPassword) {
-      console.error('❌ Admin password no configurada en variables de entorno');
-      return false;
-    }
-
-    return password === adminPassword;
+    const adminPassword = getConfig().ADMIN_PASSWORD;
+    return Boolean(adminPassword) && password === adminPassword;
   }
 
-  /**
-   * Verificar PIN del deliverista
-   */
   verifyDeliveryPin(pin) {
-    const deliveryPin = window.ASWA_CONFIG?.DELIVERY_PIN;
-    
-    if (!deliveryPin) {
-      console.error('❌ Delivery PIN no configurada en variables de entorno');
-      return false;
-    }
-
-    return pin === deliveryPin;
+    const deliveryPin = getConfig().DELIVERY_PIN;
+    return Boolean(deliveryPin) && pin === deliveryPin;
   }
 
-  /**
-   * Login admin
-   */
   loginAdmin(username, password) {
     if (!username || !password) {
       return { success: false, error: 'Campos requeridos' };
@@ -57,41 +38,32 @@ export class AuthManager {
 
     if (this.verifyAdminPassword(password)) {
       this.mode = AUTH_MODES.ADMIN;
-      this.user = { role: 'admin', username };
-      return { success: true, role: 'admin' };
+      this.user = { role: AUTH_MODES.ADMIN, username };
+      return { success: true, role: AUTH_MODES.ADMIN };
     }
 
-    return { success: false, error: 'Credenciales inválidas' };
+    return { success: false, error: 'Credenciales invalidas' };
   }
 
-  /**
-   * Login deliverista
-   */
   loginDelivery(pin) {
     if (!pin || pin.length !== 4) {
-      return { success: false, error: 'PIN debe tener 4 dígitos' };
+      return { success: false, error: 'PIN debe tener 4 digitos' };
     }
 
     if (this.verifyDeliveryPin(pin)) {
       this.mode = AUTH_MODES.DELIVERY;
-      this.user = { role: 'delivery' };
-      return { success: true, role: 'delivery' };
+      this.user = { role: AUTH_MODES.DELIVERY };
+      return { success: true, role: AUTH_MODES.DELIVERY };
     }
 
     return { success: false, error: 'PIN incorrecto' };
   }
 
-  /**
-   * Logout
-   */
   logout() {
     this.mode = AUTH_MODES.NONE;
     this.user = null;
   }
 
-  /**
-   * Obtener modo actual
-   */
   getMode() {
     return this.mode;
   }

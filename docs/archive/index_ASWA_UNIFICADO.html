@@ -41,7 +41,7 @@
   <meta property="og:description" content="Chicha natural a domicilio en Morales, Tarapoto y Banda de Shilcayo">
   <meta property="og:url" content="https://jsangama.github.io/aswa/">
   <meta property="og:type" content="website">
-  <meta property="og:image" content="https://jsangama.github.io/aswa/icon-512.png">
+  <meta property="og:image" content="https://jsangama.github.io/aswa/assets/images/icons/icon-512.png">
   <meta name="description" content="La Rica Chicha ASWA — Pide tu chicha artesanal de maiz amazónico en Morales. Delivery a domicilio.">
   <title>La Rica Chicha — ASWA Oficial</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -3694,7 +3694,7 @@
     <div class="nota-top">
       <!-- Logo grande cuadrado como en el PDF -->
       <div class="nota-logo-wrap">
-        <img src="logo de aswa.jpg" alt="ASWA"
+        <img src="assets/images/products/logo de aswa.jpg" alt="ASWA"
              onerror="this.parentElement.style.cssText='width:130px;height:130px;background:#facc15;border-radius:16px;display:flex;align-items:center;justify-content:center;font-size:48px;margin:0 auto'">
       </div>
       <!-- Nombre en dorado como en el PDF -->
@@ -4508,7 +4508,7 @@ const METODOS_PAGO = {
   Interbank: {
     ico:'🟢', titulo:'INTERBANK', hCls:'h-interbank',
     sub:'Transferencia bancaria · Cuenta Soles',
-    qr:'Captura de pantalla 2026-03-09 234917.png', num:null,
+    qr:'assets/images/misc/Captura de pantalla 2026-03-09 234917.png', num:null,
     nota:'<strong>1.</strong> Transfiere desde cualquier banco usando el CCI<br><strong>2.</strong> O usa Plin desde la app Interbank<br><strong>3.</strong> Captura el voucher y súbelo ↓',
     tabla:true, cuenta:'8983297623941', cci:'00389801329762394149', swift:null, digital:true
   },
@@ -5487,7 +5487,7 @@ function cerrarNota() {
 
 function _generarHtmlNota() {
   const baseUrl  = window.location.origin + window.location.pathname.replace(/[^/]*$/, '');
-  const logoSrc  = baseUrl + 'logo de aswa.jpg';
+  const logoSrc  = baseUrl + 'assets/images/products/logo de aswa.jpg';
   const nivel    = ST.cli.nivel || 'BRONCE';
   const nivelColors = {
     BRONCE:   { bg:'#fef3c7', color:'#92400e', border:'#fbbf24', txt:'🥉 BRONCE'   },
@@ -8383,7 +8383,7 @@ function _actualizarTrackUI(ped, pedidoId) {
   if (estado === 'en_camino' && Notification.permission === 'granted') {
     new Notification('🏍️ ¡Tu ASWA ya viene!', {
       body: 'El deliverista salió hacia tu dirección',
-      icon: 'logo de aswa.jpg'
+      icon: 'assets/images/products/logo de aswa.jpg'
     });
   }
 
@@ -9451,8 +9451,8 @@ async function enviarNotificacionLocal(titulo, opciones = {}) {
   if (!permitido) return;
   
   const defaults = {
-    icon: '/icon-192.png',
-    badge: '/icon-192.png',
+    icon: 'assets/images/icons/icon-192.png',
+    badge: 'assets/images/icons/icon-192.png',
     vibrate: [200, 100, 200],
     tag: 'aswa-notification',
     requireInteraction: false
@@ -10558,7 +10558,7 @@ function iniciarPagoCulqi() {
     modal:    true,
     numeric:  false,
     style: {
-      logo:         'logo de aswa.jpg',
+      logo:         'assets/images/products/logo de aswa.jpg',
       bannerColor:  '#09090b',
       buttonText:   `Pagar S/ ${total.toFixed(2)}`,
       buttonSize:   'large',

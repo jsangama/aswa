@@ -25,27 +25,27 @@ describe('doAdminLogin()', () => {
 
   test('✅ admin con credenciales correctas retorna success:true y role:admin', () => {
     document.getElementById('adminUser').value = 'admin';
-    document.getElementById('adminPass').value = 'ASWA2025Admin#';
+    document.getElementById('adminPass').value = 'test-admin-password';
     expect(doAdminLogin()).toEqual({ success: true, role: 'admin' });
   });
 
   test('✅ delivery con credenciales correctas retorna success:true y role:delivery', () => {
     document.getElementById('adminUser').value = 'delivery';
-    document.getElementById('adminPass').value = 'ASWA2025Delivery#';
+    document.getElementById('adminPass').value = 'test-delivery-password';
     expect(doAdminLogin()).toEqual({ success: true, role: 'delivery' });
   });
 
   test('✅ login exitoso oculta el overlay', () => {
     document.getElementById('adminLogin').style.display = 'flex';
     document.getElementById('adminUser').value = 'admin';
-    document.getElementById('adminPass').value = 'ASWA2025Admin#';
+    document.getElementById('adminPass').value = 'test-admin-password';
     doAdminLogin();
     expect(document.getElementById('adminLogin').style.display).toBe('none');
   });
 
   test('✅ login exitoso limpia los campos del formulario', () => {
     document.getElementById('adminUser').value = 'admin';
-    document.getElementById('adminPass').value = 'ASWA2025Admin#';
+    document.getElementById('adminPass').value = 'test-admin-password';
     doAdminLogin();
     expect(document.getElementById('adminUser').value).toBe('');
     expect(document.getElementById('adminPass').value).toBe('');
@@ -55,7 +55,7 @@ describe('doAdminLogin()', () => {
 
   test('❌ usuario vacío retorna empty_fields', () => {
     document.getElementById('adminUser').value = '';
-    document.getElementById('adminPass').value = 'ASWA2025Admin#';
+    document.getElementById('adminPass').value = 'test-admin-password';
     expect(doAdminLogin()).toEqual({ success: false, reason: 'empty_fields' });
   });
 
@@ -71,7 +71,7 @@ describe('doAdminLogin()', () => {
 
   test('❌ usuario solo con espacios se trata como vacío', () => {
     document.getElementById('adminUser').value = '   ';
-    document.getElementById('adminPass').value = 'ASWA2025Admin#';
+    document.getElementById('adminPass').value = 'test-admin-password';
     expect(doAdminLogin()).toEqual({ success: false, reason: 'empty_fields' });
   });
 
@@ -83,7 +83,7 @@ describe('doAdminLogin()', () => {
 
   test('❌ usuario inexistente retorna invalid_credentials', () => {
     document.getElementById('adminUser').value = 'root';
-    document.getElementById('adminPass').value = 'ASWA2025Admin#';
+    document.getElementById('adminPass').value = 'test-admin-password';
     expect(doAdminLogin()).toEqual({ success: false, reason: 'invalid_credentials' });
   });
 
@@ -117,14 +117,14 @@ describe('verifyPin()', () => {
 
   // ── Flujo exitoso ─────────────────────────────────────────────────────
 
-  test('✅ PIN correcto (8521) retorna success:true', () => {
-    fillPin('8', '5', '2', '1');
+  test('✅ PIN correcto (1234) retorna success:true', () => {
+    fillPin('1', '2', '3', '4');
     expect(verifyPin()).toEqual({ success: true });
   });
 
   test('✅ PIN correcto oculta el overlay', () => {
     document.getElementById('adminLogin').style.display = 'flex';
-    fillPin('8', '5', '2', '1');
+    fillPin('1', '2', '3', '4');
     verifyPin();
     expect(document.getElementById('adminLogin').style.display).toBe('none');
   });
@@ -132,7 +132,7 @@ describe('verifyPin()', () => {
   // ── Casos límite / errores ────────────────────────────────────────────
 
   test('❌ PIN incorrecto retorna wrong_pin', () => {
-    fillPin('1', '2', '3', '4');
+    fillPin('0', '0', '0', '0');
     expect(verifyPin()).toEqual({ success: false, reason: 'wrong_pin' });
   });
 
@@ -154,12 +154,12 @@ describe('verifyPin()', () => {
   });
 
   test('❌ dígitos correctos en orden incorrecto retorna wrong_pin', () => {
-    fillPin('1', '2', '5', '8'); // invertido
+    fillPin('4', '3', '2', '1'); // invertido
     expect(verifyPin()).toEqual({ success: false, reason: 'wrong_pin' });
   });
 
   test('❌ un solo dígito diferente al final falla', () => {
-    fillPin('8', '5', '2', '9'); // pin4 incorrecto
+    fillPin('1', '2', '3', '9'); // pin4 incorrecto
     expect(verifyPin()).toEqual({ success: false, reason: 'wrong_pin' });
   });
 });
