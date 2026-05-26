@@ -3079,6 +3079,11 @@
 
   <!-- ══ TAB: BÁSICO ══ -->
   <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:20px">
+    <button type="button" onclick="tutAbrirVideo('inicio')" style="text-align:left;border:1px solid rgba(250,204,21,.45);background:rgba(250,204,21,.12);color:#fff;border-radius:14px;padding:12px;cursor:pointer">
+      <div style="font-size:18px;margin-bottom:6px">â–¶</div>
+      <div style="font-size:12px;font-weight:800;line-height:1.35">Pide ASWA por Facebook</div>
+      <div style="font-size:10px;color:var(--mut);margin-top:4px">Tutorial inicial para nuevos clientes</div>
+    </button>
     <button type="button" onclick="tutAbrirVideo('basico')" style="text-align:left;border:1px solid var(--brd);background:var(--s1);color:#fff;border-radius:14px;padding:12px;cursor:pointer">
       <div style="font-size:18px;margin-bottom:6px">▶</div>
       <div style="font-size:12px;font-weight:800;line-height:1.35">Como hacer tu pedido</div>
@@ -6425,6 +6430,7 @@ document.addEventListener('DOMContentLoaded', () => {
   setTimeout(() => {
     document.getElementById('badge-bono').classList.add('show');
   }, 2000);
+  setTimeout(tutAbrirTutorialInicioSiNuevo, 1400);
 
   // ── Recuperar pedido pendiente de confirmar ──
   // ✅ BUG #2 CORREGIDO: usa lsGet() con prefijo dinámico BUSINESS_ID
@@ -12577,6 +12583,7 @@ function _admPinVerificar() {
 
 // YouTube video IDs por sección (pega tus IDs cuando tengas los videos)
 const TUTORIAL_VIDEOS = {
+  inicio   : 'fQbZiTTD88g',
   basico   : 'yyWMogx2UYs',
   pago     : '',
   gps      : '',
@@ -12608,6 +12615,7 @@ function tutAbrirVideo(seccion) {
   const frame = document.getElementById('tutVideoFrame');
   const titulo = document.getElementById('tutVideoTitulo');
   const titulos = {
+    inicio: 'Aprende a pedir ASWA por Facebook',
     basico: 'Cómo hacer tu pedido paso a paso',
     pago: 'Métodos de pago',
     gps: 'Cómo compartir tu ubicación GPS',
@@ -12654,13 +12662,19 @@ function tutMostrarBotonPedido(mostrar) {
   if (btn) btn.style.display = mostrar ? 'block' : 'none';
 }
 
+function tutAbrirTutorialInicioSiNuevo() {
+  if (lsGet('tel') || lsGet('tutorial_inicio_visto') === '1') return;
+  lsSet('tutorial_inicio_visto', '1');
+  tutAbrirVideo('inicio');
+}
+
 function tutAbrirPedidoClienteNuevo(tel) {
   const key = 'aswa_tutorial_pedido_visto_' + (tel || 'nuevo');
   try {
     if (sessionStorage.getItem(key) === '1') return;
     sessionStorage.setItem(key, '1');
   } catch (_) {}
-  setTimeout(() => tutAbrirVideo('basico'), 600);
+  setTimeout(() => tutAbrirVideo('inicio'), 600);
 }
 
 function tutToggleFAQ(item) {
