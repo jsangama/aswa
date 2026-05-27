@@ -255,6 +255,28 @@
       margin-bottom:14px; display:flex; align-items:center; gap:10px;
     }
     .stitle::after { content:''; flex:1; height:1px; background:var(--brd); }
+    .horario-mini {
+      display:none;
+      margin:0 0 14px;
+      border:1px solid var(--brd);
+      border-radius:14px;
+      padding:10px 12px;
+      background:var(--s1);
+      color:var(--txt);
+      font-size:11px;
+      line-height:1.5;
+    }
+    .horario-mini.show { display:flex; align-items:flex-start; gap:10px; }
+    .horario-mini.open {
+      border-color:rgba(34,197,94,.32);
+      background:rgba(34,197,94,.06);
+    }
+    .horario-mini.closed {
+      border-color:rgba(250,204,21,.34);
+      background:rgba(250,204,21,.07);
+    }
+    .horario-mini strong { color:var(--y); }
+    .horario-mini-ico { font-size:18px; line-height:1; margin-top:1px; }
 
     /* ══ BANNER CLIENTE ══ */
     /* ══ BANNER CLIENTE ══ */
@@ -2384,6 +2406,7 @@
 
 <!-- ══════════════ MAIN ══════════════ -->
 <main>
+  <div class="horario-mini" id="horarioMini"></div>
 
   <!-- PRODUCTOS -->
   <section>
@@ -5112,6 +5135,7 @@ const ZONA_ETA = {
   banda: { min: 45, texto: 'Entrega a Banda de Shilcayo' },
   recojo: { min: 0, texto: 'Recojo coordinado en local' }
 };
+const HORARIO_DEFAULT = { activo: true, inicio: '07:00', fin: '22:00', mensaje: 'Volvemos mañana desde las 7:00 AM' };
 
 function dirEsc(txt) {
   return String(txt || '').replace(/[&<>"']/g, ch => ({
@@ -5260,6 +5284,44 @@ function actualizarETAVisual(textoZona, precio) {
   const tiempo = info.min === 0 ? 'Sin tiempo de delivery' : (info.min ? `Tiempo estimado: <strong>${info.min} min</strong>` : 'Coordinamos el tiempo por WhatsApp');
   box.innerHTML = `<strong>${dirEsc(info.texto)}</strong><br>${tiempo}`;
   box.classList.add('show');
+}
+
+function horaLimaEnMinutos() {
+  const partes = new Intl.DateTimeFormat('es-PE', {
+    timeZone: 'America/Lima',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false
+  }).formatToParts(new Date());
+  const hora = Number(partes.find(p => p.type === 'hour')?.value || 0);
+  const min = Number(partes.find(p => p.type === 'minute')?.value || 0);
+  return hora * 60 + min;
+}
+
+function horarioMinutos(valor, fallback) {
+  const [h, m] = String(valor || fallback).split(':').map(Number);
+  return (Number.isFinite(h) ? h : 0) * 60 + (Number.isFinite(m) ? m : 0);
+}
+
+function actualizarHorarioMini() {
+  const box = document.getElementById('horarioMini');
+  if (!box) return;
+  const horario = { ...HORARIO_DEFAULT, ...(window.ASWA_CONFIG?.HORARIO || {}) };
+  if (horario.activo === false) {
+    box.className = 'horario-mini show closed';
+    box.innerHTML = `<span class="horario-mini-ico">🌙</span><div><strong>Estamos cerrados por ahora.</strong><br>${dirEsc(horario.mensaje || HORARIO_DEFAULT.mensaje)} · Horario ${dirEsc(horario.inicio)} - ${dirEsc(horario.fin)}</div>`;
+    return;
+  }
+
+  const ahora = horaLimaEnMinutos();
+  const ini = horarioMinutos(horario.inicio, HORARIO_DEFAULT.inicio);
+  const fin = horarioMinutos(horario.fin, HORARIO_DEFAULT.fin);
+  const abierto = ini <= fin ? (ahora >= ini && ahora <= fin) : (ahora >= ini || ahora <= fin);
+
+  box.className = 'horario-mini show ' + (abierto ? 'open' : 'closed');
+  box.innerHTML = abierto
+    ? `<span class="horario-mini-ico">✅</span><div><strong>Estamos atendiendo ahora.</strong><br>Horario de hoy: ${dirEsc(horario.inicio)} - ${dirEsc(horario.fin)} · Hora Lima</div>`
+    : `<span class="horario-mini-ico">🌙</span><div><strong>Fuera de horario.</strong><br>${dirEsc(horario.mensaje || HORARIO_DEFAULT.mensaje)} · Horario ${dirEsc(horario.inicio)} - ${dirEsc(horario.fin)}</div>`;
 }
 
 function calcVuelto() {
@@ -7062,6 +7124,8 @@ async function cargarConcurso() {
 /* ── INIT ── */
 document.addEventListener('DOMContentLoaded', () => {
   setPago('Yape');
+  actualizarHorarioMini();
+  setInterval(actualizarHorarioMini, 60000);
   // Mostrar fecha de vencimiento de misiones
   (function() {
     const el = document.getElementById('bonoVencTxt');
