@@ -5376,6 +5376,7 @@ document.getElementById('telefono').addEventListener('input', async e => {
     if (!snap.empty) {
       const data = snap.docs[0].data();
       ST.cli = { ...data, id: snap.docs[0].id };
+      ST.cli.tel = tel;
 
       // ── SISTEMA DE FIDELIDAD (nuevo) ──
       // 🥉 BRONCE  0-4  → 0%
@@ -5463,6 +5464,7 @@ document.getElementById('telefono').addEventListener('input', async e => {
 
       tutMostrarBotonPedido(true);
       ban.classList.add('on');
+      cargarUltimoPedido(tel);
 
     } else {
       // Cliente NUEVO — generar código y mostrarlo
@@ -11739,6 +11741,7 @@ function histRepetirPedido(pedidoId) {
   });
 
   calcTotal();
+  actualizarZonaVisual();
   irA('pedir');
   tst('🔄 Pedido anterior cargado — revisa y confirma ✅', 3500);
 }
@@ -11746,6 +11749,8 @@ function histRepetirPedido(pedidoId) {
 // ── cargarUltimoPedido [from index__5_]
 async function cargarUltimoPedido(telefono) {
   if (!telefono) return;
+  const oculto = Number(lsGet('reorden_oculto_' + telefono) || 0);
+  if (oculto && Date.now() - oculto < 86400000) return;
   try {
     await esperarFB();
     const { collection:col, query:q, where:wh, orderBy:ob, limit:lm, getDocs:gd } = window.FB;
@@ -11954,6 +11959,7 @@ function confirmarReorden() {
   }
 
   calcTotal();
+  actualizarZonaVisual();
   ocultarReorden();
 
   // Scroll a los productos
