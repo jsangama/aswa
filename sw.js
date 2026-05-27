@@ -1,5 +1,5 @@
-// ASWA Service Worker v7 - https://jsangama.github.io/aswa/
-const CACHE_NAME = 'aswa-v7';
+// ASWA Service Worker v9 - https://jsangama.github.io/aswa/
+const CACHE_NAME = 'aswa-v9';
 const BASE = '/aswa/';
 const ASSETS = [
   BASE,
@@ -38,6 +38,24 @@ self.addEventListener('fetch', e => {
         }
         return resp;
       }).catch(() => caches.match(BASE));
+    })
+  );
+});
+
+self.addEventListener('notificationclick', e => {
+  const data = e.notification?.data || {};
+  const url = data.url || './index.html';
+  e.notification.close();
+  if (e.action === 'ok') return;
+  e.waitUntil(
+    clients.matchAll({ type: 'window', includeUncontrolled: true }).then(list => {
+      const appClient = list.find(c => c.url.includes('/aswa/'));
+      if (appClient) {
+        appClient.focus();
+        if ('navigate' in appClient) return appClient.navigate(url);
+        return appClient;
+      }
+      return clients.openWindow(url);
     })
   );
 });

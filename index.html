@@ -147,6 +147,7 @@
     // 🔐 CREDENCIALES — login modal rápido (complementa el sistema Firestore)
     // ⚠️ CAMBIAR antes de producción
     const CREDENTIALS = {
+      owner:    { password: window.ASWA_CONFIG?.ADMIN_CREDENTIALS?.owner || '',    role: 'owner',    name: 'Dueno' },
       admin:    { password: window.ASWA_CONFIG?.ADMIN_CREDENTIALS?.admin || '',    role: 'admin',    name: 'Administrador' },
       delivery: { password: window.ASWA_CONFIG?.ADMIN_CREDENTIALS?.delivery || '', role: 'delivery', name: 'Deliverista'   }
     };
@@ -2327,6 +2328,7 @@
       background:var(--bg); color:var(--txt); cursor:pointer; font-family:'Poppins',sans-serif;
       font-size:12px; font-weight:800; text-align:center;
     }
+    .quick-access-item.owner { grid-column:1 / -1; color:#e9d5ff; border-color:rgba(168,85,247,.34); background:rgba(168,85,247,.1); }
     .quick-access-item.admin { color:#fde68a; border-color:rgba(250,204,21,.28); }
     .quick-access-item.delivery { color:#86efac; border-color:rgba(34,197,94,.28); }
     .quick-access-item.tv { grid-column:1 / -1; color:#facc15; border-color:rgba(250,204,21,.36); background:rgba(250,204,21,.08); }
@@ -2437,6 +2439,7 @@
 <div class="quick-access-panel" id="modalAccesoRapido">
   <div class="quick-access-title">Acceso rapido</div>
   <div class="quick-access-grid">
+    <button class="quick-access-item owner" onclick="abrirPanelDuenoDirecto()" type="button">Dueno</button>
     <button class="quick-access-item admin" onclick="abrirPanelAdminDirecto()" type="button">⚙️ Admin</button>
     <button class="quick-access-item delivery" onclick="abrirPanelDeliveryDirecto()" type="button">🏍️ Delivery</button>
   </div>
@@ -2778,6 +2781,10 @@
           <input type="time" id="reservaHora" class="inp" min="07:00" max="17:30" step="900" onchange="actualizarReservaUI()">
         </div>
         <div class="reserva-info" id="reservaInfo">Disponible con Yape, Plin, Agora, BIM o transferencia bancaria. No aplica para efectivo.</div>
+        <button type="button" id="reservaNotifBtn" onclick="activarAlertasReservaCliente()" style="display:none;width:100%;margin-top:10px;border:1px solid rgba(250,204,21,.45);background:rgba(250,204,21,.12);color:#fde68a;border-radius:10px;padding:10px 12px;font-size:11px;font-weight:900">
+          Activar alertas de mi reserva
+        </button>
+        <div class="reserva-info" id="reservaNotifInfo" style="display:none"></div>
       </div>
     </div>
     <div class="fld">
@@ -5470,7 +5477,15 @@ function actualizarReservaUI() {
   const activa = !!document.getElementById('reservaActiva')?.checked;
   const detalle = document.getElementById('reservaDetalle');
   const info = document.getElementById('reservaInfo');
+  const notifBtn = document.getElementById('reservaNotifBtn');
+  const notifInfo = document.getElementById('reservaNotifInfo');
   if (detalle) detalle.style.display = activa ? 'grid' : 'none';
+  if (notifBtn) notifBtn.style.display = activa ? 'block' : 'none';
+  if (notifInfo) {
+    notifInfo.style.display = activa ? 'block' : 'none';
+    notifInfo.className = 'reserva-info';
+    notifInfo.textContent = alertaReservaEstadoTexto();
+  }
   if (!info) return;
   info.className = 'reserva-info';
   if (!activa) {
@@ -5511,6 +5526,266 @@ function obtenerReservaPedido(mostrarErrores = false) {
     estado:'programada'
   };
 }
+
+function alertaReservaEstadoTexto() {
+  if (!('Notification' in window)) return 'Tu navegador no soporta alertas del sistema. Te avisaremos dentro de la app cuando la abras.';
+  if (Notification.permission === 'granted') return 'Alertas activas: te avisaremos hoy y 30 minutos antes de tu reserva.';
+  if (Notification.permission === 'denied') return 'Alertas bloqueadas. Activalas en permisos del navegador para recibir recordatorios.';
+  return 'Activa las alertas para que tu celular te recuerde la reserva.';
+}
+
+async function activarAlertasReservaCliente() {
+  if (!('Notification' in window)) {
+    tst('Tu navegador no soporta notificaciones del sistema', 3000);
+    actualizarReservaUI();
+    return false;
+  }
+  const permiso = Notification.permission === 'granted'
+    ? 'granted'
+    : await Notification.requestPermission();
+  if (permiso === 'granted') {
+    tst('Alertas de reserva activadas', 2500);
+    actualizarReservaUI();
+    return true;
+  }
+  tst('No se activaron las alertas. Revisa permisos del navegador.', 3500);
+  actualizarReservaUI();
+  return false;
+}
+
+function reservaAlertasTiempos(reserva) {
+  if (!reserva?.activa) return null;
+  const entrega = reservaFechaLocal(reserva.fecha, reserva.hora);
+  if (!entrega) return null;
+  const dia = reservaFechaLocal(reserva.fecha, '07:00');
+  const treinta = new Date(entrega.getTime() - 30 * 60 * 1000);
+  return {
+    entrega,
+    dia,
+    treinta,
+    dia_iso: dia.toISOString(),
+    treinta_iso: treinta.toISOString()
+  };
+}
+
+function reservaAlertasMeta(reserva) {
+  const t = reservaAlertasTiempos(reserva);
+  if (!t) return null;
+  return {
+    permiso_notificaciones: ('Notification' in window) ? Notification.permission : 'no_soportado',
+    alerta_dia_iso: t.dia_iso,
+    alerta_30min_iso: t.treinta_iso,
+    requiere_push_backend: true,
+    descripcion: 'El cliente debe recibir alerta el dia de reserva y alerta fuerte 30 minutos antes.'
+  };
+}
+
+function reservaReminderKey() {
+  return `${BUSINESS_ID || 'aswa'}_reservation_reminders`;
+}
+
+function reservaLoadReminders() {
+  try { return JSON.parse(localStorage.getItem(reservaReminderKey()) || '[]'); }
+  catch (_) { return []; }
+}
+
+function reservaSaveReminders(items) {
+  try { localStorage.setItem(reservaReminderKey(), JSON.stringify(items.slice(-40))); }
+  catch (_) {}
+}
+
+function reservaUpsertReminder(item) {
+  const items = reservaLoadReminders().filter(x => x.id !== item.id);
+  items.push(item);
+  reservaSaveReminders(items);
+}
+
+async function reservaShowSystemNotification(title, options = {}) {
+  if (!('Notification' in window) || Notification.permission !== 'granted') return false;
+  const defaults = {
+    icon: 'assets/images/icons/icon-192.png',
+    badge: 'assets/images/icons/icon-192.png',
+    vibrate: [700, 250, 700, 250, 1100, 300, 1100],
+    requireInteraction: true,
+    renotify: true,
+    silent: false
+  };
+  try {
+    if ('serviceWorker' in navigator) {
+      const reg = await navigator.serviceWorker.ready;
+      await reg.showNotification(title, { ...defaults, ...options });
+    } else {
+      new Notification(title, { ...defaults, ...options });
+    }
+    return true;
+  } catch (err) {
+    console.warn('Reserva notification:', err);
+    try { new Notification(title, { ...defaults, ...options }); return true; } catch (_) { return false; }
+  }
+}
+
+function reservaPlayUrgentTone() {
+  try {
+    if (navigator.vibrate) navigator.vibrate([900, 250, 900, 250, 1400, 300, 1400]);
+    const Ctx = window.AudioContext || window.webkitAudioContext;
+    if (!Ctx) return;
+    const ctx = new Ctx();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = 'sine';
+    osc.frequency.value = 880;
+    gain.gain.value = 0.0001;
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start();
+    const now = ctx.currentTime;
+    for (let i = 0; i < 10; i++) {
+      const start = now + i * 0.7;
+      gain.gain.setValueAtTime(0.0001, start);
+      gain.gain.exponentialRampToValueAtTime(0.28, start + 0.05);
+      gain.gain.exponentialRampToValueAtTime(0.0001, start + 0.42);
+    }
+    setTimeout(() => { try { osc.stop(); ctx.close(); } catch (_) {} }, 7600);
+  } catch (_) {}
+}
+
+async function reservaDispararAlerta(rem, tipo) {
+  const fuerte = tipo === '30min';
+  const titulo = fuerte ? 'ASWA: tu reserva esta por llegar' : 'ASWA: hoy tienes un pedido reservado';
+  const body = fuerte
+    ? `Faltan 30 minutos para tu entrega: ${rem.texto}. Ten tu celular atento.`
+    : `Hoy tienes una reserva: ${rem.texto}. Tu pedido ya esta programado.`;
+  showNotification?.(titulo, body, fuerte ? '!' : 'ASWA');
+  if (fuerte) reservaPlayUrgentTone();
+  await reservaShowSystemNotification(titulo, {
+    body,
+    tag: `aswa-reserva-${rem.pedidoId}-${tipo}`,
+    data: { tipo:'reserva_cliente', pedidoId:rem.pedidoId, url:`./index.html?pedido=${rem.pedidoId}` },
+    actions: [
+      { action:'open', title:'Ver pedido' },
+      { action:'ok', title:'Estoy atento' }
+    ]
+  });
+}
+
+function reservaProgramarTimeout(rem, tipo, fechaISO) {
+  const at = new Date(fechaISO).getTime();
+  const now = Date.now();
+  const entrega = new Date(rem.entrega_iso).getTime();
+  if (!at || now > entrega) return;
+  const delay = Math.max(1500, at - now);
+  const maxDelay = 2147483647;
+  const key = `${rem.id}_${tipo}`;
+  window._reservaTimers = window._reservaTimers || {};
+  clearTimeout(window._reservaTimers[key]);
+  if (delay > maxDelay) {
+    window._reservaTimers[key] = setTimeout(() => reservaProgramarTimeout(rem, tipo, fechaISO), maxDelay);
+    return;
+  }
+  window._reservaTimers[key] = setTimeout(() => {
+    reservaDispararAlerta(rem, tipo);
+    rem.disparadas = rem.disparadas || {};
+    rem.disparadas[tipo] = new Date().toISOString();
+    reservaUpsertReminder(rem);
+  }, delay);
+}
+
+function reservaRevisarReminders() {
+  const items = reservaLoadReminders();
+  const now = Date.now();
+  let changed = false;
+  items.forEach(rem => {
+    rem.disparadas = rem.disparadas || {};
+    const entrega = new Date(rem.entrega_iso).getTime();
+    if (!entrega || now > entrega + 2 * 60 * 60 * 1000) return;
+    if (!rem.disparadas.dia && now >= new Date(rem.alerta_dia_iso).getTime()) {
+      reservaDispararAlerta(rem, 'dia');
+      rem.disparadas.dia = new Date().toISOString();
+      changed = true;
+    }
+    if (!rem.disparadas['30min'] && now >= new Date(rem.alerta_30min_iso).getTime()) {
+      reservaDispararAlerta(rem, '30min');
+      rem.disparadas['30min'] = new Date().toISOString();
+      changed = true;
+    }
+    if (!rem.disparadas.dia) reservaProgramarTimeout(rem, 'dia', rem.alerta_dia_iso);
+    if (!rem.disparadas['30min']) reservaProgramarTimeout(rem, '30min', rem.alerta_30min_iso);
+  });
+  if (changed) reservaSaveReminders(items);
+}
+
+async function programarRecordatoriosReserva(pedidoId, reserva, cliente = {}) {
+  if (!pedidoId || !reserva?.activa) return null;
+  if ('Notification' in window && Notification.permission === 'default') {
+    await activarAlertasReservaCliente();
+  }
+  const tiempos = reservaAlertasTiempos(reserva);
+  if (!tiempos) return null;
+  const rem = {
+    id: `${pedidoId}_${reserva.fecha}_${reserva.hora}`,
+    pedidoId,
+    nombre: cliente.nombre || '',
+    telefono: cliente.telefono || '',
+    total: cliente.total || 0,
+    texto: reserva.texto,
+    entrega_iso: tiempos.entrega.toISOString(),
+    alerta_dia_iso: tiempos.dia_iso,
+    alerta_30min_iso: tiempos.treinta_iso,
+    permiso: ('Notification' in window) ? Notification.permission : 'no_soportado',
+    creado: new Date().toISOString(),
+    disparadas: {}
+  };
+  reservaUpsertReminder(rem);
+  reservaRevisarReminders();
+  return rem;
+}
+
+async function crearAlertasReservaPush(pedidoId, reserva, cliente = {}) {
+  if (!pedidoId || !reserva?.activa || !window.FB?.addDoc) return;
+  const tiempos = reservaAlertasTiempos(reserva);
+  if (!tiempos) return;
+  const { addDoc:ad, collection:col, serverTimestamp:ts } = window.FB;
+  const base = {
+    businessId: BUSINESS_ID,
+    pedidoId,
+    telefono: cliente.telefono || '',
+    nombre: cliente.nombre || '',
+    total: cliente.total || 0,
+    reserva_texto: reserva.texto,
+    reserva_fecha: reserva.fecha,
+    reserva_hora: reserva.hora,
+    canal: 'cliente_reserva',
+    estado: 'pendiente',
+    created_at: ts(),
+    necesita_cloud_function: true
+  };
+  await Promise.all([
+    ad(col(db, 'push_queue'), {
+      ...base,
+      tipo: 'reserva_hoy',
+      send_at_iso: tiempos.dia_iso,
+      titulo: 'ASWA: hoy tienes un pedido reservado',
+      cuerpo: `Hoy tienes una reserva: ${reserva.texto}.`
+    }),
+    ad(col(db, 'push_queue'), {
+      ...base,
+      tipo: 'reserva_30min',
+      send_at_iso: tiempos.treinta_iso,
+      urgente: true,
+      titulo: 'ASWA: tu reserva esta por llegar',
+      cuerpo: `Faltan 30 minutos para tu entrega: ${reserva.texto}.`
+    })
+  ]);
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  reservaRevisarReminders();
+  setInterval(reservaRevisarReminders, 60 * 1000);
+});
+
+window.activarAlertasReservaCliente = activarAlertasReservaCliente;
+window.programarRecordatoriosReserva = programarRecordatoriosReserva;
+window.crearAlertasReservaPush = crearAlertasReservaPush;
 
 function dirEsc(txt) {
   return String(txt || '').replace(/[&<>"']/g, ch => ({
@@ -6434,9 +6709,18 @@ async function enviarPedido() {
       reserva_iso:    reservaPedido.activa ? reservaPedido.iso : null,
       reserva_texto:  reservaPedido.activa ? reservaPedido.texto : null,
       reserva_estado: reservaPedido.activa ? 'programada' : null,
+      reserva_alertas_cliente: reservaPedido.activa ? reservaAlertasMeta(reservaPedido) : null,
       fecha:          ts()
     });
     ST.pedidoFbId = ref.id;
+    if (reservaPedido.activa) {
+      await programarRecordatoriosReserva(ref.id, reservaPedido, { telefono, nombre, total: ST.final });
+      try {
+        await crearAlertasReservaPush(ref.id, reservaPedido, { telefono, nombre, total: ST.final });
+      } catch (alertErr) {
+        console.warn('Reserva push queue:', alertErr);
+      }
+    }
     await registrarUsoCupon(ST.disc.cupCod);
     // Guardar en sessionStorage por si hay reload
     lsSet('pedido_id', ref.id);
@@ -9164,8 +9448,8 @@ async function admAbrirGestionUsuarios() {
     const snap = await gd(q(col(db,'app_users'), wh('business_id','==',BUSINESS_ID)));
     const usuarios = snap.docs.map(d => ({ id:d.id, ...d.data() }));
 
-    const rolColor = { admin:'#c4b5fd', delivery:'#93c5fd' };
-    const rolBg    = { admin:'rgba(168,85,247,.15)', delivery:'rgba(59,130,246,.15)' };
+    const rolColor = { owner:'#e9d5ff', admin:'#c4b5fd', delivery:'#93c5fd' };
+    const rolBg    = { owner:'rgba(168,85,247,.22)', admin:'rgba(168,85,247,.15)', delivery:'rgba(59,130,246,.15)' };
 
     cont.innerHTML = `
       <button onclick="admCargarClientes()" style="background:transparent;border:none;color:var(--mut);font-size:12px;cursor:pointer;font-family:Poppins,sans-serif;margin-bottom:12px;padding:0">← Volver a clientes</button>
@@ -9297,6 +9581,7 @@ async function crearUsuariosDefault() {
   try {
     const { collection:col, addDoc:ad, serverTimestamp:ts } = window.FB;
     const usuarios = [
+      { username:'owner',     nombre:'Dueno ASWA',      rol:'owner',    password:'Owner1234!',    permisos:{ owner:true, super:true, ver_stats:true, ver_clientes:true, exportar:true } },
       { username:'admin',     nombre:'Administrador',  rol:'admin',    password:'Admin1234!',    permisos:{ super:true, ver_stats:true, ver_clientes:true, exportar:true } },
       { username:'delivery1', nombre:'Repartidor 1',   rol:'delivery', password:'Delivery1234!', permisos:{} },
     ];
@@ -9532,6 +9817,217 @@ function abrirPanelAdminDirecto() {
 function abrirPanelDeliveryDirecto() {
   cerrarAccesoRapido();
   abrirPanelDeliverista();
+}
+
+function abrirPanelDuenoDirecto() {
+  cerrarAccesoRapido();
+  abrirPanelDueno();
+}
+
+let _ownerSesion = null;
+
+function abrirPanelDueno() {
+  let modal = document.getElementById('ownerModal');
+  if (!modal) {
+    document.body.insertAdjacentHTML('beforeend', `
+      <div id="ownerModal" style="display:none;position:fixed;inset:0;z-index:1750;background:rgba(0,0,0,.94);backdrop-filter:blur(12px);align-items:center;justify-content:center;padding:18px">
+        <div style="width:min(960px,100%);max-height:92vh;overflow:auto;background:var(--s1);border:1px solid rgba(168,85,247,.34);border-radius:22px;box-shadow:0 28px 90px rgba(0,0,0,.7)">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:18px 20px;border-bottom:1px solid var(--brd)">
+            <div>
+              <div style="font-family:'Bebas Neue',cursive;font-size:28px;color:#e9d5ff;letter-spacing:.08em">PANEL DUENO</div>
+              <div style="font-size:11px;color:var(--mut)">Control privado de ventas, pedidos, reservas y usuarios</div>
+            </div>
+            <button onclick="cerrarPanelDueno()" style="background:#ef4444;color:#fff;border:none;border-radius:12px;padding:10px 14px;font-weight:900;cursor:pointer">Salir</button>
+          </div>
+          <div id="ownerLoginStep" style="padding:20px">
+            <div style="max-width:360px;margin:auto">
+              <label style="font-size:10px;font-weight:800;color:var(--mut);text-transform:uppercase;letter-spacing:.1em">Usuario dueno</label>
+              <input id="ownerUser" class="inp" autocomplete="off" autocapitalize="none" placeholder="owner o tu usuario" style="margin:6px 0 12px">
+              <label style="font-size:10px;font-weight:800;color:var(--mut);text-transform:uppercase;letter-spacing:.1em">Contrasena</label>
+              <input id="ownerPass" type="password" class="inp" autocomplete="current-password" placeholder="********" style="margin:6px 0 12px" onkeydown="if(event.key==='Enter')ownerLogin()">
+              <div id="ownerError" style="display:none;background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.3);border-radius:10px;padding:10px;font-size:12px;color:#fca5a5;margin-bottom:10px"></div>
+              <button onclick="ownerLogin()" style="width:100%;background:#a855f7;color:#fff;border:none;border-radius:12px;padding:14px;font-size:14px;font-weight:900;cursor:pointer">Ingresar como dueno</button>
+            </div>
+          </div>
+          <div id="ownerDashStep" style="display:none;padding:18px">
+            <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px">
+              <button onclick="ownerCargar()" style="background:var(--y);color:#000;border:none;border-radius:10px;padding:10px 14px;font-size:12px;font-weight:900;cursor:pointer">Actualizar</button>
+              <button onclick="ownerAbrirAdmin()" style="background:rgba(250,204,21,.12);color:#fde68a;border:1px solid rgba(250,204,21,.28);border-radius:10px;padding:10px 14px;font-size:12px;font-weight:900;cursor:pointer">Abrir Admin</button>
+              <button onclick="abrirDashboardTV()" style="background:rgba(59,130,246,.14);color:#bfdbfe;border:1px solid rgba(59,130,246,.3);border-radius:10px;padding:10px 14px;font-size:12px;font-weight:900;cursor:pointer">TV real</button>
+              <button onclick="ownerGestionUsuarios()" style="background:rgba(168,85,247,.14);color:#e9d5ff;border:1px solid rgba(168,85,247,.34);border-radius:10px;padding:10px 14px;font-size:12px;font-weight:900;cursor:pointer">Usuarios</button>
+            </div>
+            <div id="ownerResumen"></div>
+            <div id="ownerDetalle" style="margin-top:14px"></div>
+          </div>
+        </div>
+      </div>
+    `);
+  }
+  modal = document.getElementById('ownerModal');
+  modal.style.display = 'flex';
+  if (_ownerSesion) ownerMostrarDash();
+  else ownerMostrarLogin();
+}
+
+function cerrarPanelDueno() {
+  const modal = document.getElementById('ownerModal');
+  if (modal) modal.style.display = 'none';
+}
+
+function ownerMostrarLogin() {
+  document.getElementById('ownerLoginStep').style.display = 'block';
+  document.getElementById('ownerDashStep').style.display = 'none';
+  document.getElementById('ownerError').style.display = 'none';
+  setTimeout(() => document.getElementById('ownerUser')?.focus(), 100);
+}
+
+function ownerMostrarDash() {
+  document.getElementById('ownerLoginStep').style.display = 'none';
+  document.getElementById('ownerDashStep').style.display = 'block';
+  ownerCargar();
+}
+
+function ownerError(msg) {
+  const el = document.getElementById('ownerError');
+  if (!el) return;
+  el.textContent = msg;
+  el.style.display = 'block';
+}
+
+async function ownerLogin() {
+  const username = document.getElementById('ownerUser')?.value.trim().toLowerCase() || '';
+  const password = document.getElementById('ownerPass')?.value || '';
+  if (!username || !password) return ownerError('Completa usuario y contrasena');
+
+  const fallback = window.CREDENTIALS?.[username];
+  if (fallback?.role === 'owner' && fallback.password && fallback.password === password) {
+    _ownerSesion = { username, nombre:fallback.name || 'Dueno', rol:'owner', permisos:{ super:true } };
+    _sesionAdmin = { ..._ownerSesion, id:'owner-fallback' };
+    tst('Bienvenido al Panel Dueno', 2200);
+    ownerMostrarDash();
+    return;
+  }
+
+  try {
+    await esperarFB();
+    const { collection:col, query:q, where:wh, getDocs:gd, doc:d, updateDoc:ud, serverTimestamp:ts } = window.FB;
+    const snap = await gd(q(col(db,'app_users'), wh('business_id','==',BUSINESS_ID), wh('username','==',username)));
+    if (snap.empty) return ownerError('Usuario o contrasena incorrectos');
+    const userDoc = snap.docs[0];
+    const user = userDoc.data();
+    const esDueno = user.rol === 'owner' || user.permisos?.owner === true || user.permisos?.super === true || username === 'admin';
+    if (!esDueno) return ownerError('Este usuario no tiene permiso de dueno');
+    if (user.activo === false) return ownerError('Usuario desactivado');
+    const check = await _verificarPasswordHash(user.password_hash, password, username);
+    if (!check.ok) return ownerError('Usuario o contrasena incorrectos');
+    _ownerSesion = { id:userDoc.id, username, nombre:user.nombre || username, rol:'owner', permisos:{ ...(user.permisos || {}), super:true, owner:true } };
+    _sesionAdmin = { ..._ownerSesion };
+    try {
+      const update = { ultimo_login:ts(), intentos_fallidos:0 };
+      if (check.legacy) {
+        update.password_hash = check.hash;
+        update.password_hash_version = 'salted-v1';
+      }
+      await ud(d(db,'app_users',userDoc.id), update);
+    } catch (_) {}
+    tst('Bienvenido, ' + _ownerSesion.nombre, 2200);
+    ownerMostrarDash();
+  } catch (err) {
+    console.error('ownerLogin:', err);
+    ownerError('No se pudo verificar. Revisa Firebase o internet.');
+  }
+}
+
+function ownerFechaLocal(fecha) {
+  return new Intl.DateTimeFormat('en-CA', { timeZone:'America/Lima', year:'numeric', month:'2-digit', day:'2-digit' }).format(fecha);
+}
+
+function ownerEsHoy(timestamp) {
+  const d = timestamp?.seconds ? new Date(timestamp.seconds * 1000) : new Date(timestamp || 0);
+  return ownerFechaLocal(d) === ownerFechaLocal(new Date());
+}
+
+function ownerCard(label, value, color = '#facc15', sub = '') {
+  return `<div style="background:#111827;border:1px solid var(--brd);border-radius:14px;padding:14px;min-height:92px">
+    <div style="font-size:11px;color:var(--mut);text-transform:uppercase;letter-spacing:.08em">${label}</div>
+    <div style="font-family:'Bebas Neue',cursive;font-size:34px;color:${color};letter-spacing:.04em;line-height:1.1">${value}</div>
+    ${sub ? `<div style="font-size:11px;color:var(--mut);line-height:1.4">${sub}</div>` : ''}
+  </div>`;
+}
+
+async function ownerCargar() {
+  const resumen = document.getElementById('ownerResumen');
+  const detalle = document.getElementById('ownerDetalle');
+  if (!resumen || !detalle) return;
+  resumen.innerHTML = '<div style="color:var(--mut);font-size:13px;padding:12px">Cargando datos reales...</div>';
+  detalle.innerHTML = '';
+  try {
+    await esperarFB();
+    const { collection:col, query:q, where:wh, getDocs:gd, limit:lim } = window.FB;
+    const [pedSnap, cliSnap, userSnap, pushSnap] = await Promise.all([
+      gd(q(col(db,'pedidos'), wh('businessId','==',BUSINESS_ID), lim(200))),
+      gd(q(col(db,'clientes'), wh('businessId','==',BUSINESS_ID), lim(200))),
+      gd(q(col(db,'app_users'), wh('business_id','==',BUSINESS_ID), lim(80))),
+      gd(q(col(db,'push_queue'), wh('businessId','==',BUSINESS_ID), lim(80))).catch(() => ({ docs:[] }))
+    ]);
+    const pedidos = pedSnap.docs.map(d => ({ id:d.id, ...d.data() }));
+    const clientes = cliSnap.docs.map(d => ({ id:d.id, ...d.data() }));
+    const usuarios = userSnap.docs.map(d => ({ id:d.id, ...d.data() }));
+    const push = pushSnap.docs.map(d => ({ id:d.id, ...d.data() }));
+    const hoy = ownerFechaLocal(new Date());
+    const pedidosHoy = pedidos.filter(p => ownerEsHoy(p.fecha));
+    const ventasHoy = pedidosHoy.reduce((s,p) => s + (Number(p.total) || 0), 0);
+    const pendientes = pedidos.filter(p => ['Pendiente','preparando','en_camino'].includes(p.estado)).length;
+    const pagosPend = pedidos.filter(p => p.yape_estado === 'pendiente').length;
+    const reservasHoy = pedidos.filter(p => p.es_reserva && p.reserva_fecha === hoy).length;
+    const reservasFuturas = pedidos.filter(p => p.es_reserva && p.reserva_fecha && p.reserva_fecha > hoy).length;
+    const alertasPend = push.filter(p => p.estado === 'pendiente').length;
+
+    resumen.innerHTML = `<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px">
+      ${ownerCard('Ventas hoy', 'S/ ' + ventasHoy.toFixed(2), '#facc15', pedidosHoy.length + ' pedido(s) hoy')}
+      ${ownerCard('Pedidos activos', pendientes, '#60a5fa', 'Pendiente, preparando o en camino')}
+      ${ownerCard('Pagos por aprobar', pagosPend, '#f97316', 'Comprobantes digitales')}
+      ${ownerCard('Reservas hoy', reservasHoy, '#e9d5ff', reservasFuturas + ' futura(s)')}
+      ${ownerCard('Clientes', clientes.length, '#34d399', 'Base real del negocio')}
+      ${ownerCard('Usuarios', usuarios.length, '#c4b5fd', 'Admin, delivery y dueno')}
+      ${ownerCard('Alertas reserva', alertasPend, '#fca5a5', 'Cola push pendiente')}
+    </div>`;
+
+    const proximas = pedidos
+      .filter(p => p.es_reserva && p.reserva_fecha)
+      .sort((a,b) => String(a.reserva_iso || '').localeCompare(String(b.reserva_iso || '')))
+      .slice(0, 8);
+    detalle.innerHTML = `
+      <div style="background:#0f172a;border:1px solid var(--brd);border-radius:14px;padding:14px">
+        <div style="font-size:14px;font-weight:900;color:#fff;margin-bottom:10px">Proximas reservas</div>
+        ${proximas.length ? proximas.map(p => `
+          <div style="display:flex;justify-content:space-between;gap:10px;border-top:1px solid var(--brd);padding:10px 0;font-size:12px">
+            <div><strong>${esc(p.nombre || 'Cliente')}</strong><br><span style="color:var(--mut)">${esc(p.telefono || '')} · ${esc(p.reserva_texto || '')}</span></div>
+            <div style="text-align:right;color:var(--y);font-weight:900">S/ ${(Number(p.total)||0).toFixed(2)}<br><span style="color:var(--mut);font-weight:700">${esc(p.pago || '')}</span></div>
+          </div>`).join('') : '<div style="color:var(--mut);font-size:12px">No hay reservas programadas.</div>'}
+      </div>`;
+  } catch (err) {
+    console.error('ownerCargar:', err);
+    resumen.innerHTML = '<div style="background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.3);border-radius:12px;padding:12px;color:#fca5a5;font-size:12px">No se pudo cargar el Panel Dueno. Revisa conexion/Firebase.</div>';
+  }
+}
+
+function ownerAbrirAdmin() {
+  cerrarPanelDueno();
+  abrirAdmin();
+}
+
+function ownerGestionUsuarios() {
+  cerrarPanelDueno();
+  abrirAdmin();
+  setTimeout(() => {
+    try {
+      admTab('clientes');
+      setTimeout(admAbrirGestionUsuarios, 500);
+    } catch (err) {
+      console.warn('ownerGestionUsuarios:', err);
+    }
+  }, 500);
 }
 
 function asegurarBotonTVRapido() {
