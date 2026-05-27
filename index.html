@@ -159,6 +159,15 @@
     let _loginTarget              = null;
     let admAutenticado            = false;
 
+    // Numeros WhatsApp por defecto (se sobreescriben si existen en Firestore)
+    const WA_CONFIG = window.ASWA_CONFIG?.WHATSAPP || {};
+    let _WA1 = WA_CONFIG.pedidos1 || "51955273229";
+    let _WA2 = WA_CONFIG.pedidos2 || "51986445531";
+    let _WAYAPE = WA_CONFIG.yape || "51947999736";
+    window.getWA1 = () => _WA1;
+    window.getWA2 = () => _WA2;
+    window.getWAYape = () => window.NEGOCIO?.whatsapp_yape || _WAYAPE;
+
     // ── Cargar config del negocio desde Firestore ──
     async function cargarNegocio() {
       try {
@@ -172,8 +181,9 @@
             const el = document.querySelector('.bname');
             if (el) el.textContent = data.nombre;
           }
-          if (data.whatsapp1) window.WA1 = data.whatsapp1;
-          if (data.whatsapp2) window.WA2 = data.whatsapp2;
+          if (data.whatsapp1) _WA1 = data.whatsapp1;
+          if (data.whatsapp2) _WA2 = data.whatsapp2;
+          if (data.whatsapp_yape) _WAYAPE = data.whatsapp_yape;
           // Guardar config globalmente
           window.NEGOCIO = data;
         }
@@ -182,14 +192,6 @@
       }
     }
 
-    // Números WhatsApp por defecto (se sobreescriben si existen en Firestore)
-    const WA_CONFIG = window.ASWA_CONFIG?.WHATSAPP || {};
-    window.WA1 = WA_CONFIG.pedidos1 || "51955273229";
-    window.WA2 = WA_CONFIG.pedidos2 || "51986445531";
-    window.WAYAPE = WA_CONFIG.yape || "51947999736";
-    window.getWA1 = () => window.WA1;
-    window.getWA2 = () => window.WA2;
-    window.getWAYape = () => window.NEGOCIO?.whatsapp_yape || window.WAYAPE;
   </script>
 
   <style>
