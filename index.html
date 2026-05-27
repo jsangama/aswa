@@ -2684,6 +2684,15 @@
       </div>
     </div>
     <div class="fld">
+      <label>Nota para entrega
+        <span style="color:var(--mut);font-weight:400;text-transform:none;font-size:10px"> (opcional)</span>
+      </label>
+      <textarea id="notaEntrega" class="inp" maxlength="160" rows="2"
+                placeholder="Ej: llamar al llegar, dejar en porteria, referencia de casa"
+                style="resize:vertical;min-height:58px;line-height:1.5"></textarea>
+      <div style="font-size:10px;color:var(--mut);margin-top:5px;padding:0 4px">Esta nota se enviara con tu pedido.</div>
+    </div>
+    <div class="fld">
       <button class="btn-gps" id="btnGPS" onclick="toggleGPS()">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
              stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
@@ -5472,6 +5481,7 @@ function perfilGuardarCliente(silencioso = true) {
     telefono: tel,
     nombre: document.getElementById('nombre')?.value.trim() || '',
     direccion: document.getElementById('direccion')?.value.trim() || '',
+    notaEntrega: document.getElementById('notaEntrega')?.value.trim() || '',
     zona: zonaEl?.value || '',
     zonaTexto: zonaEl?.options[zonaEl.selectedIndex]?.text || '',
     actualizado: new Date().toISOString()
@@ -5500,6 +5510,7 @@ function perfilUsarGuardado(conAviso = false) {
   const telEl = document.getElementById('telefono');
   const nomEl = document.getElementById('nombre');
   const dirEl = document.getElementById('direccion');
+  const notaEl = document.getElementById('notaEntrega');
   const zonaEl = document.getElementById('zona');
 
   if (telEl) telEl.value = perfil.telefono || '';
@@ -5508,6 +5519,7 @@ function perfilUsarGuardado(conAviso = false) {
     dirEl.value = perfil.direccion;
     dirEl.classList.add('has-value');
   }
+  if (notaEl && perfil.notaEntrega) notaEl.value = perfil.notaEntrega;
   if (zonaEl && perfil.zona) {
     zonaEl.value = perfil.zona;
     calcTotal();
@@ -5535,7 +5547,7 @@ function perfilInit() {
     }
   }
 
-  ['telefono','nombre','direccion','zona'].forEach(id => {
+  ['telefono','nombre','direccion','notaEntrega','zona'].forEach(id => {
     document.getElementById(id)?.addEventListener('input', () => perfilGuardarCliente(true));
     document.getElementById(id)?.addEventListener('change', () => perfilGuardarCliente(true));
   });
@@ -5842,6 +5854,7 @@ async function enviarPedido() {
   const telefono    = sanitizeInput(document.getElementById('telefono').value, 15);
   const nombre      = sanitizeInput(document.getElementById('nombre').value, 80);
   const direccion   = sanitizeInput(document.getElementById('direccion').value || 'No especificada', 200);
+  const notaEntrega = sanitizeInput(document.getElementById('notaEntrega')?.value || '', 160);
   const zonaSel     = document.getElementById('zona');
   const zonaTexto   = sanitizeInput(zonaSel.options[zonaSel.selectedIndex]?.text || '', 100);
   const codigoUsado = sanitizeInput(document.getElementById('codigoUsado').value.toUpperCase(), 20);
@@ -5909,6 +5922,7 @@ async function enviarPedido() {
 
     +'📍 *ENTREGA*\n'
     +'🏠 *Dirección:* '+direccion+'\n'
+    +(notaEntrega ? '📝 *Nota:* '+notaEntrega+'\n' : '')
     +(ST.gpsUrl ? '📡 *GPS:* '+ST.gpsUrl+'\n' : '')
     +(zonaTexto.includes('gencia') || zonaTexto.includes('nacional')
       ? '📌 *Zona:* '+zonaTexto+'\n'
@@ -5965,6 +5979,7 @@ async function enviarPedido() {
     const ref = await ad(col(db,'pedidos'), {
       businessId:     BUSINESS_ID,
       nombre, telefono, direccion,
+      nota_entrega:    notaEntrega || null,
       distrito:       zonaTexto,
       items:          { ...ST.cart },
       subtotal:       ST.raw,
@@ -7632,13 +7647,13 @@ async function admExportarCSV() {
   try {
     const { collection:col, query:q, where:wh, getDocs:gd } = window.FB;
     const snap = await gd(q(col(db,'pedidos'), wh('businessId','==',BUSINESS_ID)));
-    const rows = [['Fecha','Nombre','Teléfono','Dirección','Zona','Productos','Total','Delivery','Oferta%','Pago','Estado','Nivel']];
+    const rows = [['Fecha','Nombre','Teléfono','Dirección','Nota entrega','Zona','Productos','Total','Delivery','Oferta%','Pago','Estado','Nivel']];
     snap.docs.forEach(doc => {
       const d = doc.data();
       const fecha = d.fecha?.seconds ? new Date(d.fecha.seconds*1000).toLocaleString('es-PE') : '';
       const items = _itemsTexto(d.items);
       rows.push([
-        fecha, d.nombre||'', d.telefono||'', d.direccion||'', d.distrito||'',
+        fecha, d.nombre||'', d.telefono||'', d.direccion||'', d.nota_entrega||'', d.distrito||'',
         items, (d.total||0).toFixed(2), (d.delivery||0).toFixed(2),
         d.descuento_pct||0, d.pago||'', d.estado||'', d.nivel_cliente||''
       ]);
@@ -9264,6 +9279,7 @@ function admRenderYapes(docs) {
           <strong>Pedido:</strong> ${_itemsTexto(d.items)}<br>
           <strong>Total:</strong> <span class="adm-ped-total">S/ ${(d.total||0).toFixed(2)}</span><br>
           <strong>Dirección:</strong> ${d.direccion || '—'}<br>
+          ${d.nota_entrega ? `<strong>Nota:</strong> ${esc(d.nota_entrega)}<br>` : ''}
           <strong>Fecha:</strong> ${fecha}
         </div>
         ${fotoHtml}
@@ -9327,6 +9343,7 @@ function admRenderPedidos(docs) {
           <strong>Total:</strong> <span class="adm-ped-total">S/ ${(d.total||0).toFixed(2)}</span><br>
           <strong>Pago:</strong> ${d.pago || '—'}<br>
           <strong>Dirección:</strong> ${d.direccion || '—'}<br>
+          ${d.nota_entrega ? `<strong>Nota:</strong> ${esc(d.nota_entrega)}<br>` : ''}
           <strong>Fecha:</strong> ${fecha}
         </div>
         <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">
@@ -9986,6 +10003,7 @@ function armarResumenPedidoCliente() {
   const nombre = document.getElementById('nombre')?.value || ST.cli?.nom || ST.cli?.nombre || 'Cliente';
   const telefono = document.getElementById('telefono')?.value || ST.cli?.tel || ST.cli?.telefono || '';
   const direccion = document.getElementById('direccion')?.value || 'No especificada';
+  const notaEntrega = document.getElementById('notaEntrega')?.value || '';
   const codigoPedido = ST.pedidoFbId ? ST.pedidoFbId.slice(0, 8).toUpperCase() : (lsGet('pedido_id') || '').slice(0, 8).toUpperCase();
   const lineas = [];
 
@@ -10007,6 +10025,7 @@ function armarResumenPedidoCliente() {
     'Pago: ' + (ST.pago || 'Efectivo'),
     '',
     'Entrega: ' + direccion,
+    notaEntrega ? 'Nota: ' + notaEntrega : '',
     'Zona: ' + zona,
     ST.gpsUrl ? 'GPS: ' + ST.gpsUrl : '',
     '',
@@ -12176,6 +12195,7 @@ function histRenderLista(filtro) {
       </div>
       <div class="hist-items">🌽 ${itxt}</div>
       ${p.direccion ? `<div style="font-size:11px;color:var(--mut);margin-bottom:8px">📍 ${p.direccion}</div>` : ''}
+      ${p.nota_entrega ? `<div style="font-size:11px;color:#fde68a;background:rgba(250,204,21,.08);border:1px solid rgba(250,204,21,.18);border-radius:8px;padding:7px 9px;margin-bottom:8px">Nota: ${esc(p.nota_entrega)}</div>` : ''}
       ${calif ? `<div style="font-size:12px;margin-bottom:6px">${calif}</div>` : ''}
       <div class="hist-footer">
         <div class="hist-total">S/ ${(p.total||0).toFixed(2)}</div>
@@ -12224,6 +12244,7 @@ function histVerDetalle(pedidoId) {
         <span style="color:var(--y)">S/ ${(p.total||0).toFixed(2)}</span>
       </div>
       <div style="font-size:12px;color:var(--mut);padding:0 4px;margin-bottom:4px">📍 ${p.direccion||'—'}</div>
+      ${p.nota_entrega ? `<div style="font-size:12px;color:#fde68a;padding:0 4px;margin-bottom:4px">Nota: ${esc(p.nota_entrega)}</div>` : ''}
       <div style="font-size:12px;color:var(--mut);padding:0 4px;margin-bottom:4px">💳 ${p.pago||'—'}</div>
       <div style="font-size:12px;color:var(--mut);padding:0 4px;margin-bottom:16px">${calif}</div>
       <div style="display:flex;gap:8px">
