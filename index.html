@@ -2479,9 +2479,10 @@
 </div>
 <script>
 (function(){
-  let idx=0, total=10;
+  let idx=0, total=10, timer=null;
   const slider=document.getElementById('promoSlider');
   const dots=document.getElementById('promoDots');
+  if (!slider || !dots) return;
   function goTo(n){
     idx=((n%total)+total)%total;
     slider.style.transform='translateX(-'+(idx*100)+'%)';
@@ -2490,7 +2491,14 @@
       d.style.width=i===idx?'22px':'8px';
     });
   }
-  setInterval(()=>goTo(idx+1),4000);
+  function start(){
+    if (!timer) timer=setInterval(()=>goTo(idx+1),4000);
+  }
+  function stop(){
+    if (timer) { clearInterval(timer); timer=null; }
+  }
+  document.addEventListener('visibilitychange',()=>document.hidden?stop():start());
+  start();
   let sx=0;
   slider.addEventListener('touchstart',e=>sx=e.touches[0].clientX,{passive:true});
   slider.addEventListener('touchend',e=>{
@@ -6064,8 +6072,8 @@ async function enviarPedido() {
     await registrarUsoCupon(ST.disc.cupCod);
     // Guardar en sessionStorage por si hay reload
     lsSet('pedido_id', ref.id);
-    // Iniciar tracking en tiempo real para el cliente
-    setTimeout(() => { if (typeof trackOrder === 'function') trackOrder(ref.id); }, 2000);
+    // Iniciar tracking en tiempo real para el cliente inmediatamente
+    if (typeof trackOrder === 'function') trackOrder(ref.id);
 
     // 2. Upsert cliente
     const snapC = await gd(q(col(db,'clientes'), wh('businessId','==',BUSINESS_ID), wh('telefono','==',telefono)));
