@@ -8,6 +8,11 @@
       fin: '22:00',
       mensaje: 'Volvemos mañana desde las 7:00 AM',
     },
+    WHATSAPP: {
+      pedidos1: '51955273229',
+      pedidos2: '51986445531',
+      yape: '51947999736',
+    },
     FIREBASE: {
       apiKey: 'AIzaSyAsAIZEEuE4Ha3xCFgfn8hBTictVi4CTIk',
       authDomain: 'pedidos-aswa-peru.firebaseapp.com',
@@ -33,6 +38,10 @@
       HORARIO: {
         ...(base.HORARIO || {}),
         ...(override.HORARIO || {}),
+      },
+      WHATSAPP: {
+        ...(base.WHATSAPP || {}),
+        ...(override.WHATSAPP || {}),
       },
     };
   }
