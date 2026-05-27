@@ -1657,6 +1657,29 @@
     .track-step-lbl { font-size:9px; color:var(--mut); text-transform:uppercase; letter-spacing:.06em; }
     .track-step.done .track-step-lbl,
     .track-step.active .track-step-lbl { color:var(--txt); font-weight:700; }
+    .track-live-map {
+      background:var(--s2); border:1px solid rgba(34,197,94,.28);
+      border-radius:14px; overflow:hidden; margin-bottom:16px;
+    }
+    .track-live-map-head {
+      display:flex; align-items:center; justify-content:space-between; gap:10px;
+      padding:10px 12px; background:rgba(34,197,94,.08); border-bottom:1px solid rgba(34,197,94,.18);
+    }
+    .track-live-map-title { font-size:12px; font-weight:900; color:#86efac; }
+    .track-live-map-sub { font-size:10px; color:var(--mut); margin-top:2px; }
+    .track-live-map-link {
+      background:var(--y); color:#000; border:none; border-radius:9px;
+      padding:7px 10px; font-size:10px; font-weight:900; text-decoration:none; white-space:nowrap;
+    }
+    .track-live-map iframe {
+      display:block; width:100%; height:190px; border:0; background:#0b1220;
+    }
+    .track-near-alert {
+      margin:0 0 14px; padding:12px; border-radius:12px;
+      background:rgba(250,204,21,.12); border:1px solid rgba(250,204,21,.35);
+      color:#fde68a; font-size:12px; font-weight:800; text-align:center;
+      animation:pulse-btn 1.8s infinite;
+    }
 
     /* ══ CHART.JS CONTAINER ══ */
     .chart-wrap {
@@ -4826,6 +4849,9 @@
       <div class="track-lbl" id="trackLbl">PEDIDO RECIBIDO</div>
       <div class="track-sub" id="trackSub">Tu chicha está siendo preparada 🌽</div>
     </div>
+
+    <div id="trackNearAlert" class="track-near-alert" style="display:none"></div>
+    <div id="trackLiveMap" class="track-live-map" style="display:none"></div>
 
     <!-- Info pedido -->
     <div id="trackInfo" style="background:var(--s2);border:1px solid var(--brd);border-radius:12px;padding:14px;margin-bottom:16px;font-size:13px">
@@ -8481,8 +8507,17 @@ async function dlvCargarTodosPedidos() {
 
 async function dlvMarcarEnCaminoDesdeListado(pedidoId, nombre, telefono) {
   try {
-    const { doc:d, updateDoc:ud, serverTimestamp:ts } = window.FB;
-    await ud(d(db,'pedidos',pedidoId), { estado:'en_camino', confirmacion_deliverista:true, deliverista_at:ts() });
+    const { doc:d, updateDoc:ud, serverTimestamp:ts, getDoc:gd } = window.FB;
+    const pedidoSnap = await gd(d(db,'pedidos',pedidoId)).catch(() => null);
+    const pedidoData = pedidoSnap?.exists?.() ? pedidoSnap.data() : {};
+    const deliveryUser = _sesionDelivery?.username || sessionStorage.getItem('deliveryUser') || 'delivery';
+    await ud(d(db,'pedidos',pedidoId), {
+      estado:'en_camino',
+      confirmacion_deliverista:true,
+      deliverista_at:ts(),
+      asignado_a: pedidoData.asignado_a || deliveryUser
+    });
+    iniciarTrackingEntrega(pedidoId, { ...pedidoData, asignado_a: pedidoData.asignado_a || deliveryUser });
     const link='https://jsangama.github.io/aswa';
     const msg='🏍️ *¡Tu pedido ASWA ya está en camino!*\n\nHola '+nombre+', tu chicha está llegando 🌽\n\n📦 Cuando lo recibas, confirma la entrega en:\n'+link+'\n\nEsto activa tu descuento de fidelidad y genera tu Nota de Venta ✅';
     window.open('https://wa.me/51'+telefono+'?text='+encodeURIComponent(msg),'_blank');
@@ -8495,6 +8530,7 @@ async function dlvCerrarDesdeListado(pedidoId, nombre, telefono) {
   try {
     const { doc:d, updateDoc:ud, serverTimestamp:ts } = window.FB;
     await ud(d(db,'pedidos',pedidoId), { estado:'entregado', cerrado_at:ts(), confirmacion_deliverista:true });
+    if (_deliveryLivePedidoId === pedidoId) detenerTrackingEntrega();
     tst('✅ Pedido cerrado: '+nombre, 3000);
     await dlvCargarTodosPedidos();
   } catch(err) { tst('❌ Error. Verifica conexión.', 3000); }
@@ -8610,8 +8646,10 @@ async function deliveristaMarcarEnCamino() {
     await ud(d(db, 'pedidos', dlvPedidoActual.id), {
       estado: 'en_camino',
       confirmacion_deliverista: true,
-      deliverista_at: ts()
+      deliverista_at: ts(),
+      asignado_a: dlvPedidoActual.asignado_a || _sesionDelivery?.username || sessionStorage.getItem('deliveryUser') || 'delivery'
     });
+    iniciarTrackingEntrega(dlvPedidoActual.id, dlvPedidoActual);
 
     // Notificar al cliente
     const link = 'https://jsangama.github.io/aswa';
@@ -8649,6 +8687,7 @@ async function _deliverCerrarSinPOD() {
       cerrado_at: ts(),
       cerrado_por: 'deliverista'
     });
+    if (_deliveryLivePedidoId === dlvPedidoActual.id) detenerTrackingEntrega();
 
     const items = dlvPedidoActual.items || {};
     const nombres = { p2l:'2L', p3l:'3L', p4l:'4L Familiar' };
@@ -8793,7 +8832,14 @@ async function podActualizar() {
     }
 
     // Mapa GPS — coordenadas del deliverista al salir
-    if (data.pod_gps_url) {
+    if (data.delivery_gps_url || data.delivery_live) {
+      const live = coordsDeliveryPedido(data);
+      document.getElementById('podMapaLink').href = data.delivery_gps_url || googleMapsUrl(live);
+      document.getElementById('podMapaCoordTxt').textContent = live
+        ? live.lat + ', ' + live.lng + (data.delivery_distance_m !== null && data.delivery_distance_m !== undefined ? ' · ' + textoDistancia(data.delivery_distance_m) + ' de ti' : '')
+        : 'GPS del deliverista activo';
+      document.getElementById('podMapaBadge').textContent = 'Deliverista en vivo';
+    } else if (data.pod_gps_url) {
       document.getElementById('podMapaLink').href = data.pod_gps_url;
       document.getElementById('podMapaCoordTxt').textContent =
         data.pod_gps_coords ? data.pod_gps_coords.lat + ', ' + data.pod_gps_coords.lng : 'GPS registrado';
@@ -8931,6 +8977,7 @@ async function podEnviarYCerrar() {
       pod_gps_url:      podData.gpsUrl     || null,
       pod_codigo_verif: podData.codigoVerif || podGenerarCodigo(dlvPedidoActual.id)
     });
+    if (_deliveryLivePedidoId === dlvPedidoActual.id) detenerTrackingEntrega();
 
     // Resumen cierre
     const items = dlvPedidoActual.items || {};
@@ -10134,6 +10181,11 @@ async function ownerCargar() {
       .slice()
       .sort((a,b) => ownerTimestampMs(b.fecha) - ownerTimestampMs(a.fecha))
       .slice(0, 10);
+    const pedidosEnRuta = pedidos
+      .filter(p => p.estado === 'en_camino' && (p.delivery_gps_url || p.delivery_live))
+      .slice()
+      .sort((a,b) => (a.delivery_distance_m ?? 999999) - (b.delivery_distance_m ?? 999999))
+      .slice(0, 6);
     detalle.innerHTML = `
       <div style="background:#0f172a;border:1px solid var(--brd);border-radius:14px;padding:14px;margin-bottom:14px">
         <div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-start;margin-bottom:10px">
@@ -10190,6 +10242,18 @@ async function ownerCargar() {
               <strong style="color:var(--y)">S/ ${(Number(p.total)||0).toFixed(2)}</strong>
             </div>`).join('') : '<div style="color:var(--mut);font-size:12px">Aun no hay pedidos.</div>'}
         </div>
+      </div>
+
+      <div style="background:#0f172a;border:1px solid rgba(34,197,94,.28);border-radius:14px;padding:14px;margin-bottom:14px">
+        <div style="font-size:14px;font-weight:900;color:#fff;margin-bottom:10px">Mapa en vivo de entregas</div>
+        ${pedidosEnRuta.length ? pedidosEnRuta.map(p => `
+          <div style="border-top:1px solid var(--brd);padding:10px 0;font-size:12px">
+            <div style="display:flex;justify-content:space-between;gap:10px;margin-bottom:6px">
+              <div><strong>${esc(p.nombre || 'Cliente')}</strong><br><span style="color:var(--mut)">${esc(ownerPedidoDeliverista(p))} · ${textoDistancia(p.delivery_distance_m)} de entrega</span></div>
+              <a href="${p.delivery_gps_url || googleMapsUrl(coordsDeliveryPedido(p))}" target="_blank" style="color:#93c5fd;font-weight:900;text-decoration:none">Mapa</a>
+            </div>
+            ${p.delivery_near ? '<div style="color:#fde68a;font-weight:900">Alerta: deliverista cerca del cliente</div>' : ''}
+          </div>`).join('') : '<div style="color:var(--mut);font-size:12px">No hay entregas con GPS en vivo ahora.</div>'}
       </div>
 
       <div style="background:#0f172a;border:1px solid var(--brd);border-radius:14px;padding:14px">
@@ -10378,6 +10442,8 @@ function renderDashboardTV(pedidos) {
         ${esc(p.distrito || '')}<br>
         ${p.nota_entrega ? 'Nota: ' + esc(p.nota_entrega) + '<br>' : ''}
         ${p.telefono ? 'Cel: ' + esc(p.telefono) : ''}
+        ${p.delivery_gps_url ? `<br><span style="color:#93c5fd;font-weight:900">GPS en vivo: ${textoDistancia(p.delivery_distance_m)} de entrega</span>` : ''}
+        ${p.delivery_near ? '<br><span style="color:#fde68a;font-weight:900">ALERTA: deliverista cerca</span>' : ''}
       </div>
     </div>`;
   }).join('');
@@ -10979,6 +11045,185 @@ async function pedirPermisoNotificacion() {
 /* ══════════════════════════════════════
    TRACKING PEDIDO EN TIEMPO REAL (onSnapshot)
 ══════════════════════════════════════ */
+const DELIVERY_NEAR_METERS = 150;
+let _deliveryLiveWatchId = null;
+let _deliveryLivePedidoId = null;
+let _deliveryNearAlerted = {};
+let _trackNearAlerted = {};
+
+function coordNum(v) {
+  const n = Number(v);
+  return Number.isFinite(n) ? n : null;
+}
+
+function normalizarCoords(c) {
+  if (!c) return null;
+  const lat = coordNum(c.lat ?? c.latitude);
+  const lng = coordNum(c.lng ?? c.lon ?? c.longitude);
+  if (lat === null || lng === null) return null;
+  return { lat, lng, acc: coordNum(c.acc ?? c.accuracy), ts: c.ts || Date.now() };
+}
+
+function coordsDesdeUrl(url) {
+  const m = String(url || '').match(/(-?\d+(?:\.\d+)?)[,\s]+(-?\d+(?:\.\d+)?)/);
+  return m ? normalizarCoords({ lat:m[1], lng:m[2] }) : null;
+}
+
+function coordsClientePedido(ped) {
+  return normalizarCoords(ped?.gps_coords) || coordsDesdeUrl(ped?.gps_url);
+}
+
+function coordsDeliveryPedido(ped) {
+  return normalizarCoords(ped?.delivery_live) ||
+         normalizarCoords(ped?.delivery_gps_coords) ||
+         normalizarCoords(ped?.pod_gps_coords);
+}
+
+function distanciaMetros(a, b) {
+  a = normalizarCoords(a); b = normalizarCoords(b);
+  if (!a || !b) return null;
+  const R = 6371000;
+  const toRad = x => x * Math.PI / 180;
+  const dLat = toRad(b.lat - a.lat);
+  const dLng = toRad(b.lng - a.lng);
+  const lat1 = toRad(a.lat);
+  const lat2 = toRad(b.lat);
+  const h = Math.sin(dLat/2) ** 2 + Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLng/2) ** 2;
+  return Math.round(2 * R * Math.atan2(Math.sqrt(h), Math.sqrt(1 - h)));
+}
+
+function textoDistancia(m) {
+  if (m === null || m === undefined) return 'distancia no disponible';
+  return m >= 1000 ? (m / 1000).toFixed(1) + ' km' : m + ' m';
+}
+
+function googleMapsUrl(coords) {
+  coords = normalizarCoords(coords);
+  return coords ? `https://www.google.com/maps?q=${coords.lat},${coords.lng}` : '#';
+}
+
+function osmEmbedUrl(coords) {
+  coords = normalizarCoords(coords);
+  if (!coords) return '';
+  const d = 0.0032;
+  const left = coords.lng - d;
+  const right = coords.lng + d;
+  const top = coords.lat + d;
+  const bottom = coords.lat - d;
+  return `https://www.openstreetmap.org/export/embed.html?bbox=${left}%2C${bottom}%2C${right}%2C${top}&layer=mapnik&marker=${coords.lat}%2C${coords.lng}`;
+}
+
+function renderLiveMapHtml(ped, contexto = 'cliente') {
+  const delivery = coordsDeliveryPedido(ped);
+  if (!delivery) return '';
+  const cliente = coordsClientePedido(ped);
+  const dist = cliente ? distanciaMetros(delivery, cliente) : null;
+  const act = ped.delivery_last_seen?.seconds
+    ? new Date(ped.delivery_last_seen.seconds * 1000).toLocaleTimeString('es-PE', { hour:'2-digit', minute:'2-digit' })
+    : 'en vivo';
+  const titulo = contexto === 'delivery' ? 'Tu ubicacion en ruta' : 'Deliverista en tiempo real';
+  const sub = cliente
+    ? `${textoDistancia(dist)} de la ubicacion del cliente · actualizado ${act}`
+    : `GPS del deliverista activo · actualizado ${act}`;
+  return `
+    <div class="track-live-map-head">
+      <div>
+        <div class="track-live-map-title">${titulo}</div>
+        <div class="track-live-map-sub">${sub}</div>
+      </div>
+      <a class="track-live-map-link" href="${googleMapsUrl(delivery)}" target="_blank" rel="noopener">Abrir mapa</a>
+    </div>
+    <iframe loading="lazy" referrerpolicy="no-referrer-when-downgrade" src="${osmEmbedUrl(delivery)}" title="Mapa GPS ASWA"></iframe>`;
+}
+
+function mostrarAlertaCercania(scope, pedidoId, metros, nombre = '') {
+  if (metros === null || metros > DELIVERY_NEAR_METERS) return;
+  const key = `${scope}_${pedidoId}`;
+  if (_trackNearAlerted[key]) return;
+  _trackNearAlerted[key] = true;
+  const msg = `El deliverista esta a ${textoDistancia(metros)} de ${nombre || 'la ubicacion de entrega'}.`;
+  mostrarNotif('Delivery cerca', msg, '📍');
+  tst('📍 ' + msg, 5000);
+  if ('Notification' in window && Notification.permission === 'granted') {
+    new Notification('ASWA: delivery cerca', {
+      body: msg,
+      icon: 'assets/images/icons/icon-192.png',
+      tag: 'aswa-delivery-near-' + pedidoId,
+      requireInteraction: true,
+      vibrate: [300, 120, 300, 120, 500]
+    });
+  }
+}
+
+function detenerTrackingEntrega() {
+  if (_deliveryLiveWatchId !== null && navigator.geolocation) {
+    navigator.geolocation.clearWatch(_deliveryLiveWatchId);
+  }
+  _deliveryLiveWatchId = null;
+  _deliveryLivePedidoId = null;
+}
+
+async function iniciarTrackingEntrega(pedidoId, pedido = {}) {
+  if (!pedidoId || !navigator.geolocation) {
+    tst('GPS no disponible para seguimiento en vivo', 3000);
+    return;
+  }
+  if (_deliveryLivePedidoId === pedidoId && _deliveryLiveWatchId !== null) return;
+  detenerTrackingEntrega();
+  _deliveryLivePedidoId = pedidoId;
+
+  const enviar = async (pos) => {
+    const coords = {
+      lat: Number(pos.coords.latitude.toFixed(6)),
+      lng: Number(pos.coords.longitude.toFixed(6)),
+      acc: Math.round(pos.coords.accuracy || 0),
+      ts: Date.now()
+    };
+    const cliente = coordsClientePedido(pedido);
+    const metros = cliente ? distanciaMetros(coords, cliente) : null;
+    const username = _sesionDelivery?.username || sessionStorage.getItem('deliveryUser') || window._dlvNombre || 'delivery';
+    try {
+      const { doc:d, updateDoc:ud, serverTimestamp:ts } = window.FB;
+      await ud(d(db, 'pedidos', pedidoId), {
+        delivery_live: coords,
+        delivery_gps_coords: coords,
+        delivery_gps_url: googleMapsUrl(coords),
+        delivery_last_seen: ts(),
+        delivery_distance_m: metros,
+        delivery_near: metros !== null && metros <= DELIVERY_NEAR_METERS,
+        asignado_a: pedido.asignado_a || username,
+        estado: 'en_camino'
+      });
+      const dkey = `delivery_${pedidoId}`;
+      if (metros !== null && metros <= DELIVERY_NEAR_METERS && !_deliveryNearAlerted[dkey]) {
+        _deliveryNearAlerted[dkey] = true;
+        tst('📍 Ya estas cerca del cliente: ' + textoDistancia(metros), 6000);
+        if ('Notification' in window && Notification.permission === 'granted') {
+          new Notification('ASWA Delivery', {
+            body: 'Estas a ' + textoDistancia(metros) + ' del cliente.',
+            tag: 'aswa-delivery-driver-near-' + pedidoId,
+            requireInteraction: true,
+            vibrate: [300, 100, 300, 100, 500]
+          });
+        }
+      }
+    } catch (err) {
+      console.warn('tracking entrega:', err);
+    }
+  };
+
+  navigator.geolocation.getCurrentPosition(enviar, () => {
+    tst('Activa el permiso de ubicacion para compartir ruta en vivo', 5000);
+  }, { enableHighAccuracy:true, timeout:12000, maximumAge:0 });
+
+  _deliveryLiveWatchId = navigator.geolocation.watchPosition(enviar, () => {}, {
+    enableHighAccuracy:true,
+    timeout:20000,
+    maximumAge:5000
+  });
+  tst('📍 Mapa en tiempo real activado para este pedido', 3500);
+}
+
 let _trackUnsub = null; // desuscribir listener anterior
 
 function abrirTrackModal(pedidoId) {
@@ -11029,6 +11274,26 @@ function _actualizarTrackUI(ped, pedidoId) {
     if (i < idx)  el.classList.add('done');
     if (i === idx) el.classList.add('active');
   });
+
+  const liveMap = document.getElementById('trackLiveMap');
+  const nearBox = document.getElementById('trackNearAlert');
+  const deliveryCoords = coordsDeliveryPedido(ped);
+  const clienteCoords = coordsClientePedido(ped);
+  const metros = deliveryCoords && clienteCoords ? distanciaMetros(deliveryCoords, clienteCoords) : null;
+  if (liveMap && deliveryCoords && estado === 'en_camino') {
+    liveMap.innerHTML = renderLiveMapHtml(ped, 'cliente');
+    liveMap.style.display = 'block';
+  } else if (liveMap) {
+    liveMap.style.display = 'none';
+    liveMap.innerHTML = '';
+  }
+  if (nearBox && metros !== null && metros <= DELIVERY_NEAR_METERS && estado === 'en_camino') {
+    nearBox.textContent = 'Tu deliverista esta cerca: aprox. ' + textoDistancia(metros) + ' de tu ubicacion.';
+    nearBox.style.display = 'block';
+    mostrarAlertaCercania('cliente', pedidoId, metros, ped.nombre || 'tu ubicacion');
+  } else if (nearBox) {
+    nearBox.style.display = 'none';
+  }
 
   // Info del pedido
   const items = Object.entries(ped.items || {})
