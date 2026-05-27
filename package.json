@@ -16,6 +16,7 @@
     "dev": "http-server . -p 8080 -c-1",
     "claims:set": "node scripts/set-firebase-claims.mjs",
     "operators:upsert": "node scripts/upsert-operator-user.mjs",
+    "security:preflight": "node scripts/firestore-security-preflight.mjs",
     "lint": "echo \"Lint pending: add ESLint configuration\"",
     "format": "echo \"Format pending: add Prettier configuration\""
   },
