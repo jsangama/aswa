@@ -96,6 +96,14 @@ window.ASWA_CONFIG = {
 
 Luego entra al panel usando el usuario corto (`owner`, `admin` o `delivery`) y la contrasena del usuario Firebase Auth.
 
+Para generar ese bloque sin escribirlo a mano:
+
+```bash
+npm run operators:config -- --owner dueno@aswa.pe --admin admin@aswa.pe --delivery1 delivery1@aswa.pe --delivery2 delivery2@aswa.pe
+```
+
+Puedes usar varios deliveristas (`delivery1`, `delivery2`, `delivery3`). El usuario que escriben en el login debe coincidir con la llave configurada.
+
 ## Importante despues de asignar claims
 
 El usuario debe cerrar sesion y volver a entrar para que Firebase emita un token nuevo con los claims.

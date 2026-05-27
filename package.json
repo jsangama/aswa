@@ -17,6 +17,7 @@
     "claims:set": "node scripts/set-firebase-claims.mjs",
     "operators:upsert": "node scripts/upsert-operator-user.mjs",
     "security:preflight": "node scripts/firestore-security-preflight.mjs",
+    "operators:config": "node scripts/print-operator-config.mjs",
     "lint": "echo \"Lint pending: add ESLint configuration\"",
     "format": "echo \"Format pending: add Prettier configuration\""
   },
