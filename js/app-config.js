@@ -43,6 +43,10 @@
         ...(base.ADMIN_CREDENTIALS || {}),
         ...(override.ADMIN_CREDENTIALS || {}),
       },
+      OPERATOR_AUTH_EMAILS: {
+        ...(base.OPERATOR_AUTH_EMAILS || {}),
+        ...(override.OPERATOR_AUTH_EMAILS || {}),
+      },
       HORARIO: {
         ...(base.HORARIO || {}),
         ...(override.HORARIO || {}),

@@ -64,7 +64,7 @@
              getDocs, onSnapshot, serverTimestamp, doc, updateDoc,
              getDoc, setDoc, deleteDoc, orderBy, limit }
       from "https://www.gstatic.com/firebasejs/11.1.0/firebase-firestore.js";
-    import { getAuth, signInAnonymously, onAuthStateChanged }
+    import { getAuth, signInAnonymously, onAuthStateChanged, signInWithEmailAndPassword, signOut }
       from "https://www.gstatic.com/firebasejs/11.1.0/firebase-auth.js";
     import { getStorage, ref, uploadBytes, getDownloadURL }
       from "https://www.gstatic.com/firebasejs/11.1.0/firebase-storage.js";
@@ -91,9 +91,91 @@
     window.ST_UP   = uploadBytes;
     window.ST_URL  = getDownloadURL;
 
+    function _aswaExpectedRoleOk(actualRole, expectedRole) {
+      if (expectedRole === 'owner') return actualRole === 'owner';
+      if (expectedRole === 'admin') return actualRole === 'owner' || actualRole === 'admin';
+      if (expectedRole === 'delivery') return actualRole === 'delivery';
+      return actualRole === 'owner' || actualRole === 'admin' || actualRole === 'delivery';
+    }
+
+    async function _aswaEnsureAnonymousAuth() {
+      if (!window.auth.currentUser) {
+        await signInAnonymously(window.auth);
+      }
+    }
+
+    async function _aswaApplyClaims(user, force = false) {
+      if (!user) return {};
+      const token = await user.getIdTokenResult(force);
+      const claims = token.claims || {};
+      window.aswaAuthClaims = claims;
+
+      const businessId = window.ASWA_CONFIG?.BUSINESS_ID || 'aswa001';
+      if (claims.businessId === businessId && _aswaExpectedRoleOk(claims.role)) {
+        sessionStorage.setItem('aswaRole', claims.role);
+        if (claims.role === 'delivery') {
+          const username = claims.username || user.email || 'delivery';
+          sessionStorage.setItem('deliveryUser', username);
+          sessionStorage.setItem('deliveryName', claims.name || username);
+        }
+      }
+
+      return claims;
+    }
+
+    window.aswaGetTokenClaims = async (force = false) => {
+      if (!window.auth.currentUser) return {};
+      return _aswaApplyClaims(window.auth.currentUser, force);
+    };
+
+    window.aswaSignInOperativo = async ({ username, password, expectedRole } = {}) => {
+      const emailMap = window.ASWA_CONFIG?.OPERATOR_AUTH_EMAILS || {};
+      const email = emailMap[username] || (String(username || '').includes('@') ? username : '');
+      const businessId = window.ASWA_CONFIG?.BUSINESS_ID || 'aswa001';
+
+      if (!email) {
+        return { ok: false, configured: false, error: 'No hay email Firebase configurado para este usuario.' };
+      }
+
+      try {
+        const credential = await signInWithEmailAndPassword(window.auth, email, password);
+        const claims = await _aswaApplyClaims(credential.user, true);
+
+        if (claims.businessId !== businessId) {
+          await signOut(window.auth);
+          await _aswaEnsureAnonymousAuth();
+          return { ok: false, configured: true, error: 'El usuario no pertenece a este negocio.' };
+        }
+
+        if (!_aswaExpectedRoleOk(claims.role, expectedRole)) {
+          await signOut(window.auth);
+          await _aswaEnsureAnonymousAuth();
+          return { ok: false, configured: true, error: 'El usuario no tiene permiso para este panel.' };
+        }
+
+        return { ok: true, configured: true, user: credential.user, claims };
+      } catch (error) {
+        await _aswaEnsureAnonymousAuth().catch(() => {});
+        return { ok: false, configured: true, error: error.code || error.message };
+      }
+    };
+
+    window.aswaSignOutOperativo = async () => {
+      await signOut(window.auth);
+      sessionStorage.removeItem('aswaRole');
+      sessionStorage.removeItem('deliveryUser');
+      sessionStorage.removeItem('deliveryName');
+      window.aswaAuthClaims = {};
+      await _aswaEnsureAnonymousAuth();
+    };
+
     onAuthStateChanged(window.auth, u => {
-      if (u) window.currentUser = u;
-      else   signInAnonymously(window.auth).catch(e => console.warn('Auth:', e.code));
+      if (u) {
+        window.currentUser = u;
+        _aswaApplyClaims(u).catch(e => console.warn('Claims:', e.code || e.message));
+      } else {
+        signInAnonymously(window.auth).catch(e => console.warn('Auth:', e.code));
+      }
     });
 
     // ✅ Notificar que Firebase está lista
@@ -9359,7 +9441,9 @@ function cerrarAdmin() {
 
 function admCerrarSesion() {
   _sesionAdmin = null;
-  if (sessionStorage.getItem('aswaRole') === 'admin') sessionStorage.removeItem('aswaRole');
+  admAutenticado = false;
+  if (['owner', 'admin'].includes(sessionStorage.getItem('aswaRole'))) sessionStorage.removeItem('aswaRole');
+  window.aswaSignOutOperativo?.().catch(() => {});
   _admMostrarFormLogin();
 }
 
@@ -9386,6 +9470,37 @@ async function admIniciarSesion() {
   btn.textContent = '⏳ Verificando...';
 
   try {
+    const authLogin = await window.aswaSignInOperativo?.({ username, password, expectedRole: 'admin' });
+    if (authLogin?.ok) {
+      const claims = authLogin.claims || {};
+      const role = claims.role === 'owner' ? 'owner' : 'admin';
+      _admIntentos = 0;
+      _sesionAdmin = {
+        id: authLogin.user?.uid || 'firebase-auth',
+        username,
+        nombre: claims.name || authLogin.user?.email || username,
+        rol: role,
+        permisos: { firebaseAuth: true }
+      };
+      admAutenticado = true;
+      sessionStorage.setItem('aswaRole', role);
+      btn.disabled = false; btn.textContent = 'ðŸ”“ INGRESAR';
+      document.getElementById('admLoginError').style.display = 'none';
+      document.getElementById('admPinStep').style.display  = 'none';
+      document.getElementById('admDashStep').style.display = 'flex';
+      tst(`âœ… Bienvenido, ${_sesionAdmin.nombre}`, 2500);
+      admCargar();
+      return;
+    }
+
+    if (authLogin?.configured) {
+      _admIntentos++;
+      _admChequearBloqueo('adm');
+      _admMostrarError('âŒ Usuario Firebase no autorizado o contraseÃ±a incorrecta');
+      btn.disabled = false; btn.textContent = 'ðŸ”“ INGRESAR';
+      return;
+    }
+
     const { collection:col, query:q, where:wh, getDocs:gd, doc:d, updateDoc:ud, serverTimestamp:ts } = window.FB;
 
     // Buscar usuario en Firestore
@@ -9540,6 +9655,11 @@ function verificarPin() {
 }
 
 function dlvCerrarSesion() {
+  _sesionDelivery = null;
+  sessionStorage.removeItem('deliveryUser');
+  sessionStorage.removeItem('deliveryName');
+  if (sessionStorage.getItem('aswaRole') === 'delivery') sessionStorage.removeItem('aswaRole');
+  window.aswaSignOutOperativo?.().catch(() => {});
   cerrarDeliverista();
 }
 
@@ -10138,6 +10258,26 @@ async function ownerLogin() {
   const username = document.getElementById('ownerUser')?.value.trim().toLowerCase() || '';
   const password = document.getElementById('ownerPass')?.value || '';
   if (!username || !password) return ownerError('Completa usuario y contrasena');
+
+  const authLogin = await window.aswaSignInOperativo?.({ username, password, expectedRole: 'owner' });
+  if (authLogin?.ok) {
+    const claims = authLogin.claims || {};
+    _ownerSesion = {
+      id: authLogin.user?.uid || 'firebase-auth',
+      username,
+      nombre: claims.name || authLogin.user?.email || username,
+      rol: 'owner',
+      permisos: { super:true, owner:true, firebaseAuth:true }
+    };
+    _sesionAdmin = { ..._ownerSesion };
+    admAutenticado = true;
+    sessionStorage.setItem('aswaRole', 'owner');
+    tst('Bienvenido al Panel Dueno', 2200);
+    ownerMostrarDash();
+    return;
+  }
+
+  if (authLogin?.configured) return ownerError('Usuario Firebase no autorizado o contrasena incorrecta');
 
   const fallback = window.CREDENTIALS?.[username];
   if (fallback?.role === 'owner' && fallback.password && fallback.password === password) {
@@ -12255,13 +12395,40 @@ function closeLoginModal() {
   _loginTarget = null;
 }
 
-function attemptLogin() {
+async function attemptLogin() {
   const username = document.getElementById('loginUsername')?.value.trim().toLowerCase() || '';
   const password = document.getElementById('loginPassword')?.value || '';
   const errEl    = document.getElementById('loginError');
 
   if (!username || !password) {
     if (errEl) { errEl.textContent = '⚠️ Completa usuario y contraseña'; errEl.style.display = 'block'; }
+    return;
+  }
+
+  const expectedRole = _loginTarget === 'admin' ? 'admin' : 'delivery';
+  const authLogin = await window.aswaSignInOperativo?.({ username, password, expectedRole });
+  if (authLogin?.ok) {
+    const claims = authLogin.claims || {};
+    closeLoginModal();
+    tst('âœ… Bienvenido, ' + (claims.name || authLogin.user?.email || username), 2500);
+
+    if (expectedRole === 'admin') {
+      admAutenticado = true;
+      sessionStorage.setItem('aswaRole', claims.role === 'owner' ? 'owner' : 'admin');
+      abrirAdmin();
+    } else {
+      const deliveryName = claims.name || authLogin.user?.email || username;
+      window._dlvNombre = deliveryName;
+      sessionStorage.setItem('aswaRole', 'delivery');
+      sessionStorage.setItem('deliveryUser', username);
+      sessionStorage.setItem('deliveryName', deliveryName);
+      abrirPanelDeliverista();
+    }
+    return;
+  }
+
+  if (authLogin?.configured) {
+    if (errEl) { errEl.textContent = 'âŒ Usuario Firebase no autorizado o contraseÃ±a incorrecta'; errEl.style.display = 'block'; }
     return;
   }
 
