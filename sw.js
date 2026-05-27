@@ -1,5 +1,5 @@
-// ASWA Service Worker v12 - https://jsangama.github.io/aswa/
-const CACHE_NAME = 'aswa-v12';
+// ASWA Service Worker v13 - https://jsangama.github.io/aswa/
+const CACHE_NAME = 'aswa-v13';
 const BASE = '/aswa/';
 const ASSETS = [
   BASE,
