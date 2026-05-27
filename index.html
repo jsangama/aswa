@@ -2619,6 +2619,20 @@
       </div>
     </div>
 
+    <div id="perfilGuardadoBox" style="display:none;background:rgba(34,197,94,.08);border:1px solid rgba(34,197,94,.24);border-radius:14px;padding:12px 14px;margin:0 0 14px">
+      <div style="display:flex;gap:10px;align-items:flex-start">
+        <div style="font-size:18px;line-height:1">✓</div>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:12px;font-weight:900;color:#86efac">Datos listos para pedir mas rapido</div>
+          <div id="perfilGuardadoTxt" style="font-size:11px;color:var(--mut);line-height:1.45;margin-top:2px"></div>
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:10px">
+        <button type="button" onclick="perfilUsarGuardado(true)" style="flex:1;background:#22c55e;color:#000;border:none;border-radius:10px;padding:9px;font-size:11px;font-weight:900;cursor:pointer;font-family:'Poppins',sans-serif">Usar datos</button>
+        <button type="button" onclick="perfilOlvidarCliente()" style="background:transparent;color:var(--mut);border:1px solid var(--brd);border-radius:10px;padding:9px 12px;font-size:11px;font-weight:800;cursor:pointer;font-family:'Poppins',sans-serif">Borrar</button>
+      </div>
+    </div>
+
     <div class="fld">
       <label>Teléfono</label>
       <input type="tel" id="telefono" class="inp" maxlength="9"
@@ -5440,6 +5454,93 @@ function calcVuelto() {
   document.getElementById('vmsg').textContent = 'Vuelto: S/ ' + Math.max(0, p - ST.final).toFixed(2);
 }
 
+function perfilLeerGuardado() {
+  try {
+    const raw = lsGet('perfil_cliente');
+    return raw ? JSON.parse(raw) : null;
+  } catch(e) {
+    return null;
+  }
+}
+
+function perfilGuardarCliente(silencioso = true) {
+  const tel = document.getElementById('telefono')?.value.trim() || '';
+  if (!/^\d{9}$/.test(tel)) return;
+
+  const zonaEl = document.getElementById('zona');
+  const perfil = {
+    telefono: tel,
+    nombre: document.getElementById('nombre')?.value.trim() || '',
+    direccion: document.getElementById('direccion')?.value.trim() || '',
+    zona: zonaEl?.value || '',
+    zonaTexto: zonaEl?.options[zonaEl.selectedIndex]?.text || '',
+    actualizado: new Date().toISOString()
+  };
+
+  lsSet('perfil_cliente', JSON.stringify(perfil));
+  perfilMostrarGuardado(perfil);
+  if (!silencioso) tst('Datos guardados para tu proximo pedido', 2600);
+}
+
+function perfilMostrarGuardado(perfil = perfilLeerGuardado()) {
+  const box = document.getElementById('perfilGuardadoBox');
+  const txt = document.getElementById('perfilGuardadoTxt');
+  if (!box || !txt || !perfil?.telefono) return;
+
+  const nombre = perfil.nombre ? perfil.nombre : 'Cliente ASWA';
+  const zona = perfil.zonaTexto ? ' · ' + perfil.zonaTexto : '';
+  txt.textContent = nombre + ' · ' + perfil.telefono + zona;
+  box.style.display = 'block';
+}
+
+function perfilUsarGuardado(conAviso = false) {
+  const perfil = perfilLeerGuardado();
+  if (!perfil?.telefono) return;
+
+  const telEl = document.getElementById('telefono');
+  const nomEl = document.getElementById('nombre');
+  const dirEl = document.getElementById('direccion');
+  const zonaEl = document.getElementById('zona');
+
+  if (telEl) telEl.value = perfil.telefono || '';
+  if (nomEl && perfil.nombre) nomEl.value = perfil.nombre;
+  if (dirEl && perfil.direccion) {
+    dirEl.value = perfil.direccion;
+    dirEl.classList.add('has-value');
+  }
+  if (zonaEl && perfil.zona) {
+    zonaEl.value = perfil.zona;
+    calcTotal();
+    mostrarNotaNacional(zonaEl);
+    actualizarZonaVisual();
+  }
+
+  telEl?.dispatchEvent(new Event('input', { bubbles: true }));
+  if (conAviso) tst('Datos recuperados para pedir mas rapido', 2600);
+}
+
+function perfilOlvidarCliente() {
+  lsDel('perfil_cliente');
+  const box = document.getElementById('perfilGuardadoBox');
+  if (box) box.style.display = 'none';
+  tst('Datos guardados eliminados de este dispositivo', 2600);
+}
+
+function perfilInit() {
+  const perfil = perfilLeerGuardado();
+  if (perfil?.telefono) {
+    perfilMostrarGuardado(perfil);
+    if (!document.getElementById('telefono')?.value) {
+      setTimeout(() => perfilUsarGuardado(false), 250);
+    }
+  }
+
+  ['telefono','nombre','direccion','zona'].forEach(id => {
+    document.getElementById(id)?.addEventListener('input', () => perfilGuardarCliente(true));
+    document.getElementById(id)?.addEventListener('change', () => perfilGuardarCliente(true));
+  });
+}
+
 /* ── GENERAR CÓDIGO REFERIDO ── */
 async function genCod() {
   if (!window.currentUser) {
@@ -5750,6 +5851,7 @@ async function enviarPedido() {
   const descFijoAmt = +getDescuentoFijoAplicado(disc).toFixed(2);
   const descTotal   = +(descPctAmt + descFijoAmt).toFixed(2);
   const pid         = '#'+Date.now().toString(36).slice(-6).toUpperCase();
+  perfilGuardarCliente(true);
 
   /* Construir mensaje WhatsApp */
   let items = '';
@@ -7242,6 +7344,7 @@ async function cargarConcurso() {
 document.addEventListener('DOMContentLoaded', () => {
   setPago('Yape');
   actualizarHorarioMini();
+  perfilInit();
   setInterval(actualizarHorarioMini, 60000);
   // Mostrar fecha de vencimiento de misiones
   (function() {
