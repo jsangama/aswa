@@ -2363,12 +2363,12 @@
       ▶ Ver tutorial para hacer tu pedido
     </button>
 
-    <div id="tutorialPedidoInline" style="display:block;margin:0 0 16px;background:#050505;border:1px solid rgba(250,204,21,.28);border-radius:14px;overflow:hidden;box-shadow:0 12px 28px rgba(0,0,0,.24)">
+    <div id="tutorialPedidoInline" style="display:none;margin:0 0 16px;background:#050505;border:1px solid rgba(250,204,21,.28);border-radius:14px;overflow:hidden;box-shadow:0 12px 28px rgba(0,0,0,.24)">
       <div style="padding:10px 12px;border-bottom:1px solid rgba(255,255,255,.08)">
         <div style="font-size:12px;font-weight:900;color:#facc15">Tutorial ASWA</div>
         <div style="font-size:11px;color:var(--mut);margin-top:2px">Mira como hacer tu pedido sin salir de la app</div>
       </div>
-      <div style="width:100%;max-width:360px;margin:0 auto;background:#000;aspect-ratio:9/16">
+      <div style="width:100%;max-width:230px;margin:0 auto;background:#000;aspect-ratio:9/16">
         <iframe
           src="https://www.youtube-nocookie.com/embed/fQbZiTTD88g?rel=0&playsinline=1&modestbranding=1"
           title="Tutorial para hacer tu pedido ASWA"
@@ -4524,6 +4524,21 @@ function lsDelAll()      {
     .forEach(k => lsDel(k));
 }
 
+function sanitizeInput(val, maxLen = 200) {
+  if (val == null) return '';
+  return String(val).trim().slice(0, maxLen);
+}
+
+function esc(s) {
+  if (s == null) return '';
+  return String(s)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
 /* ── esperarFB — espera a que Firebase esté lista (de archivo 5) ── */
 function esperarFB() {
   return new Promise(res => {
@@ -4724,6 +4739,31 @@ async function registrarUsoCupon(codigo) {
     });
   } catch (err) {
     console.warn('No se pudo registrar uso de cupon:', err);
+  }
+}
+
+async function subirComprobantePago() {
+  if (!yapeFileData || !window.FBStorage || !window.storage) return null;
+
+  try {
+    const { ref: fbRef, uploadBytes, getDownloadURL } = window.FBStorage;
+    let fileToUpload = yapeFileData;
+    let ext = 'jpg';
+
+    if (typeof yapeFileData === 'string' && yapeFileData.startsWith('data:')) {
+      const mime = yapeFileData.slice(5, yapeFileData.indexOf(';')) || 'image/jpeg';
+      ext = mime.includes('png') ? 'png' : mime.includes('webp') ? 'webp' : 'jpg';
+      const res = await fetch(yapeFileData);
+      fileToUpload = await res.blob();
+    }
+
+    const ruta = `comprobantes/${BUSINESS_ID}/${Date.now()}_${ST.pago}.${ext}`;
+    const storageRef = fbRef(window.storage, ruta);
+    const snap = await uploadBytes(storageRef, fileToUpload);
+    return await getDownloadURL(snap.ref);
+  } catch (err) {
+    console.warn('No se pudo subir comprobante a Storage:', err);
+    return null;
   }
 }
 
@@ -5235,12 +5275,12 @@ async function enviarPedido() {
   _enviandoPedido = true;
   btn.disabled = true; btn.textContent = 'Enviando...';
 
-  const telefono    = document.getElementById('telefono').value.trim();
-  const nombre      = document.getElementById('nombre').value.trim();
-  const direccion   = document.getElementById('direccion').value.trim() || 'No especificada';
+  const telefono    = sanitizeInput(document.getElementById('telefono').value, 15);
+  const nombre      = sanitizeInput(document.getElementById('nombre').value, 80);
+  const direccion   = sanitizeInput(document.getElementById('direccion').value || 'No especificada', 200);
   const zonaSel     = document.getElementById('zona');
-  const zonaTexto   = zonaSel.options[zonaSel.selectedIndex]?.text || '';
-  const codigoUsado = document.getElementById('codigoUsado').value.trim().toUpperCase();
+  const zonaTexto   = sanitizeInput(zonaSel.options[zonaSel.selectedIndex]?.text || '', 100);
+  const codigoUsado = sanitizeInput(document.getElementById('codigoUsado').value.toUpperCase(), 20);
   const pagoCon     = Number(document.getElementById('pagoCon').value) || ST.final;
   const disc        = getDescuentoPct();
   const descPctAmt  = +(ST.raw * disc / 100).toFixed(2);
@@ -5354,6 +5394,8 @@ async function enviarPedido() {
     const { addDoc:ad, collection:col, query:q, where:wh,
             getDocs:gd, doc:d, updateDoc:ud, serverTimestamp:ts } = window.FB;
 
+    const yapePhotoUrl = esDigitalPago ? await subirComprobantePago() : null;
+
     // 1. Guardar pedido
     const ref = await ad(col(db,'pedidos'), {
       businessId:     BUSINESS_ID,
@@ -5377,8 +5419,9 @@ async function enviarPedido() {
       confirmacion_cliente: false, // Cloud Function escucha este campo
       gps_url:        ST.gpsUrl || null,
       gps_coords:     ST.gpsCoords || null,
-      // Comprobante digital: guardar foto y estado para Yape, Plin y Transferencia
-      yape_foto_base64: (esDigitalPago && yapeFileData) ? yapeFileData : null,
+      // Comprobante digital: URL de Storage. Si Storage falla, mantiene fallback base64.
+      yape_foto_url:    yapePhotoUrl || null,
+      yape_foto_base64: (!yapePhotoUrl && esDigitalPago && yapeFileData) ? yapeFileData : null,
       yape_estado:      esDigitalPago ? 'pendiente' : null,
       compartido:     false,   // se actualiza cuando cliente comparte en redes
       asignado_a:     null,    // se asigna cuando deliverista acepta
@@ -6747,6 +6790,7 @@ document.addEventListener('DOMContentLoaded', () => {
   setTimeout(() => {
     document.getElementById('badge-bono').classList.add('show');
   }, 2000);
+  tutToggleTutorialPedido(false);
   setTimeout(tutAbrirTutorialInicioSiNuevo, 1400);
 
   // ── Recuperar pedido pendiente de confirmar ──
@@ -8407,8 +8451,9 @@ function admRenderYapes(docs) {
   cont.innerHTML = docs.map(doc => {
     const d = doc.data();
     const fecha = d.fecha?.seconds ? new Date(d.fecha.seconds*1000).toLocaleString('es-PE') : '—';
-    const fotoHtml = d.yape_foto_base64
-      ? `<img src="${d.yape_foto_base64}" class="adm-yape-foto" onclick="this.style.maxHeight=this.style.maxHeight?'':'none'" alt="Comprobante Yape">`
+    const fotoSrc = d.yape_foto_url || d.yape_foto_base64 || '';
+    const fotoHtml = fotoSrc
+      ? `<img src="${esc(fotoSrc)}" class="adm-yape-foto" onclick="this.style.maxHeight=this.style.maxHeight?'':'none'" alt="Comprobante de pago">`
       : '<div style="background:var(--s2);border:1px solid var(--brd);border-radius:10px;padding:20px;text-align:center;color:var(--mut);font-size:12px;margin:8px 0">Sin foto adjunta</div>';
 
     return `
@@ -13210,6 +13255,8 @@ function tutToggleTutorialPedido(forzarMostrar = null) {
   if (!box) return;
   const mostrar = forzarMostrar === null ? box.style.display === 'none' : forzarMostrar;
   box.style.display = mostrar ? 'block' : 'none';
+  const btn = document.getElementById('btnTutorialPedido');
+  if (btn) btn.textContent = mostrar ? 'Ocultar tutorial' : 'Ver tutorial para hacer tu pedido';
   if (mostrar) box.scrollIntoView({ behavior: 'smooth', block: 'center' });
 }
 
