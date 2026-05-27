@@ -9473,6 +9473,9 @@ function actualizarDots() {
 
 function verificarPin() {
   if (dlvPinIngresado === DELIVERY_PIN) {
+    _sesionDelivery = { username:'delivery_pin', nombre:'Deliverista', rol:'delivery', permisos:{ tv:true } };
+    sessionStorage.setItem('deliveryUser', 'delivery_pin');
+    sessionStorage.setItem('deliveryName', 'Deliverista');
     document.querySelectorAll('.dlv-step').forEach(s => s.classList.remove('active'));
     document.getElementById('dlvStep2').classList.add('active');
   } else {
@@ -10033,7 +10036,7 @@ function abrirPanelDueno() {
             <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px">
               <button onclick="ownerCargar()" style="background:var(--y);color:#000;border:none;border-radius:10px;padding:10px 14px;font-size:12px;font-weight:900;cursor:pointer">Actualizar</button>
               <button onclick="ownerAbrirAdmin()" style="background:rgba(250,204,21,.12);color:#fde68a;border:1px solid rgba(250,204,21,.28);border-radius:10px;padding:10px 14px;font-size:12px;font-weight:900;cursor:pointer">Abrir Admin</button>
-              <button onclick="abrirDashboardTV()" style="background:rgba(59,130,246,.14);color:#bfdbfe;border:1px solid rgba(59,130,246,.3);border-radius:10px;padding:10px 14px;font-size:12px;font-weight:900;cursor:pointer">TV real</button>
+              <button onclick="abrirDashboardTVSeguro()" style="background:rgba(59,130,246,.14);color:#bfdbfe;border:1px solid rgba(59,130,246,.3);border-radius:10px;padding:10px 14px;font-size:12px;font-weight:900;cursor:pointer">TV real</button>
               <button onclick="ownerGestionUsuarios()" style="background:rgba(168,85,247,.14);color:#e9d5ff;border:1px solid rgba(168,85,247,.34);border-radius:10px;padding:10px 14px;font-size:12px;font-weight:900;cursor:pointer">Usuarios</button>
             </div>
             <div id="ownerResumen"></div>
@@ -10431,13 +10434,39 @@ function ownerGestionUsuarios() {
 function asegurarBotonTVRapido() {
   const grid = document.querySelector('#modalAccesoRapido .quick-access-grid');
   if (!grid || document.getElementById('quickTvBtn')) return;
-  grid.insertAdjacentHTML('beforeend', '<button class="quick-access-item tv" id="quickTvBtn" onclick="abrirDashboardTV()" type="button">TV real</button>');
+  grid.insertAdjacentHTML('beforeend', '<button class="quick-access-item tv" id="quickTvBtn" onclick="abrirDashboardTVSeguro()" type="button">TV real</button>');
 }
 
 let _tvUnsub = null;
 let _tvClock = null;
 
+function tvSesionOperativa() {
+  if (_ownerSesion) return { ok:true, rol:'owner', nombre:_ownerSesion.nombre || _ownerSesion.username || 'Dueno' };
+  if (_sesionAdmin) return { ok:true, rol:'admin', nombre:_sesionAdmin.nombre || _sesionAdmin.username || 'Admin' };
+  if (_sesionDelivery) return { ok:true, rol:'delivery', nombre:_sesionDelivery.nombre || _sesionDelivery.username || 'Delivery' };
+  const deliveryUser = sessionStorage.getItem('deliveryUser');
+  if (deliveryUser) return { ok:true, rol:'delivery', nombre:sessionStorage.getItem('deliveryName') || deliveryUser };
+  return { ok:false };
+}
+
+function abrirDashboardTVSeguro() {
+  const sesion = tvSesionOperativa();
+  if (!sesion.ok) {
+    cerrarAccesoRapido();
+    tst('TV real es privado. Ingresa como dueno, admin o delivery.', 4200);
+    abrirPanelDueno();
+    return;
+  }
+  abrirDashboardTV();
+}
+
 function abrirDashboardTV() {
+  const sesion = tvSesionOperativa();
+  if (!sesion.ok) {
+    tst('Acceso privado: inicia sesion para ver el modo TV.', 3600);
+    abrirPanelDueno();
+    return;
+  }
   cerrarAccesoRapido();
   let tv = document.getElementById('tvDashboard');
   if (!tv) {
@@ -10452,6 +10481,7 @@ function abrirDashboardTV() {
       <div>
         <div class="tv-title">ASWA - Pedidos en Tiempo Real</div>
         <div class="tv-time" id="tvClock">Conectando...</div>
+        <div style="color:#6ee7b7;font-size:13px;font-weight:900;margin-top:6px">Acceso privado: ${esc(sesion.rol)} - ${esc(sesion.nombre)}</div>
       </div>
       <button class="tv-exit" onclick="cerrarDashboardTV()">Salir</button>
     </div>
@@ -10493,7 +10523,7 @@ async function escucharPedidosTV() {
     _tvUnsub = os(consulta, snap => {
       let pedidos = snap.docs.map(docSnap => ({ id:docSnap.id, ...docSnap.data() }));
       if (filtrarActivo) {
-        pedidos = pedidos.filter(p => ['Pendiente','preparando','en_camino'].includes(p.estado));
+        pedidos = pedidos.filter(p => tvPedidoVisibleHoy(p));
       }
       renderDashboardTV(pedidos);
     }, err => {
@@ -10520,7 +10550,7 @@ async function escucharPedidosTVFallback() {
     _tvUnsub = os(q(col(db,'pedidos'), wh('businessId','==',BUSINESS_ID), lm(120)), snap => {
       const pedidos = snap.docs
         .map(docSnap => ({ id:docSnap.id, ...docSnap.data() }))
-        .filter(p => ['Pendiente','preparando','en_camino'].includes(p.estado));
+        .filter(p => tvPedidoVisibleHoy(p));
       renderDashboardTV(pedidos);
     }, err => {
       console.error('TV fallback:', err);
@@ -10532,9 +10562,30 @@ async function escucharPedidosTVFallback() {
   }
 }
 
+function tvPedidoFechaISO(p) {
+  if (p?.reserva_fecha) return p.reserva_fecha;
+  const ms = ownerTimestampMs(p?.fecha || p?.created_at || p?.creado_at);
+  if (!ms) return '';
+  return ownerFechaLocal(new Date(ms));
+}
+
+function tvPedidoVisibleHoy(p) {
+  const estado = p?.estado || 'Pendiente';
+  if (!['Pendiente','preparando','en_camino'].includes(estado)) return false;
+  const hoy = reservaFechaLimaISO();
+  if (p?.es_reserva) return p.reserva_fecha === hoy;
+  return tvPedidoFechaISO(p) === hoy;
+}
+
+function tvTelefonoSeguro(tel) {
+  const digits = String(tel || '').replace(/\D/g, '');
+  if (!digits) return '';
+  return digits.length > 3 ? '*** *** ' + digits.slice(-3) : '***';
+}
+
 function renderDashboardTV(pedidos) {
   const hoy = reservaFechaLimaISO();
-  const pedidosTV = pedidos.filter(p => !p.es_reserva || !p.reserva_fecha || p.reserva_fecha <= hoy);
+  const pedidosTV = pedidos.filter(tvPedidoVisibleHoy);
   const pendientes = pedidosTV.filter(p => p.estado === 'Pendiente').length;
   const preparando = pedidosTV.filter(p => p.estado === 'preparando').length;
   const enCamino = pedidosTV.filter(p => p.estado === 'en_camino').length;
@@ -10581,7 +10632,7 @@ function renderDashboardTV(pedidos) {
         Total: S/ ${(p.total || 0).toFixed(2)} - Pago: ${esc(p.pago || '—')}<br>
         ${esc(p.distrito || '')}<br>
         ${p.nota_entrega ? 'Nota: ' + esc(p.nota_entrega) + '<br>' : ''}
-        ${p.telefono ? 'Cel: ' + esc(p.telefono) : ''}
+        ${p.telefono ? 'Cel: ' + esc(tvTelefonoSeguro(p.telefono)) : ''}
         ${p.delivery_gps_url ? `<br><span style="color:#93c5fd;font-weight:900">GPS en vivo: ${textoDistancia(p.delivery_distance_m)} de entrega</span>` : ''}
         ${p.delivery_near ? '<br><span style="color:#fde68a;font-weight:900">ALERTA: deliverista cerca</span>' : ''}
       </div>
@@ -12522,6 +12573,7 @@ async function loginDeliveryUser() {
 
     sessionStorage.setItem('deliveryUser', username);
     sessionStorage.setItem('deliveryName', userData.nombre || username);
+    _sesionDelivery = { id: userDoc.id, username, nombre: userData.nombre || username, rol: 'delivery', permisos: userData.permisos || {} };
     document.getElementById('dlvStep1').classList.remove('active');
     document.getElementById('dlvStep2').classList.add('active');
     cargarPedidosDelivery();
@@ -14283,7 +14335,7 @@ function registrarSW() {
   if (!('serviceWorker' in navigator)) return;
 
   const SW_CODE = `
-const CACHE_NAME = 'aswa-v14';
+const CACHE_NAME = 'aswa-v15';
 const SHELL = [
   './',
   './index.html'
