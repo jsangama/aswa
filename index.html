@@ -2263,6 +2263,34 @@
       animation:pulse-gps 1.4s ease-in-out infinite;
     }
     .pod-gps-txt { color:var(--grn); font-weight:700; }
+
+    /* Chat de soporte ASWA */
+    .chat-fab { position:fixed; right:16px; bottom:148px; z-index:1500; display:none; align-items:center; gap:8px; border:1px solid rgba(34,197,94,.35); border-radius:999px; background:linear-gradient(135deg,#22c55e,#16a34a); color:#03140a; padding:10px 14px; font-size:12px; font-weight:900; font-family:'Poppins',sans-serif; cursor:pointer; box-shadow:0 12px 28px rgba(34,197,94,.28); }
+    .chat-fab.show { display:flex; }
+    .chat-fab-badge { display:none; min-width:18px; height:18px; border-radius:999px; background:#ef4444; color:#fff; align-items:center; justify-content:center; font-size:10px; padding:0 5px; }
+    .chat-fab-badge.show { display:flex; }
+    .chat-modal { position:fixed; inset:0; z-index:2400; display:none; background:rgba(0,0,0,.72); padding:18px; align-items:flex-end; justify-content:center; }
+    .chat-modal.open { display:flex; }
+    .chat-box { width:100%; max-width:420px; max-height:78vh; overflow:hidden; border:1px solid var(--brd); border-radius:18px; background:var(--s1); box-shadow:0 24px 70px rgba(0,0,0,.5); display:flex; flex-direction:column; }
+    .chat-header { display:flex; align-items:center; gap:10px; padding:14px 16px; background:linear-gradient(135deg,#facc15,#f59e0b); color:#111; }
+    .chat-title { flex:1; font-size:14px; font-weight:900; }
+    .chat-sub { font-size:10px; font-weight:700; opacity:.75; margin-top:2px; }
+    .chat-close { border:0; background:rgba(0,0,0,.12); color:#111; border-radius:10px; width:32px; height:32px; font-size:18px; font-weight:900; cursor:pointer; }
+    .chat-msgs { padding:14px; min-height:220px; max-height:48vh; overflow-y:auto; display:flex; flex-direction:column; gap:8px; }
+    .chat-msg { max-width:82%; padding:10px 12px; border-radius:14px; font-size:12px; line-height:1.45; border:1px solid rgba(255,255,255,.08); }
+    .chat-msg.cliente { align-self:flex-end; background:rgba(250,204,21,.16); color:#fff; border-color:rgba(250,204,21,.28); }
+    .chat-msg.negocio { align-self:flex-start; background:#18181b; color:#fff; }
+    .chat-msg.sistema { align-self:center; background:transparent; color:var(--mut); border:0; text-align:center; max-width:100%; }
+    .chat-time { display:block; margin-top:4px; font-size:9px; color:var(--mut); }
+    .chat-input-bar { display:flex; gap:8px; padding:12px; border-top:1px solid var(--brd); }
+    .chat-input { flex:1; resize:none; max-height:96px; min-height:44px; border:1px solid var(--brd); border-radius:12px; background:var(--bg); color:var(--txt); padding:11px 12px; font-size:13px; font-family:'Poppins',sans-serif; }
+    .chat-send { width:46px; border:0; border-radius:12px; background:var(--y); color:#111; font-size:18px; font-weight:900; cursor:pointer; }
+    .adm-chat-item { background:var(--s1); border:1px solid var(--brd); border-radius:12px; padding:12px; margin-bottom:8px; cursor:pointer; }
+    .adm-chat-item.unread { border-color:rgba(34,197,94,.45); background:rgba(34,197,94,.05); }
+    .adm-chat-msgs { max-height:260px; overflow-y:auto; display:flex; flex-direction:column; gap:8px; padding:12px; }
+    .adm-chat-msg { border-radius:12px; padding:9px 11px; font-size:12px; max-width:84%; }
+    .adm-chat-msg.cliente { align-self:flex-start; background:#18181b; color:#fff; }
+    .adm-chat-msg.negocio { align-self:flex-end; background:rgba(250,204,21,.18); color:#fff; }
   </style>
 </head>
 <body>
@@ -2283,6 +2311,33 @@
   pointer-events:none;
 "></div>
 <div id="notificationContainer" style="display:none"></div>
+
+<!-- Chat de soporte dentro de la app -->
+<button class="chat-fab" id="chatFab" onclick="abrirChat()" type="button">
+  <span>💬 Soporte ASWA</span>
+  <span class="chat-fab-badge" id="chatFabBadge"></span>
+</button>
+<div class="chat-modal" id="chatModal">
+  <div class="chat-box">
+    <div class="chat-header">
+      <div style="font-size:28px">🌽</div>
+      <div class="chat-title">
+        ASWA La Rica Chicha
+        <div class="chat-sub" id="chatHeaderSub">Te respondemos en la app</div>
+      </div>
+      <button class="chat-close" onclick="cerrarChat()" type="button">×</button>
+    </div>
+    <div class="chat-msgs" id="chatMsgs">
+      <div class="chat-msg sistema">Escríbenos si necesitas ayuda con tu pedido.</div>
+    </div>
+    <div class="chat-input-bar">
+      <textarea class="chat-input" id="chatInput" rows="1" placeholder="Escribe tu mensaje..."
+        onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();enviarMensajeChat()}"
+        oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px'"></textarea>
+      <button class="chat-send" id="chatSendBtn" onclick="enviarMensajeChat()" type="button">➤</button>
+    </div>
+  </div>
+</div>
 
 <!-- ══════════════ HEADER ══════════════ -->
 <header>
@@ -4260,6 +4315,10 @@
         <button class="adm-refresh" onclick="admExportarCSV()" style="flex:1;background:rgba(34,197,94,.15);border-color:rgba(34,197,94,.3);color:var(--grn)">📥 Exportar CSV</button>
       </div>
 
+      <button class="adm-refresh" id="tabChat" onclick="admTab('chat')" style="width:100%;margin:-8px 0 16px;background:rgba(34,197,94,.12);border-color:rgba(34,197,94,.3);color:#86efac">
+        💬 Ver chats de clientes <span id="badgeChat" style="font-weight:900;color:#facc15">—</span>
+      </button>
+
       <!-- Buscador global admin -->
       <div style="position:relative;margin-bottom:16px">
         <input type="text" id="admBuscador" class="inp" placeholder="🔍 Buscar por nombre, teléfono..." 
@@ -4272,6 +4331,7 @@
       <div id="admContenidoStats" style="display:none"></div>
       <div id="admContenidoClientes" style="display:none"></div>
       <div id="admContenidoCupones" style="display:none"></div>
+      <div id="admContenidoChat" style="display:none"></div>
 
     </div>
   </div>
@@ -4670,6 +4730,7 @@ function esc(s) {
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#39;');
 }
+function escAttr(s) { return esc(s); }
 
 /* ── esperarFB — espera a que Firebase esté lista (de archivo 5) ── */
 function esperarFB() {
@@ -5372,6 +5433,10 @@ document.getElementById('telefono').addEventListener('input', async e => {
       console.warn('Auth no lista, omitiendo búsqueda de cliente');
       return;
     }
+  }
+
+  if (typeof iniciarChat === 'function') {
+    iniciarChat(tel, document.getElementById('nombre')?.value.trim() || 'Cliente');
   }
 
   try {
@@ -8598,12 +8663,211 @@ async function crearUsuariosDefault() {
    PANEL ADMIN — JS (mantenido)
 ══════════════════════════════════════ */
 
+/* Chat de soporte cliente/admin */
+let _chatUnsub = null;
+let _chatTelefono = '';
+let _chatNombre = '';
+let _chatId = '';
+let _chatAbierto = false;
+let _admChatActivo = null;
+let _admChatUnsub = null;
+
+function _chatIdPorTelefono(tel) {
+  return BUSINESS_ID + '_' + String(tel || '').replace(/\D/g, '');
+}
+
+function _chatFecha(fecha) {
+  const d = fecha?.seconds ? new Date(fecha.seconds * 1000) : fecha ? new Date(fecha) : new Date();
+  return d.toLocaleTimeString('es-PE', { hour:'2-digit', minute:'2-digit' });
+}
+
+async function iniciarChat(telefono, nombre) {
+  const tel = String(telefono || '').replace(/\D/g, '');
+  if (tel.length !== 9 || !tel.startsWith('9')) return;
+  await esperarFB();
+  _chatTelefono = tel;
+  _chatNombre = nombre || document.getElementById('nombre')?.value.trim() || 'Cliente';
+  _chatId = _chatIdPorTelefono(tel);
+  document.getElementById('chatFab')?.classList.add('show');
+
+  const { doc:d, setDoc, collection:col, query:q, orderBy:ob, limit:lm, onSnapshot:os, serverTimestamp:ts } = window.FB;
+  await setDoc(d(db, 'chats', _chatId), {
+    businessId: BUSINESS_ID,
+    telefono: tel,
+    nombre: _chatNombre,
+    actualizado_en: ts()
+  }, { merge:true }).catch(err => console.warn('chat meta:', err.message));
+
+  if (_chatUnsub) _chatUnsub();
+  _chatUnsub = os(q(col(db, 'chats', _chatId, 'mensajes'), ob('fecha', 'asc'), lm(60)), snap => {
+    const mensajes = snap.docs.map(x => ({ id:x.id, ...x.data() }));
+    _renderMensajesChat(mensajes);
+    const noLeidos = mensajes.filter(m => m.de === 'negocio' && !m.leido_cliente).length;
+    const badge = document.getElementById('chatFabBadge');
+    if (badge) {
+      badge.textContent = noLeidos || '';
+      badge.classList.toggle('show', noLeidos > 0 && !_chatAbierto);
+    }
+  });
+}
+
+function abrirChat() {
+  if (!_chatId) {
+    const tel = document.getElementById('telefono')?.value.trim() || '';
+    if (tel.length !== 9) return tst('Ingresa tu telefono para activar el chat', 2500);
+    iniciarChat(tel, document.getElementById('nombre')?.value.trim() || 'Cliente');
+  }
+  _chatAbierto = true;
+  document.getElementById('chatFabBadge')?.classList.remove('show');
+  document.getElementById('chatModal')?.classList.add('open');
+  setTimeout(() => {
+    document.getElementById('chatInput')?.focus();
+    _marcarChatLeidoCliente();
+    _scrollChatAbajo();
+  }, 120);
+}
+
+function cerrarChat() {
+  _chatAbierto = false;
+  document.getElementById('chatModal')?.classList.remove('open');
+}
+
+async function enviarMensajeChat() {
+  const input = document.getElementById('chatInput');
+  const texto = input?.value.trim();
+  if (!texto || !_chatId) return;
+  input.value = '';
+  input.style.height = 'auto';
+  const btn = document.getElementById('chatSendBtn');
+  if (btn) btn.disabled = true;
+  try {
+    const { doc:d, collection:col, addDoc:ad, setDoc, serverTimestamp:ts } = window.FB;
+    await ad(col(db, 'chats', _chatId, 'mensajes'), {
+      de:'cliente', texto, nombre:_chatNombre, telefono:_chatTelefono,
+      fecha:ts(), leido_cliente:true, leido_negocio:false
+    });
+    await setDoc(d(db, 'chats', _chatId), {
+      businessId:BUSINESS_ID, telefono:_chatTelefono, nombre:_chatNombre,
+      ultimo_msg:texto, ultimo_de:'cliente', actualizado_en:ts(), no_leidos_negocio:1
+    }, { merge:true });
+  } catch(err) {
+    console.error('enviar chat:', err);
+    tst('No se pudo enviar el mensaje', 2500);
+  } finally {
+    if (btn) btn.disabled = false;
+  }
+}
+
+function _renderMensajesChat(mensajes) {
+  const cont = document.getElementById('chatMsgs');
+  if (!cont) return;
+  const base = '<div class="chat-msg sistema">Escribenos si necesitas ayuda con tu pedido.</div>';
+  cont.innerHTML = base + mensajes.map(m => {
+    const cls = m.de === 'negocio' ? 'negocio' : 'cliente';
+    return `<div class="chat-msg ${cls}">${esc(m.texto || '')}<span class="chat-time">${_chatFecha(m.fecha)}</span></div>`;
+  }).join('');
+  _scrollChatAbajo();
+}
+
+function _scrollChatAbajo() {
+  const cont = document.getElementById('chatMsgs');
+  if (cont) cont.scrollTop = cont.scrollHeight;
+}
+
+async function _marcarChatLeidoCliente() {
+  if (!_chatId) return;
+  const { doc:d, setDoc, collection:col, query:q, where:wh, getDocs:gd, updateDoc:ud } = window.FB;
+  await setDoc(d(db, 'chats', _chatId), { no_leidos_cliente:0 }, { merge:true }).catch(()=>{});
+  const snap = await gd(q(col(db, 'chats', _chatId, 'mensajes'), wh('de', '==', 'negocio'))).catch(() => null);
+  if (snap) {
+    snap.docs.forEach(msg => {
+      if (!msg.data().leido_cliente) ud(d(db, 'chats', _chatId, 'mensajes', msg.id), { leido_cliente:true }).catch(()=>{});
+    });
+  }
+}
+
+async function admRenderChat() {
+  const cont = document.getElementById('admContenidoChat');
+  if (!cont) return;
+  await esperarFB();
+  cont.innerHTML = '<div class="adm-loading">Cargando chats...</div>';
+  try {
+    const { collection:col, query:q, orderBy:ob, limit:lm, onSnapshot:os } = window.FB;
+    if (window._admChatListUnsub) window._admChatListUnsub();
+    window._admChatListUnsub = os(q(col(db, 'chats'), ob('actualizado_en', 'desc'), lm(50)), snap => {
+      const chats = snap.docs.map(x => ({ id:x.id, ...x.data() })).filter(c => c.businessId === BUSINESS_ID);
+      window._admChats = chats;
+      document.getElementById('badgeChat').textContent = chats.length || '0';
+      cont.innerHTML = chats.length ? chats.map(ch => {
+        const unread = Number(ch.no_leidos_negocio || 0);
+        return `<div class="adm-chat-item ${unread ? 'unread' : ''}" onclick="admAbrirChatById('${ch.id}')">
+          <div style="display:flex;justify-content:space-between;gap:10px">
+            <div><div style="font-size:13px;font-weight:900;color:var(--txt)">${esc(ch.nombre || 'Cliente')}</div>
+            <div style="font-size:11px;color:var(--mut)">📱 ${esc(ch.telefono || '')}</div></div>
+            <div style="font-size:10px;color:${unread ? '#86efac' : 'var(--mut)'};font-weight:900">${unread ? unread + ' nuevo' : _chatFecha(ch.actualizado_en)}</div>
+          </div>
+          <div style="font-size:12px;color:var(--mut);margin-top:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(ch.ultimo_msg || 'Sin mensajes')}</div>
+        </div>`;
+      }).join('') + '<div id="admChatPanel"></div>' : '<div class="adm-empty"><p>No hay chats todavia.</p></div>';
+    });
+  } catch(err) {
+    console.error('admRenderChat:', err);
+    cont.innerHTML = '<div class="adm-empty"><p>No se pudieron cargar los chats.</p></div>';
+  }
+}
+
+function admAbrirChatById(chatId) {
+  const chat = (window._admChats || []).find(c => c.id === chatId) || { id:chatId };
+  admAbrirChat(chatId, chat.nombre || 'Cliente', chat.telefono || '');
+}
+
+async function admAbrirChat(chatId, nombre, telefono) {
+  _admChatActivo = { chatId, nombre, telefono };
+  const panel = document.getElementById('admChatPanel');
+  if (!panel) return;
+  panel.innerHTML = `<div style="margin-top:12px;background:var(--s1);border:1px solid var(--brd);border-radius:14px;overflow:hidden">
+    <div style="padding:12px 14px;background:rgba(250,204,21,.08);border-bottom:1px solid var(--brd)">
+      <div style="font-weight:900;color:var(--txt)">${esc(nombre || 'Cliente')}</div>
+      <div style="font-size:11px;color:var(--mut)">📱 ${esc(telefono || '')}</div>
+    </div>
+    <div class="adm-chat-msgs" id="admChatMsgs"></div>
+    <div style="display:flex;gap:8px;padding:10px;border-top:1px solid var(--brd)">
+      <input class="inp" id="admChatInput" placeholder="Responder..." onkeydown="if(event.key==='Enter')admEnviarRespuesta()" style="flex:1;font-size:13px">
+      <button class="adm-refresh" onclick="admEnviarRespuesta()" style="width:auto;padding:10px 12px">Enviar</button>
+    </div>
+  </div>`;
+  const { collection:col, query:q, orderBy:ob, onSnapshot:os, doc:d, setDoc } = window.FB;
+  if (_admChatUnsub) _admChatUnsub();
+  _admChatUnsub = os(q(col(db, 'chats', chatId, 'mensajes'), ob('fecha', 'asc')), snap => {
+    const msgs = snap.docs.map(x => x.data());
+    const box = document.getElementById('admChatMsgs');
+    if (!box) return;
+    box.innerHTML = msgs.map(m => `<div class="adm-chat-msg ${m.de === 'negocio' ? 'negocio' : 'cliente'}">${esc(m.texto || '')}<span class="chat-time">${_chatFecha(m.fecha)}</span></div>`).join('');
+    box.scrollTop = box.scrollHeight;
+  });
+  await setDoc(d(db, 'chats', chatId), { no_leidos_negocio:0 }, { merge:true }).catch(()=>{});
+}
+
+async function admEnviarRespuesta() {
+  const input = document.getElementById('admChatInput');
+  const texto = input?.value.trim();
+  if (!texto || !_admChatActivo) return;
+  input.value = '';
+  const { collection:col, addDoc:ad, doc:d, setDoc, serverTimestamp:ts } = window.FB;
+  await ad(col(db, 'chats', _admChatActivo.chatId, 'mensajes'), {
+    de:'negocio', texto, fecha:ts(), leido_cliente:false, leido_negocio:true
+  });
+  await setDoc(d(db, 'chats', _admChatActivo.chatId), {
+    ultimo_msg:texto, ultimo_de:'negocio', actualizado_en:ts(), no_leidos_cliente:1
+  }, { merge:true });
+}
+
 let _admTabActiva = 'yape';
 function admTab(tab) {
   _admTabActiva = tab;
-  const tabs = ['yape','pedidos','stats','clientes','cupones'];
-  const ids  = { yape:'tabYape', pedidos:'tabPedidos', stats:'tabStats', clientes:'tabClientes', cupones:'tabCupones' };
-  const conts= { yape:'admContenidoYape', pedidos:'admContenidoPedidos', stats:'admContenidoStats', clientes:'admContenidoClientes', cupones:'admContenidoCupones' };
+  const tabs = ['yape','pedidos','stats','clientes','cupones','chat'];
+  const ids  = { yape:'tabYape', pedidos:'tabPedidos', stats:'tabStats', clientes:'tabClientes', cupones:'tabCupones', chat:'tabChat' };
+  const conts= { yape:'admContenidoYape', pedidos:'admContenidoPedidos', stats:'admContenidoStats', clientes:'admContenidoClientes', cupones:'admContenidoCupones', chat:'admContenidoChat' };
   tabs.forEach(t => {
     document.getElementById(ids[t])?.classList.toggle('active', t === tab);
     const c = document.getElementById(conts[t]);
@@ -8612,6 +8876,7 @@ function admTab(tab) {
   if (tab === 'stats')    admCargarStats();
   if (tab === 'clientes') admCargarClientes();
   if (tab === 'cupones')  admRenderCupones();
+  if (tab === 'chat')     admRenderChat();
 }
 
 async function admCrearCupon(codigo, tipo, valor, opciones = {}) {
@@ -8725,7 +8990,7 @@ async function admRenderCupones() {
 }
 
 async function admCargar() {
-  ['Yape','Pedidos','Stats','Clientes','Cupones'].forEach(t => {
+  ['Yape','Pedidos','Stats','Clientes','Cupones','Chat'].forEach(t => {
     const el = document.getElementById('admContenido'+t);
     if (el) el.innerHTML = '<div class="adm-loading">⏳ Cargando...</div>';
   });
@@ -8782,6 +9047,7 @@ async function admCargar() {
     admRenderStats(snapTodos.docs, { totalVentas, totalPedidos, pedHoy, ventasHoy, totalCli: snapCli.size });
     admRenderClientes(snapCli.docs);
     admRenderCupones();
+    admRenderChat();
 
     // Guardar globalmente para búsqueda
     window._admTodosPedidos = snapTodos.docs;
