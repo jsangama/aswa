@@ -753,6 +753,19 @@
       font-size:10px;
       line-height:1.35;
     }
+    .zona-eta-info {
+      display:none;
+      margin:-2px 0 10px;
+      border:1px solid rgba(250,204,21,.28);
+      background:rgba(250,204,21,.06);
+      border-radius:12px;
+      padding:10px 12px;
+      color:var(--txt);
+      font-size:11px;
+      line-height:1.5;
+    }
+    .zona-eta-info.show { display:block; }
+    .zona-eta-info strong { color:var(--y); }
 
     .cupon-wrap {
       background:rgba(250,204,21,.05);
@@ -2577,6 +2590,7 @@
           <div class="zona-quick-sub">Sin delivery, coordinamos el recojo</div>
         </button>
       </div>
+      <div class="zona-eta-info" id="zonaEtaInfo"></div>
       <select id="zona" class="inp" style="display:none" onchange="calcTotal(); mostrarNotaNacional(this); actualizarZonaVisual()">
         <option value="">Selecciona tu zona</option>
         <option value="3">Morales — S/ 3.00</option>
@@ -5092,6 +5106,12 @@ const CALLES_LOCALES = [
 ];
 let _dirTimer = null;
 let _dirResultados = [];
+const ZONA_ETA = {
+  morales: { min: 25, texto: 'Entrega cercana en Morales' },
+  tarapoto: { min: 35, texto: 'Entrega a Tarapoto y alrededores' },
+  banda: { min: 45, texto: 'Entrega a Banda de Shilcayo' },
+  recojo: { min: 0, texto: 'Recojo coordinado en local' }
+};
 
 function dirEsc(txt) {
   return String(txt || '').replace(/[&<>"']/g, ch => ({
@@ -5210,6 +5230,36 @@ function actualizarZonaVisual() {
     );
     btn.classList.toggle('active', activo);
   });
+
+  actualizarETAVisual(texto, precio);
+}
+
+function actualizarETAVisual(textoZona, precio) {
+  const box = document.getElementById('zonaEtaInfo');
+  if (!box) return;
+
+  if (!precio && precio !== '0') {
+    box.classList.remove('show');
+    box.innerHTML = '';
+    return;
+  }
+
+  let info = null;
+  if (textoZona.includes('morales')) info = ZONA_ETA.morales;
+  else if (textoZona.includes('tarapoto')) info = ZONA_ETA.tarapoto;
+  else if (textoZona.includes('banda') || textoZona.includes('shilcayo')) info = ZONA_ETA.banda;
+  else if (textoZona.includes('recojo')) info = ZONA_ETA.recojo;
+  else if (String(precio) === '10') info = { min: null, texto: 'Entrega a agencia para envio nacional' };
+
+  if (!info) {
+    box.classList.remove('show');
+    box.innerHTML = '';
+    return;
+  }
+
+  const tiempo = info.min === 0 ? 'Sin tiempo de delivery' : (info.min ? `Tiempo estimado: <strong>${info.min} min</strong>` : 'Coordinamos el tiempo por WhatsApp');
+  box.innerHTML = `<strong>${dirEsc(info.texto)}</strong><br>${tiempo}`;
+  box.classList.add('show');
 }
 
 function calcVuelto() {
