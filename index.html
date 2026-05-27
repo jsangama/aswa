@@ -2796,6 +2796,20 @@
     <div class="fld">
       <div class="reserva-card">
         <label class="reserva-toggle">
+          <input type="checkbox" id="regaloActiva" onchange="actualizarRegaloUI(); actualizarReservaUI();">
+          <span>Enviar como regalo a un amigo o familiar</span>
+        </label>
+        <div id="regaloDetalle" style="display:none;margin-top:10px">
+          <input type="text" id="regaloNombre" class="inp" maxlength="80" placeholder="Nombre de quien recibe">
+          <input type="tel" id="regaloTelefono" class="inp" maxlength="9" inputmode="numeric" placeholder="Telefono de quien recibe" style="margin-top:8px">
+          <textarea id="regaloMensaje" class="inp" maxlength="140" rows="2" placeholder="Mensaje corto para la tarjeta (opcional)" style="margin-top:8px;resize:vertical;min-height:58px;line-height:1.5"></textarea>
+          <div class="reserva-info warn">Los regalos deben pagarse antes con Yape, Plin, Agora, BIM o transferencia. No aplica efectivo.</div>
+        </div>
+      </div>
+    </div>
+    <div class="fld">
+      <div class="reserva-card">
+        <label class="reserva-toggle">
           <input type="checkbox" id="reservaActiva" onchange="actualizarReservaUI()">
           <span>Reservar pedido con calendario y hora de entrega</span>
         </label>
@@ -4620,7 +4634,7 @@
             <div style="font-family:'Bebas Neue',cursive;font-size:20px;color:#22c55e" id="dlv-stat-entregados">0</div>
           </div>
         </div>
-        <div id="dlvPedidosAsignadosLista" style="max-height:120px;overflow-y:auto"></div>
+        <div id="dlvPedidosAsignadosLista" style="max-height:240px;overflow-y:auto"></div>
       </div>
 
       <!-- Tabs del deliverista -->
@@ -5274,6 +5288,10 @@ const METODOS_PAGO = {
 };
 
 function setPago(metodo) {
+  if (metodo === 'Efectivo' && pedidoEspecialRequierePagoDigital()) {
+    tst('Reservas y regalos solo aceptan pago anticipado: Yape, Plin, Agora, BIM o transferencia.', 3600);
+    metodo = 'Yape';
+  }
   ST.pago = metodo;
   const cfg = METODOS_PAGO[metodo];
   if (!cfg) return;
@@ -5435,6 +5453,59 @@ const HORARIO_DEFAULT = {
   ]
 };
 
+function pedidoRegaloActivo() {
+  return !!document.getElementById('regaloActiva')?.checked;
+}
+
+function actualizarRegaloUI() {
+  const activa = pedidoRegaloActivo();
+  const detalle = document.getElementById('regaloDetalle');
+  if (detalle) detalle.style.display = activa ? 'block' : 'none';
+  if (activa && ST.pago === 'Efectivo') {
+    setPago('Yape');
+    tst('Los regalos se reservan con pago anticipado. Cambie a Yape.', 3200);
+  }
+}
+
+function obtenerPedidoRegalo(mostrarErrores = false) {
+  const activa = pedidoRegaloActivo();
+  if (!activa) return { ok:true, activo:false };
+  const nombre = sanitizeInput(document.getElementById('regaloNombre')?.value || '', 80);
+  const telefono = sanitizeInput(document.getElementById('regaloTelefono')?.value || '', 15);
+  const mensaje = sanitizeInput(document.getElementById('regaloMensaje')?.value || '', 140);
+  const fail = (error, campo = 'regaloNombre') => {
+    if (mostrarErrores) marcarCampoPedido(campo, error);
+    return { ok:false, activo:true, error };
+  };
+  if (ST.pago === 'Efectivo') return fail('Los regalos solo se aceptan con pago anticipado. Cambia el metodo de pago.', 'regaloActiva');
+  if (!nombre) return fail('Ingresa el nombre de la persona que recibe el regalo.', 'regaloNombre');
+  if (!/^\d{9}$/.test(telefono)) return fail('Ingresa un telefono valido de 9 digitos para quien recibe.', 'regaloTelefono');
+  return { ok:true, activo:true, nombre, telefono, mensaje };
+}
+
+function pedidoEspecialRequierePagoDigital() {
+  return pedidoRegaloActivo() || !!document.getElementById('reservaActiva')?.checked;
+}
+
+function coordsPlantaNegocio() {
+  return normalizarCoords(window.NEGOCIO?.planta_coords) ||
+         normalizarCoords(window.NEGOCIO?.planta) ||
+         normalizarCoords(window.ASWA_CONFIG?.PLANTA_COORDS) ||
+         normalizarCoords(window.ASWA_CONFIG?.PLANTA);
+}
+
+function distanciaPlantaCliente() {
+  const planta = coordsPlantaNegocio();
+  const cliente = normalizarCoords(ST.gpsCoords) || coordsDesdeUrl(ST.gpsUrl);
+  const metros = planta && cliente ? distanciaMetros(planta, cliente) : null;
+  return {
+    planta,
+    cliente,
+    metros,
+    texto: metros === null ? 'Configura GPS de planta y cliente para medir distancia real.' : textoDistancia(metros)
+  };
+}
+
 function reservaFechaLimaISO(date = new Date()) {
   const parts = new Intl.DateTimeFormat('en-CA', {
     timeZone: 'America/Lima', year: 'numeric', month: '2-digit', day: '2-digit'
@@ -5511,6 +5582,11 @@ function actualizarReservaUI() {
     notifInfo.style.display = activa ? 'block' : 'none';
     notifInfo.className = 'reserva-info';
     notifInfo.textContent = alertaReservaEstadoTexto();
+  }
+  if (activa && ST.pago === 'Efectivo') {
+    setPago('Yape');
+    tst('Las reservas se pagan por adelantado. Cambie a Yape.', 3200);
+    return;
   }
   if (!info) return;
   info.className = 'reserva-info';
@@ -6488,6 +6564,8 @@ function abrirResumen() {
   if (requiereDireccion && dir.length < 6) return marcarCampoPedido('direccion', 'Ingresa tu direccion o una referencia de entrega');
   const reservaPedido = obtenerReservaPedido(true);
   if (!reservaPedido.ok) return false;
+  const regaloPedido = obtenerPedidoRegalo(true);
+  if (!regaloPedido.ok) return false;
 
   // ── Pago digital requiere comprobante antes de continuar ──
   const esDigitalPago = ST.pago !== 'Efectivo';
@@ -6570,6 +6648,8 @@ async function enviarPedido() {
 
   const reservaPedido = obtenerReservaPedido(true);
   if (!reservaPedido.ok) return;
+  const regaloPedido = obtenerPedidoRegalo(true);
+  if (!regaloPedido.ok) return;
 
   _enviandoPedido = true;
   btn.disabled = true; btn.textContent = 'Enviando...';
@@ -6587,6 +6667,7 @@ async function enviarPedido() {
   const descFijoAmt = +getDescuentoFijoAplicado(disc).toFixed(2);
   const descTotal   = +(descPctAmt + descFijoAmt).toFixed(2);
   const pid         = '#'+Date.now().toString(36).slice(-6).toUpperCase();
+  const distanciaRuta = distanciaPlantaCliente();
   perfilGuardarCliente(true);
 
   /* Construir mensaje WhatsApp */
@@ -6648,6 +6729,9 @@ async function enviarPedido() {
     +(notaEntrega ? '📝 *Nota:* '+notaEntrega+'\n' : '')
     +(ST.gpsUrl ? '📡 *GPS:* '+ST.gpsUrl+'\n' : '')
     +(reservaPedido.activa ? 'Reserva programada: '+reservaPedido.texto+'\n' : '')
+    +(regaloPedido.activo ? 'REGALO PARA: '+regaloPedido.nombre+' - '+regaloPedido.telefono+'\n' : '')
+    +(regaloPedido.activo && regaloPedido.mensaje ? 'Mensaje regalo: '+regaloPedido.mensaje+'\n' : '')
+    +'Distancia planta-cliente: '+distanciaRuta.texto+'\n'
     +(zonaTexto.includes('gencia') || zonaTexto.includes('nacional')
       ? '📌 *Zona:* '+zonaTexto+'\n'
         +'⚠️ *ENVÍO NACIONAL:* S/ 10.00 es hasta la agencia.\n'
@@ -6736,6 +6820,16 @@ async function enviarPedido() {
       reserva_texto:  reservaPedido.activa ? reservaPedido.texto : null,
       reserva_estado: reservaPedido.activa ? 'programada' : null,
       reserva_alertas_cliente: reservaPedido.activa ? reservaAlertasMeta(reservaPedido) : null,
+      es_regalo:      !!regaloPedido.activo,
+      regalo_para:    regaloPedido.activo ? { nombre: regaloPedido.nombre, telefono: regaloPedido.telefono, mensaje: regaloPedido.mensaje || '' } : null,
+      pago_anticipado_obligatorio: !!(reservaPedido.activa || regaloPedido.activo),
+      planta_coords:  distanciaRuta.planta || null,
+      distancia_planta_m: distanciaRuta.metros,
+      distancia_planta_txt: distanciaRuta.texto,
+      delivery_carga: { ...ST.cart },
+      delivery_carga_confirmada: false,
+      admin_alerta_nueva: true,
+      delivery_alerta_nueva: true,
       fecha:          ts()
     });
     ST.pedidoFbId = ref.id;
@@ -8473,6 +8567,7 @@ async function dlvCargarTodosPedidos() {
       return;
     }
     const docs = snap.docs.sort((a,b)=>(a.data().fecha?.seconds||0)-(b.data().fecha?.seconds||0));
+    window._dlvTodosPedidosData = window._dlvTodosPedidosData || {};
     const badges = {
       'Pendiente':'<span style="background:rgba(168,85,247,.2);color:#c4b5fd;border:1px solid rgba(168,85,247,.3);border-radius:999px;padding:2px 8px;font-size:9px;font-weight:800">🟣 PENDIENTE</span>',
       'en_camino':'<span style="background:rgba(59,130,246,.2);color:#93c5fd;border:1px solid rgba(59,130,246,.3);border-radius:999px;padding:2px 8px;font-size:9px;font-weight:800">🔵 EN CAMINO</span>'
@@ -8480,9 +8575,13 @@ async function dlvCargarTodosPedidos() {
     cont.innerHTML = `<div style="font-size:11px;color:var(--mut);margin-bottom:12px;font-weight:700">${docs.length} pedido${docs.length!==1?'s':''} activo${docs.length!==1?'s':''}</div>` +
       docs.map(doc => {
         const d = doc.data();
+        window._dlvTodosPedidosData[doc.id] = { id:doc.id, ...d };
         const hora = d.fecha?.seconds ? new Date(d.fecha.seconds*1000).toLocaleTimeString('es-PE',{hour:'2-digit',minute:'2-digit'}) : '—';
         const items = Object.entries(d.items||{}).filter(([,q])=>q>0).map(([k,q])=>q+'×'+{p2l:'2L',p3l:'3L',p4l:'4L'}[k]).join(' ');
         const notaEntrega = (d.nota_entrega || '').trim();
+        const live = coordsDeliveryPedido(d);
+        const distancia = d.delivery_distance_m !== null && d.delivery_distance_m !== undefined ? textoDistancia(d.delivery_distance_m) : '';
+        const gpsLive = live ? `<div style="background:rgba(34,197,94,.08);border:1px solid rgba(34,197,94,.22);border-radius:8px;padding:7px 8px;color:#86efac;font-size:11px;font-weight:700;margin-bottom:8px">GPS en vivo${distancia ? ': ' + distancia + ' de entrega' : ''}${d.delivery_near ? '<br><span style="color:#fde68a">Alerta: estas cerca del cliente</span>' : ''}</div>` : '';
         return `
           <div style="background:var(--s2);border:1px solid var(--brd);border-radius:12px;padding:12px;margin-bottom:8px">
             <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px">
@@ -8495,8 +8594,10 @@ async function dlvCargarTodosPedidos() {
             <div style="font-size:12px;color:var(--txt);margin-bottom:4px">📦 ${items||'—'} — <span style="color:var(--y);font-weight:800">S/ ${(d.total||0).toFixed(2)}</span></div>
             <div style="font-size:11px;color:var(--mut);margin-bottom:8px">🏠 ${d.direccion||'—'} · 💳 ${d.pago||'—'}</div>
             ${notaEntrega ? `<div style="background:rgba(250,204,21,.08);border:1px solid rgba(250,204,21,.22);border-radius:8px;padding:7px 8px;color:var(--y);font-size:11px;font-weight:700;margin-bottom:8px">📝 Nota: ${esc(notaEntrega)}</div>` : ''}
+            ${gpsLive}
             <div style="display:flex;gap:6px">
               ${d.gps_url ? `<a href="${d.gps_url}" target="_blank" style="flex:1;background:rgba(34,197,94,.15);color:var(--grn);border:1px solid rgba(34,197,94,.3);border-radius:8px;padding:8px;font-size:11px;font-weight:800;text-align:center;text-decoration:none;display:block">📍 GPS</a>` : ''}
+              ${d.delivery_gps_url ? `<a href="${d.delivery_gps_url}" target="_blank" style="flex:1;background:rgba(59,130,246,.15);color:#93c5fd;border:1px solid rgba(59,130,246,.3);border-radius:8px;padding:8px;font-size:11px;font-weight:800;text-align:center;text-decoration:none;display:block">Mi ruta</a>` : ''}
               ${d.estado==='Pendiente' ? `<button onclick="dlvMarcarEnCaminoDesdeListado('${doc.id}','${d.nombre||''}','${d.telefono||''}')" style="flex:2;background:var(--y);color:#000;border:none;border-radius:8px;padding:8px;font-size:11px;font-weight:800;cursor:pointer;font-family:'Poppins',sans-serif">🏍️ Salir a entregar</button>` : ''}
               ${d.estado==='en_camino' ? `<button onclick="dlvCerrarDesdeListado('${doc.id}','${d.nombre||''}','${d.telefono||''}')" style="flex:2;background:var(--grn);color:#000;border:none;border-radius:8px;padding:8px;font-size:11px;font-weight:800;cursor:pointer;font-family:'Poppins',sans-serif">✅ Cerrar pedido</button>` : ''}
             </div>
@@ -9872,6 +9973,7 @@ function abrirPanelDuenoDirecto() {
 }
 
 let _ownerSesion = null;
+let _ownerAutoRefresh = null;
 
 function abrirPanelDueno() {
   let modal = document.getElementById('ownerModal');
@@ -9919,6 +10021,8 @@ function abrirPanelDueno() {
 function cerrarPanelDueno() {
   const modal = document.getElementById('ownerModal');
   if (modal) modal.style.display = 'none';
+  clearInterval(_ownerAutoRefresh);
+  _ownerAutoRefresh = null;
 }
 
 function ownerMostrarLogin() {
@@ -9932,6 +10036,11 @@ function ownerMostrarDash() {
   document.getElementById('ownerLoginStep').style.display = 'none';
   document.getElementById('ownerDashStep').style.display = 'block';
   ownerCargar();
+  clearInterval(_ownerAutoRefresh);
+  _ownerAutoRefresh = setInterval(() => {
+    const modal = document.getElementById('ownerModal');
+    if (_ownerSesion && modal?.style.display === 'flex') ownerCargar();
+  }, 20000);
 }
 
 function ownerError(msg) {
@@ -11674,6 +11783,8 @@ function cargarPedidosAsignados(deliverista) {
       return;
     }
     const colorEstado = { 'Pendiente':'#fb923c','en_camino':'#3b82f6','En camino':'#3b82f6','entregado':'#22c55e','Entregado':'#22c55e' };
+    window._dlvPedidoAsignadoData = window._dlvPedidoAsignadoData || {};
+    pedidos.forEach(p => { if (p.id) window._dlvPedidoAsignadoData[p.id] = p; });
     lista.innerHTML = pedidos.slice(0, 10).map(p => {
       const items = p.items || {};
       const itxt  = [
@@ -11682,6 +11793,14 @@ function cargarPedidosAsignados(deliverista) {
         items.p4l ? items.p4l+'×4L' : ''
       ].filter(Boolean).join(' ');
       const color = colorEstado[p.estado] || '#888';
+      const live = coordsDeliveryPedido(p);
+      const distancia = p.delivery_distance_m !== null && p.delivery_distance_m !== undefined ? textoDistancia(p.delivery_distance_m) : '';
+      const liveBox = live ? `<div style="margin-top:8px;background:rgba(34,197,94,.08);border:1px solid rgba(34,197,94,.22);border-radius:9px;padding:8px;font-size:11px;color:#86efac">GPS en vivo ${distancia ? '· ' + distancia + ' de entrega' : ''}${p.delivery_near ? '<br><strong style="color:#fde68a">Alerta: estas cerca del cliente</strong>' : ''}</div>` : '';
+      const rutaBtns = `<div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap">
+        ${p.gps_url ? `<a href="${p.gps_url}" target="_blank" style="flex:1;min-width:100px;background:rgba(59,130,246,.12);color:#93c5fd;border:1px solid rgba(59,130,246,.25);border-radius:8px;padding:7px;font-size:10px;font-weight:900;text-align:center;text-decoration:none">Mapa cliente</a>` : ''}
+        ${p.delivery_gps_url ? `<a href="${p.delivery_gps_url}" target="_blank" style="flex:1;min-width:100px;background:rgba(34,197,94,.12);color:#86efac;border:1px solid rgba(34,197,94,.25);border-radius:8px;padding:7px;font-size:10px;font-weight:900;text-align:center;text-decoration:none">Mi ruta</a>` : ''}
+        ${['Pendiente','en_camino','En camino'].includes(p.estado) ? `<button onclick="iniciarTrackingEntrega('${p.id}', window._dlvPedidoAsignadoData['${p.id}'])" style="flex:1;min-width:120px;background:var(--y);color:#000;border:none;border-radius:8px;padding:7px;font-size:10px;font-weight:900;cursor:pointer;font-family:Poppins,sans-serif">Activar GPS vivo</button>` : ''}
+      </div>`;
       return `<div style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:12px;margin-bottom:8px">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
           <span style="font-weight:700;font-size:13px">${p.nombre||'—'}</span>
@@ -11689,6 +11808,8 @@ function cargarPedidosAsignados(deliverista) {
         </div>
         <div style="font-size:11px;color:var(--mut)">${p.telefono||''} · ${itxt||'—'}</div>
         <div style="font-size:11px;color:var(--mut);margin-top:2px">📍 ${p.direccion||'—'}</div>
+        ${liveBox}
+        ${rutaBtns}
         ${p.gps_url ? `<a href="${p.gps_url}" target="_blank" style="font-size:11px;color:#3b82f6;text-decoration:none">🗺 Ver GPS</a>` : ''}
       </div>`;
     }).join('');
@@ -14095,7 +14216,7 @@ function registrarSW() {
   if (!('serviceWorker' in navigator)) return;
 
   const SW_CODE = `
-const CACHE_NAME = 'aswa-v1';
+const CACHE_NAME = 'aswa-v12';
 const SHELL = [
   './',
   './index.html'
