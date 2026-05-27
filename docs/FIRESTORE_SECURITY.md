@@ -25,8 +25,11 @@ No despliegues estas reglas hasta configurar custom claims para usuarios operati
 Cuando los claims estén listos:
 
 ```bash
+npm run security:preflight -- --business aswa001
 firebase deploy --only firestore:rules
 ```
+
+Si `security:preflight` falla, no despliegues las reglas todavia. Primero crea o corrige los usuarios operativos con `npm run operators:upsert`.
 
 ## Próximo paso recomendado
 
