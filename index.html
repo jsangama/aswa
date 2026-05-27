@@ -4033,6 +4033,15 @@
     </button>
   </div>
 
+  <div style="max-width:320px;width:100%;display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:0 auto 12px">
+    <button onclick="copiarResumenPedido()" style="background:rgba(255,255,255,.06);color:var(--txt);border:1px solid var(--brd);border-radius:12px;padding:12px 10px;font-size:11px;font-weight:800;cursor:pointer;font-family:'Poppins',sans-serif">
+      Copiar resumen
+    </button>
+    <button onclick="compartirResumenPedido()" style="background:rgba(250,204,21,.12);color:var(--y);border:1px solid rgba(250,204,21,.3);border-radius:12px;padding:12px 10px;font-size:11px;font-weight:800;cursor:pointer;font-family:'Poppins',sans-serif">
+      Compartir pedido
+    </button>
+  </div>
+
   <!-- Botón de seguimiento POD -->
   <button onclick="abrirPOD()" style="background:linear-gradient(135deg,#1e3a8a,#2563eb);color:#fff;border:none;border-radius:14px;padding:14px 28px;font-size:14px;font-weight:800;cursor:pointer;font-family:'Poppins',sans-serif;width:100%;max-width:320px;display:flex;align-items:center;justify-content:center;gap:10px;margin:0 auto 12px">
     📍 Ver seguimiento en tiempo real
@@ -9866,6 +9875,80 @@ function compartirEnInstagram() {
   const texto = '¡Acabo de pedir ASWA La Rica Chicha! 🌽✨ El oro líquido de la selva. @aswa.laricachicha';
   navigator.clipboard?.writeText(texto).catch(() => {});
   tst('📱 Texto copiado — pégalo en Instagram', 3000);
+}
+
+function armarResumenPedidoCliente() {
+  const zonaEl = document.getElementById('zona');
+  const zona = zonaEl?.options[zonaEl.selectedIndex]?.text || 'No especificada';
+  const nombre = document.getElementById('nombre')?.value || ST.cli?.nom || ST.cli?.nombre || 'Cliente';
+  const telefono = document.getElementById('telefono')?.value || ST.cli?.tel || ST.cli?.telefono || '';
+  const direccion = document.getElementById('direccion')?.value || 'No especificada';
+  const codigoPedido = ST.pedidoFbId ? ST.pedidoFbId.slice(0, 8).toUpperCase() : (lsGet('pedido_id') || '').slice(0, 8).toUpperCase();
+  const lineas = [];
+
+  if (ST.cart?.p2l > 0) lineas.push('- ' + ST.cart.p2l + ' x ASWA 2L: S/ ' + (ST.cart.p2l * ST.precio.p2l).toFixed(2));
+  if (ST.cart?.p3l > 0) lineas.push('- ' + ST.cart.p3l + ' x ASWA 3L: S/ ' + (ST.cart.p3l * ST.precio.p3l).toFixed(2));
+  if (ST.cart?.p4l > 0) lineas.push('- ' + ST.cart.p4l + ' x ASWA Familiar: S/ ' + (ST.cart.p4l * ST.precio.p4l).toFixed(2));
+
+  return [
+    'ASWA La Rica Chicha - Resumen de pedido',
+    codigoPedido ? 'Pedido: ' + codigoPedido : '',
+    'Cliente: ' + nombre,
+    telefono ? 'Telefono: ' + telefono : '',
+    '',
+    'Productos:',
+    lineas.length ? lineas.join('\n') : '- Sin productos registrados',
+    '',
+    'Delivery: S/ ' + (ST.delivery || 0).toFixed(2),
+    'Total: S/ ' + (ST.final || 0).toFixed(2),
+    'Pago: ' + (ST.pago || 'Efectivo'),
+    '',
+    'Entrega: ' + direccion,
+    'Zona: ' + zona,
+    ST.gpsUrl ? 'GPS: ' + ST.gpsUrl : '',
+    '',
+    'Gracias por pedir ASWA - El oro liquido de la selva.'
+  ].filter(Boolean).join('\n');
+}
+
+async function copiarResumenPedido() {
+  const resumen = armarResumenPedidoCliente();
+  try {
+    if (navigator.clipboard?.writeText) {
+      await navigator.clipboard.writeText(resumen);
+    } else {
+      const tmp = document.createElement('textarea');
+      tmp.value = resumen;
+      tmp.style.position = 'fixed';
+      tmp.style.left = '-9999px';
+      document.body.appendChild(tmp);
+      tmp.focus();
+      tmp.select();
+      document.execCommand('copy');
+      tmp.remove();
+    }
+    tst('Resumen del pedido copiado', 2800);
+  } catch (err) {
+    console.warn('copiarResumenPedido:', err);
+    tst('No se pudo copiar el resumen. Intentalo de nuevo.', 3200);
+  }
+}
+
+async function compartirResumenPedido() {
+  const resumen = armarResumenPedidoCliente();
+  if (navigator.share) {
+    try {
+      await navigator.share({
+        title: 'Mi pedido ASWA',
+        text: resumen
+      });
+      return;
+    } catch (err) {
+      if (err?.name === 'AbortError') return;
+      console.warn('compartirResumenPedido:', err);
+    }
+  }
+  await copiarResumenPedido();
 }
 
 async function confirmarCompartidoEnRedes() {
