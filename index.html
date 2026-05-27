@@ -9955,6 +9955,132 @@ function ownerCard(label, value, color = '#facc15', sub = '') {
   </div>`;
 }
 
+function ownerTimestampMs(fecha) {
+  if (!fecha) return 0;
+  if (fecha.seconds) return fecha.seconds * 1000;
+  const ms = new Date(fecha).getTime();
+  return Number.isFinite(ms) ? ms : 0;
+}
+
+function ownerEstadoNorm(estado) {
+  return String(estado || 'Pendiente').trim().toLowerCase().replace(/\s+/g, '_');
+}
+
+function ownerItemQty(pedido, key) {
+  const items = pedido.items || {};
+  if (Array.isArray(items)) {
+    return items.reduce((sum, item) => {
+      const id = String(item.id || item.producto_id || item.producto || item.nombre || '').toLowerCase();
+      const qty = Number(item.quantity || item.cantidad || 0);
+      if (key === 'p2l' && (id.includes('2l') || id.includes('2 litros'))) return sum + qty;
+      if (key === 'p3l' && (id.includes('3l') || id.includes('3 litros'))) return sum + qty;
+      if (key === 'p4l' && (id.includes('4l') || id.includes('familiar') || id.includes('4 litros'))) return sum + qty;
+      return sum;
+    }, 0);
+  }
+  return Number(items[key] || 0);
+}
+
+function ownerProductosTotales(pedidos) {
+  return pedidos.reduce((acc, p) => {
+    acc.p2l += ownerItemQty(p, 'p2l');
+    acc.p3l += ownerItemQty(p, 'p3l');
+    acc.p4l += ownerItemQty(p, 'p4l');
+    acc.total += Number(p.total) || 0;
+    acc.pedidos += 1;
+    return acc;
+  }, { p2l:0, p3l:0, p4l:0, total:0, pedidos:0 });
+}
+
+function ownerPedidoDeliverista(pedido) {
+  return String(
+    pedido.asignado_a ||
+    pedido.deliverista ||
+    pedido.delivery_nombre ||
+    pedido.repartidor ||
+    'Sin asignar'
+  ).trim() || 'Sin asignar';
+}
+
+function ownerDeliveristasResumen(pedidos, usuarios) {
+  const map = new Map();
+  const hoy = ownerFechaLocal(new Date());
+  const asegurar = (key, data = {}) => {
+    const id = String(key || 'Sin asignar').trim() || 'Sin asignar';
+    if (!map.has(id)) {
+      map.set(id, {
+        id,
+        nombre: data.nombre || id,
+        username: data.username || id,
+        activoUsuario: data.activo !== false,
+        pedidos:0,
+        pedidosHoy:0,
+        activos:0,
+        entregados:0,
+        monto:0,
+        montoHoy:0,
+        p2l:0,
+        p3l:0,
+        p4l:0,
+        p2lHoy:0,
+        p3lHoy:0,
+        p4lHoy:0,
+        recientes:[]
+      });
+    }
+    return map.get(id);
+  };
+  usuarios.filter(u => u.rol === 'delivery').forEach(u => asegurar(u.username || u.nombre, u));
+  pedidos.forEach(p => {
+    const key = ownerPedidoDeliverista(p);
+    const d = asegurar(key);
+    const esHoy = ownerEsHoy(p.fecha || p.cerrado_at || p.deliverista_at);
+    const estado = ownerEstadoNorm(p.estado);
+    const total = Number(p.total) || 0;
+    const p2l = ownerItemQty(p, 'p2l');
+    const p3l = ownerItemQty(p, 'p3l');
+    const p4l = ownerItemQty(p, 'p4l');
+    d.pedidos++;
+    d.monto += total;
+    d.p2l += p2l; d.p3l += p3l; d.p4l += p4l;
+    if (['pendiente','preparando','en_camino'].includes(estado)) d.activos++;
+    if (['entregado','cerrado'].includes(estado)) d.entregados++;
+    if (esHoy) {
+      d.pedidosHoy++;
+      d.montoHoy += total;
+      d.p2lHoy += p2l; d.p3lHoy += p3l; d.p4lHoy += p4l;
+    }
+    d.recientes.push(p);
+  });
+  return [...map.values()]
+    .map(d => ({ ...d, recientes:d.recientes.sort((a,b) => ownerTimestampMs(b.fecha) - ownerTimestampMs(a.fecha)).slice(0, 5) }))
+    .sort((a,b) => b.montoHoy - a.montoHoy || b.pedidosHoy - a.pedidosHoy || b.monto - a.monto);
+}
+
+function ownerClienteResumen(clientes, pedidos) {
+  const map = new Map();
+  clientes.forEach(c => {
+    const tel = String(c.telefono || c.celular || c.id || '').replace(/\D/g, '') || c.id;
+    map.set(tel, {
+      nombre:c.nombre || 'Cliente',
+      telefono:tel,
+      pedidos:Number(c.pedidos_totales || c.pedidos_total || 0),
+      monto:Number(c.total_consumo || 0),
+      ultimo:c.ultimo_pedido || null
+    });
+  });
+  pedidos.forEach(p => {
+    const tel = String(p.telefono || '').replace(/\D/g, '') || p.cliente_id || 'sin-telefono';
+    if (!map.has(tel)) map.set(tel, { nombre:p.nombre || 'Cliente', telefono:tel, pedidos:0, monto:0, ultimo:null });
+    const c = map.get(tel);
+    c.nombre = c.nombre || p.nombre || 'Cliente';
+    c.pedidos += 1;
+    c.monto += Number(p.total) || 0;
+    if (ownerTimestampMs(p.fecha) > ownerTimestampMs(c.ultimo)) c.ultimo = p.fecha;
+  });
+  return [...map.values()].sort((a,b) => b.monto - a.monto).slice(0, 10);
+}
+
 async function ownerCargar() {
   const resumen = document.getElementById('ownerResumen');
   const detalle = document.getElementById('ownerDetalle');
@@ -9982,6 +10108,10 @@ async function ownerCargar() {
     const reservasHoy = pedidos.filter(p => p.es_reserva && p.reserva_fecha === hoy).length;
     const reservasFuturas = pedidos.filter(p => p.es_reserva && p.reserva_fecha && p.reserva_fecha > hoy).length;
     const alertasPend = push.filter(p => p.estado === 'pendiente').length;
+    const productosHoy = ownerProductosTotales(pedidosHoy);
+    const productosTotal = ownerProductosTotales(pedidos);
+    const deliveristas = ownerDeliveristasResumen(pedidos, usuarios);
+    const clientesTop = ownerClienteResumen(clientes, pedidos);
 
     resumen.innerHTML = `<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px">
       ${ownerCard('Ventas hoy', 'S/ ' + ventasHoy.toFixed(2), '#facc15', pedidosHoy.length + ' pedido(s) hoy')}
@@ -9991,13 +10121,77 @@ async function ownerCargar() {
       ${ownerCard('Clientes', clientes.length, '#34d399', 'Base real del negocio')}
       ${ownerCard('Usuarios', usuarios.length, '#c4b5fd', 'Admin, delivery y dueno')}
       ${ownerCard('Alertas reserva', alertasPend, '#fca5a5', 'Cola push pendiente')}
+      ${ownerCard('2 litros hoy', productosHoy.p2l, '#fde68a', productosTotal.p2l + ' historico')}
+      ${ownerCard('3 litros hoy', productosHoy.p3l, '#fde68a', productosTotal.p3l + ' historico')}
+      ${ownerCard('4 litros hoy', productosHoy.p4l, '#fde68a', productosTotal.p4l + ' historico')}
     </div>`;
 
     const proximas = pedidos
       .filter(p => p.es_reserva && p.reserva_fecha)
       .sort((a,b) => String(a.reserva_iso || '').localeCompare(String(b.reserva_iso || '')))
       .slice(0, 8);
+    const ultimosPedidos = pedidos
+      .slice()
+      .sort((a,b) => ownerTimestampMs(b.fecha) - ownerTimestampMs(a.fecha))
+      .slice(0, 10);
     detalle.innerHTML = `
+      <div style="background:#0f172a;border:1px solid var(--brd);border-radius:14px;padding:14px;margin-bottom:14px">
+        <div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-start;margin-bottom:10px">
+          <div>
+            <div style="font-size:14px;font-weight:900;color:#fff">Control por deliverista</div>
+            <div style="font-size:11px;color:var(--mut)">Historial pasado, presente, acumulados, montos y litros vendidos</div>
+          </div>
+          <div style="font-size:11px;color:#e9d5ff;font-weight:900">${deliveristas.length} deliverista(s)</div>
+        </div>
+        ${deliveristas.length ? `<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:10px">
+          ${deliveristas.map(d => `
+            <div style="background:#111827;border:1px solid ${d.activos ? 'rgba(34,197,94,.4)' : 'var(--brd)'};border-radius:12px;padding:12px">
+              <div style="display:flex;justify-content:space-between;gap:8px;margin-bottom:8px">
+                <div>
+                  <div style="font-size:14px;font-weight:900;color:#fff">${esc(d.nombre)}</div>
+                  <div style="font-size:10px;color:var(--mut)">@${esc(d.username)} · ${d.activoUsuario ? 'usuario activo' : 'usuario inactivo'}</div>
+                </div>
+                <div style="text-align:right;font-size:10px;color:${d.activos ? '#86efac' : 'var(--mut)'};font-weight:900">${d.activos} activo(s)</div>
+              </div>
+              <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:8px">
+                <div style="background:#0b1220;border-radius:8px;padding:8px"><div style="font-size:9px;color:var(--mut)">Hoy</div><strong>${d.pedidosHoy}</strong></div>
+                <div style="background:#0b1220;border-radius:8px;padding:8px"><div style="font-size:9px;color:var(--mut)">Historial</div><strong>${d.pedidos}</strong></div>
+                <div style="background:#0b1220;border-radius:8px;padding:8px"><div style="font-size:9px;color:var(--mut)">Entregados</div><strong>${d.entregados}</strong></div>
+              </div>
+              <div style="display:flex;justify-content:space-between;border-top:1px solid var(--brd);padding-top:8px;font-size:12px">
+                <span style="color:var(--mut)">Monto hoy</span><strong style="color:var(--y)">S/ ${d.montoHoy.toFixed(2)}</strong>
+              </div>
+              <div style="display:flex;justify-content:space-between;font-size:12px">
+                <span style="color:var(--mut)">Monto acumulado</span><strong>S/ ${d.monto.toFixed(2)}</strong>
+              </div>
+              <div style="margin-top:8px;font-size:11px;color:var(--mut);line-height:1.7">
+                Hoy: 2L=${d.p2lHoy}, 3L=${d.p3lHoy}, 4L=${d.p4lHoy}<br>
+                Total: 2L=${d.p2l}, 3L=${d.p3l}, 4L=${d.p4l}
+              </div>
+            </div>`).join('')}
+        </div>` : '<div style="color:var(--mut);font-size:12px">No hay deliveristas registrados ni pedidos asignados.</div>'}
+      </div>
+
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px;margin-bottom:14px">
+        <div style="background:#0f172a;border:1px solid var(--brd);border-radius:14px;padding:14px">
+          <div style="font-size:14px;font-weight:900;color:#fff;margin-bottom:10px">Top clientes por consumo</div>
+          ${clientesTop.length ? clientesTop.map(c => `
+            <div style="display:flex;justify-content:space-between;gap:10px;border-top:1px solid var(--brd);padding:9px 0;font-size:12px">
+              <div><strong>${esc(c.nombre)}</strong><br><span style="color:var(--mut)">${esc(c.telefono || '')} · ${c.pedidos} pedido(s)</span></div>
+              <strong style="color:#34d399">S/ ${c.monto.toFixed(2)}</strong>
+            </div>`).join('') : '<div style="color:var(--mut);font-size:12px">Aun no hay clientes.</div>'}
+        </div>
+
+        <div style="background:#0f172a;border:1px solid var(--brd);border-radius:14px;padding:14px">
+          <div style="font-size:14px;font-weight:900;color:#fff;margin-bottom:10px">Ultimos pedidos y montos</div>
+          ${ultimosPedidos.length ? ultimosPedidos.map(p => `
+            <div style="display:flex;justify-content:space-between;gap:10px;border-top:1px solid var(--brd);padding:9px 0;font-size:12px">
+              <div><strong>${esc(p.nombre || 'Cliente')}</strong><br><span style="color:var(--mut)">${esc(ownerPedidoDeliverista(p))} · ${esc(p.estado || 'Pendiente')} · 2L=${ownerItemQty(p,'p2l')} 3L=${ownerItemQty(p,'p3l')} 4L=${ownerItemQty(p,'p4l')}</span></div>
+              <strong style="color:var(--y)">S/ ${(Number(p.total)||0).toFixed(2)}</strong>
+            </div>`).join('') : '<div style="color:var(--mut);font-size:12px">Aun no hay pedidos.</div>'}
+        </div>
+      </div>
+
       <div style="background:#0f172a;border:1px solid var(--brd);border-radius:14px;padding:14px">
         <div style="font-size:14px;font-weight:900;color:#fff;margin-bottom:10px">Proximas reservas</div>
         ${proximas.length ? proximas.map(p => `
