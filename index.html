@@ -2363,12 +2363,12 @@
       ▶ Ver tutorial para hacer tu pedido
     </button>
 
-    <div id="tutorialPedidoInline" style="display:block;margin:0 0 16px;background:#050505;border:1px solid rgba(250,204,21,.28);border-radius:14px;overflow:hidden;box-shadow:0 12px 28px rgba(0,0,0,.24)">
+    <div id="tutorialPedidoInline" style="display:none;margin:0 0 16px;background:#050505;border:1px solid rgba(250,204,21,.28);border-radius:14px;overflow:hidden;box-shadow:0 12px 28px rgba(0,0,0,.24)">
       <div style="padding:10px 12px;border-bottom:1px solid rgba(255,255,255,.08)">
         <div style="font-size:12px;font-weight:900;color:#facc15">Tutorial ASWA</div>
         <div style="font-size:11px;color:var(--mut);margin-top:2px">Mira como hacer tu pedido sin salir de la app</div>
       </div>
-      <div style="width:100%;max-width:360px;margin:0 auto;background:#000;aspect-ratio:9/16">
+      <div style="width:100%;max-width:230px;margin:0 auto;background:#000;aspect-ratio:9/16">
         <iframe
           src="https://www.youtube-nocookie.com/embed/fQbZiTTD88g?rel=0&playsinline=1&modestbranding=1"
           title="Tutorial para hacer tu pedido ASWA"
@@ -6790,6 +6790,7 @@ document.addEventListener('DOMContentLoaded', () => {
   setTimeout(() => {
     document.getElementById('badge-bono').classList.add('show');
   }, 2000);
+  tutToggleTutorialPedido(false);
   setTimeout(tutAbrirTutorialInicioSiNuevo, 1400);
 
   // ── Recuperar pedido pendiente de confirmar ──
@@ -13254,6 +13255,8 @@ function tutToggleTutorialPedido(forzarMostrar = null) {
   if (!box) return;
   const mostrar = forzarMostrar === null ? box.style.display === 'none' : forzarMostrar;
   box.style.display = mostrar ? 'block' : 'none';
+  const btn = document.getElementById('btnTutorialPedido');
+  if (btn) btn.textContent = mostrar ? 'Ocultar tutorial' : 'Ver tutorial para hacer tu pedido';
   if (mostrar) box.scrollIntoView({ behavior: 'smooth', block: 'center' });
 }
 
