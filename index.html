@@ -8594,10 +8594,14 @@ async function dlvCargarTodosPedidos() {
             <div style="font-size:12px;color:var(--txt);margin-bottom:4px">📦 ${items||'—'} — <span style="color:var(--y);font-weight:800">S/ ${(d.total||0).toFixed(2)}</span></div>
             <div style="font-size:11px;color:var(--mut);margin-bottom:8px">🏠 ${d.direccion||'—'} · 💳 ${d.pago||'—'}</div>
             ${notaEntrega ? `<div style="background:rgba(250,204,21,.08);border:1px solid rgba(250,204,21,.22);border-radius:8px;padding:7px 8px;color:var(--y);font-size:11px;font-weight:700;margin-bottom:8px">📝 Nota: ${esc(notaEntrega)}</div>` : ''}
+            ${pedidoRegaloHtml(d)}
+            ${pedidoRutaHtml(d)}
+            ${pedidoCargaHtml(d)}
             ${gpsLive}
             <div style="display:flex;gap:6px">
               ${d.gps_url ? `<a href="${d.gps_url}" target="_blank" style="flex:1;background:rgba(34,197,94,.15);color:var(--grn);border:1px solid rgba(34,197,94,.3);border-radius:8px;padding:8px;font-size:11px;font-weight:800;text-align:center;text-decoration:none;display:block">📍 GPS</a>` : ''}
               ${d.delivery_gps_url ? `<a href="${d.delivery_gps_url}" target="_blank" style="flex:1;background:rgba(59,130,246,.15);color:#93c5fd;border:1px solid rgba(59,130,246,.3);border-radius:8px;padding:8px;font-size:11px;font-weight:800;text-align:center;text-decoration:none;display:block">Mi ruta</a>` : ''}
+              ${!d.delivery_carga_confirmada ? `<button onclick="dlvConfirmarCarga('${doc.id}')" style="flex:2;background:rgba(250,204,21,.16);color:#fde68a;border:1px solid rgba(250,204,21,.35);border-radius:8px;padding:8px;font-size:11px;font-weight:800;cursor:pointer;font-family:'Poppins',sans-serif">Confirmar carga</button>` : ''}
               ${d.estado==='Pendiente' ? `<button onclick="dlvMarcarEnCaminoDesdeListado('${doc.id}','${d.nombre||''}','${d.telefono||''}')" style="flex:2;background:var(--y);color:#000;border:none;border-radius:8px;padding:8px;font-size:11px;font-weight:800;cursor:pointer;font-family:'Poppins',sans-serif">🏍️ Salir a entregar</button>` : ''}
               ${d.estado==='en_camino' ? `<button onclick="dlvCerrarDesdeListado('${doc.id}','${d.nombre||''}','${d.telefono||''}')" style="flex:2;background:var(--grn);color:#000;border:none;border-radius:8px;padding:8px;font-size:11px;font-weight:800;cursor:pointer;font-family:'Poppins',sans-serif">✅ Cerrar pedido</button>` : ''}
             </div>
@@ -8738,6 +8742,25 @@ async function buscarPedidoDeliverista() {
     tst('❌ Error al buscar el pedido', 2500);
   }
 }
+
+async function dlvConfirmarCarga(pedidoId) {
+  if (!pedidoId || !window.FB || !window.db) return;
+  try {
+    const { doc:d, updateDoc:ud, serverTimestamp:ts } = window.FB;
+    const deliveryUser = _sesionDelivery?.username || sessionStorage.getItem('deliveryUser') || window._dlvNombre || 'delivery';
+    await ud(d(db, 'pedidos', pedidoId), {
+      delivery_carga_confirmada: true,
+      delivery_carga_confirmada_at: ts(),
+      delivery_carga_confirmada_por: deliveryUser,
+      delivery_alerta_nueva: false
+    });
+    tst('Carga confirmada para este pedido', 2600);
+  } catch (err) {
+    console.error('dlvConfirmarCarga:', err);
+    tst('No se pudo confirmar la carga', 3200);
+  }
+}
+window.dlvConfirmarCarga = dlvConfirmarCarga;
 
 /* ── DELIVERISTA: MARCAR EN CAMINO (paso 1) ── */
 async function deliveristaMarcarEnCamino() {
@@ -10793,6 +10816,9 @@ function admRenderYapes(docs) {
 
     return `
       <div class="adm-pedido yape-pendiente" id="admped-${doc.id}">
+        ${pedidoRegaloHtml(d)}
+        ${pedidoRutaHtml(d)}
+        ${pedidoCargaHtml(d)}
         <div class="adm-ped-top">
           <div>
             <div class="adm-ped-nom">${d.nombre || '—'}</div>
@@ -10859,6 +10885,9 @@ function admRenderPedidos(docs) {
     return `
       <div class="adm-pedido" style="${bordeExtra}" id="admped2-${doc.id}">
         ${reservaAlerta}
+        ${pedidoRegaloHtml(d)}
+        ${pedidoRutaHtml(d)}
+        ${pedidoCargaHtml(d)}
         ${alertaCierre}
         <div class="adm-ped-top">
           <div>
@@ -10899,6 +10928,9 @@ function admRenderReservas(docs) {
     const fechaPedido = d.fecha?.seconds ? new Date(d.fecha.seconds * 1000).toLocaleString('es-PE') : '—';
     return `
       <div class="adm-pedido" style="border-color:rgba(250,204,21,.55);background:rgba(250,204,21,.05)" id="admres-${doc.id}">
+        ${pedidoRegaloHtml(d)}
+        ${pedidoRutaHtml(d)}
+        ${pedidoCargaHtml(d)}
         <div style="background:rgba(250,204,21,.14);border:1px solid rgba(250,204,21,.35);border-radius:10px;padding:9px 12px;color:#fde68a;font-weight:900;font-size:12px;margin-bottom:10px">
           📅 Reserva: ${esc(reserva)}
         </div>
@@ -10923,6 +10955,27 @@ function admRenderReservas(docs) {
         </div>
       </div>`;
   }).join('');
+}
+
+function pedidoRegaloHtml(d) {
+  if (!d?.es_regalo || !d.regalo_para) return '';
+  const r = d.regalo_para || {};
+  return `<div style="background:rgba(236,72,153,.1);border:1px solid rgba(236,72,153,.28);border-radius:8px;padding:8px 12px;font-size:12px;color:#f9a8d4;font-weight:800;margin-bottom:8px">Regalo para: ${esc(r.nombre || '—')} · ${esc(r.telefono || '—')}${r.mensaje ? '<br><span style="color:#fbcfe8">Mensaje: ' + esc(r.mensaje) + '</span>' : ''}</div>`;
+}
+
+function pedidoRutaHtml(d) {
+  if (!d) return '';
+  const dist = d.distancia_planta_txt || (d.distancia_planta_m !== null && d.distancia_planta_m !== undefined ? textoDistancia(d.distancia_planta_m) : '');
+  if (!dist) return '';
+  const ok = d.distancia_planta_m !== null && d.distancia_planta_m !== undefined;
+  return `<div style="background:rgba(59,130,246,.08);border:1px solid rgba(59,130,246,.22);border-radius:8px;padding:8px 12px;font-size:12px;color:${ok ? '#93c5fd' : '#fde68a'};font-weight:800;margin-bottom:8px">Ruta planta-cliente: ${esc(dist)}</div>`;
+}
+
+function pedidoCargaHtml(d) {
+  if (!d?.delivery_carga && !d?.items) return '';
+  const confirmado = !!d.delivery_carga_confirmada;
+  const txt = _itemsTexto(d.delivery_carga || d.items);
+  return `<div style="background:${confirmado ? 'rgba(34,197,94,.08)' : 'rgba(250,204,21,.08)'};border:1px solid ${confirmado ? 'rgba(34,197,94,.22)' : 'rgba(250,204,21,.24)'};border-radius:8px;padding:8px 12px;font-size:12px;color:${confirmado ? '#86efac' : '#fde68a'};font-weight:800;margin-bottom:8px">Carga delivery: ${esc(txt)}${confirmado ? '<br>Confirmada por deliverista' : '<br>Pendiente de confirmacion del deliverista'}</div>`;
 }
 
 function _itemsTexto(items) {
@@ -11808,8 +11861,12 @@ function cargarPedidosAsignados(deliverista) {
         </div>
         <div style="font-size:11px;color:var(--mut)">${p.telefono||''} · ${itxt||'—'}</div>
         <div style="font-size:11px;color:var(--mut);margin-top:2px">📍 ${p.direccion||'—'}</div>
+        ${pedidoRegaloHtml(p)}
+        ${pedidoRutaHtml(p)}
+        ${pedidoCargaHtml(p)}
         ${liveBox}
         ${rutaBtns}
+        ${!p.delivery_carga_confirmada ? `<button onclick="dlvConfirmarCarga('${p.id}')" style="width:100%;margin-top:8px;background:rgba(250,204,21,.16);color:#fde68a;border:1px solid rgba(250,204,21,.35);border-radius:8px;padding:8px;font-size:11px;font-weight:900;cursor:pointer;font-family:Poppins,sans-serif">Confirmar carga que llevare</button>` : ''}
         ${p.gps_url ? `<a href="${p.gps_url}" target="_blank" style="font-size:11px;color:#3b82f6;text-decoration:none">🗺 Ver GPS</a>` : ''}
       </div>`;
     }).join('');
@@ -14216,7 +14273,7 @@ function registrarSW() {
   if (!('serviceWorker' in navigator)) return;
 
   const SW_CODE = `
-const CACHE_NAME = 'aswa-v12';
+const CACHE_NAME = 'aswa-v13';
 const SHELL = [
   './',
   './index.html'
