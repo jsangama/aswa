@@ -159,6 +159,15 @@
     let _loginTarget              = null;
     let admAutenticado            = false;
 
+    // Numeros WhatsApp por defecto (se sobreescriben si existen en Firestore)
+    const WA_CONFIG = window.ASWA_CONFIG?.WHATSAPP || {};
+    let _WA1 = WA_CONFIG.pedidos1 || "51955273229";
+    let _WA2 = WA_CONFIG.pedidos2 || "51986445531";
+    let _WAYAPE = WA_CONFIG.yape || "51947999736";
+    window.getWA1 = () => _WA1;
+    window.getWA2 = () => _WA2;
+    window.getWAYape = () => window.NEGOCIO?.whatsapp_yape || _WAYAPE;
+
     // ── Cargar config del negocio desde Firestore ──
     async function cargarNegocio() {
       try {
@@ -172,8 +181,9 @@
             const el = document.querySelector('.bname');
             if (el) el.textContent = data.nombre;
           }
-          if (data.whatsapp1) window.WA1 = data.whatsapp1;
-          if (data.whatsapp2) window.WA2 = data.whatsapp2;
+          if (data.whatsapp1) _WA1 = data.whatsapp1;
+          if (data.whatsapp2) _WA2 = data.whatsapp2;
+          if (data.whatsapp_yape) _WAYAPE = data.whatsapp_yape;
           // Guardar config globalmente
           window.NEGOCIO = data;
         }
@@ -182,14 +192,6 @@
       }
     }
 
-    // Números WhatsApp por defecto (se sobreescriben si existen en Firestore)
-    const WA_CONFIG = window.ASWA_CONFIG?.WHATSAPP || {};
-    window.WA1 = WA_CONFIG.pedidos1 || "51955273229";
-    window.WA2 = WA_CONFIG.pedidos2 || "51986445531";
-    window.WAYAPE = WA_CONFIG.yape || "51947999736";
-    window.getWA1 = () => window.WA1;
-    window.getWA2 = () => window.WA2;
-    window.getWAYape = () => window.NEGOCIO?.whatsapp_yape || window.WAYAPE;
   </script>
 
   <style>
@@ -8437,6 +8439,20 @@ async function sha256(texto) {
 }
 
 /* ── Mostrar/ocultar contraseña ── */
+const _SALT_PREFIJO = 'aswa2025_';
+
+async function hashPassword(password, username = '') {
+  return sha256(_SALT_PREFIJO + String(username).toLowerCase() + ':' + password);
+}
+
+async function _verificarPasswordHash(hashGuardado, password, username = '') {
+  const hashSalted = await hashPassword(password, username);
+  if (hashGuardado === hashSalted) return { ok: true, legacy: false, hash: hashSalted };
+
+  const hashLegacy = await sha256(password);
+  return { ok: hashGuardado === hashLegacy, legacy: hashGuardado === hashLegacy, hash: hashSalted };
+}
+
 function admTogglePass(inputId, btn) {
   const inp = document.getElementById(inputId);
   if (!inp) return;
@@ -8510,7 +8526,6 @@ async function admIniciarSesion() {
   btn.textContent = '⏳ Verificando...';
 
   try {
-    const hash = await sha256(password);
     const { collection:col, query:q, where:wh, getDocs:gd, doc:d, updateDoc:ud, serverTimestamp:ts } = window.FB;
 
     // Buscar usuario en Firestore
@@ -8540,7 +8555,8 @@ async function admIniciarSesion() {
     }
 
     // Verificar contraseña
-    if (userData.password_hash !== hash) {
+    const passwordCheck = await _verificarPasswordHash(userData.password_hash, password, username);
+    if (!passwordCheck.ok) {
       _admIntentos++;
       _admChequearBloqueo('adm');
       _admMostrarError(`❌ Usuario o contraseña incorrectos (${_admIntentos}/${MAX_INTENTOS})`);
@@ -8554,7 +8570,12 @@ async function admIniciarSesion() {
 
     // Registrar último login
     try {
-      await ud(d(db, 'app_users', userDoc.id), { ultimo_login: ts(), intentos_fallidos: 0 });
+      const loginUpdate = { ultimo_login: ts(), intentos_fallidos: 0 };
+      if (passwordCheck.legacy) {
+        loginUpdate.password_hash = passwordCheck.hash;
+        loginUpdate.password_hash_version = 'salted-v1';
+      }
+      await ud(d(db, 'app_users', userDoc.id), loginUpdate);
     } catch(e) {}
 
     btn.disabled = false; btn.textContent = '🔓 INGRESAR';
@@ -8685,7 +8706,6 @@ async function dlvIniciarSesion() {
   btn.textContent = '⏳ Verificando...';
 
   try {
-    const hash = await sha256(password);
     const { collection:col, query:q, where:wh, getDocs:gd, doc:d, updateDoc:ud, serverTimestamp:ts } = window.FB;
 
     const snap = await gd(q(
@@ -8712,7 +8732,8 @@ async function dlvIniciarSesion() {
       return;
     }
 
-    if (userData.password_hash !== hash) {
+    const passwordCheck = await _verificarPasswordHash(userData.password_hash, password, username);
+    if (!passwordCheck.ok) {
       _dlvIntentos++;
       _admChequearBloqueo('dlv');
       _dlvMostrarError(`❌ Usuario o contraseña incorrectos (${_dlvIntentos}/${MAX_INTENTOS})`);
@@ -8725,7 +8746,12 @@ async function dlvIniciarSesion() {
     _sesionDelivery = { id: userDoc.id, username, nombre: userData.nombre || username, rol: 'delivery' };
 
     try {
-      await ud(d(db, 'app_users', userDoc.id), { ultimo_login: ts(), intentos_fallidos: 0 });
+      const loginUpdate = { ultimo_login: ts(), intentos_fallidos: 0 };
+      if (passwordCheck.legacy) {
+        loginUpdate.password_hash = passwordCheck.hash;
+        loginUpdate.password_hash_version = 'salted-v1';
+      }
+      await ud(d(db, 'app_users', userDoc.id), loginUpdate);
     } catch(e) {}
 
     btn.disabled = false;
@@ -8823,7 +8849,7 @@ async function admAbrirGestionUsuarios() {
               style="flex:1;background:rgba(250,204,21,.12);color:var(--y);border:1px solid rgba(250,204,21,.2);border-radius:8px;padding:8px;font-size:11px;font-weight:800;cursor:pointer;font-family:Poppins,sans-serif">
               ✏️ Editar
             </button>
-            <button onclick="admCambiarPassword('${u.id}','${u.nombre||u.username}')"
+            <button onclick="admCambiarPassword('${u.id}','${u.nombre||u.username}','${u.username}')"
               style="flex:1;background:rgba(168,85,247,.12);color:#c4b5fd;border:1px solid rgba(168,85,247,.2);border-radius:8px;padding:8px;font-size:11px;font-weight:800;cursor:pointer;font-family:Poppins,sans-serif">
               🔑 Contraseña
             </button>
@@ -8856,7 +8882,7 @@ async function admCrearUsuario() {
   if (pass1 !== pass2) return tst('❌ Las contraseñas no coinciden', 3000);
 
   try {
-    const hash = await sha256(pass1);
+    const hash = await hashPassword(pass1, username);
     const { collection:col, addDoc:ad, query:q, where:wh, getDocs:gd, serverTimestamp:ts } = window.FB;
 
     // Verificar que el username no exista
@@ -8865,7 +8891,7 @@ async function admCrearUsuario() {
 
     await ad(col(db,'app_users'), {
       business_id: BUSINESS_ID, username, nombre, rol,
-      password_hash: hash, activo: true,
+      password_hash: hash, password_hash_version: 'salted-v1', activo: true,
       creado_at: ts(), ultimo_login: null, intentos_fallidos: 0,
       permisos: rol === 'admin' ? { ver_stats:true, ver_clientes:true, exportar:true } : {}
     });
@@ -8889,15 +8915,15 @@ async function admEditarUsuario(userId, username, nombre, rol) {
   } catch(err) { tst('❌ Error al actualizar', 3000); }
 }
 
-async function admCambiarPassword(userId, nombre) {
+async function admCambiarPassword(userId, nombre, username = '') {
   const pass1 = prompt(`Nueva contraseña para ${nombre} (mín. 6 caracteres):`);
   if (!pass1 || pass1.length < 6) return tst('Contraseña muy corta', 3000);
   const pass2 = prompt('Confirmar nueva contraseña:');
   if (pass1 !== pass2) return tst('❌ Las contraseñas no coinciden', 3000);
   try {
-    const hash = await sha256(pass1);
+    const hash = await hashPassword(pass1, username || nombre);
     const { doc:d, updateDoc:ud, serverTimestamp:ts } = window.FB;
-    await ud(d(db,'app_users',userId), { password_hash:hash, password_cambiado_at:ts() });
+    await ud(d(db,'app_users',userId), { password_hash:hash, password_hash_version:'salted-v1', password_cambiado_at:ts() });
     tst(`✅ Contraseña de ${nombre} actualizada`, 2500);
   } catch(err) { tst('❌ Error al cambiar contraseña', 3000); }
 }
@@ -8926,10 +8952,10 @@ async function crearUsuariosDefault() {
       { username:'delivery1', nombre:'Repartidor 1',   rol:'delivery', password:'Delivery1234!', permisos:{} },
     ];
     for (const u of usuarios) {
-      const hash = await sha256(u.password);
+      const hash = await hashPassword(u.password, u.username);
       await ad(col(db,'app_users'), {
         business_id:BUSINESS_ID, username:u.username, nombre:u.nombre,
-        rol:u.rol, password_hash:hash, activo:true,
+        rol:u.rol, password_hash:hash, password_hash_version:'salted-v1', activo:true,
         creado_at:ts(), ultimo_login:null, intentos_fallidos:0, permisos:u.permisos
       });
       console.log(`✅ Creado: @${u.username} (${u.rol}) — pass: ${u.password}`);
@@ -10702,7 +10728,6 @@ async function loginDeliveryUser() {
   }
   
   try {
-    const hash = await sha256(password);
     const usersRef = window.FB.collection(db, 'app_users');
     const q = window.FB.query(usersRef, 
       window.FB.where('username', '==', username),
@@ -10717,8 +10742,10 @@ async function loginDeliveryUser() {
       return;
     }
     
-    const userData = snapshot.docs[0].data();
-    if (userData.password_hash !== hash) {
+    const userDoc = snapshot.docs[0];
+    const userData = userDoc.data();
+    const passwordCheck = await _verificarPasswordHash(userData.password_hash, password, username);
+    if (!passwordCheck.ok) {
       errorDiv.textContent = 'Contraseña incorrecta';
       errorDiv.style.display = 'block';
       return;
@@ -10730,6 +10757,15 @@ async function loginDeliveryUser() {
       return;
     }
     
+    if (passwordCheck.legacy) {
+      await window.FB.updateDoc(window.FB.doc(db, 'app_users', userDoc.id), {
+        password_hash: passwordCheck.hash,
+        password_hash_version: 'salted-v1',
+        ultimo_login: window.FB.serverTimestamp(),
+        intentos_fallidos: 0
+      });
+    }
+
     sessionStorage.setItem('deliveryUser', username);
     sessionStorage.setItem('deliveryName', userData.nombre || username);
     document.getElementById('dlvStep1').classList.remove('active');
@@ -11349,7 +11385,6 @@ async function dlvLoginConCredenciales() {
 
   try {
     await esperarFB();
-    const hash = await sha256(pass);
     const { collection: col, query: q, where: wh, getDocs: gd } = window.FB;
 
     // Buscar por DNI en app_users
@@ -11377,7 +11412,8 @@ async function dlvLoginConCredenciales() {
       return;
     }
 
-    if (userData.password_hash !== hash) {
+    const passwordCheck = await _verificarPasswordHash(userData.password_hash, pass, userData.username || dni);
+    if (!passwordCheck.ok) {
       // Registrar intento fallido
       const intentos = (userData.intentos || 0) + 1;
       await window.FB.updateDoc(window.FB.doc(db, 'app_users', userDoc.id), { intentos });
@@ -11388,9 +11424,12 @@ async function dlvLoginConCredenciales() {
     }
 
     // ✅ LOGIN EXITOSO
-    await window.FB.updateDoc(window.FB.doc(db, 'app_users', userDoc.id), {
-      intentos: 0, ultimo_acceso: window.FB.serverTimestamp()
-    });
+    const loginUpdate = { intentos: 0, ultimo_acceso: window.FB.serverTimestamp() };
+    if (passwordCheck.legacy) {
+      loginUpdate.password_hash = passwordCheck.hash;
+      loginUpdate.password_hash_version = 'salted-v1';
+    }
+    await window.FB.updateDoc(window.FB.doc(db, 'app_users', userDoc.id), loginUpdate);
 
     dlvSesionActual = { id: userDoc.id, ...userData };
     lsSet('dlv_sesion', JSON.stringify({ id: userDoc.id, username: userData.username, nombre: userData.nombre, dni }));
