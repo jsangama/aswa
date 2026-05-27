@@ -18292,5 +18292,172 @@ function secRatingOmitir() {
   </div>
 </div>
 
+<style>
+  .aswa-social-share-container {
+    position: fixed;
+    left: 14px;
+    bottom: 92px;
+    z-index: 9980;
+    display: flex;
+    flex-direction: column-reverse;
+    align-items: flex-start;
+    gap: 10px;
+    pointer-events: none;
+  }
+  .aswa-social-main-btn,
+  .aswa-social-link {
+    pointer-events: auto;
+    border: 0;
+    font-family: 'Poppins', sans-serif;
+    box-shadow: 0 16px 38px rgba(0,0,0,.45);
+  }
+  .aswa-social-main-btn {
+    width: 52px;
+    height: 52px;
+    border-radius: 999px;
+    background: linear-gradient(135deg, #facc15, #f59e0b);
+    color: #050505;
+    font-size: 22px;
+    font-weight: 900;
+    cursor: pointer;
+    transition: transform .2s ease, box-shadow .2s ease;
+  }
+  .aswa-social-share-container.open .aswa-social-main-btn {
+    transform: rotate(45deg) scale(1.04);
+    box-shadow: 0 18px 46px rgba(250,204,21,.28);
+  }
+  .aswa-social-menu-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: 8px;
+    max-height: 0;
+    overflow: hidden;
+    opacity: 0;
+    transform: translateY(12px);
+    transition: max-height .25s ease, opacity .2s ease, transform .2s ease;
+  }
+  .aswa-social-share-container.open .aswa-social-menu-list {
+    max-height: 520px;
+    opacity: 1;
+    transform: translateY(0);
+  }
+  .aswa-social-link {
+    width: 44px;
+    height: 44px;
+    border-radius: 999px;
+    display: grid;
+    place-items: center;
+    color: #fff;
+    text-decoration: none;
+    font-size: 12px;
+    font-weight: 900;
+    border: 1px solid rgba(255,255,255,.16);
+    position: relative;
+  }
+  .aswa-social-link::after {
+    content: attr(aria-label);
+    position: absolute;
+    left: 52px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: rgba(12,12,14,.96);
+    border: 1px solid rgba(255,255,255,.12);
+    color: #fff;
+    border-radius: 999px;
+    padding: 7px 10px;
+    white-space: nowrap;
+    font-size: 11px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity .18s ease;
+  }
+  .aswa-social-link:hover::after,
+  .aswa-social-link:focus-visible::after {
+    opacity: 1;
+  }
+  .aswa-social-link.facebook { background: #1877f2; }
+  .aswa-social-link.instagram { background: linear-gradient(135deg, #f58529, #dd2a7b, #8134af); }
+  .aswa-social-link.whatsapp { background: #22c55e; color: #06140a; }
+  .aswa-social-link.tiktok { background: #111; }
+  .aswa-social-link.x { background: #000; }
+  .aswa-social-link.youtube { background: #ff0000; }
+  .aswa-social-link.maps { background: #facc15; color: #111; }
+  @media (max-width: 480px) {
+    .aswa-social-share-container {
+      left: 10px;
+      bottom: 82px;
+    }
+    .aswa-social-main-btn {
+      width: 46px;
+      height: 46px;
+      font-size: 20px;
+    }
+    .aswa-social-link {
+      width: 40px;
+      height: 40px;
+      font-size: 10px;
+    }
+    .aswa-social-link::after {
+      display: none;
+    }
+  }
+</style>
+
+<div class="aswa-social-share-container" id="aswaSocialShareMenu">
+  <button class="aswa-social-main-btn" id="aswaSocialMainBtn"
+          onclick="toggleSocialMenu(event)"
+          aria-label="Abrir redes sociales"
+          aria-expanded="false"
+          title="Redes sociales">
+    +
+  </button>
+  <ul class="aswa-social-menu-list" role="menu" aria-label="Redes sociales de ASWA">
+    <li><a class="aswa-social-link facebook" href="https://www.facebook.com/profile.php?id=61556816075939" target="_blank" rel="noopener" aria-label="Facebook">FB</a></li>
+    <li><a class="aswa-social-link instagram" href="https://www.instagram.com/aswa.laricachicha" target="_blank" rel="noopener" aria-label="Instagram">IG</a></li>
+    <li><a class="aswa-social-link whatsapp" href="#" onclick="aswaSocialWhatsApp(event)" aria-label="WhatsApp">WA</a></li>
+    <li><a class="aswa-social-link tiktok" href="https://www.tiktok.com/@aswalaricachicha" target="_blank" rel="noopener" aria-label="TikTok">TT</a></li>
+    <li><a class="aswa-social-link x" href="https://x.com/AswaRica_Chicha" target="_blank" rel="noopener" aria-label="X">X</a></li>
+    <li><a class="aswa-social-link youtube" href="https://www.youtube.com/@AswaLaricachicha" target="_blank" rel="noopener" aria-label="YouTube">YT</a></li>
+    <li><a class="aswa-social-link maps" href="https://maps.app.goo.gl/wYw9wLArDkZt8F7b7" target="_blank" rel="noopener" aria-label="Google Maps">MAP</a></li>
+  </ul>
+</div>
+
+<script>
+function toggleSocialMenu(event) {
+  if (event) event.stopPropagation();
+  const menu = document.getElementById('aswaSocialShareMenu');
+  const btn = document.getElementById('aswaSocialMainBtn');
+  if (!menu || !btn) return;
+  const isOpen = menu.classList.toggle('open');
+  btn.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+}
+
+function cerrarSocialMenu() {
+  const menu = document.getElementById('aswaSocialShareMenu');
+  const btn = document.getElementById('aswaSocialMainBtn');
+  if (!menu || !btn) return;
+  menu.classList.remove('open');
+  btn.setAttribute('aria-expanded', 'false');
+}
+
+function aswaSocialWhatsApp(event) {
+  if (event) event.preventDefault();
+  const phone = (typeof getWA1 === 'function' ? getWA1() : '51955273229');
+  const text = encodeURIComponent('Hola ASWA, quiero una Chicha Artesanal');
+  window.open('https://wa.me/' + phone + '?text=' + text, '_blank', 'noopener');
+}
+
+document.addEventListener('click', function(event) {
+  const menu = document.getElementById('aswaSocialShareMenu');
+  if (menu && !menu.contains(event.target)) cerrarSocialMenu();
+});
+
+document.addEventListener('keydown', function(event) {
+  if (event.key === 'Escape') cerrarSocialMenu();
+});
+</script>
+
 </body>
 </html>
