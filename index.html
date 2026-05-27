@@ -99,6 +99,11 @@
     // ✅ Notificar que Firebase está lista
     // ── Helper: pedidos asignados a un deliverista (tiempo real) ──
     window.obtenerPedidosDeliverista = (deliverista, callback) => {
+      if (!esSesionDeliveryOperativa(deliverista)) {
+        console.warn('Acceso bloqueado: pedidos de deliverista requieren sesion operativa.');
+        callback([]);
+        return () => {};
+      }
       const q = query(
         collection(db, 'pedidos'),
         where('asignado_a', '==', deliverista),
@@ -111,6 +116,14 @@
 
     // ── Helper: estadísticas admin en tiempo real ──
     window.obtenerEstadisticasAdmin = (callback) => {
+      if (!esSesionAdminOperativa()) {
+        console.warn('Acceso bloqueado: estadisticas admin requieren sesion admin.');
+        callback({
+          total:0, hoy:0, pendientes:0, enCamino:0,
+          entregados:0, compartidos:0, ingresos:0, ingresosHoy:0
+        }, []);
+        return () => {};
+      }
       const q = query(collection(db, 'pedidos'), orderBy('fecha', 'desc'), limit(100));
       return onSnapshot(q, snap => {
         const pedidos = snap.docs.map(d => ({ id: d.id, ...d.data() }));
@@ -159,6 +172,19 @@
     let _admStatsUnsubscribe      = null;
     let _loginTarget              = null;
     let admAutenticado            = false;
+
+    function esSesionAdminOperativa() {
+      const role = sessionStorage.getItem('aswaRole');
+      return role === 'owner' || role === 'admin' || admAutenticado;
+    }
+
+    function esSesionDeliveryOperativa(deliverista = '') {
+      const role = sessionStorage.getItem('aswaRole');
+      const deliveryUser = sessionStorage.getItem('deliveryUser') || '';
+      return esSesionAdminOperativa() ||
+        role === 'delivery' ||
+        (!!deliveryUser && (!deliverista || deliveryUser === deliverista));
+    }
 
     // Numeros WhatsApp por defecto (se sobreescriben si existen en Firestore)
     const WA_CONFIG = window.ASWA_CONFIG?.WHATSAPP || {};
@@ -8512,6 +8538,11 @@ function admBuscar(q) {
    ADMIN — EXPORTAR CSV
 ══════════════════════════════════════ */
 async function admExportarCSV() {
+  if (!esSesionAdminOperativa()) {
+    tst('Acceso privado: inicia sesion admin para exportar.', 3200);
+    abrirAdmin();
+    return;
+  }
   tst('📥 Generando CSV...', 2000);
   try {
     const { collection:col, query:q, where:wh, getDocs:gd, orderBy:ob, limit:lm } = window.FB;
@@ -8542,6 +8573,11 @@ async function admExportarCSV() {
    ADMIN — CAMBIAR ESTADO PEDIDO
 ══════════════════════════════════════ */
 async function admCambiarEstado(pedidoId, nuevoEstado, telefono, nombre) {
+  if (!esSesionAdminOperativa()) {
+    tst('Acceso privado: inicia sesion admin para cambiar pedidos.', 3200);
+    abrirAdmin();
+    return;
+  }
   try {
     const { doc:d, updateDoc:ud, serverTimestamp:ts } = window.FB;
     await ud(d(db,'pedidos',pedidoId), { estado:nuevoEstado, updated_at:ts() });
@@ -8551,6 +8587,11 @@ async function admCambiarEstado(pedidoId, nuevoEstado, telefono, nombre) {
 }
 
 async function admEliminarPedido(pedidoId) {
+  if (!esSesionAdminOperativa()) {
+    tst('Acceso privado: inicia sesion admin para eliminar pedidos.', 3200);
+    abrirAdmin();
+    return;
+  }
   if (!confirm('¿Eliminar este pedido? Esta acción no se puede deshacer.')) return;
   try {
     const { doc:d, deleteDoc } = window.FB;
@@ -8564,6 +8605,11 @@ async function admEliminarPedido(pedidoId) {
    DELIVERISTA — LISTA TODOS LOS PEDIDOS
 ══════════════════════════════════════ */
 async function dlvCargarTodosPedidos() {
+  if (!esSesionDeliveryOperativa()) {
+    tst('Acceso privado: inicia sesion delivery para ver pedidos.', 3200);
+    abrirPanelDeliverista();
+    return;
+  }
   const cont = document.getElementById('dlvListaPedidos');
   if (!cont) return;
   cont.innerHTML = '<div style="text-align:center;padding:20px;color:var(--mut)">⏳ Cargando pedidos...</div>';
@@ -9312,6 +9358,7 @@ function cerrarAdmin() {
 
 function admCerrarSesion() {
   _sesionAdmin = null;
+  if (sessionStorage.getItem('aswaRole') === 'admin') sessionStorage.removeItem('aswaRole');
   _admMostrarFormLogin();
 }
 
@@ -9379,6 +9426,7 @@ async function admIniciarSesion() {
     // ✅ Login exitoso
     _admIntentos = 0;
     _sesionAdmin = { id: userDoc.id, username, nombre: userData.nombre || username, rol: 'admin', permisos: userData.permisos || {} };
+    sessionStorage.setItem('aswaRole', 'admin');
 
     // Registrar último login
     try {
@@ -9474,6 +9522,7 @@ function actualizarDots() {
 function verificarPin() {
   if (dlvPinIngresado === DELIVERY_PIN) {
     _sesionDelivery = { username:'delivery_pin', nombre:'Deliverista', rol:'delivery', permisos:{ tv:true } };
+    sessionStorage.setItem('aswaRole', 'delivery');
     sessionStorage.setItem('deliveryUser', 'delivery_pin');
     sessionStorage.setItem('deliveryName', 'Deliverista');
     document.querySelectorAll('.dlv-step').forEach(s => s.classList.remove('active'));
@@ -10093,6 +10142,7 @@ async function ownerLogin() {
   if (fallback?.role === 'owner' && fallback.password && fallback.password === password) {
     _ownerSesion = { username, nombre:fallback.name || 'Dueno', rol:'owner', permisos:{ super:true } };
     _sesionAdmin = { ..._ownerSesion, id:'owner-fallback' };
+    sessionStorage.setItem('aswaRole', 'owner');
     tst('Bienvenido al Panel Dueno', 2200);
     ownerMostrarDash();
     return;
@@ -10112,6 +10162,7 @@ async function ownerLogin() {
     if (!check.ok) return ownerError('Usuario o contrasena incorrectos');
     _ownerSesion = { id:userDoc.id, username, nombre:user.nombre || username, rol:'owner', permisos:{ ...(user.permisos || {}), super:true, owner:true } };
     _sesionAdmin = { ..._ownerSesion };
+    sessionStorage.setItem('aswaRole', 'owner');
     try {
       const update = { ultimo_login:ts(), intentos_fallidos:0 };
       if (check.legacy) {
@@ -10779,6 +10830,11 @@ async function admRenderCupones() {
 }
 
 async function admCargar() {
+  if (!esSesionAdminOperativa()) {
+    tst('Acceso privado: inicia sesion admin para ver pedidos.', 3200);
+    abrirAdmin();
+    return;
+  }
   ['Yape','Pedidos','Reservas','Stats','Clientes','Cupones','Chat'].forEach(t => {
     const el = document.getElementById('admContenido'+t);
     if (el) el.innerHTML = '<div class="adm-loading">⏳ Cargando...</div>';
@@ -12223,9 +12279,13 @@ function attemptLogin() {
 
   if (cred.role === 'admin') {
     admAutenticado = true;
+    sessionStorage.setItem('aswaRole', 'admin');
     abrirAdmin();
   } else {
     window._dlvNombre = cred.name;
+    sessionStorage.setItem('aswaRole', 'delivery');
+    sessionStorage.setItem('deliveryUser', username);
+    sessionStorage.setItem('deliveryName', cred.name || username);
     abrirPanelDeliverista();
   }
 }
@@ -12571,6 +12631,7 @@ async function loginDeliveryUser() {
       });
     }
 
+    sessionStorage.setItem('aswaRole', 'delivery');
     sessionStorage.setItem('deliveryUser', username);
     sessionStorage.setItem('deliveryName', userData.nombre || username);
     _sesionDelivery = { id: userDoc.id, username, nombre: userData.nombre || username, rol: 'delivery', permisos: userData.permisos || {} };
@@ -14335,7 +14396,7 @@ function registrarSW() {
   if (!('serviceWorker' in navigator)) return;
 
   const SW_CODE = `
-const CACHE_NAME = 'aswa-v15';
+const CACHE_NAME = 'aswa-v16';
 const SHELL = [
   './',
   './index.html'
