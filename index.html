@@ -7751,8 +7751,8 @@ function admBuscar(q) {
 async function admExportarCSV() {
   tst('📥 Generando CSV...', 2000);
   try {
-    const { collection:col, query:q, where:wh, getDocs:gd } = window.FB;
-    const snap = await gd(q(col(db,'pedidos'), wh('businessId','==',BUSINESS_ID)));
+    const { collection:col, query:q, where:wh, getDocs:gd, orderBy:ob, limit:lm } = window.FB;
+    const snap = await gd(q(col(db,'pedidos'), wh('businessId','==',BUSINESS_ID), ob('fecha','desc'), lm(500)));
     const rows = [['Fecha','Nombre','Teléfono','Dirección','Nota entrega','Zona','Productos','Total','Delivery','Oferta%','Pago','Estado','Nivel']];
     snap.docs.forEach(doc => {
       const d = doc.data();
@@ -9318,11 +9318,11 @@ async function admCargar() {
     const { collection:col, query:q, where:wh, getDocs:gd, orderBy:ob, limit:lm } = window.FB;
 
     // Yapes pendientes
-    const snapYape = await gd(q(col(db,'pedidos'), wh('businessId','==',BUSINESS_ID), wh('yape_estado','==','pendiente')));
+    const snapYape = await gd(q(col(db,'pedidos'), wh('businessId','==',BUSINESS_ID), wh('yape_estado','==','pendiente'), lm(50)));
     // Pedidos activos
-    const snapPed  = await gd(q(col(db,'pedidos'), wh('businessId','==',BUSINESS_ID), wh('estado','in',['Pendiente','en_camino'])));
-    // Todos los pedidos para stats
-    const snapTodos = await gd(q(col(db,'pedidos'), wh('businessId','==',BUSINESS_ID)));
+    const snapPed  = await gd(q(col(db,'pedidos'), wh('businessId','==',BUSINESS_ID), wh('estado','in',['Pendiente','en_camino']), lm(100)));
+    // Ãšltimos pedidos para stats del dashboard
+    const snapTodos = await gd(q(col(db,'pedidos'), wh('businessId','==',BUSINESS_ID), ob('fecha','desc'), lm(200)));
     // Clientes
     const snapCli  = await gd(q(col(db,'clientes'), wh('businessId','==',BUSINESS_ID)));
 
