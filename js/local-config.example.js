@@ -6,4 +6,9 @@ window.ASWA_CONFIG = {
     admin: 'change-me',
     delivery: 'change-me-too',
   },
+  OPERATOR_AUTH_EMAILS: {
+    owner: 'owner@example.com',
+    admin: 'admin@example.com',
+    delivery: 'delivery@example.com',
+  },
 };

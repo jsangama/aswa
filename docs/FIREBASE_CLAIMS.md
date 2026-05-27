@@ -55,6 +55,23 @@ Delivery:
 npm run claims:set -- --uid UID_DEL_USUARIO --role delivery --business aswa001
 ```
 
+## Conectar esos usuarios con la app
+
+En `js/local-config.js`, configura el usuario visible del panel con el email real de Firebase Auth:
+
+```js
+window.ASWA_CONFIG = {
+  ...(window.ASWA_CONFIG || {}),
+  OPERATOR_AUTH_EMAILS: {
+    owner: 'dueno@tudominio.com',
+    admin: 'admin@tudominio.com',
+    delivery: 'delivery1@tudominio.com',
+  },
+};
+```
+
+Luego entra al panel usando el usuario corto (`owner`, `admin` o `delivery`) y la contrasena del usuario Firebase Auth.
+
 ## Importante despues de asignar claims
 
 El usuario debe cerrar sesion y volver a entrar para que Firebase emita un token nuevo con los claims.
