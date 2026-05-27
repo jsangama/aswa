@@ -4132,6 +4132,10 @@
           <a id="nvGpsLink" href="#" target="_blank"
              style="color:#16a34a;font-weight:700;font-size:12px">Ver ubicación →</a>
         </div>
+        <div class="nc-row" id="nvNotaRow" style="display:none">
+          <span class="nc-lbl">Nota:</span>
+          <span class="nc-val" id="nvNota">—</span>
+        </div>
         <div class="nc-row">
           <span class="nc-lbl">Zona:</span>
           <span class="nc-val" id="nvZona">—</span>
@@ -6123,6 +6127,7 @@ async function enviarPedido() {
   lsSet('delivery', ST.delivery || 0);
   lsSet('raw', ST.raw || 0);
   lsSet('pago', ST.pago || 'Efectivo');
+  lsSet('nota_entrega', notaEntrega || '');
   if (ST.cli.nombre || ST.cli.nom) {
     lsSet('nombre', ST.cli.nom || ST.cli.nombre || '');
     lsSet('tel', ST.cli.tel || ST.cli.telefono || '');
@@ -6263,6 +6268,7 @@ function mostrarNotaVenta() {
   const nombre    = ST.cli.nom    || document.getElementById('nombre')?.value    || '—';
   const telefono  = ST.cli.tel    || document.getElementById('telefono')?.value  || '—';
   const direccion = document.getElementById('direccion')?.value || '—';
+  const notaEntrega = document.getElementById('notaEntrega')?.value.trim() || lsGet('nota_entrega') || '';
   const zonaEl    = document.getElementById('zona');
   const zonaText  = zonaEl?.options[zonaEl.selectedIndex]?.text || '—';
 
@@ -6271,6 +6277,12 @@ function mostrarNotaVenta() {
   document.getElementById('nvDireccion').textContent= direccion;
   document.getElementById('nvZona').textContent     = zonaText;
   document.getElementById('nvPago').textContent     = ST.pago || 'Efectivo';
+  const notaRow = document.getElementById('nvNotaRow');
+  const notaVal = document.getElementById('nvNota');
+  if (notaRow && notaVal) {
+    notaVal.textContent = notaEntrega || '—';
+    notaRow.style.display = notaEntrega ? 'flex' : 'none';
+  }
 
   // ── GPS ──
   if (ST.gpsUrl) {
@@ -6509,6 +6521,7 @@ function _generarHtmlNota() {
     <div class="cli-row"><span class="cli-lbl">Celular:</span><span class="cli-val">${document.getElementById('nvTelefono').textContent}</span></div>
     <div class="cli-row"><span class="cli-lbl">Dirección:</span><span class="cli-val">${document.getElementById('nvDireccion').textContent}</span></div>
     ${ST.gpsUrl ? `<div class="cli-row"><span class="cli-lbl">📍 GPS:</span><span class="cli-val"><a href="${ST.gpsUrl}" style="color:#16a34a;font-weight:700">Ver en Maps →</a></span></div>` : ''}
+    ${notaEntrega ? `<div class="cli-row"><span class="cli-lbl">Nota:</span><span class="cli-val">${esc(notaEntrega)}</span></div>` : ''}
     <div class="cli-row"><span class="cli-lbl">Zona:</span><span class="cli-val">${document.getElementById('nvZona').textContent}</span></div>
     <div class="cli-row"><span class="cli-lbl">Pago:</span><span class="cli-val">${document.getElementById('nvPago').textContent}</span></div>
     <div class="cli-row">
@@ -10168,6 +10181,7 @@ function downloadNotaPDF() {
     const tel  = document.getElementById('telefono')?.value  || ST.cli?.tel || '—';
     const nom  = document.getElementById('nombre')?.value    || ST.cli?.nom || '—';
     const dir  = document.getElementById('direccion')?.value || '—';
+    const nota = document.getElementById('notaEntrega')?.value.trim() || lsGet('nota_entrega') || '';
     const zonaEl = document.getElementById('zona');
     const zona = zonaEl?.options[zonaEl?.selectedIndex]?.text || '—';
 
@@ -10178,14 +10192,20 @@ function downloadNotaPDF() {
     doc.text(`Teléfono:  ${tel}`,  20, 58);
     doc.text(`Dirección: ${dir}`,  20, 64);
     doc.text(`Zona:      ${zona}`, 20, 70);
+    let clienteY = 74;
+    if (nota) {
+      const notaLineas = doc.splitTextToSize(`Nota: ${nota}`, 165);
+      doc.text(notaLineas, 20, clienteY);
+      clienteY += notaLineas.length * 5;
+    }
     doc.setDrawColor(60,60,60);
-    doc.line(20, 74, 190, 74);
+    doc.line(20, clienteY, 190, clienteY);
 
     // Detalle de productos
     doc.setFontSize(10); doc.setFont(undefined,'bold');
-    doc.text('DETALLE', 20, 82);
+    doc.text('DETALLE', 20, clienteY + 8);
     doc.setFont(undefined,'normal'); doc.setFontSize(9);
-    let y = 90;
+    let y = clienteY + 16;
     if (ST.cart.p2l > 0) { doc.text(`Chicha ASWA 2L × ${ST.cart.p2l}`, 20, y); doc.text(`S/ ${(ST.cart.p2l*ST.precio.p2l).toFixed(2)}`,  170, y, {align:'right'}); y += 7; }
     if (ST.cart.p3l > 0) { doc.text(`Chicha ASWA 3L × ${ST.cart.p3l}`, 20, y); doc.text(`S/ ${(ST.cart.p3l*ST.precio.p3l).toFixed(2)}`, 170, y, {align:'right'}); y += 7; }
     if (ST.cart.p4l > 0) { doc.text(`Chicha ASWA 4L × ${ST.cart.p4l}`, 20, y); doc.text(`S/ ${(ST.cart.p4l*ST.precio.p4l).toFixed(2)}`, 170, y, {align:'right'}); y += 7; }
