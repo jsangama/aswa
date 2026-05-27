@@ -5761,14 +5761,54 @@ document.getElementById('codigoUsado').addEventListener('input', e => {
 });
 
 /* ── RESUMEN ── */
+function marcarCampoPedido(id, msg) {
+  const el = document.getElementById(id);
+  if (!el) {
+    tst(msg, 3200);
+    return false;
+  }
+  el.style.borderColor = 'var(--red)';
+  el.style.boxShadow = '0 0 0 3px rgba(239,68,68,.18)';
+  el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  setTimeout(() => el.focus?.(), 250);
+  setTimeout(() => {
+    el.style.borderColor = '';
+    el.style.boxShadow = '';
+  }, 2800);
+  tst(msg, 3200);
+  return false;
+}
+
+function marcarZonaPedido(msg) {
+  const grid = document.getElementById('zonaQuickGrid');
+  if (grid) {
+    grid.style.border = '1px solid var(--red)';
+    grid.style.borderRadius = '14px';
+    grid.style.padding = '4px';
+    grid.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    setTimeout(() => {
+      grid.style.border = '';
+      grid.style.borderRadius = '';
+      grid.style.padding = '';
+    }, 2800);
+  }
+  tst(msg, 3200);
+  return false;
+}
+
 function abrirResumen() {
   if (ST.final <= 0)    return tst('Selecciona al menos un producto 🛒');
   const tel = document.getElementById('telefono').value.trim();
   const nom = document.getElementById('nombre').value.trim();
+  const dir = document.getElementById('direccion').value.trim();
   const dis = document.getElementById('zona').value;
-  if (tel.length !== 9) return tst('Ingresa tu número de teléfono 📱');
-  if (!nom)             return tst('Ingresa tu nombre completo');
-  if (!dis)             return tst('Selecciona tu zona de entrega 📍');
+  const zonaEl = document.getElementById('zona');
+  const zonaTxt = zonaEl?.options[zonaEl.selectedIndex]?.text || '';
+  const requiereDireccion = !/recojo/i.test(zonaTxt);
+  if (!/^\d{9}$/.test(tel))       return marcarCampoPedido('telefono', 'Ingresa un telefono valido de 9 digitos');
+  if (!nom)                       return marcarCampoPedido('nombre', 'Ingresa tu nombre completo');
+  if (!dis)                       return marcarZonaPedido('Selecciona tu zona de entrega');
+  if (requiereDireccion && dir.length < 6) return marcarCampoPedido('direccion', 'Ingresa tu direccion o una referencia de entrega');
 
   // ── Pago digital requiere comprobante antes de continuar ──
   const esDigitalPago = ST.pago !== 'Efectivo';
