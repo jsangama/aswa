@@ -147,6 +147,7 @@
     // 🔐 CREDENCIALES — login modal rápido (complementa el sistema Firestore)
     // ⚠️ CAMBIAR antes de producción
     const CREDENTIALS = {
+      owner:    { password: window.ASWA_CONFIG?.ADMIN_CREDENTIALS?.owner || '',    role: 'owner',    name: 'Dueno' },
       admin:    { password: window.ASWA_CONFIG?.ADMIN_CREDENTIALS?.admin || '',    role: 'admin',    name: 'Administrador' },
       delivery: { password: window.ASWA_CONFIG?.ADMIN_CREDENTIALS?.delivery || '', role: 'delivery', name: 'Deliverista'   }
     };
@@ -2327,6 +2328,7 @@
       background:var(--bg); color:var(--txt); cursor:pointer; font-family:'Poppins',sans-serif;
       font-size:12px; font-weight:800; text-align:center;
     }
+    .quick-access-item.owner { grid-column:1 / -1; color:#e9d5ff; border-color:rgba(168,85,247,.34); background:rgba(168,85,247,.1); }
     .quick-access-item.admin { color:#fde68a; border-color:rgba(250,204,21,.28); }
     .quick-access-item.delivery { color:#86efac; border-color:rgba(34,197,94,.28); }
     .quick-access-item.tv { grid-column:1 / -1; color:#facc15; border-color:rgba(250,204,21,.36); background:rgba(250,204,21,.08); }
@@ -2437,6 +2439,7 @@
 <div class="quick-access-panel" id="modalAccesoRapido">
   <div class="quick-access-title">Acceso rapido</div>
   <div class="quick-access-grid">
+    <button class="quick-access-item owner" onclick="abrirPanelDuenoDirecto()" type="button">Dueno</button>
     <button class="quick-access-item admin" onclick="abrirPanelAdminDirecto()" type="button">⚙️ Admin</button>
     <button class="quick-access-item delivery" onclick="abrirPanelDeliveryDirecto()" type="button">🏍️ Delivery</button>
   </div>
@@ -9445,8 +9448,8 @@ async function admAbrirGestionUsuarios() {
     const snap = await gd(q(col(db,'app_users'), wh('business_id','==',BUSINESS_ID)));
     const usuarios = snap.docs.map(d => ({ id:d.id, ...d.data() }));
 
-    const rolColor = { admin:'#c4b5fd', delivery:'#93c5fd' };
-    const rolBg    = { admin:'rgba(168,85,247,.15)', delivery:'rgba(59,130,246,.15)' };
+    const rolColor = { owner:'#e9d5ff', admin:'#c4b5fd', delivery:'#93c5fd' };
+    const rolBg    = { owner:'rgba(168,85,247,.22)', admin:'rgba(168,85,247,.15)', delivery:'rgba(59,130,246,.15)' };
 
     cont.innerHTML = `
       <button onclick="admCargarClientes()" style="background:transparent;border:none;color:var(--mut);font-size:12px;cursor:pointer;font-family:Poppins,sans-serif;margin-bottom:12px;padding:0">← Volver a clientes</button>
@@ -9578,6 +9581,7 @@ async function crearUsuariosDefault() {
   try {
     const { collection:col, addDoc:ad, serverTimestamp:ts } = window.FB;
     const usuarios = [
+      { username:'owner',     nombre:'Dueno ASWA',      rol:'owner',    password:'Owner1234!',    permisos:{ owner:true, super:true, ver_stats:true, ver_clientes:true, exportar:true } },
       { username:'admin',     nombre:'Administrador',  rol:'admin',    password:'Admin1234!',    permisos:{ super:true, ver_stats:true, ver_clientes:true, exportar:true } },
       { username:'delivery1', nombre:'Repartidor 1',   rol:'delivery', password:'Delivery1234!', permisos:{} },
     ];
@@ -9813,6 +9817,217 @@ function abrirPanelAdminDirecto() {
 function abrirPanelDeliveryDirecto() {
   cerrarAccesoRapido();
   abrirPanelDeliverista();
+}
+
+function abrirPanelDuenoDirecto() {
+  cerrarAccesoRapido();
+  abrirPanelDueno();
+}
+
+let _ownerSesion = null;
+
+function abrirPanelDueno() {
+  let modal = document.getElementById('ownerModal');
+  if (!modal) {
+    document.body.insertAdjacentHTML('beforeend', `
+      <div id="ownerModal" style="display:none;position:fixed;inset:0;z-index:1750;background:rgba(0,0,0,.94);backdrop-filter:blur(12px);align-items:center;justify-content:center;padding:18px">
+        <div style="width:min(960px,100%);max-height:92vh;overflow:auto;background:var(--s1);border:1px solid rgba(168,85,247,.34);border-radius:22px;box-shadow:0 28px 90px rgba(0,0,0,.7)">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:18px 20px;border-bottom:1px solid var(--brd)">
+            <div>
+              <div style="font-family:'Bebas Neue',cursive;font-size:28px;color:#e9d5ff;letter-spacing:.08em">PANEL DUENO</div>
+              <div style="font-size:11px;color:var(--mut)">Control privado de ventas, pedidos, reservas y usuarios</div>
+            </div>
+            <button onclick="cerrarPanelDueno()" style="background:#ef4444;color:#fff;border:none;border-radius:12px;padding:10px 14px;font-weight:900;cursor:pointer">Salir</button>
+          </div>
+          <div id="ownerLoginStep" style="padding:20px">
+            <div style="max-width:360px;margin:auto">
+              <label style="font-size:10px;font-weight:800;color:var(--mut);text-transform:uppercase;letter-spacing:.1em">Usuario dueno</label>
+              <input id="ownerUser" class="inp" autocomplete="off" autocapitalize="none" placeholder="owner o tu usuario" style="margin:6px 0 12px">
+              <label style="font-size:10px;font-weight:800;color:var(--mut);text-transform:uppercase;letter-spacing:.1em">Contrasena</label>
+              <input id="ownerPass" type="password" class="inp" autocomplete="current-password" placeholder="********" style="margin:6px 0 12px" onkeydown="if(event.key==='Enter')ownerLogin()">
+              <div id="ownerError" style="display:none;background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.3);border-radius:10px;padding:10px;font-size:12px;color:#fca5a5;margin-bottom:10px"></div>
+              <button onclick="ownerLogin()" style="width:100%;background:#a855f7;color:#fff;border:none;border-radius:12px;padding:14px;font-size:14px;font-weight:900;cursor:pointer">Ingresar como dueno</button>
+            </div>
+          </div>
+          <div id="ownerDashStep" style="display:none;padding:18px">
+            <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px">
+              <button onclick="ownerCargar()" style="background:var(--y);color:#000;border:none;border-radius:10px;padding:10px 14px;font-size:12px;font-weight:900;cursor:pointer">Actualizar</button>
+              <button onclick="ownerAbrirAdmin()" style="background:rgba(250,204,21,.12);color:#fde68a;border:1px solid rgba(250,204,21,.28);border-radius:10px;padding:10px 14px;font-size:12px;font-weight:900;cursor:pointer">Abrir Admin</button>
+              <button onclick="abrirDashboardTV()" style="background:rgba(59,130,246,.14);color:#bfdbfe;border:1px solid rgba(59,130,246,.3);border-radius:10px;padding:10px 14px;font-size:12px;font-weight:900;cursor:pointer">TV real</button>
+              <button onclick="ownerGestionUsuarios()" style="background:rgba(168,85,247,.14);color:#e9d5ff;border:1px solid rgba(168,85,247,.34);border-radius:10px;padding:10px 14px;font-size:12px;font-weight:900;cursor:pointer">Usuarios</button>
+            </div>
+            <div id="ownerResumen"></div>
+            <div id="ownerDetalle" style="margin-top:14px"></div>
+          </div>
+        </div>
+      </div>
+    `);
+  }
+  modal = document.getElementById('ownerModal');
+  modal.style.display = 'flex';
+  if (_ownerSesion) ownerMostrarDash();
+  else ownerMostrarLogin();
+}
+
+function cerrarPanelDueno() {
+  const modal = document.getElementById('ownerModal');
+  if (modal) modal.style.display = 'none';
+}
+
+function ownerMostrarLogin() {
+  document.getElementById('ownerLoginStep').style.display = 'block';
+  document.getElementById('ownerDashStep').style.display = 'none';
+  document.getElementById('ownerError').style.display = 'none';
+  setTimeout(() => document.getElementById('ownerUser')?.focus(), 100);
+}
+
+function ownerMostrarDash() {
+  document.getElementById('ownerLoginStep').style.display = 'none';
+  document.getElementById('ownerDashStep').style.display = 'block';
+  ownerCargar();
+}
+
+function ownerError(msg) {
+  const el = document.getElementById('ownerError');
+  if (!el) return;
+  el.textContent = msg;
+  el.style.display = 'block';
+}
+
+async function ownerLogin() {
+  const username = document.getElementById('ownerUser')?.value.trim().toLowerCase() || '';
+  const password = document.getElementById('ownerPass')?.value || '';
+  if (!username || !password) return ownerError('Completa usuario y contrasena');
+
+  const fallback = window.CREDENTIALS?.[username];
+  if (fallback?.role === 'owner' && fallback.password && fallback.password === password) {
+    _ownerSesion = { username, nombre:fallback.name || 'Dueno', rol:'owner', permisos:{ super:true } };
+    _sesionAdmin = { ..._ownerSesion, id:'owner-fallback' };
+    tst('Bienvenido al Panel Dueno', 2200);
+    ownerMostrarDash();
+    return;
+  }
+
+  try {
+    await esperarFB();
+    const { collection:col, query:q, where:wh, getDocs:gd, doc:d, updateDoc:ud, serverTimestamp:ts } = window.FB;
+    const snap = await gd(q(col(db,'app_users'), wh('business_id','==',BUSINESS_ID), wh('username','==',username)));
+    if (snap.empty) return ownerError('Usuario o contrasena incorrectos');
+    const userDoc = snap.docs[0];
+    const user = userDoc.data();
+    const esDueno = user.rol === 'owner' || user.permisos?.owner === true || user.permisos?.super === true || username === 'admin';
+    if (!esDueno) return ownerError('Este usuario no tiene permiso de dueno');
+    if (user.activo === false) return ownerError('Usuario desactivado');
+    const check = await _verificarPasswordHash(user.password_hash, password, username);
+    if (!check.ok) return ownerError('Usuario o contrasena incorrectos');
+    _ownerSesion = { id:userDoc.id, username, nombre:user.nombre || username, rol:'owner', permisos:{ ...(user.permisos || {}), super:true, owner:true } };
+    _sesionAdmin = { ..._ownerSesion };
+    try {
+      const update = { ultimo_login:ts(), intentos_fallidos:0 };
+      if (check.legacy) {
+        update.password_hash = check.hash;
+        update.password_hash_version = 'salted-v1';
+      }
+      await ud(d(db,'app_users',userDoc.id), update);
+    } catch (_) {}
+    tst('Bienvenido, ' + _ownerSesion.nombre, 2200);
+    ownerMostrarDash();
+  } catch (err) {
+    console.error('ownerLogin:', err);
+    ownerError('No se pudo verificar. Revisa Firebase o internet.');
+  }
+}
+
+function ownerFechaLocal(fecha) {
+  return new Intl.DateTimeFormat('en-CA', { timeZone:'America/Lima', year:'numeric', month:'2-digit', day:'2-digit' }).format(fecha);
+}
+
+function ownerEsHoy(timestamp) {
+  const d = timestamp?.seconds ? new Date(timestamp.seconds * 1000) : new Date(timestamp || 0);
+  return ownerFechaLocal(d) === ownerFechaLocal(new Date());
+}
+
+function ownerCard(label, value, color = '#facc15', sub = '') {
+  return `<div style="background:#111827;border:1px solid var(--brd);border-radius:14px;padding:14px;min-height:92px">
+    <div style="font-size:11px;color:var(--mut);text-transform:uppercase;letter-spacing:.08em">${label}</div>
+    <div style="font-family:'Bebas Neue',cursive;font-size:34px;color:${color};letter-spacing:.04em;line-height:1.1">${value}</div>
+    ${sub ? `<div style="font-size:11px;color:var(--mut);line-height:1.4">${sub}</div>` : ''}
+  </div>`;
+}
+
+async function ownerCargar() {
+  const resumen = document.getElementById('ownerResumen');
+  const detalle = document.getElementById('ownerDetalle');
+  if (!resumen || !detalle) return;
+  resumen.innerHTML = '<div style="color:var(--mut);font-size:13px;padding:12px">Cargando datos reales...</div>';
+  detalle.innerHTML = '';
+  try {
+    await esperarFB();
+    const { collection:col, query:q, where:wh, getDocs:gd, limit:lim } = window.FB;
+    const [pedSnap, cliSnap, userSnap, pushSnap] = await Promise.all([
+      gd(q(col(db,'pedidos'), wh('businessId','==',BUSINESS_ID), lim(200))),
+      gd(q(col(db,'clientes'), wh('businessId','==',BUSINESS_ID), lim(200))),
+      gd(q(col(db,'app_users'), wh('business_id','==',BUSINESS_ID), lim(80))),
+      gd(q(col(db,'push_queue'), wh('businessId','==',BUSINESS_ID), lim(80))).catch(() => ({ docs:[] }))
+    ]);
+    const pedidos = pedSnap.docs.map(d => ({ id:d.id, ...d.data() }));
+    const clientes = cliSnap.docs.map(d => ({ id:d.id, ...d.data() }));
+    const usuarios = userSnap.docs.map(d => ({ id:d.id, ...d.data() }));
+    const push = pushSnap.docs.map(d => ({ id:d.id, ...d.data() }));
+    const hoy = ownerFechaLocal(new Date());
+    const pedidosHoy = pedidos.filter(p => ownerEsHoy(p.fecha));
+    const ventasHoy = pedidosHoy.reduce((s,p) => s + (Number(p.total) || 0), 0);
+    const pendientes = pedidos.filter(p => ['Pendiente','preparando','en_camino'].includes(p.estado)).length;
+    const pagosPend = pedidos.filter(p => p.yape_estado === 'pendiente').length;
+    const reservasHoy = pedidos.filter(p => p.es_reserva && p.reserva_fecha === hoy).length;
+    const reservasFuturas = pedidos.filter(p => p.es_reserva && p.reserva_fecha && p.reserva_fecha > hoy).length;
+    const alertasPend = push.filter(p => p.estado === 'pendiente').length;
+
+    resumen.innerHTML = `<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px">
+      ${ownerCard('Ventas hoy', 'S/ ' + ventasHoy.toFixed(2), '#facc15', pedidosHoy.length + ' pedido(s) hoy')}
+      ${ownerCard('Pedidos activos', pendientes, '#60a5fa', 'Pendiente, preparando o en camino')}
+      ${ownerCard('Pagos por aprobar', pagosPend, '#f97316', 'Comprobantes digitales')}
+      ${ownerCard('Reservas hoy', reservasHoy, '#e9d5ff', reservasFuturas + ' futura(s)')}
+      ${ownerCard('Clientes', clientes.length, '#34d399', 'Base real del negocio')}
+      ${ownerCard('Usuarios', usuarios.length, '#c4b5fd', 'Admin, delivery y dueno')}
+      ${ownerCard('Alertas reserva', alertasPend, '#fca5a5', 'Cola push pendiente')}
+    </div>`;
+
+    const proximas = pedidos
+      .filter(p => p.es_reserva && p.reserva_fecha)
+      .sort((a,b) => String(a.reserva_iso || '').localeCompare(String(b.reserva_iso || '')))
+      .slice(0, 8);
+    detalle.innerHTML = `
+      <div style="background:#0f172a;border:1px solid var(--brd);border-radius:14px;padding:14px">
+        <div style="font-size:14px;font-weight:900;color:#fff;margin-bottom:10px">Proximas reservas</div>
+        ${proximas.length ? proximas.map(p => `
+          <div style="display:flex;justify-content:space-between;gap:10px;border-top:1px solid var(--brd);padding:10px 0;font-size:12px">
+            <div><strong>${esc(p.nombre || 'Cliente')}</strong><br><span style="color:var(--mut)">${esc(p.telefono || '')} · ${esc(p.reserva_texto || '')}</span></div>
+            <div style="text-align:right;color:var(--y);font-weight:900">S/ ${(Number(p.total)||0).toFixed(2)}<br><span style="color:var(--mut);font-weight:700">${esc(p.pago || '')}</span></div>
+          </div>`).join('') : '<div style="color:var(--mut);font-size:12px">No hay reservas programadas.</div>'}
+      </div>`;
+  } catch (err) {
+    console.error('ownerCargar:', err);
+    resumen.innerHTML = '<div style="background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.3);border-radius:12px;padding:12px;color:#fca5a5;font-size:12px">No se pudo cargar el Panel Dueno. Revisa conexion/Firebase.</div>';
+  }
+}
+
+function ownerAbrirAdmin() {
+  cerrarPanelDueno();
+  abrirAdmin();
+}
+
+function ownerGestionUsuarios() {
+  cerrarPanelDueno();
+  abrirAdmin();
+  setTimeout(() => {
+    try {
+      admTab('clientes');
+      setTimeout(admAbrirGestionUsuarios, 500);
+    } catch (err) {
+      console.warn('ownerGestionUsuarios:', err);
+    }
+  }, 500);
 }
 
 function asegurarBotonTVRapido() {
