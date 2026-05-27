@@ -5752,12 +5752,21 @@ document.getElementById('codigoUsado').addEventListener('input', e => {
     try {
       const { query:q, collection:col, where:wh, getDocs:gd } = window.FB;
       const snap = await gd(q(col(db,'clientes'), wh('businessId','==',BUSINESS_ID), wh('codigo_referido','==',cod)));
-      if (!snap.empty && snap.docs[0].id !== ST.cli.id) {
-        el.textContent='✓ +5%'; el.style.color='var(--grn)'; ST.disc.ref=5;
-      } else if (snap.docs[0]?.id === ST.cli.id) {
+      if (snap.empty) {
+        el.textContent='✗ Inválido'; el.style.color='var(--red)'; ST.disc.ref=0;
+      } else if (snap.docs[0].id === ST.cli.id) {
         el.textContent='⚠ Tu código'; el.style.color='#f59e0b'; ST.disc.ref=0;
       } else {
-        el.textContent='✗ Inválido'; el.style.color='var(--red)'; ST.disc.ref=0;
+        const telActual = ST.cli.tel || document.getElementById('telefono')?.value.trim() || '';
+        const miSnap = await gd(q(col(db,'clientes'), wh('businessId','==',BUSINESS_ID), wh('telefono','==',telActual)));
+        const esPrimerPedido = miSnap.empty || (miSnap.docs[0].data().pedidos_totales || 0) === 0;
+        if (!esPrimerPedido) {
+          el.textContent='⚠ Solo primer pedido'; el.style.color='#f59e0b'; ST.disc.ref=0;
+        } else if ((snap.docs[0].data().referidos || []).includes(telActual)) {
+          el.textContent='✗ Ya usado'; el.style.color='var(--red)'; ST.disc.ref=0;
+        } else {
+          el.textContent='✓ +5%'; el.style.color='var(--grn)'; ST.disc.ref=5;
+        }
       }
     } catch { el.textContent=''; ST.disc.ref=0; }
     calcTotal();
@@ -6060,6 +6069,9 @@ async function enviarPedido() {
 
     // 2. Upsert cliente
     const snapC = await gd(q(col(db,'clientes'), wh('businessId','==',BUSINESS_ID), wh('telefono','==',telefono)));
+    const clienteDoc = snapC.empty ? null : snapC.docs[0];
+    const clientePrevio = clienteDoc?.data() || {};
+    const esClienteNuevo = !clienteDoc || (clientePrevio.pedidos_totales || 0) === 0;
     const codFin = ST.cli.cod || await genCod();
     const cdata  = {
       businessId: BUSINESS_ID,
@@ -6071,28 +6083,42 @@ async function enviarPedido() {
       codigo_referido: codFin,
       bonos_activos:   ST.cli.bonos || []
     };
-    if (!snapC.empty) await ud(d(db,'clientes',snapC.docs[0].id), cdata);
-    else              await ad(col(db,'clientes'), cdata);
-
-    // 3. Aplicar bono al referidor
-    if (codigoUsado && ST.disc.ref > 0) {
+    // 3. Aplicar bono al referidor y al cliente nuevo
+    if (codigoUsado && ST.disc.ref > 0 && esClienteNuevo) {
       const snapR = await gd(q(col(db,'clientes'), wh('businessId','==',BUSINESS_ID), wh('codigo_referido','==',codigoUsado)));
       if (!snapR.empty) {
         const rd  = snapR.docs[0].data();
+        const referidos = rd.referidos || [];
+        const yaRegistrado = referidos.includes(telefono);
+        const ahora = new Date().toISOString();
         // Referidos: válido 2 meses completos (renovable solo para nuevos clientes)
         const exp = new Date();
         exp.setMonth(exp.getMonth() + 2);
         exp.setDate(0); // último día del mes de vencimiento
         exp.setHours(23, 59, 59, 0);
-        await ud(d(db,'clientes',snapR.docs[0].id), {
-          bonos_activos: [...(rd.bonos_activos||[]), {
-            tipo:'referido', valor:5, origen:telefono,
-            fecha: new Date().toISOString(), expira: exp.toISOString()
-          }],
-          referidos: [...(rd.referidos||[]), telefono]
-        });
+        const expira = exp.toISOString();
+        if (!yaRegistrado) {
+          const bonosReferidor = (rd.bonos_activos||[])
+            .filter(b => !b.expira || new Date(b.expira) > new Date());
+          bonosReferidor.push({
+            tipo:'referido', valor:5, origen:telefono, nombre_origen:nombre,
+            fecha: ahora, expira
+          });
+          await ud(d(db,'clientes',snapR.docs[0].id), {
+            bonos_activos: bonosReferidor,
+            referidos: [...referidos, telefono]
+          });
+          cdata.bonos_activos = (cdata.bonos_activos||[])
+            .filter(b => !b.expira || new Date(b.expira) > new Date());
+          cdata.bonos_activos.push({
+            tipo:'primer_referido', valor:5, origen:codigoUsado,
+            fecha: ahora, expira
+          });
+        }
       }
     }
+    if (clienteDoc) await ud(d(db,'clientes',clienteDoc.id), cdata);
+    else            await ad(col(db,'clientes'), cdata);
 
   } catch(err) {
     console.error('Firebase error:', err);
