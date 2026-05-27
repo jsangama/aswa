@@ -2797,13 +2797,20 @@
       <div class="reserva-card">
         <label class="reserva-toggle">
           <input type="checkbox" id="regaloActiva" onchange="actualizarRegaloUI(); actualizarReservaUI();">
-          <span>Enviar como regalo a un amigo o familiar</span>
+          <span>Enviar como regalo a alguien especial</span>
         </label>
         <div id="regaloDetalle" style="display:none;margin-top:10px">
+          <select id="regaloRelacion" class="inp">
+            <option value="Amigo(a)">Amigo(a)</option>
+            <option value="Familiar">Familiar</option>
+            <option value="Pareja">Pareja</option>
+            <option value="Esposo(a)">Esposo(a)</option>
+            <option value="Enamorado(a)">Enamorado(a)</option>
+          </select>
           <input type="text" id="regaloNombre" class="inp" maxlength="80" placeholder="Nombre de quien recibe">
           <input type="tel" id="regaloTelefono" class="inp" maxlength="9" inputmode="numeric" placeholder="Telefono de quien recibe" style="margin-top:8px">
-          <textarea id="regaloMensaje" class="inp" maxlength="140" rows="2" placeholder="Mensaje corto para la tarjeta (opcional)" style="margin-top:8px;resize:vertical;min-height:58px;line-height:1.5"></textarea>
-          <div class="reserva-info warn">Los regalos deben pagarse antes con Yape, Plin, Agora, BIM o transferencia. No aplica efectivo.</div>
+          <textarea id="regaloMensaje" class="inp" maxlength="140" rows="2" placeholder="Mensaje corto para la tarjeta (opcional). Ej: Con carino para mi esposa." style="margin-top:8px;resize:vertical;min-height:58px;line-height:1.5"></textarea>
+          <div class="reserva-info warn">Regalos para amigo(a), familiar, pareja, esposo(a) o enamorado(a) deben pagarse antes con Yape, Plin, Agora, BIM o transferencia. No aplica efectivo.</div>
         </div>
       </div>
     </div>
@@ -5470,6 +5477,7 @@ function actualizarRegaloUI() {
 function obtenerPedidoRegalo(mostrarErrores = false) {
   const activa = pedidoRegaloActivo();
   if (!activa) return { ok:true, activo:false };
+  const relacion = sanitizeInput(document.getElementById('regaloRelacion')?.value || 'Amigo(a)', 40);
   const nombre = sanitizeInput(document.getElementById('regaloNombre')?.value || '', 80);
   const telefono = sanitizeInput(document.getElementById('regaloTelefono')?.value || '', 15);
   const mensaje = sanitizeInput(document.getElementById('regaloMensaje')?.value || '', 140);
@@ -5480,7 +5488,7 @@ function obtenerPedidoRegalo(mostrarErrores = false) {
   if (ST.pago === 'Efectivo') return fail('Los regalos solo se aceptan con pago anticipado. Cambia el metodo de pago.', 'regaloActiva');
   if (!nombre) return fail('Ingresa el nombre de la persona que recibe el regalo.', 'regaloNombre');
   if (!/^\d{9}$/.test(telefono)) return fail('Ingresa un telefono valido de 9 digitos para quien recibe.', 'regaloTelefono');
-  return { ok:true, activo:true, nombre, telefono, mensaje };
+  return { ok:true, activo:true, relacion, nombre, telefono, mensaje };
 }
 
 function pedidoEspecialRequierePagoDigital() {
@@ -6729,7 +6737,7 @@ async function enviarPedido() {
     +(notaEntrega ? '📝 *Nota:* '+notaEntrega+'\n' : '')
     +(ST.gpsUrl ? '📡 *GPS:* '+ST.gpsUrl+'\n' : '')
     +(reservaPedido.activa ? 'Reserva programada: '+reservaPedido.texto+'\n' : '')
-    +(regaloPedido.activo ? 'REGALO PARA: '+regaloPedido.nombre+' - '+regaloPedido.telefono+'\n' : '')
+    +(regaloPedido.activo ? 'REGALO PARA ('+regaloPedido.relacion+'): '+regaloPedido.nombre+' - '+regaloPedido.telefono+'\n' : '')
     +(regaloPedido.activo && regaloPedido.mensaje ? 'Mensaje regalo: '+regaloPedido.mensaje+'\n' : '')
     +'Distancia planta-cliente: '+distanciaRuta.texto+'\n'
     +(zonaTexto.includes('gencia') || zonaTexto.includes('nacional')
@@ -6821,7 +6829,7 @@ async function enviarPedido() {
       reserva_estado: reservaPedido.activa ? 'programada' : null,
       reserva_alertas_cliente: reservaPedido.activa ? reservaAlertasMeta(reservaPedido) : null,
       es_regalo:      !!regaloPedido.activo,
-      regalo_para:    regaloPedido.activo ? { nombre: regaloPedido.nombre, telefono: regaloPedido.telefono, mensaje: regaloPedido.mensaje || '' } : null,
+      regalo_para:    regaloPedido.activo ? { relacion: regaloPedido.relacion, nombre: regaloPedido.nombre, telefono: regaloPedido.telefono, mensaje: regaloPedido.mensaje || '' } : null,
       pago_anticipado_obligatorio: !!(reservaPedido.activa || regaloPedido.activo),
       planta_coords:  distanciaRuta.planta || null,
       distancia_planta_m: distanciaRuta.metros,
@@ -10959,7 +10967,9 @@ function admRenderReservas(docs) {
 
 function pedidoRegaloHtml(d) {
   if (!d?.es_regalo || !d.regalo_para) return '';
-  const r = d.regalo_para || {};
+  const r = { ...(d.regalo_para || {}) };
+  const relacion = r.relacion || 'alguien especial';
+  r.nombre = `${relacion} - ${r.nombre || ''}`;
   return `<div style="background:rgba(236,72,153,.1);border:1px solid rgba(236,72,153,.28);border-radius:8px;padding:8px 12px;font-size:12px;color:#f9a8d4;font-weight:800;margin-bottom:8px">Regalo para: ${esc(r.nombre || '—')} · ${esc(r.telefono || '—')}${r.mensaje ? '<br><span style="color:#fbcfe8">Mensaje: ' + esc(r.mensaje) + '</span>' : ''}</div>`;
 }
 
@@ -14273,7 +14283,7 @@ function registrarSW() {
   if (!('serviceWorker' in navigator)) return;
 
   const SW_CODE = `
-const CACHE_NAME = 'aswa-v13';
+const CACHE_NAME = 'aswa-v14';
 const SHELL = [
   './',
   './index.html'
