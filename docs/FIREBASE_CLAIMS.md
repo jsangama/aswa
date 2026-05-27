@@ -37,6 +37,30 @@ $env:FIREBASE_SERVICE_ACCOUNT="C:\ruta\segura\service-account-aswa.json"
 
 ## Asignar roles
 
+Puedes crear/actualizar el usuario y asignar claims en un solo comando:
+
+Dueno:
+
+```bash
+npm run operators:upsert -- --email dueno@aswa.pe --password "CambiaEstaClave123!" --role owner --business aswa001 --name "Dueno ASWA" --username owner
+```
+
+Admin:
+
+```bash
+npm run operators:upsert -- --email admin@aswa.pe --password "CambiaEstaClave123!" --role admin --business aswa001 --name "Admin ASWA" --username admin
+```
+
+Delivery:
+
+```bash
+npm run operators:upsert -- --email delivery1@aswa.pe --password "CambiaEstaClave123!" --role delivery --business aswa001 --name "Delivery 1" --username delivery
+```
+
+Si el usuario ya existe y quieres cambiar solo claims/nombre, puedes omitir `--password`.
+
+Tambien puedes asignar claims a un UID existente:
+
 Dueno:
 
 ```bash
