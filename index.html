@@ -9640,9 +9640,10 @@ async function escucharPedidosTVFallback() {
 
 function renderDashboardTV(pedidos) {
   const hoy = reservaFechaLimaISO();
-  const pendientes = pedidos.filter(p => p.estado === 'Pendiente').length;
-  const preparando = pedidos.filter(p => p.estado === 'preparando').length;
-  const enCamino = pedidos.filter(p => p.estado === 'en_camino').length;
+  const pedidosTV = pedidos.filter(p => !p.es_reserva || !p.reserva_fecha || p.reserva_fecha <= hoy);
+  const pendientes = pedidosTV.filter(p => p.estado === 'Pendiente').length;
+  const preparando = pedidosTV.filter(p => p.estado === 'preparando').length;
+  const enCamino = pedidosTV.filter(p => p.estado === 'en_camino').length;
   const reservasHoy = pedidos.filter(p => p.es_reserva && p.reserva_fecha === hoy).length;
   const set = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
   set('tvPendientes', pendientes);
@@ -9653,21 +9654,27 @@ function renderDashboardTV(pedidos) {
   const estado = document.getElementById('tvEstado');
   const lista = document.getElementById('tvLista');
   if (!lista) return;
-  if (!pedidos.length) {
-    if (estado) { estado.style.display = 'block'; estado.textContent = 'Sin pedidos activos reales en Firebase.'; }
+  if (!pedidosTV.length) {
+    const futuras = pedidos.filter(p => p.es_reserva && p.reserva_fecha && p.reserva_fecha > hoy).length;
+    if (estado) {
+      estado.style.display = 'block';
+      estado.textContent = futuras
+        ? `Sin pedidos activos para hoy. Hay ${futuras} reserva${futuras === 1 ? '' : 's'} futura${futuras === 1 ? '' : 's'} en el panel admin.`
+        : 'Sin pedidos activos reales en Firebase.';
+    }
     lista.innerHTML = '';
     return;
   }
   if (estado) estado.style.display = 'none';
-  pedidos.sort((a, b) => {
+  pedidosTV.sort((a, b) => {
     const ar = a.reserva_iso || '';
     const br = b.reserva_iso || '';
     if (ar || br) return String(ar || '9999').localeCompare(String(br || '9999'));
     return (b.fecha?.seconds || 0) - (a.fecha?.seconds || 0);
   });
-  lista.innerHTML = pedidos.map(p => {
+  lista.innerHTML = pedidosTV.map(p => {
     const reserva = p.es_reserva
-      ? (p.reserva_fecha === hoy ? `RESERVA HOY ${p.reserva_hora || ''}` : `Reserva ${p.reserva_texto || ''}`)
+      ? `RESERVA HOY ${p.reserva_hora || ''}`
       : '';
     return `<div class="tv-order ${p.es_reserva ? 'reserva' : ''}">
       ${reserva ? `<div class="tv-reserva-badge">${esc(reserva)}</div>` : ''}
