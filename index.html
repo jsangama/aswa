@@ -683,6 +683,76 @@
       position:absolute; right:14px; bottom:15px;
       font-size:11px; font-weight:700; pointer-events:none;
     }
+    .dir-sug-box {
+      display:none;
+      position:absolute;
+      left:0;
+      right:0;
+      top:74px;
+      z-index:20;
+      background:#111113;
+      border:1px solid var(--brd);
+      border-radius:12px;
+      overflow:hidden;
+      box-shadow:0 16px 34px rgba(0,0,0,.38);
+    }
+    .dir-sug-box.show { display:block; }
+    .dir-sug-item {
+      display:flex;
+      gap:10px;
+      align-items:flex-start;
+      padding:11px 12px;
+      border-bottom:1px solid rgba(255,255,255,.06);
+      cursor:pointer;
+      background:#111113;
+    }
+    .dir-sug-item:last-child { border-bottom:0; }
+    .dir-sug-item:hover { background:rgba(250,204,21,.07); }
+    .dir-sug-ico { font-size:15px; line-height:1.2; }
+    .dir-sug-main { color:var(--txt); font-size:12px; font-weight:800; }
+    .dir-sug-sub { color:var(--mut); font-size:10px; margin-top:2px; }
+    .dir-sug-dist { color:var(--y); font-size:10px; font-weight:800; margin-top:2px; }
+    .zona-quick-grid {
+      display:grid;
+      grid-template-columns:repeat(2,minmax(0,1fr));
+      gap:8px;
+      margin-bottom:10px;
+    }
+    .zona-quick-btn {
+      background:var(--s1);
+      border:1px solid var(--brd);
+      border-radius:12px;
+      padding:10px 8px;
+      color:var(--txt);
+      font-family:'Poppins',sans-serif;
+      cursor:pointer;
+      text-align:left;
+      transition:border-color .15s, background .15s, transform .1s;
+    }
+    .zona-quick-btn:active { transform:scale(.98); }
+    .zona-quick-btn.active {
+      border-color:var(--y);
+      background:rgba(250,204,21,.08);
+    }
+    .zona-quick-top {
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:6px;
+      font-size:11px;
+      font-weight:900;
+    }
+    .zona-quick-price {
+      color:var(--y);
+      font-size:12px;
+      white-space:nowrap;
+    }
+    .zona-quick-sub {
+      margin-top:4px;
+      color:var(--mut);
+      font-size:10px;
+      line-height:1.35;
+    }
 
     .cupon-wrap {
       background:rgba(250,204,21,.05);
@@ -2460,7 +2530,9 @@
     <div class="fld">
       <label>Dirección de entrega</label>
       <input type="text" id="direccion" class="inp"
+             oninput="dirBuscar(this.value)" onfocus="dirBuscar(this.value)"
              placeholder="Calle, número, referencia" autocomplete="street-address">
+      <div id="dirSugerencias" class="dir-sug-box"></div>
       <div style="font-size:11px;color:var(--mut);margin-top:6px;padding:0 4px">
         ¿No aparece tu dirección? Puedes escribirla manualmente.
       </div>
@@ -2487,7 +2559,25 @@
     </div>
     <div class="fld">
       <label>Zona</label>
-      <select id="zona" class="inp" onchange="calcTotal(); mostrarNotaNacional(this)">
+      <div class="zona-quick-grid" id="zonaQuickGrid">
+        <button type="button" class="zona-quick-btn" data-zona-nombre="Morales" data-zona-precio="3" onclick="seleccionarZonaVisual('Morales',3)">
+          <div class="zona-quick-top"><span>Morales</span><span class="zona-quick-price">S/ 3.00</span></div>
+          <div class="zona-quick-sub">Entrega cercana, aprox. 25 min</div>
+        </button>
+        <button type="button" class="zona-quick-btn" data-zona-nombre="Tarapoto" data-zona-precio="4" onclick="seleccionarZonaVisual('Tarapoto',4)">
+          <div class="zona-quick-top"><span>Tarapoto</span><span class="zona-quick-price">S/ 4.00</span></div>
+          <div class="zona-quick-sub">Centro y alrededores, aprox. 35 min</div>
+        </button>
+        <button type="button" class="zona-quick-btn" data-zona-nombre="Banda" data-zona-precio="5" onclick="seleccionarZonaVisual('Banda',5)">
+          <div class="zona-quick-top"><span>Banda de Shilcayo</span><span class="zona-quick-price">S/ 5.00</span></div>
+          <div class="zona-quick-sub">Ruta a La Banda, aprox. 45 min</div>
+        </button>
+        <button type="button" class="zona-quick-btn" data-zona-nombre="Recojo" data-zona-precio="0" onclick="seleccionarZonaVisual('Recojo',0)">
+          <div class="zona-quick-top"><span>Recojo en local</span><span class="zona-quick-price">Gratis</span></div>
+          <div class="zona-quick-sub">Sin delivery, coordinamos el recojo</div>
+        </button>
+      </div>
+      <select id="zona" class="inp" style="display:none" onchange="calcTotal(); mostrarNotaNacional(this); actualizarZonaVisual()">
         <option value="">Selecciona tu zona</option>
         <option value="3">Morales — S/ 3.00</option>
         <option value="4">Tarapoto — S/ 4.00</option>
@@ -4976,6 +5066,150 @@ function mostrarNotaNacional(sel) {
   if (!nota) return;
   // Mostrar solo si seleccionó la opción de valor 10 (nacional)
   nota.style.display = sel.value === '10' ? 'block' : 'none';
+}
+
+const CALLES_LOCALES = [
+  { calle:'Jr. Augusto B. Leguia', zona:'Morales' },
+  { calle:'Jr. Miraflores', zona:'Morales' },
+  { calle:'Jr. Los Cedros', zona:'Morales' },
+  { calle:'Jr. Tupac Amaru', zona:'Morales' },
+  { calle:'Jr. San Martin', zona:'Morales' },
+  { calle:'Av. Circunvalacion', zona:'Morales' },
+  { calle:'Jr. Jimenez Pimentel', zona:'Tarapoto' },
+  { calle:'Jr. Maynas', zona:'Tarapoto' },
+  { calle:'Jr. Martinez de Companon', zona:'Tarapoto' },
+  { calle:'Jr. Shapaja', zona:'Tarapoto' },
+  { calle:'Jr. Lima', zona:'Tarapoto' },
+  { calle:'Av. Alfonso Ugarte', zona:'Tarapoto' },
+  { calle:'Jr. Los Angeles', zona:'Banda' },
+  { calle:'Jr. Cahuide', zona:'Banda' },
+  { calle:'Jr. Las Palmeras', zona:'Banda' },
+  { calle:'Jr. Inca', zona:'Banda' },
+  { calle:'Av. Principal La Banda', zona:'Banda' },
+  { calle:'Urb. La Planicie', zona:'Morales' },
+  { calle:'Urb. Las Orquideas', zona:'Tarapoto' },
+  { calle:'AA.HH. 9 de Abril', zona:'Morales' }
+];
+let _dirTimer = null;
+let _dirResultados = [];
+
+function dirEsc(txt) {
+  return String(txt || '').replace(/[&<>"']/g, ch => ({
+    '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;'
+  }[ch]));
+}
+
+function dirBuscar(query) {
+  query = (query || '').trim();
+  clearTimeout(_dirTimer);
+  if (query.length < 3) {
+    dirOcultarSug();
+    return;
+  }
+
+  _dirTimer = setTimeout(() => {
+    const qn = _zonaNorm(query);
+    _dirResultados = CALLES_LOCALES
+      .filter(item => _zonaNorm(item.calle + ' ' + item.zona).includes(qn))
+      .slice(0, 6);
+    dirRenderSug();
+  }, 120);
+}
+
+function dirRenderSug() {
+  const box = document.getElementById('dirSugerencias');
+  if (!box) return;
+  if (_dirResultados.length === 0) {
+    box.innerHTML = '<div class="dir-sug-item"><div class="dir-sug-ico">+</div><div><div class="dir-sug-main">Usar direccion escrita</div><div class="dir-sug-sub">Puedes continuar con tu direccion manual.</div></div></div>';
+    box.classList.add('show');
+    return;
+  }
+
+  box.innerHTML = _dirResultados.map((item, i) => `
+    <div class="dir-sug-item" onclick="dirSeleccionar(${i})">
+      <div class="dir-sug-ico">📍</div>
+      <div>
+        <div class="dir-sug-main">${dirEsc(item.calle)}</div>
+        <div class="dir-sug-sub">Sugerencia local ASWA</div>
+        <div class="dir-sug-dist">${dirEsc(item.zona)}</div>
+      </div>
+    </div>
+  `).join('');
+  box.classList.add('show');
+}
+
+function dirOcultarSug() {
+  const box = document.getElementById('dirSugerencias');
+  if (box) box.classList.remove('show');
+}
+
+function dirSeleccionar(index) {
+  const item = _dirResultados[index];
+  if (!item) return;
+  const input = document.getElementById('direccion');
+  if (input) {
+    input.value = item.calle;
+    input.classList.add('has-value');
+  }
+  const precios = { Morales:3, Tarapoto:4, Banda:5 };
+  seleccionarZonaVisual(item.zona, precios[item.zona] || 0);
+  dirOcultarSug();
+}
+
+document.addEventListener('click', e => {
+  if (e.target.closest('#dirSugerencias') || e.target.id === 'direccion') return;
+  dirOcultarSug();
+});
+
+function _zonaNorm(txt) {
+  return String(txt || '').toLowerCase()
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+}
+
+function seleccionarZonaVisual(nombre, precio) {
+  const sel = document.getElementById('zona');
+  if (!sel) return;
+  const nombreNorm = _zonaNorm(nombre);
+  const precioNorm = String(Number(precio));
+  let elegido = -1;
+
+  for (let i = 0; i < sel.options.length; i++) {
+    const opt = sel.options[i];
+    if (opt.value === '') continue;
+    const optNombre = _zonaNorm(opt.dataset.nombre || opt.textContent);
+    const optPrecio = String(Number(opt.value));
+    if ((nombreNorm && optNombre.includes(nombreNorm)) || optPrecio === precioNorm) {
+      elegido = i;
+      break;
+    }
+  }
+
+  if (elegido >= 0) {
+    sel.selectedIndex = elegido;
+    calcTotal();
+    mostrarNotaNacional(sel);
+    actualizarZonaVisual();
+  }
+}
+
+function actualizarZonaVisual() {
+  const sel = document.getElementById('zona');
+  const grid = document.getElementById('zonaQuickGrid');
+  if (!sel || !grid) return;
+
+  const opt = sel.options[sel.selectedIndex];
+  const texto = _zonaNorm(opt?.dataset?.nombre || opt?.textContent || '');
+  const precio = String(Number(sel.value || 0));
+
+  grid.querySelectorAll('.zona-quick-btn').forEach(btn => {
+    const nombreBtn = _zonaNorm(btn.dataset.zonaNombre);
+    const precioBtn = String(Number(btn.dataset.zonaPrecio || 0));
+    const activo = !!sel.value && (
+      (nombreBtn && texto.includes(nombreBtn)) ||
+      (precioBtn === precio && precio !== '10')
+    );
+    btn.classList.toggle('active', activo);
+  });
 }
 
 function calcVuelto() {
@@ -10839,6 +11073,7 @@ function _renderZonas() {
   });
   // Restaurar valor si todavía existe
   if (valActual) sel.value = valActual;
+  actualizarZonaVisual();
 }
 
 // ── _setPasoActivo [from index__5_]
