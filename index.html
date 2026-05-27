@@ -47,7 +47,8 @@
   ══════════════════════════════════════ -->
 
   <!-- PWA Meta -->
-  <link rel="manifest" href="data:application/json;base64,eyJuYW1lIjoiQVNXQSBMYSBSaWNhIENoaWNoYSIsInNob3J0X25hbWUiOiJBU1dBIiwic3RhcnRfdXJsIjoiLiIsImRpc3BsYXkiOiJzdGFuZGFsb25lIiwiYmFja2dyb3VuZF9jb2xvciI6IiMwOTA5MGIiLCJ0aGVtZV9jb2xvciI6IiNmYWNjMTUifQ==">
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="assets/images/icons/icon-192.png">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 
@@ -2108,6 +2109,25 @@
 
 <!-- PÁGINA: PEDIR -->
 <div class="page active" id="page-pedir">
+
+  <section id="pwaInstallCard" style="display:none;background:linear-gradient(135deg,rgba(250,204,21,.18),rgba(245,158,11,.08));border:1px solid rgba(250,204,21,.35);border-radius:14px;padding:14px;margin:0 auto 16px;max-width:430px">
+    <div style="display:flex;gap:12px;align-items:flex-start">
+      <div style="width:38px;height:38px;border-radius:10px;background:#facc15;color:#111;display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:900;flex-shrink:0">📱</div>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:14px;font-weight:900;color:#fff;line-height:1.25">Instala ASWA en tu celular</div>
+        <div style="font-size:11px;color:var(--mut);line-height:1.45;margin-top:4px">Abre directo la app y haz tu pedido sin buscar el enlace.</div>
+      </div>
+      <button type="button" onclick="pwaCerrarSugerencia()" aria-label="Cerrar"
+              style="width:28px;height:28px;border:0;border-radius:8px;background:rgba(255,255,255,.08);color:#fff;cursor:pointer;flex-shrink:0">×</button>
+    </div>
+    <button id="pwaInstallMainBtn" type="button" onclick="pwaInstalarApp()"
+            style="width:100%;margin-top:12px;border:0;background:linear-gradient(135deg,#facc15,#f59e0b);color:#111;border-radius:10px;padding:11px 12px;font-size:13px;font-weight:900;cursor:pointer">
+      Instalar app ASWA
+    </button>
+    <div id="pwaIosHelp" style="display:none;margin-top:10px;font-size:11px;color:#fde68a;line-height:1.5">
+      En iPhone: toca Compartir y luego "Agregar a pantalla de inicio".
+    </div>
+  </section>
 
 <!-- ══════════════ BANNER PROMO ROTATIVO ══════════════ -->
 <div style="position:relative;overflow:hidden;max-width:430px;margin:0 auto">
@@ -8165,13 +8185,62 @@ async function admRechazarYape(pedidoId, telefono, nombre) {
 ══════════════════════════════════════ */
 let _pwaPrompt = null;
 
+function pwaEsStandalone() {
+  return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+}
+
+function pwaMostrarSugerencia() {
+  const card = document.getElementById('pwaInstallCard');
+  if (!card || pwaEsStandalone() || lsGet('pwa_install_dismissed') === '1') return;
+  const isiOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+  if (!_pwaPrompt && !isiOS) return;
+  card.style.display = 'block';
+  const btn = document.getElementById('pwaInstallMainBtn');
+  const help = document.getElementById('pwaIosHelp');
+  if (isiOS && !_pwaPrompt) {
+    if (btn) btn.textContent = 'Ver como instalar en iPhone';
+    if (help) help.style.display = 'block';
+  }
+}
+
+function pwaCerrarSugerencia() {
+  lsSet('pwa_install_dismissed', '1');
+  const card = document.getElementById('pwaInstallCard');
+  if (card) card.style.display = 'none';
+}
+
+async function pwaInstalarApp() {
+  const help = document.getElementById('pwaIosHelp');
+  if (!_pwaPrompt) {
+    if (help) help.style.display = 'block';
+    tst('En iPhone usa Compartir y Agregar a pantalla de inicio', 4500);
+    return;
+  }
+  _pwaPrompt.prompt();
+  const { outcome } = await _pwaPrompt.userChoice;
+  _pwaPrompt = null;
+  if (outcome === 'accepted') {
+    lsSet('pwa_install_dismissed', '1');
+    document.getElementById('installPWA').style.display = 'none';
+    document.getElementById('pwaInstallCard').style.display = 'none';
+    tst('ASWA instalada como app', 3000);
+  }
+}
+
 window.addEventListener('beforeinstallprompt', e => {
   e.preventDefault();
   _pwaPrompt = e;
   const btn = document.getElementById('installPWA');
   if (btn) btn.style.display = 'block';
+  pwaMostrarSugerencia();
 });
 
+document.getElementById('installPWA')?.addEventListener('click', pwaInstalarApp);
+
+document.addEventListener('DOMContentLoaded', () => {
+  setTimeout(pwaMostrarSugerencia, 1600);
+});
+/*
 document.getElementById('installPWA')?.addEventListener('click', async () => {
   if (!_pwaPrompt) return;
   _pwaPrompt.prompt();
@@ -8180,9 +8249,12 @@ document.getElementById('installPWA')?.addEventListener('click', async () => {
   document.getElementById('installPWA').style.display = 'none';
   if (outcome === 'accepted') tst('✅ ¡App instalada!', 3000);
 });
+*/
 
 window.addEventListener('appinstalled', () => {
-  document.getElementById('installPWA').style.display = 'none';
+  lsSet('pwa_install_dismissed', '1');
+  document.getElementById('installPWA')?.style.setProperty('display', 'none');
+  document.getElementById('pwaInstallCard')?.remove();
   tst('✅ ¡ASWA instalada como app!', 3000);
 });
 
