@@ -2329,6 +2329,36 @@
     }
     .quick-access-item.admin { color:#fde68a; border-color:rgba(250,204,21,.28); }
     .quick-access-item.delivery { color:#86efac; border-color:rgba(34,197,94,.28); }
+    .quick-access-item.tv { grid-column:1 / -1; color:#facc15; border-color:rgba(250,204,21,.36); background:rgba(250,204,21,.08); }
+
+    .reserva-card { background:rgba(250,204,21,.06); border:1px solid rgba(250,204,21,.24); border-radius:14px; padding:12px; }
+    .reserva-toggle { display:flex; align-items:flex-start; gap:10px; color:var(--txt); font-size:12px; font-weight:900; line-height:1.35; cursor:pointer; text-transform:none; letter-spacing:0; }
+    .reserva-toggle input { width:18px; height:18px; accent-color:#facc15; margin-top:1px; flex-shrink:0; }
+    .reserva-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:10px; }
+    .reserva-info { font-size:10px; color:var(--mut); line-height:1.5; margin-top:8px; padding:0 2px; }
+    .reserva-info.ok { color:#86efac; }
+    .reserva-info.warn { color:#fde68a; }
+    .reserva-info.err { color:#fca5a5; }
+
+    .tv-dashboard { position:fixed; inset:0; z-index:9800; background:#000; color:#fff; overflow:auto; padding:28px 22px; font-family:'Poppins',sans-serif; }
+    .tv-head { display:flex; align-items:flex-start; justify-content:space-between; gap:16px; margin-bottom:24px; }
+    .tv-title { font-family:'Bebas Neue',cursive; font-size:clamp(34px,5vw,76px); line-height:.95; color:#facc15; letter-spacing:.01em; }
+    .tv-time { color:#a1a1aa; font-size:clamp(13px,1.8vw,24px); margin-top:10px; font-weight:600; }
+    .tv-exit { border:0; border-radius:12px; background:#ef4444; color:#fff; padding:14px 22px; font-size:16px; font-weight:900; cursor:pointer; }
+    .tv-stats { display:grid; grid-template-columns:repeat(4,1fr); gap:18px; margin-bottom:26px; }
+    .tv-stat { background:#1f2937; border:1px solid rgba(255,255,255,.08); border-radius:12px; padding:22px; text-align:center; }
+    .tv-stat-num { font-family:'Bebas Neue',cursive; font-size:clamp(42px,5vw,72px); color:#facc15; line-height:1; }
+    .tv-stat-lbl { color:#a1a1aa; font-size:14px; text-transform:uppercase; letter-spacing:.04em; margin-top:8px; }
+    .tv-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); gap:14px; }
+    .tv-order { background:#111827; border:1px solid rgba(255,255,255,.10); border-radius:16px; padding:16px; }
+    .tv-order.reserva { border-color:rgba(250,204,21,.55); background:linear-gradient(180deg,rgba(250,204,21,.11),#111827); }
+    .tv-order-top { display:flex; align-items:flex-start; justify-content:space-between; gap:12px; margin-bottom:10px; }
+    .tv-order-name { font-size:20px; font-weight:900; color:#fff; }
+    .tv-order-state { font-size:12px; font-weight:900; color:#111; background:#facc15; border-radius:999px; padding:5px 9px; white-space:nowrap; }
+    .tv-order-info { color:#d4d4d8; font-size:14px; line-height:1.55; }
+    .tv-reserva-badge { display:inline-block; background:#facc15; color:#111; border-radius:999px; padding:5px 9px; font-size:12px; font-weight:900; margin-bottom:8px; }
+    .tv-empty { color:#a1a1aa; text-align:center; padding:40px 10px; font-size:18px; }
+    @media (max-width:720px) { .reserva-grid,.tv-stats { grid-template-columns:1fr 1fr; } .tv-dashboard { padding:18px 12px; } }
   </style>
 </head>
 <body>
@@ -2736,6 +2766,19 @@
                 placeholder="Ej: llamar al llegar, dejar en porteria, referencia de casa"
                 style="resize:vertical;min-height:58px;line-height:1.5"></textarea>
       <div style="font-size:10px;color:var(--mut);margin-top:5px;padding:0 4px">Esta nota se enviara con tu pedido.</div>
+    </div>
+    <div class="fld">
+      <div class="reserva-card">
+        <label class="reserva-toggle">
+          <input type="checkbox" id="reservaActiva" onchange="actualizarReservaUI()">
+          <span>Reservar pedido con calendario y hora de entrega</span>
+        </label>
+        <div class="reserva-grid" id="reservaDetalle" style="display:none">
+          <input type="date" id="reservaFecha" class="inp" onchange="actualizarReservaUI()">
+          <input type="time" id="reservaHora" class="inp" min="07:00" max="17:30" step="900" onchange="actualizarReservaUI()">
+        </div>
+        <div class="reserva-info" id="reservaInfo">Disponible con Yape, Plin, Agora, BIM o transferencia bancaria. No aplica para efectivo.</div>
+      </div>
     </div>
     <div class="fld">
       <button class="btn-gps" id="btnGPS" onclick="toggleGPS()">
@@ -4409,12 +4452,15 @@
       </div>
 
       <!-- Tabs -->
-      <div class="adm-tabs" style="display:grid;grid-template-columns:repeat(5,1fr);gap:6px">
+      <div class="adm-tabs" style="display:grid;grid-template-columns:repeat(6,1fr);gap:6px">
         <button class="adm-tab active" id="tabYape" onclick="admTab('yape')" style="font-size:10px;padding:10px 4px">
           📱 Yapes<br><span id="badgeYape" style="font-size:16px;color:var(--y);font-weight:900">—</span>
         </button>
         <button class="adm-tab" id="tabPedidos" onclick="admTab('pedidos')" style="font-size:10px;padding:10px 4px">
           📦 Pedidos<br><span id="badgePedidos" style="font-size:16px;color:var(--y);font-weight:900">—</span>
+        </button>
+        <button class="adm-tab" id="tabReservas" onclick="admTab('reservas')" style="font-size:10px;padding:10px 4px">
+          Reservas<br><span id="badgeReservas" style="font-size:16px;color:var(--y);font-weight:900">0</span>
         </button>
         <button class="adm-tab" id="tabStats" onclick="admTab('stats')" style="font-size:10px;padding:10px 4px">
           📊 Stats<br><span id="badgeStats" style="font-size:16px;color:var(--y);font-weight:900">—</span>
@@ -4445,6 +4491,7 @@
       <!-- Contenido tabs -->
       <div id="admContenidoYape"></div>
       <div id="admContenidoPedidos" style="display:none"></div>
+      <div id="admContenidoReservas" style="display:none"></div>
       <div id="admContenidoStats" style="display:none"></div>
       <div id="admContenidoClientes" style="display:none"></div>
       <div id="admContenidoCupones" style="display:none"></div>
@@ -5221,6 +5268,7 @@ function setPago(metodo) {
     if (uploadBox) uploadBox.classList.remove('show');
     _limpiarFotoComprobante();
     calcTotal();
+    actualizarReservaUI();
     tst('💵 Pagarás al recibir tu pedido', 2000);
     return;
   }
@@ -5290,6 +5338,7 @@ function setPago(metodo) {
   }
 
   calcTotal();
+  actualizarReservaUI();
 }
 
 function _limpiarFotoComprobante() {
@@ -5352,6 +5401,116 @@ const HORARIO_DEFAULT = {
     { nombre: 'Sábados', inicio: '07:00', fin: '14:00' }
   ]
 };
+
+function reservaFechaLimaISO(date = new Date()) {
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'America/Lima', year: 'numeric', month: '2-digit', day: '2-digit'
+  }).formatToParts(date).reduce((acc, p) => (acc[p.type] = p.value, acc), {});
+  return `${parts.year}-${parts.month}-${parts.day}`;
+}
+
+function reservaFechaLocal(fecha, hora = '00:00') {
+  const [y, m, d] = String(fecha || '').split('-').map(Number);
+  const [hh, mm] = String(hora || '00:00').split(':').map(Number);
+  if (!y || !m || !d || !Number.isFinite(hh) || !Number.isFinite(mm)) return null;
+  return new Date(y, m - 1, d, hh, mm, 0, 0);
+}
+
+function reservaMinutos(hora) {
+  const [h, m] = String(hora || '').split(':').map(Number);
+  if (!Number.isFinite(h) || !Number.isFinite(m)) return NaN;
+  return h * 60 + m;
+}
+
+function reservaVentanasParaFecha(fecha) {
+  const dt = reservaFechaLocal(fecha);
+  if (!dt) return [];
+  const dia = dt.getDay();
+  if (dia === 0) return [];
+  if (dia === 6) return HORARIO_DEFAULT.sabado || [];
+  return HORARIO_DEFAULT.lunesViernes || [];
+}
+
+function reservaEnHorario(fecha, hora) {
+  const mins = reservaMinutos(hora);
+  if (!Number.isFinite(mins)) return false;
+  return reservaVentanasParaFecha(fecha).some(v => mins >= reservaMinutos(v.inicio) && mins <= reservaMinutos(v.fin));
+}
+
+function reservaTexto(fecha, hora) {
+  const dt = reservaFechaLocal(fecha, hora);
+  if (!dt) return '';
+  const dia = dt.toLocaleDateString('es-PE', { weekday:'long', day:'2-digit', month:'2-digit', year:'numeric' });
+  return `${dia} a las ${hora}`;
+}
+
+function reservaSiguienteFechaValida() {
+  const base = new Date(reservaFechaLimaISO() + 'T12:00:00');
+  for (let i = 0; i < 8; i++) {
+    const d = new Date(base);
+    d.setDate(base.getDate() + i);
+    const iso = d.toISOString().slice(0, 10);
+    if (reservaVentanasParaFecha(iso).length) return iso;
+  }
+  return reservaFechaLimaISO();
+}
+
+function reservaInit() {
+  const fecha = document.getElementById('reservaFecha');
+  const hora = document.getElementById('reservaHora');
+  if (fecha) {
+    fecha.min = reservaFechaLimaISO();
+    if (!fecha.value) fecha.value = reservaSiguienteFechaValida();
+  }
+  if (hora && !hora.value) hora.value = '09:00';
+  actualizarReservaUI();
+}
+
+function actualizarReservaUI() {
+  const activa = !!document.getElementById('reservaActiva')?.checked;
+  const detalle = document.getElementById('reservaDetalle');
+  const info = document.getElementById('reservaInfo');
+  if (detalle) detalle.style.display = activa ? 'grid' : 'none';
+  if (!info) return;
+  info.className = 'reserva-info';
+  if (!activa) {
+    info.textContent = 'Disponible con Yape, Plin, Agora, BIM o transferencia bancaria. No aplica para efectivo.';
+    return;
+  }
+  const reserva = obtenerReservaPedido(false);
+  info.classList.add(reserva.ok ? 'ok' : 'err');
+  info.textContent = reserva.ok
+    ? 'Reserva programada: ' + reserva.texto + '. El pedido se activa con pago digital verificado.'
+    : reserva.error;
+}
+
+function obtenerReservaPedido(mostrarErrores = false) {
+  const activa = !!document.getElementById('reservaActiva')?.checked;
+  if (!activa) return { ok:true, activa:false };
+  const fecha = document.getElementById('reservaFecha')?.value || '';
+  const hora = document.getElementById('reservaHora')?.value || '';
+  const fail = (error, campo = 'reservaFecha') => {
+    if (mostrarErrores) marcarCampoPedido(campo, error);
+    return { ok:false, activa:true, error };
+  };
+  if (ST.pago === 'Efectivo') return fail('Las reservas solo se aceptan con pago digital o transferencia. Cambia el metodo de pago.', 'reservaActiva');
+  if (!fecha) return fail('Selecciona la fecha de reserva.', 'reservaFecha');
+  if (!hora) return fail('Selecciona la hora de entrega.', 'reservaHora');
+  if (fecha < reservaFechaLimaISO()) return fail('La reserva no puede ser para una fecha pasada.', 'reservaFecha');
+  if (!reservaEnHorario(fecha, hora)) {
+    return fail('Horario no disponible. Lunes a viernes 7:00 am - 5:30 pm y sabados 7:00 am - 2:00 pm.', 'reservaHora');
+  }
+  const dt = reservaFechaLocal(fecha, hora);
+  return {
+    ok:true,
+    activa:true,
+    fecha,
+    hora,
+    iso: dt ? dt.toISOString() : `${fecha}T${hora}:00`,
+    texto: reservaTexto(fecha, hora),
+    estado:'programada'
+  };
+}
 
 function dirEsc(txt) {
   return String(txt || '').replace(/[&<>"']/g, ch => ({
@@ -6026,6 +6185,8 @@ function abrirResumen() {
   if (!nom)                       return marcarCampoPedido('nombre', 'Ingresa tu nombre completo');
   if (!dis)                       return marcarZonaPedido('Selecciona tu zona de entrega');
   if (requiereDireccion && dir.length < 6) return marcarCampoPedido('direccion', 'Ingresa tu direccion o una referencia de entrega');
+  const reservaPedido = obtenerReservaPedido(true);
+  if (!reservaPedido.ok) return false;
 
   // ── Pago digital requiere comprobante antes de continuar ──
   const esDigitalPago = ST.pago !== 'Efectivo';
@@ -6052,6 +6213,7 @@ function abrirResumen() {
   if (ST.cart.p3l) row(ST.cart.p3l+'× ASWA 3L',         'S/ '+(ST.cart.p3l*ST.precio.p3l).toFixed(2));
   if (ST.cart.p4l) row(ST.cart.p4l+'× ASWA 4L Familiar','S/ '+(ST.cart.p4l*ST.precio.p4l).toFixed(2));
   if (ST.delivery) row('Delivery','S/ '+ST.delivery.toFixed(2));
+  if (reservaPedido.activa) row('Reserva de entrega', reservaPedido.texto);
 
   const disc = getDescuentoPct();
   const fixed = getDescuentoFijoAplicado(disc);
@@ -6104,6 +6266,9 @@ async function enviarPedido() {
     tst('📸 Debes subir la foto de tu comprobante de ' + ST.pago + ' para continuar', 3500);
     return;
   }
+
+  const reservaPedido = obtenerReservaPedido(true);
+  if (!reservaPedido.ok) return;
 
   _enviandoPedido = true;
   btn.disabled = true; btn.textContent = 'Enviando...';
@@ -6181,6 +6346,7 @@ async function enviarPedido() {
     +'🏠 *Dirección:* '+direccion+'\n'
     +(notaEntrega ? '📝 *Nota:* '+notaEntrega+'\n' : '')
     +(ST.gpsUrl ? '📡 *GPS:* '+ST.gpsUrl+'\n' : '')
+    +(reservaPedido.activa ? 'Reserva programada: '+reservaPedido.texto+'\n' : '')
     +(zonaTexto.includes('gencia') || zonaTexto.includes('nacional')
       ? '📌 *Zona:* '+zonaTexto+'\n'
         +'⚠️ *ENVÍO NACIONAL:* S/ 10.00 es hasta la agencia.\n'
@@ -6262,6 +6428,12 @@ async function enviarPedido() {
       yape_estado:      esDigitalPago ? 'pendiente' : null,
       compartido:     false,   // se actualiza cuando cliente comparte en redes
       asignado_a:     null,    // se asigna cuando deliverista acepta
+      es_reserva:     !!reservaPedido.activa,
+      reserva_fecha:  reservaPedido.activa ? reservaPedido.fecha : null,
+      reserva_hora:   reservaPedido.activa ? reservaPedido.hora : null,
+      reserva_iso:    reservaPedido.activa ? reservaPedido.iso : null,
+      reserva_texto:  reservaPedido.activa ? reservaPedido.texto : null,
+      reserva_estado: reservaPedido.activa ? 'programada' : null,
       fecha:          ts()
     });
     ST.pedidoFbId = ref.id;
@@ -7642,6 +7814,7 @@ async function cargarConcurso() {
 /* ── INIT ── */
 document.addEventListener('DOMContentLoaded', () => {
   setPago('Yape');
+  reservaInit();
   actualizarHorarioMini();
   perfilInit();
   setInterval(actualizarHorarioMini, 60000);
@@ -9361,6 +9534,160 @@ function abrirPanelDeliveryDirecto() {
   abrirPanelDeliverista();
 }
 
+function asegurarBotonTVRapido() {
+  const grid = document.querySelector('#modalAccesoRapido .quick-access-grid');
+  if (!grid || document.getElementById('quickTvBtn')) return;
+  grid.insertAdjacentHTML('beforeend', '<button class="quick-access-item tv" id="quickTvBtn" onclick="abrirDashboardTV()" type="button">TV real</button>');
+}
+
+let _tvUnsub = null;
+let _tvClock = null;
+
+function abrirDashboardTV() {
+  cerrarAccesoRapido();
+  let tv = document.getElementById('tvDashboard');
+  if (!tv) {
+    tv = document.createElement('div');
+    tv.id = 'tvDashboard';
+    tv.className = 'tv-dashboard';
+    document.body.appendChild(tv);
+  }
+  tv.style.display = 'block';
+  tv.innerHTML = `
+    <div class="tv-head">
+      <div>
+        <div class="tv-title">ASWA - Pedidos en Tiempo Real</div>
+        <div class="tv-time" id="tvClock">Conectando...</div>
+      </div>
+      <button class="tv-exit" onclick="cerrarDashboardTV()">Salir</button>
+    </div>
+    <div class="tv-stats">
+      <div class="tv-stat"><div class="tv-stat-num" id="tvPendientes">0</div><div class="tv-stat-lbl">Pendientes</div></div>
+      <div class="tv-stat"><div class="tv-stat-num" id="tvPreparando">0</div><div class="tv-stat-lbl">Preparando</div></div>
+      <div class="tv-stat"><div class="tv-stat-num" id="tvEnCamino">0</div><div class="tv-stat-lbl">En camino</div></div>
+      <div class="tv-stat"><div class="tv-stat-num" id="tvReservasHoy">0</div><div class="tv-stat-lbl">Reservas hoy</div></div>
+    </div>
+    <div id="tvEstado" class="tv-empty">Conectando Firebase para ver pedidos reales...</div>
+    <div id="tvLista" class="tv-grid"></div>`;
+  actualizarRelojTV();
+  clearInterval(_tvClock);
+  _tvClock = setInterval(actualizarRelojTV, 1000);
+  escucharPedidosTV();
+}
+
+function cerrarDashboardTV() {
+  const tv = document.getElementById('tvDashboard');
+  if (tv) tv.style.display = 'none';
+  if (_tvUnsub) { _tvUnsub(); _tvUnsub = null; }
+  clearInterval(_tvClock);
+}
+
+function actualizarRelojTV() {
+  const el = document.getElementById('tvClock');
+  if (!el) return;
+  el.textContent = new Date().toLocaleString('es-PE', {
+    weekday:'long', year:'numeric', month:'long', day:'numeric',
+    hour:'2-digit', minute:'2-digit', second:'2-digit'
+  });
+}
+
+async function escucharPedidosTV() {
+  const estado = document.getElementById('tvEstado');
+  const suscribirTV = (consulta, filtrarActivo = false) => {
+    const { onSnapshot:os } = window.FB;
+    if (_tvUnsub) _tvUnsub();
+    _tvUnsub = os(consulta, snap => {
+      let pedidos = snap.docs.map(docSnap => ({ id:docSnap.id, ...docSnap.data() }));
+      if (filtrarActivo) {
+        pedidos = pedidos.filter(p => ['Pendiente','preparando','en_camino'].includes(p.estado));
+      }
+      renderDashboardTV(pedidos);
+    }, err => {
+      console.error('TV Firebase:', err);
+      if (filtrarActivo && estado) estado.textContent = 'No se pudo conectar Firebase para pedidos reales.';
+      else escucharPedidosTVFallback();
+    });
+  };
+  try {
+    await esperarFB();
+    const { collection:col, query:q, where:wh, limit:lm } = window.FB;
+    suscribirTV(q(col(db,'pedidos'), wh('businessId','==',BUSINESS_ID), wh('estado','in',['Pendiente','preparando','en_camino']), lm(120)));
+  } catch (err) {
+    console.error('TV init:', err);
+    if (estado) estado.textContent = 'Conecta Firebase para ver pedidos reales.';
+  }
+}
+
+async function escucharPedidosTVFallback() {
+  const estado = document.getElementById('tvEstado');
+  try {
+    const { collection:col, query:q, where:wh, onSnapshot:os, limit:lm } = window.FB;
+    if (_tvUnsub) _tvUnsub();
+    _tvUnsub = os(q(col(db,'pedidos'), wh('businessId','==',BUSINESS_ID), lm(120)), snap => {
+      const pedidos = snap.docs
+        .map(docSnap => ({ id:docSnap.id, ...docSnap.data() }))
+        .filter(p => ['Pendiente','preparando','en_camino'].includes(p.estado));
+      renderDashboardTV(pedidos);
+    }, err => {
+      console.error('TV fallback:', err);
+      if (estado) estado.textContent = 'No se pudo conectar Firebase para pedidos reales.';
+    });
+  } catch (err) {
+    console.error('TV fallback init:', err);
+    if (estado) estado.textContent = 'Conecta Firebase para ver pedidos reales.';
+  }
+}
+
+function renderDashboardTV(pedidos) {
+  const hoy = reservaFechaLimaISO();
+  const pendientes = pedidos.filter(p => p.estado === 'Pendiente').length;
+  const preparando = pedidos.filter(p => p.estado === 'preparando').length;
+  const enCamino = pedidos.filter(p => p.estado === 'en_camino').length;
+  const reservasHoy = pedidos.filter(p => p.es_reserva && p.reserva_fecha === hoy).length;
+  const set = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
+  set('tvPendientes', pendientes);
+  set('tvPreparando', preparando);
+  set('tvEnCamino', enCamino);
+  set('tvReservasHoy', reservasHoy);
+
+  const estado = document.getElementById('tvEstado');
+  const lista = document.getElementById('tvLista');
+  if (!lista) return;
+  if (!pedidos.length) {
+    if (estado) { estado.style.display = 'block'; estado.textContent = 'Sin pedidos activos reales en Firebase.'; }
+    lista.innerHTML = '';
+    return;
+  }
+  if (estado) estado.style.display = 'none';
+  pedidos.sort((a, b) => {
+    const ar = a.reserva_iso || '';
+    const br = b.reserva_iso || '';
+    if (ar || br) return String(ar || '9999').localeCompare(String(br || '9999'));
+    return (b.fecha?.seconds || 0) - (a.fecha?.seconds || 0);
+  });
+  lista.innerHTML = pedidos.map(p => {
+    const reserva = p.es_reserva
+      ? (p.reserva_fecha === hoy ? `RESERVA HOY ${p.reserva_hora || ''}` : `Reserva ${p.reserva_texto || ''}`)
+      : '';
+    return `<div class="tv-order ${p.es_reserva ? 'reserva' : ''}">
+      ${reserva ? `<div class="tv-reserva-badge">${esc(reserva)}</div>` : ''}
+      <div class="tv-order-top">
+        <div class="tv-order-name">${esc(p.nombre || 'Cliente')}</div>
+        <div class="tv-order-state">${esc(p.estado || 'Pendiente')}</div>
+      </div>
+      <div class="tv-order-info">
+        <strong>${_itemsTexto(p.items)}</strong><br>
+        Total: S/ ${(p.total || 0).toFixed(2)} - Pago: ${esc(p.pago || '—')}<br>
+        ${esc(p.distrito || '')}<br>
+        ${p.nota_entrega ? 'Nota: ' + esc(p.nota_entrega) + '<br>' : ''}
+        ${p.telefono ? 'Cel: ' + esc(p.telefono) : ''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+document.addEventListener('DOMContentLoaded', asegurarBotonTVRapido);
+
 document.addEventListener('click', e => {
   const panel = document.getElementById('modalAccesoRapido');
   const btn = document.getElementById('btnAccesoRapido');
@@ -9372,15 +9699,16 @@ document.addEventListener('click', e => {
 let _admTabActiva = 'yape';
 function admTab(tab) {
   _admTabActiva = tab;
-  const tabs = ['yape','pedidos','stats','clientes','cupones','chat'];
-  const ids  = { yape:'tabYape', pedidos:'tabPedidos', stats:'tabStats', clientes:'tabClientes', cupones:'tabCupones', chat:'tabChat' };
-  const conts= { yape:'admContenidoYape', pedidos:'admContenidoPedidos', stats:'admContenidoStats', clientes:'admContenidoClientes', cupones:'admContenidoCupones', chat:'admContenidoChat' };
+  const tabs = ['yape','pedidos','reservas','stats','clientes','cupones','chat'];
+  const ids  = { yape:'tabYape', pedidos:'tabPedidos', reservas:'tabReservas', stats:'tabStats', clientes:'tabClientes', cupones:'tabCupones', chat:'tabChat' };
+  const conts= { yape:'admContenidoYape', pedidos:'admContenidoPedidos', reservas:'admContenidoReservas', stats:'admContenidoStats', clientes:'admContenidoClientes', cupones:'admContenidoCupones', chat:'admContenidoChat' };
   tabs.forEach(t => {
     document.getElementById(ids[t])?.classList.toggle('active', t === tab);
     const c = document.getElementById(conts[t]);
     if (c) c.style.display = t === tab ? 'block' : 'none';
   });
   if (tab === 'stats')    admCargarStats();
+  if (tab === 'reservas') admRenderReservas(window._admReservas || []);
   if (tab === 'clientes') admCargarClientes();
   if (tab === 'cupones')  admRenderCupones();
   if (tab === 'chat')     admRenderChat();
@@ -9497,7 +9825,7 @@ async function admRenderCupones() {
 }
 
 async function admCargar() {
-  ['Yape','Pedidos','Stats','Clientes','Cupones','Chat'].forEach(t => {
+  ['Yape','Pedidos','Reservas','Stats','Clientes','Cupones','Chat'].forEach(t => {
     const el = document.getElementById('admContenido'+t);
     if (el) el.innerHTML = '<div class="adm-loading">⏳ Cargando...</div>';
   });
@@ -9527,6 +9855,10 @@ async function admCargar() {
     const snapTodos = await gd(q(col(db,'pedidos'), wh('businessId','==',BUSINESS_ID), ob('fecha','desc'), lm(200)));
     // Clientes
     const snapCli  = await gd(q(col(db,'clientes'), wh('businessId','==',BUSINESS_ID)));
+    const reservasDocs = snapTodos.docs.filter(docSnap => {
+      const d = docSnap.data();
+      return d.es_reserva && !['entregado','cerrado','rechazado','cancelado'].includes(d.estado);
+    });
 
     // Calcular stats
     let totalVentas = 0, totalPedidos = 0, pedHoy = 0, ventasHoy = 0;
@@ -9545,12 +9877,14 @@ async function admCargar() {
     // Actualizar badges
     document.getElementById('badgeYape').textContent    = snapYape.size || '0';
     document.getElementById('badgePedidos').textContent = snapPed.size  || '0';
+    document.getElementById('badgeReservas').textContent = reservasDocs.length || '0';
     document.getElementById('badgeStats').textContent   = 'S/'+ventasHoy.toFixed(0);
     document.getElementById('badgeClientes').textContent = snapCli.size || '0';
 
     // Render
     admRenderYapes(snapYape.docs);
     admRenderPedidos(snapPed.docs);
+    admRenderReservas(reservasDocs);
     admRenderStats(snapTodos.docs, { totalVentas, totalPedidos, pedHoy, ventasHoy, totalCli: snapCli.size });
     admRenderClientes(snapCli.docs);
     admRenderCupones();
@@ -9558,6 +9892,7 @@ async function admCargar() {
 
     // Guardar globalmente para búsqueda
     window._admTodosPedidos = snapTodos.docs;
+    window._admReservas = reservasDocs;
     window._admTodosClientes = snapCli.docs;
 
   } catch(err) {
@@ -9635,6 +9970,9 @@ function admRenderPedidos(docs) {
     const fecha = d.fecha?.seconds ? new Date(d.fecha.seconds*1000).toLocaleString('es-PE') : '—';
     const esperaCierre = d.estado === 'en_camino' && d.confirmacion_cliente;
     const bordeExtra = esperaCierre ? 'border-color:rgba(34,197,94,.6);' : '';
+    const reservaAlerta = d.es_reserva
+      ? '<div style="background:rgba(250,204,21,.12);border:1px solid rgba(250,204,21,.35);border-radius:8px;padding:8px 12px;font-size:12px;color:#fde68a;font-weight:800;margin-bottom:8px">Reserva programada: ' + esc(d.reserva_texto || ((d.reserva_fecha || '') + ' ' + (d.reserva_hora || ''))) + '</div>'
+      : '';
     const alertaCierre = esperaCierre
       ? '<div style="background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.3);border-radius:8px;padding:8px 12px;font-size:12px;color:#86efac;font-weight:700;margin-bottom:8px">✅ Cliente confirmó recepción — pendiente de cierre</div>'
       : '';
@@ -9648,6 +9986,7 @@ function admRenderPedidos(docs) {
 
     return `
       <div class="adm-pedido" style="${bordeExtra}" id="admped2-${doc.id}">
+        ${reservaAlerta}
         ${alertaCierre}
         <div class="adm-ped-top">
           <div>
@@ -9669,6 +10008,46 @@ function admRenderPedidos(docs) {
           <a href="https://wa.me/51${d.telefono}" target="_blank" style="background:rgba(37,211,102,.15);color:#25D366;border:1px solid rgba(37,211,102,.3);border-radius:8px;padding:6px 10px;font-size:10px;font-weight:800;text-decoration:none">💬 WA</a>
           ${botonesEstado}
           <button onclick="admEliminarPedido('${doc.id}')" style="background:rgba(239,68,68,.1);color:var(--red);border:1px solid rgba(239,68,68,.2);border-radius:8px;padding:6px 10px;font-size:10px;font-weight:800;cursor:pointer;font-family:'Poppins',sans-serif;margin-left:auto">🗑️</button>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+function admRenderReservas(docs) {
+  const cont = document.getElementById('admContenidoReservas');
+  if (!cont) return;
+  if (!docs.length) {
+    cont.innerHTML = '<div class="adm-empty"><div class="adm-empty-emo">📅</div><p>No hay reservas programadas.</p></div>';
+    return;
+  }
+  docs.sort((a, b) => String(a.data().reserva_iso || '').localeCompare(String(b.data().reserva_iso || '')));
+  cont.innerHTML = docs.map(doc => {
+    const d = doc.data();
+    const reserva = d.reserva_texto || ((d.reserva_fecha || '') + ' ' + (d.reserva_hora || ''));
+    const fechaPedido = d.fecha?.seconds ? new Date(d.fecha.seconds * 1000).toLocaleString('es-PE') : '—';
+    return `
+      <div class="adm-pedido" style="border-color:rgba(250,204,21,.55);background:rgba(250,204,21,.05)" id="admres-${doc.id}">
+        <div style="background:rgba(250,204,21,.14);border:1px solid rgba(250,204,21,.35);border-radius:10px;padding:9px 12px;color:#fde68a;font-weight:900;font-size:12px;margin-bottom:10px">
+          📅 Reserva: ${esc(reserva)}
+        </div>
+        <div class="adm-ped-top">
+          <div>
+            <div class="adm-ped-nom">${esc(d.nombre || '—')}</div>
+            <div class="adm-ped-tel">📱 ${esc(d.telefono || '—')}</div>
+          </div>
+          <span class="adm-ped-badge badge-pendiente">PROGRAMADA</span>
+        </div>
+        <div class="adm-ped-info">
+          <strong>Pedido:</strong> ${_itemsTexto(d.items)}<br>
+          <strong>Total:</strong> <span class="adm-ped-total">S/ ${(d.total || 0).toFixed(2)}</span><br>
+          <strong>Pago:</strong> ${esc(d.pago || '—')}<br>
+          <strong>Direccion:</strong> ${esc(d.direccion || '—')}<br>
+          ${d.nota_entrega ? `<strong>Nota:</strong> ${esc(d.nota_entrega)}<br>` : ''}
+          <strong>Registrado:</strong> ${fechaPedido}
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">
+          <a href="https://wa.me/51${d.telefono || ''}" target="_blank" style="background:rgba(37,211,102,.15);color:#25D366;border:1px solid rgba(37,211,102,.3);border-radius:8px;padding:6px 10px;font-size:10px;font-weight:800;text-decoration:none">WA</a>
+          <button onclick="admCambiarEstado('${doc.id}','en_camino','${d.telefono || ''}','${d.nombre || ''}')" style="background:rgba(59,130,246,.2);color:#93c5fd;border:1px solid rgba(59,130,246,.3);border-radius:8px;padding:6px 10px;font-size:10px;font-weight:800;cursor:pointer;font-family:'Poppins',sans-serif">Marcar en camino</button>
         </div>
       </div>`;
   }).join('');
