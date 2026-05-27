@@ -32,7 +32,7 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#09090b">
   <meta name="description" content="La Rica Chicha ASWA — Pide tu chicha artesanal de maiz amazónico en Morales. Delivery a domicilio.">
   <title>La Rica Chicha — ASWA Oficial</title>
@@ -53,8 +53,7 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 
   <!-- Librerías externas -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <!-- jsPDF y Chart.js se cargan bajo demanda -->
 
   <script src="js/app-config.js"></script>
 
@@ -4811,6 +4810,26 @@ function esc(s) {
     .replace(/'/g, '&#39;');
 }
 function escAttr(s) { return esc(s); }
+
+function lazyLoadScript(src) {
+  return new Promise((resolve, reject) => {
+    const loaded = Array.from(document.scripts).some(s => s.src === src);
+    if (loaded) { resolve(); return; }
+    const s = document.createElement('script');
+    s.src = src;
+    s.async = true;
+    s.onload = resolve;
+    s.onerror = () => reject(new Error('No se pudo cargar ' + src));
+    document.head.appendChild(s);
+  });
+}
+
+async function _cargarLibsAdmin() {
+  await Promise.all([
+    lazyLoadScript('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js'),
+    lazyLoadScript('https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js')
+  ]);
+}
 
 /* ── esperarFB — espera a que Firebase esté lista (de archivo 5) ── */
 function esperarFB() {
@@ -9853,9 +9872,14 @@ function admRenderStatsConGraficas(docs, stats) {
   admRenderStats(docs, stats);
 
   // Agregar gráficas con Chart.js después del render
-  setTimeout(() => {
-    _renderChartVentas(docs);
-    _renderChartPagos(docs);
+  setTimeout(async () => {
+    try {
+      await _cargarLibsAdmin();
+      _renderChartVentas(docs);
+      _renderChartPagos(docs);
+    } catch(e) {
+      console.warn('Chart.js no disponible:', e);
+    }
   }, 100);
 }
 
@@ -10195,8 +10219,9 @@ async function confirmarCompartidoEnRedes() {
    DOWNLOAD PDF con jsPDF
    Genera PDF real (más robusto que HTML)
 ══════════════════════════════════════ */
-function downloadNotaPDF() {
+async function downloadNotaPDF() {
   try {
+    await lazyLoadScript('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js');
     const { jsPDF } = window.jspdf;
     if (!jsPDF) { descargarNotaPDF(); return; } // fallback al método HTML
     const doc = new jsPDF();
