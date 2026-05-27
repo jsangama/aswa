@@ -2124,8 +2124,8 @@
             style="width:100%;margin-top:12px;border:0;background:linear-gradient(135deg,#facc15,#f59e0b);color:#111;border-radius:10px;padding:11px 12px;font-size:13px;font-weight:900;cursor:pointer">
       Instalar app ASWA
     </button>
-    <div id="pwaIosHelp" style="display:none;margin-top:10px;font-size:11px;color:#fde68a;line-height:1.5">
-      En iPhone: toca Compartir y luego "Agregar a pantalla de inicio".
+    <div id="pwaInstallHelp" style="display:none;margin-top:10px;font-size:11px;color:#fde68a;line-height:1.5">
+      Si no aparece el instalador: en Android abre el menu del navegador y toca "Instalar app"; en iPhone toca Compartir y luego "Agregar a pantalla de inicio".
     </div>
   </section>
 
@@ -8193,13 +8193,14 @@ function pwaMostrarSugerencia() {
   const card = document.getElementById('pwaInstallCard');
   if (!card || pwaEsStandalone() || lsGet('pwa_install_dismissed') === '1') return;
   const isiOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
-  if (!_pwaPrompt && !isiOS) return;
   card.style.display = 'block';
   const btn = document.getElementById('pwaInstallMainBtn');
-  const help = document.getElementById('pwaIosHelp');
-  if (isiOS && !_pwaPrompt) {
-    if (btn) btn.textContent = 'Ver como instalar en iPhone';
+  const help = document.getElementById('pwaInstallHelp');
+  if (!_pwaPrompt) {
+    if (btn) btn.textContent = isiOS ? 'Ver como instalar en iPhone' : 'Ver como instalar ASWA';
     if (help) help.style.display = 'block';
+  } else if (btn) {
+    btn.textContent = 'Instalar app ASWA';
   }
 }
 
@@ -8210,10 +8211,10 @@ function pwaCerrarSugerencia() {
 }
 
 async function pwaInstalarApp() {
-  const help = document.getElementById('pwaIosHelp');
+  const help = document.getElementById('pwaInstallHelp');
   if (!_pwaPrompt) {
     if (help) help.style.display = 'block';
-    tst('En iPhone usa Compartir y Agregar a pantalla de inicio', 4500);
+    tst('Usa el menu del navegador para agregar ASWA a la pantalla de inicio', 4500);
     return;
   }
   _pwaPrompt.prompt();
