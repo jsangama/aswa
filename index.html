@@ -683,6 +683,35 @@
       position:absolute; right:14px; bottom:15px;
       font-size:11px; font-weight:700; pointer-events:none;
     }
+    .dir-sug-box {
+      display:none;
+      position:absolute;
+      left:0;
+      right:0;
+      top:74px;
+      z-index:20;
+      background:#111113;
+      border:1px solid var(--brd);
+      border-radius:12px;
+      overflow:hidden;
+      box-shadow:0 16px 34px rgba(0,0,0,.38);
+    }
+    .dir-sug-box.show { display:block; }
+    .dir-sug-item {
+      display:flex;
+      gap:10px;
+      align-items:flex-start;
+      padding:11px 12px;
+      border-bottom:1px solid rgba(255,255,255,.06);
+      cursor:pointer;
+      background:#111113;
+    }
+    .dir-sug-item:last-child { border-bottom:0; }
+    .dir-sug-item:hover { background:rgba(250,204,21,.07); }
+    .dir-sug-ico { font-size:15px; line-height:1.2; }
+    .dir-sug-main { color:var(--txt); font-size:12px; font-weight:800; }
+    .dir-sug-sub { color:var(--mut); font-size:10px; margin-top:2px; }
+    .dir-sug-dist { color:var(--y); font-size:10px; font-weight:800; margin-top:2px; }
     .zona-quick-grid {
       display:grid;
       grid-template-columns:repeat(2,minmax(0,1fr));
@@ -2501,7 +2530,9 @@
     <div class="fld">
       <label>Dirección de entrega</label>
       <input type="text" id="direccion" class="inp"
+             oninput="dirBuscar(this.value)" onfocus="dirBuscar(this.value)"
              placeholder="Calle, número, referencia" autocomplete="street-address">
+      <div id="dirSugerencias" class="dir-sug-box"></div>
       <div style="font-size:11px;color:var(--mut);margin-top:6px;padding:0 4px">
         ¿No aparece tu dirección? Puedes escribirla manualmente.
       </div>
@@ -5036,6 +5067,99 @@ function mostrarNotaNacional(sel) {
   // Mostrar solo si seleccionó la opción de valor 10 (nacional)
   nota.style.display = sel.value === '10' ? 'block' : 'none';
 }
+
+const CALLES_LOCALES = [
+  { calle:'Jr. Augusto B. Leguia', zona:'Morales' },
+  { calle:'Jr. Miraflores', zona:'Morales' },
+  { calle:'Jr. Los Cedros', zona:'Morales' },
+  { calle:'Jr. Tupac Amaru', zona:'Morales' },
+  { calle:'Jr. San Martin', zona:'Morales' },
+  { calle:'Av. Circunvalacion', zona:'Morales' },
+  { calle:'Jr. Jimenez Pimentel', zona:'Tarapoto' },
+  { calle:'Jr. Maynas', zona:'Tarapoto' },
+  { calle:'Jr. Martinez de Companon', zona:'Tarapoto' },
+  { calle:'Jr. Shapaja', zona:'Tarapoto' },
+  { calle:'Jr. Lima', zona:'Tarapoto' },
+  { calle:'Av. Alfonso Ugarte', zona:'Tarapoto' },
+  { calle:'Jr. Los Angeles', zona:'Banda' },
+  { calle:'Jr. Cahuide', zona:'Banda' },
+  { calle:'Jr. Las Palmeras', zona:'Banda' },
+  { calle:'Jr. Inca', zona:'Banda' },
+  { calle:'Av. Principal La Banda', zona:'Banda' },
+  { calle:'Urb. La Planicie', zona:'Morales' },
+  { calle:'Urb. Las Orquideas', zona:'Tarapoto' },
+  { calle:'AA.HH. 9 de Abril', zona:'Morales' }
+];
+let _dirTimer = null;
+let _dirResultados = [];
+
+function dirEsc(txt) {
+  return String(txt || '').replace(/[&<>"']/g, ch => ({
+    '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;'
+  }[ch]));
+}
+
+function dirBuscar(query) {
+  query = (query || '').trim();
+  clearTimeout(_dirTimer);
+  if (query.length < 3) {
+    dirOcultarSug();
+    return;
+  }
+
+  _dirTimer = setTimeout(() => {
+    const qn = _zonaNorm(query);
+    _dirResultados = CALLES_LOCALES
+      .filter(item => _zonaNorm(item.calle + ' ' + item.zona).includes(qn))
+      .slice(0, 6);
+    dirRenderSug();
+  }, 120);
+}
+
+function dirRenderSug() {
+  const box = document.getElementById('dirSugerencias');
+  if (!box) return;
+  if (_dirResultados.length === 0) {
+    box.innerHTML = '<div class="dir-sug-item"><div class="dir-sug-ico">+</div><div><div class="dir-sug-main">Usar direccion escrita</div><div class="dir-sug-sub">Puedes continuar con tu direccion manual.</div></div></div>';
+    box.classList.add('show');
+    return;
+  }
+
+  box.innerHTML = _dirResultados.map((item, i) => `
+    <div class="dir-sug-item" onclick="dirSeleccionar(${i})">
+      <div class="dir-sug-ico">📍</div>
+      <div>
+        <div class="dir-sug-main">${dirEsc(item.calle)}</div>
+        <div class="dir-sug-sub">Sugerencia local ASWA</div>
+        <div class="dir-sug-dist">${dirEsc(item.zona)}</div>
+      </div>
+    </div>
+  `).join('');
+  box.classList.add('show');
+}
+
+function dirOcultarSug() {
+  const box = document.getElementById('dirSugerencias');
+  if (box) box.classList.remove('show');
+}
+
+function dirSeleccionar(index) {
+  const item = _dirResultados[index];
+  if (!item) return;
+  const input = document.getElementById('direccion');
+  if (input) {
+    input.value = item.calle;
+    input.classList.add('has-value');
+  }
+  const precios = { Morales:3, Tarapoto:4, Banda:5 };
+  seleccionarZonaVisual(item.zona, precios[item.zona] || 0);
+  dirOcultarSug();
+}
+
+document.addEventListener('click', e => {
+  if (e.target.closest('#dirSugerencias') || e.target.id === 'direccion') return;
+  dirOcultarSug();
+});
 
 function _zonaNorm(txt) {
   return String(txt || '').toLowerCase()
