@@ -3587,7 +3587,7 @@
         </div>
       </div>
       <div style="font-size:11px;color:var(--mut);margin-top:10px;line-height:1.5">
-        ⏰ Atención: Lun–Vie 9am–12pm y 2pm–5pm · Sábados 8am–12pm
+        🕘 Horarios de entrega: Mañanas 7:00 am – 2:00 pm · Tardes 2:00 pm – 5:30 pm · Lunes a viernes · Sábados 7:00 am – 2:00 pm
       </div>
     </div>
   </div>
@@ -5302,7 +5302,20 @@ const ZONA_ETA = {
   banda: { min: 45, texto: 'Entrega a Banda de Shilcayo' },
   recojo: { min: 0, texto: 'Recojo coordinado en local' }
 };
-const HORARIO_DEFAULT = { activo: true, inicio: '07:00', fin: '22:00', mensaje: 'Volvemos mañana desde las 7:00 AM' };
+const HORARIO_DEFAULT = {
+  activo: true,
+  inicio: '07:00',
+  fin: '17:30',
+  mensaje: 'Volvemos en el siguiente horario de entrega',
+  texto: '🕘 Horarios de entrega:<br>✨ Mañanas: 7:00 am – 2:00 pm<br>✨ Tardes: 2:00 pm – 5:30 pm<br>📅 Disponible de lunes a viernes<br>🗓️ Sábados: 7:00 am – 2:00 pm',
+  lunesViernes: [
+    { nombre: 'Mañanas', inicio: '07:00', fin: '14:00' },
+    { nombre: 'Tardes', inicio: '14:00', fin: '17:30' }
+  ],
+  sabado: [
+    { nombre: 'Sábados', inicio: '07:00', fin: '14:00' }
+  ]
+};
 
 function dirEsc(txt) {
   return String(txt || '').replace(/[&<>"']/g, ch => ({
@@ -5465,30 +5478,70 @@ function horaLimaEnMinutos() {
   return hora * 60 + min;
 }
 
+function horarioLimaAhora() {
+  const partes = new Intl.DateTimeFormat('es-PE', {
+    timeZone: 'America/Lima',
+    weekday: 'long',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false
+  }).formatToParts(new Date());
+  const weekday = String(partes.find(p => p.type === 'weekday')?.value || '')
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '');
+  const dia = { domingo:0, lunes:1, martes:2, miercoles:3, jueves:4, viernes:5, sabado:6 }[weekday] ?? 0;
+  const hora = Number(partes.find(p => p.type === 'hour')?.value || 0);
+  const min = Number(partes.find(p => p.type === 'minute')?.value || 0);
+  return { dia, minutos: hora * 60 + min };
+}
+
 function horarioMinutos(valor, fallback) {
   const [h, m] = String(valor || fallback).split(':').map(Number);
   return (Number.isFinite(h) ? h : 0) * 60 + (Number.isFinite(m) ? m : 0);
+}
+
+function horarioVentanasDelDia(horario, dia) {
+  if (horario.dias && Array.isArray(horario.dias[dia])) return horario.dias[dia];
+  if (dia >= 1 && dia <= 5) return horario.lunesViernes || [{ nombre:'Horario', inicio: horario.inicio, fin: horario.fin }];
+  if (dia === 6) return horario.sabado || [];
+  return horario.domingo || [];
+}
+
+function horarioEstadoActual(horario) {
+  const ahora = horarioLimaAhora();
+  const ventanas = horarioVentanasDelDia(horario, ahora.dia);
+  const ventana = ventanas.find(item => {
+    const ini = horarioMinutos(item.inicio, horario.inicio);
+    const fin = horarioMinutos(item.fin, horario.fin);
+    return ini <= fin
+      ? (ahora.minutos >= ini && ahora.minutos <= fin)
+      : (ahora.minutos >= ini || ahora.minutos <= fin);
+  });
+  return { abierto: !!ventana, ventana, ventanas };
 }
 
 function actualizarHorarioMini() {
   const box = document.getElementById('horarioMini');
   if (!box) return;
   const horario = { ...HORARIO_DEFAULT, ...(window.ASWA_CONFIG?.HORARIO || {}) };
+  const textoHorario = horario.texto || HORARIO_DEFAULT.texto;
+  const mensajeHorario = HORARIO_DEFAULT.mensaje;
   if (horario.activo === false) {
     box.className = 'horario-mini show closed';
-    box.innerHTML = `<span class="horario-mini-ico">🌙</span><div><strong>Estamos cerrados por ahora.</strong><br>${dirEsc(horario.mensaje || HORARIO_DEFAULT.mensaje)} · Horario ${dirEsc(horario.inicio)} - ${dirEsc(horario.fin)}</div>`;
+    box.innerHTML = `<span class="horario-mini-ico">🌙</span><div><strong>Estamos cerrados por ahora.</strong><br>${dirEsc(mensajeHorario)}<br>${textoHorario}</div>`;
     return;
   }
 
-  const ahora = horaLimaEnMinutos();
-  const ini = horarioMinutos(horario.inicio, HORARIO_DEFAULT.inicio);
-  const fin = horarioMinutos(horario.fin, HORARIO_DEFAULT.fin);
-  const abierto = ini <= fin ? (ahora >= ini && ahora <= fin) : (ahora >= ini || ahora <= fin);
+  const estado = horarioEstadoActual(horario);
+  const turno = estado.ventana
+    ? `${dirEsc(estado.ventana.nombre || 'Horario')}: ${dirEsc(estado.ventana.inicio)} - ${dirEsc(estado.ventana.fin)}`
+    : dirEsc(mensajeHorario);
 
-  box.className = 'horario-mini show ' + (abierto ? 'open' : 'closed');
-  box.innerHTML = abierto
-    ? `<span class="horario-mini-ico">✅</span><div><strong>Estamos atendiendo ahora.</strong><br>Horario de hoy: ${dirEsc(horario.inicio)} - ${dirEsc(horario.fin)} · Hora Lima</div>`
-    : `<span class="horario-mini-ico">🌙</span><div><strong>Fuera de horario.</strong><br>${dirEsc(horario.mensaje || HORARIO_DEFAULT.mensaje)} · Horario ${dirEsc(horario.inicio)} - ${dirEsc(horario.fin)}</div>`;
+  box.className = 'horario-mini show ' + (estado.abierto ? 'open' : 'closed');
+  box.innerHTML = estado.abierto
+    ? `<span class="horario-mini-ico">✅</span><div><strong>Estamos atendiendo ahora.</strong><br>${turno} · Hora Lima<br>${textoHorario}</div>`
+    : `<span class="horario-mini-ico">🌙</span><div><strong>Fuera de horario.</strong><br>${turno}<br>${textoHorario}</div>`;
 }
 
 function calcVuelto() {
@@ -11749,19 +11802,11 @@ async function admCargarTracking() {
 // ── _verificarHorario [from index__5_]
 function _verificarHorario() {
   const h = CATALOGO.horario;
-  if (!h || h.activo) return; // abierto
-
-  // Verificar si estamos fuera de horario
-  const ahora = new Date();
-  const [hIni, mIni] = (h.inicio || '00:00').split(':').map(Number);
-  const [hFin, mFin] = (h.fin    || '23:59').split(':').map(Number);
-  const minAhora = ahora.getHours() * 60 + ahora.getMinutes();
-  const minIni   = hIni * 60 + mIni;
-  const minFin   = hFin * 60 + mFin;
-  const estaAbierto = minAhora >= minIni && minAhora <= minFin;
-
-  if (!estaAbierto) {
-    _mostrarCerrado(h.mensaje || 'Estamos cerrados por el momento 🌙');
+  if (!h) return;
+  const horario = { ...HORARIO_DEFAULT, ...h };
+  const estado = horarioEstadoActual(horario);
+  if (horario.activo === false || !estado.abierto) {
+    _mostrarCerrado(horario.mensaje || 'Estamos cerrados por el momento 🌙');
   }
 }
 
@@ -11783,7 +11828,7 @@ function _mostrarCerrado(mensaje) {
     <div style="font-family:'Bebas Neue',cursive;font-size:32px;color:var(--y);letter-spacing:.08em;margin-bottom:8px">ESTAMOS CERRADOS</div>
     <p style="font-size:14px;color:var(--mut);max-width:280px;line-height:1.7">${mensaje}</p>
     <div style="margin-top:20px;font-size:12px;color:var(--mut)">
-      Horario: ${CATALOGO.horario.inicio} – ${CATALOGO.horario.fin}
+      ${CATALOGO.horario.texto || HORARIO_DEFAULT.texto}
     </div>
     <a href="https://wa.me/51947999736" target="_blank"
        style="margin-top:24px;background:var(--y);color:#000;padding:14px 32px;border-radius:14px;font-weight:900;font-size:14px;text-decoration:none;font-family:'Poppins',sans-serif">
@@ -11993,8 +12038,8 @@ async function catGuardarHorario() {
   const h = {
     activo:  document.getElementById('cat-abierto')?.checked ?? true,
     inicio:  document.getElementById('cat-hora-ini')?.value || '07:00',
-    fin:     document.getElementById('cat-hora-fin')?.value || '22:00',
-    mensaje: document.getElementById('cat-msg-cerrado')?.value || 'Volvemos pronto 🌽'
+    fin:     document.getElementById('cat-hora-fin')?.value || '17:30',
+    mensaje: document.getElementById('cat-msg-cerrado')?.value || 'Volvemos en el siguiente horario de entrega'
   };
   CATALOGO.horario = h;
   await _catGuardar({ horario: h }, '✅ Horario guardado');

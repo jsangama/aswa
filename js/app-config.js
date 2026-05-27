@@ -5,8 +5,16 @@
     HORARIO: {
       activo: true,
       inicio: '07:00',
-      fin: '22:00',
-      mensaje: 'Volvemos mañana desde las 7:00 AM',
+      fin: '17:30',
+      mensaje: 'Volvemos en el siguiente horario de entrega',
+      texto: '🕘 Horarios de entrega:<br>✨ Mañanas: 7:00 am – 2:00 pm<br>✨ Tardes: 2:00 pm – 5:30 pm<br>📅 Disponible de lunes a viernes<br>🗓️ Sábados: 7:00 am – 2:00 pm',
+      lunesViernes: [
+        { nombre: 'Mañanas', inicio: '07:00', fin: '14:00' },
+        { nombre: 'Tardes', inicio: '14:00', fin: '17:30' },
+      ],
+      sabado: [
+        { nombre: 'Sábados', inicio: '07:00', fin: '14:00' },
+      ],
     },
     WHATSAPP: {
       pedidos1: '51955273229',
