@@ -1361,6 +1361,19 @@
       border:1px solid rgba(168,85,247,.2);
       padding:8px 20px; border-radius:999px; margin:12px 0 28px; display:none;
     }
+    .eta-card {
+      display:none; width:100%; max-width:320px; margin:8px 0 12px;
+      background:linear-gradient(135deg,rgba(34,197,94,.12),rgba(250,204,21,.08));
+      border:1px solid rgba(34,197,94,.28); border-radius:16px;
+      padding:14px; text-align:left; box-shadow:0 8px 26px rgba(0,0,0,.22);
+    }
+    .eta-card.on { display:block; }
+    .eta-head { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:8px; }
+    .eta-title { display:flex; align-items:center; gap:8px; font-size:12px; font-weight:900; color:#bbf7d0; text-transform:uppercase; letter-spacing:.06em; }
+    .eta-time { font-family:'Bebas Neue',cursive; font-size:30px; color:var(--y); letter-spacing:.03em; white-space:nowrap; }
+    .eta-detail { font-size:11px; color:#d1d5db; line-height:1.45; margin-bottom:10px; }
+    .eta-progress { height:7px; background:rgba(255,255,255,.08); border-radius:999px; overflow:hidden; }
+    .eta-progress span { display:block; width:6%; height:100%; background:linear-gradient(90deg,var(--grn),var(--y)); border-radius:999px; transition:width .35s ease; }
     .bnvo {
       background:var(--y); color:#000; border:none;
       padding:16px 44px; border-radius:14px;
@@ -5489,6 +5502,92 @@ function actualizarETAVisual(textoZona, precio) {
   box.classList.add('show');
 }
 
+let _etaInterval = null;
+let _etaInicio = null;
+let _etaMinutos = 0;
+
+function calcularETA() {
+  const sel = document.getElementById('zona');
+  const opt = sel?.options?.[sel.selectedIndex];
+  const textoZona = _zonaNorm(opt?.dataset?.nombre || opt?.textContent || '');
+  const precio = Number(sel?.value || ST.delivery || 0);
+  const preparacion = 10;
+
+  if (textoZona.includes('recojo') || precio === 0) return preparacion;
+  if (textoZona.includes('morales') || precio === 3) return ZONA_ETA.morales.min + preparacion;
+  if (textoZona.includes('tarapoto') || precio === 4) return ZONA_ETA.tarapoto.min + preparacion;
+  if (textoZona.includes('banda') || textoZona.includes('shilcayo') || precio === 5) return ZONA_ETA.banda.min + preparacion;
+  return 40;
+}
+
+function asegurarETABox() {
+  let box = document.getElementById('etaBox');
+  if (box) return box;
+
+  box = document.createElement('div');
+  box.id = 'etaBox';
+  box.className = 'eta-card';
+  box.setAttribute('aria-live', 'polite');
+  box.innerHTML = `
+    <div class="eta-head">
+      <div class="eta-title"><span id="etaIco">ETA</span><span>Entrega estimada</span></div>
+      <div class="eta-time" id="etaTiempo">~30 min</div>
+    </div>
+    <div class="eta-detail" id="etaDetalle">Calculando tiempo segun tu zona...</div>
+    <div class="eta-progress"><span id="etaProgreso"></span></div>
+  `;
+
+  const badge = document.getElementById('succTrackingBadge');
+  const succ = document.getElementById('succScreen');
+  if (badge?.parentNode) badge.insertAdjacentElement('afterend', box);
+  else succ?.insertBefore(box, succ.firstChild);
+  return box;
+}
+
+function mostrarETA(pedidoId) {
+  const box = asegurarETABox();
+  const tiempoEl = document.getElementById('etaTiempo');
+  const detalle = document.getElementById('etaDetalle');
+  const progrEl = document.getElementById('etaProgreso');
+  const icoEl = document.getElementById('etaIco');
+
+  if (!box) return;
+
+  _etaMinutos = Math.max(10, calcularETA());
+  _etaInicio = Date.now();
+  const horaLlegada = new Date(Date.now() + _etaMinutos * 60000);
+  const horaTexto = horaLlegada.toLocaleTimeString('es-PE', {
+    hour: '2-digit',
+    minute: '2-digit',
+    timeZone: 'America/Lima'
+  });
+  const ico = _etaMinutos <= 25 ? 'Rapido' : _etaMinutos <= 45 ? 'Delivery' : 'Ruta';
+
+  if (icoEl) icoEl.textContent = ico;
+  if (tiempoEl) tiempoEl.textContent = `~${_etaMinutos} min`;
+  if (detalle) {
+    detalle.textContent = `Preparacion + delivery. Llegada aproximada ${horaTexto}${pedidoId ? ' · Pedido ' + pedidoId.slice(0, 6).toUpperCase() : ''}`;
+  }
+  if (progrEl) progrEl.style.width = '6%';
+  box.classList.add('on');
+
+  if (_etaInterval) clearInterval(_etaInterval);
+  _etaInterval = setInterval(() => {
+    const transcurrido = (Date.now() - _etaInicio) / 60000;
+    const restante = Math.max(0, _etaMinutos - transcurrido);
+    if (progrEl) progrEl.style.width = Math.min(98, (transcurrido / _etaMinutos) * 100) + '%';
+    if (!tiempoEl) return;
+    if (restante < 2) {
+      tiempoEl.textContent = 'Llegando';
+      tiempoEl.style.color = 'var(--grn)';
+      if (icoEl) icoEl.textContent = 'Final';
+      clearInterval(_etaInterval);
+    } else {
+      tiempoEl.textContent = `~${Math.ceil(restante)} min`;
+    }
+  }, 30000);
+}
+
 function horaLimaEnMinutos() {
   const partes = new Intl.DateTimeFormat('es-PE', {
     timeZone: 'America/Lima',
@@ -6247,6 +6346,7 @@ async function enviarPedido() {
     el.style.display = 'block';
   }
   document.getElementById('succScreen').classList.add('on');
+  mostrarETA(ST.pedidoFbId || pid);
 
   /* ── Mostrar rating después de 8 seg (flujo efectivo) ── */
   setTimeout(() => { if (typeof abrirRating === 'function') abrirRating(); }, 8000);
