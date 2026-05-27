@@ -184,8 +184,13 @@
     }
 
     // Números WhatsApp por defecto (se sobreescriben si existen en Firestore)
-    window.WA1 = "51955273229";
-    window.WA2 = "51986445531";
+    const WA_CONFIG = window.ASWA_CONFIG?.WHATSAPP || {};
+    window.WA1 = WA_CONFIG.pedidos1 || "51955273229";
+    window.WA2 = WA_CONFIG.pedidos2 || "51986445531";
+    window.WAYAPE = WA_CONFIG.yape || "51947999736";
+    window.getWA1 = () => window.WA1;
+    window.getWA2 = () => window.WA2;
+    window.getWAYape = () => window.NEGOCIO?.whatsapp_yape || window.WAYAPE;
   </script>
 
   <style>
@@ -5717,8 +5722,8 @@ async function enviarPedido() {
     +'_📞 955 273 229 / 986 445 531_';
 
   /* Enviar a ambos WhatsApp */
-  window.open('https://wa.me/'+window.WA1+'?text='+encodeURIComponent(msg), '_blank');
-  setTimeout(() => window.open('https://wa.me/'+window.WA2+'?text='+encodeURIComponent(msg), '_blank'), 900);
+  window.open('https://wa.me/'+getWA1()+'?text='+encodeURIComponent(msg), '_blank');
+  setTimeout(() => window.open('https://wa.me/'+getWA2()+'?text='+encodeURIComponent(msg), '_blank'), 900);
 
   /* Si pagó con método digital, enviar alerta para verificar comprobante */
   if (esDigitalPago) {
@@ -5734,7 +5739,7 @@ async function enviarPedido() {
       + '\n👉 Entra al Panel Admin para APROBAR o RECHAZAR:\n'
       + 'https://jsangama.github.io/aswa → ⚙️ Admin\n\n'
       + '_LA RICA CHICHA - ASWA_ 🌿';
-    setTimeout(() => window.open('https://wa.me/'+window.WA1+'?text='+encodeURIComponent(msgComp), '_blank'), 1800);
+    setTimeout(() => window.open('https://wa.me/'+getWA1()+'?text='+encodeURIComponent(msgComp), '_blank'), 1800);
   }
 
   /* Guardar en Firestore */
@@ -6945,7 +6950,7 @@ function enviarMisionWA(tipo) {
     + '\n\n👤 ' + nombre
     + '\n📱 ' + tel
     + '\n📅 Válido hasta: ' + finMes + ' (fin de mes)';
-  window.open('https://wa.me/'+window.WA1+'?text=' + encodeURIComponent(msg), '_blank');
+  window.open('https://wa.me/'+getWA1()+'?text=' + encodeURIComponent(msg), '_blank');
   cerrar('mMision');
   tst('✅ ¡Reclamo enviado! Te confirmaremos el bono pronto 🎉', 3500);
 }
