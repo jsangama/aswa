@@ -2778,6 +2778,10 @@
           <input type="time" id="reservaHora" class="inp" min="07:00" max="17:30" step="900" onchange="actualizarReservaUI()">
         </div>
         <div class="reserva-info" id="reservaInfo">Disponible con Yape, Plin, Agora, BIM o transferencia bancaria. No aplica para efectivo.</div>
+        <button type="button" id="reservaNotifBtn" onclick="activarAlertasReservaCliente()" style="display:none;width:100%;margin-top:10px;border:1px solid rgba(250,204,21,.45);background:rgba(250,204,21,.12);color:#fde68a;border-radius:10px;padding:10px 12px;font-size:11px;font-weight:900">
+          Activar alertas de mi reserva
+        </button>
+        <div class="reserva-info" id="reservaNotifInfo" style="display:none"></div>
       </div>
     </div>
     <div class="fld">
@@ -5470,7 +5474,15 @@ function actualizarReservaUI() {
   const activa = !!document.getElementById('reservaActiva')?.checked;
   const detalle = document.getElementById('reservaDetalle');
   const info = document.getElementById('reservaInfo');
+  const notifBtn = document.getElementById('reservaNotifBtn');
+  const notifInfo = document.getElementById('reservaNotifInfo');
   if (detalle) detalle.style.display = activa ? 'grid' : 'none';
+  if (notifBtn) notifBtn.style.display = activa ? 'block' : 'none';
+  if (notifInfo) {
+    notifInfo.style.display = activa ? 'block' : 'none';
+    notifInfo.className = 'reserva-info';
+    notifInfo.textContent = alertaReservaEstadoTexto();
+  }
   if (!info) return;
   info.className = 'reserva-info';
   if (!activa) {
@@ -5511,6 +5523,266 @@ function obtenerReservaPedido(mostrarErrores = false) {
     estado:'programada'
   };
 }
+
+function alertaReservaEstadoTexto() {
+  if (!('Notification' in window)) return 'Tu navegador no soporta alertas del sistema. Te avisaremos dentro de la app cuando la abras.';
+  if (Notification.permission === 'granted') return 'Alertas activas: te avisaremos hoy y 30 minutos antes de tu reserva.';
+  if (Notification.permission === 'denied') return 'Alertas bloqueadas. Activalas en permisos del navegador para recibir recordatorios.';
+  return 'Activa las alertas para que tu celular te recuerde la reserva.';
+}
+
+async function activarAlertasReservaCliente() {
+  if (!('Notification' in window)) {
+    tst('Tu navegador no soporta notificaciones del sistema', 3000);
+    actualizarReservaUI();
+    return false;
+  }
+  const permiso = Notification.permission === 'granted'
+    ? 'granted'
+    : await Notification.requestPermission();
+  if (permiso === 'granted') {
+    tst('Alertas de reserva activadas', 2500);
+    actualizarReservaUI();
+    return true;
+  }
+  tst('No se activaron las alertas. Revisa permisos del navegador.', 3500);
+  actualizarReservaUI();
+  return false;
+}
+
+function reservaAlertasTiempos(reserva) {
+  if (!reserva?.activa) return null;
+  const entrega = reservaFechaLocal(reserva.fecha, reserva.hora);
+  if (!entrega) return null;
+  const dia = reservaFechaLocal(reserva.fecha, '07:00');
+  const treinta = new Date(entrega.getTime() - 30 * 60 * 1000);
+  return {
+    entrega,
+    dia,
+    treinta,
+    dia_iso: dia.toISOString(),
+    treinta_iso: treinta.toISOString()
+  };
+}
+
+function reservaAlertasMeta(reserva) {
+  const t = reservaAlertasTiempos(reserva);
+  if (!t) return null;
+  return {
+    permiso_notificaciones: ('Notification' in window) ? Notification.permission : 'no_soportado',
+    alerta_dia_iso: t.dia_iso,
+    alerta_30min_iso: t.treinta_iso,
+    requiere_push_backend: true,
+    descripcion: 'El cliente debe recibir alerta el dia de reserva y alerta fuerte 30 minutos antes.'
+  };
+}
+
+function reservaReminderKey() {
+  return `${BUSINESS_ID || 'aswa'}_reservation_reminders`;
+}
+
+function reservaLoadReminders() {
+  try { return JSON.parse(localStorage.getItem(reservaReminderKey()) || '[]'); }
+  catch (_) { return []; }
+}
+
+function reservaSaveReminders(items) {
+  try { localStorage.setItem(reservaReminderKey(), JSON.stringify(items.slice(-40))); }
+  catch (_) {}
+}
+
+function reservaUpsertReminder(item) {
+  const items = reservaLoadReminders().filter(x => x.id !== item.id);
+  items.push(item);
+  reservaSaveReminders(items);
+}
+
+async function reservaShowSystemNotification(title, options = {}) {
+  if (!('Notification' in window) || Notification.permission !== 'granted') return false;
+  const defaults = {
+    icon: 'assets/images/icons/icon-192.png',
+    badge: 'assets/images/icons/icon-192.png',
+    vibrate: [700, 250, 700, 250, 1100, 300, 1100],
+    requireInteraction: true,
+    renotify: true,
+    silent: false
+  };
+  try {
+    if ('serviceWorker' in navigator) {
+      const reg = await navigator.serviceWorker.ready;
+      await reg.showNotification(title, { ...defaults, ...options });
+    } else {
+      new Notification(title, { ...defaults, ...options });
+    }
+    return true;
+  } catch (err) {
+    console.warn('Reserva notification:', err);
+    try { new Notification(title, { ...defaults, ...options }); return true; } catch (_) { return false; }
+  }
+}
+
+function reservaPlayUrgentTone() {
+  try {
+    if (navigator.vibrate) navigator.vibrate([900, 250, 900, 250, 1400, 300, 1400]);
+    const Ctx = window.AudioContext || window.webkitAudioContext;
+    if (!Ctx) return;
+    const ctx = new Ctx();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = 'sine';
+    osc.frequency.value = 880;
+    gain.gain.value = 0.0001;
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start();
+    const now = ctx.currentTime;
+    for (let i = 0; i < 10; i++) {
+      const start = now + i * 0.7;
+      gain.gain.setValueAtTime(0.0001, start);
+      gain.gain.exponentialRampToValueAtTime(0.28, start + 0.05);
+      gain.gain.exponentialRampToValueAtTime(0.0001, start + 0.42);
+    }
+    setTimeout(() => { try { osc.stop(); ctx.close(); } catch (_) {} }, 7600);
+  } catch (_) {}
+}
+
+async function reservaDispararAlerta(rem, tipo) {
+  const fuerte = tipo === '30min';
+  const titulo = fuerte ? 'ASWA: tu reserva esta por llegar' : 'ASWA: hoy tienes un pedido reservado';
+  const body = fuerte
+    ? `Faltan 30 minutos para tu entrega: ${rem.texto}. Ten tu celular atento.`
+    : `Hoy tienes una reserva: ${rem.texto}. Tu pedido ya esta programado.`;
+  showNotification?.(titulo, body, fuerte ? '!' : 'ASWA');
+  if (fuerte) reservaPlayUrgentTone();
+  await reservaShowSystemNotification(titulo, {
+    body,
+    tag: `aswa-reserva-${rem.pedidoId}-${tipo}`,
+    data: { tipo:'reserva_cliente', pedidoId:rem.pedidoId, url:`./index.html?pedido=${rem.pedidoId}` },
+    actions: [
+      { action:'open', title:'Ver pedido' },
+      { action:'ok', title:'Estoy atento' }
+    ]
+  });
+}
+
+function reservaProgramarTimeout(rem, tipo, fechaISO) {
+  const at = new Date(fechaISO).getTime();
+  const now = Date.now();
+  const entrega = new Date(rem.entrega_iso).getTime();
+  if (!at || now > entrega) return;
+  const delay = Math.max(1500, at - now);
+  const maxDelay = 2147483647;
+  const key = `${rem.id}_${tipo}`;
+  window._reservaTimers = window._reservaTimers || {};
+  clearTimeout(window._reservaTimers[key]);
+  if (delay > maxDelay) {
+    window._reservaTimers[key] = setTimeout(() => reservaProgramarTimeout(rem, tipo, fechaISO), maxDelay);
+    return;
+  }
+  window._reservaTimers[key] = setTimeout(() => {
+    reservaDispararAlerta(rem, tipo);
+    rem.disparadas = rem.disparadas || {};
+    rem.disparadas[tipo] = new Date().toISOString();
+    reservaUpsertReminder(rem);
+  }, delay);
+}
+
+function reservaRevisarReminders() {
+  const items = reservaLoadReminders();
+  const now = Date.now();
+  let changed = false;
+  items.forEach(rem => {
+    rem.disparadas = rem.disparadas || {};
+    const entrega = new Date(rem.entrega_iso).getTime();
+    if (!entrega || now > entrega + 2 * 60 * 60 * 1000) return;
+    if (!rem.disparadas.dia && now >= new Date(rem.alerta_dia_iso).getTime()) {
+      reservaDispararAlerta(rem, 'dia');
+      rem.disparadas.dia = new Date().toISOString();
+      changed = true;
+    }
+    if (!rem.disparadas['30min'] && now >= new Date(rem.alerta_30min_iso).getTime()) {
+      reservaDispararAlerta(rem, '30min');
+      rem.disparadas['30min'] = new Date().toISOString();
+      changed = true;
+    }
+    if (!rem.disparadas.dia) reservaProgramarTimeout(rem, 'dia', rem.alerta_dia_iso);
+    if (!rem.disparadas['30min']) reservaProgramarTimeout(rem, '30min', rem.alerta_30min_iso);
+  });
+  if (changed) reservaSaveReminders(items);
+}
+
+async function programarRecordatoriosReserva(pedidoId, reserva, cliente = {}) {
+  if (!pedidoId || !reserva?.activa) return null;
+  if ('Notification' in window && Notification.permission === 'default') {
+    await activarAlertasReservaCliente();
+  }
+  const tiempos = reservaAlertasTiempos(reserva);
+  if (!tiempos) return null;
+  const rem = {
+    id: `${pedidoId}_${reserva.fecha}_${reserva.hora}`,
+    pedidoId,
+    nombre: cliente.nombre || '',
+    telefono: cliente.telefono || '',
+    total: cliente.total || 0,
+    texto: reserva.texto,
+    entrega_iso: tiempos.entrega.toISOString(),
+    alerta_dia_iso: tiempos.dia_iso,
+    alerta_30min_iso: tiempos.treinta_iso,
+    permiso: ('Notification' in window) ? Notification.permission : 'no_soportado',
+    creado: new Date().toISOString(),
+    disparadas: {}
+  };
+  reservaUpsertReminder(rem);
+  reservaRevisarReminders();
+  return rem;
+}
+
+async function crearAlertasReservaPush(pedidoId, reserva, cliente = {}) {
+  if (!pedidoId || !reserva?.activa || !window.FB?.addDoc) return;
+  const tiempos = reservaAlertasTiempos(reserva);
+  if (!tiempos) return;
+  const { addDoc:ad, collection:col, serverTimestamp:ts } = window.FB;
+  const base = {
+    businessId: BUSINESS_ID,
+    pedidoId,
+    telefono: cliente.telefono || '',
+    nombre: cliente.nombre || '',
+    total: cliente.total || 0,
+    reserva_texto: reserva.texto,
+    reserva_fecha: reserva.fecha,
+    reserva_hora: reserva.hora,
+    canal: 'cliente_reserva',
+    estado: 'pendiente',
+    created_at: ts(),
+    necesita_cloud_function: true
+  };
+  await Promise.all([
+    ad(col(db, 'push_queue'), {
+      ...base,
+      tipo: 'reserva_hoy',
+      send_at_iso: tiempos.dia_iso,
+      titulo: 'ASWA: hoy tienes un pedido reservado',
+      cuerpo: `Hoy tienes una reserva: ${reserva.texto}.`
+    }),
+    ad(col(db, 'push_queue'), {
+      ...base,
+      tipo: 'reserva_30min',
+      send_at_iso: tiempos.treinta_iso,
+      urgente: true,
+      titulo: 'ASWA: tu reserva esta por llegar',
+      cuerpo: `Faltan 30 minutos para tu entrega: ${reserva.texto}.`
+    })
+  ]);
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  reservaRevisarReminders();
+  setInterval(reservaRevisarReminders, 60 * 1000);
+});
+
+window.activarAlertasReservaCliente = activarAlertasReservaCliente;
+window.programarRecordatoriosReserva = programarRecordatoriosReserva;
+window.crearAlertasReservaPush = crearAlertasReservaPush;
 
 function dirEsc(txt) {
   return String(txt || '').replace(/[&<>"']/g, ch => ({
@@ -6434,9 +6706,18 @@ async function enviarPedido() {
       reserva_iso:    reservaPedido.activa ? reservaPedido.iso : null,
       reserva_texto:  reservaPedido.activa ? reservaPedido.texto : null,
       reserva_estado: reservaPedido.activa ? 'programada' : null,
+      reserva_alertas_cliente: reservaPedido.activa ? reservaAlertasMeta(reservaPedido) : null,
       fecha:          ts()
     });
     ST.pedidoFbId = ref.id;
+    if (reservaPedido.activa) {
+      await programarRecordatoriosReserva(ref.id, reservaPedido, { telefono, nombre, total: ST.final });
+      try {
+        await crearAlertasReservaPush(ref.id, reservaPedido, { telefono, nombre, total: ST.final });
+      } catch (alertErr) {
+        console.warn('Reserva push queue:', alertErr);
+      }
+    }
     await registrarUsoCupon(ST.disc.cupCod);
     // Guardar en sessionStorage por si hay reload
     lsSet('pedido_id', ref.id);
