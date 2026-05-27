@@ -63,7 +63,7 @@
       from "https://www.gstatic.com/firebasejs/11.1.0/firebase-app.js";
     import { getFirestore, collection, addDoc, query, where,
              getDocs, onSnapshot, serverTimestamp, doc, updateDoc,
-             getDoc, deleteDoc, orderBy, limit }
+             getDoc, setDoc, deleteDoc, orderBy, limit }
       from "https://www.gstatic.com/firebasejs/11.1.0/firebase-firestore.js";
     import { getAuth, signInAnonymously, onAuthStateChanged }
       from "https://www.gstatic.com/firebasejs/11.1.0/firebase-auth.js";
@@ -81,7 +81,7 @@
 
     window.FB = {
       collection, addDoc, query, where, getDocs, onSnapshot,
-      serverTimestamp, doc, updateDoc, getDoc, deleteDoc, orderBy, limit
+      serverTimestamp, doc, updateDoc, getDoc, setDoc, deleteDoc, orderBy, limit
     };
     window.FBStorage = { ref, uploadBytes, getDownloadURL };
     // Aliases directos para evidEnviar (sistema de misiones)
@@ -683,6 +683,100 @@
       position:absolute; right:14px; bottom:15px;
       font-size:11px; font-weight:700; pointer-events:none;
     }
+
+    .cupon-wrap {
+      background:rgba(250,204,21,.05);
+      border:1px dashed rgba(250,204,21,.35);
+      border-radius:14px;
+      padding:14px 16px;
+      transition:all .2s;
+    }
+    .cupon-wrap.aplicado {
+      background:rgba(34,197,94,.08);
+      border-color:rgba(34,197,94,.45);
+      border-style:solid;
+    }
+    .cupon-header {
+      display:flex;
+      align-items:center;
+      gap:10px;
+      cursor:pointer;
+      user-select:none;
+    }
+    .cupon-ico { font-size:20px; line-height:1; }
+    .cupon-title {
+      color:var(--y);
+      font-size:12px;
+      font-weight:900;
+      letter-spacing:.04em;
+      text-transform:uppercase;
+    }
+    .cupon-sub { color:var(--mut); font-size:10px; margin-top:2px; }
+    .cupon-input-wrap {
+      display:grid;
+      grid-template-columns:minmax(0,1fr) auto;
+      gap:8px;
+      margin-top:12px;
+    }
+    .cupon-input {
+      min-width:0;
+      background:var(--s2);
+      border:1px solid var(--brd);
+      border-radius:10px;
+      color:var(--txt);
+      font-family:'Poppins',sans-serif;
+      font-size:13px;
+      font-weight:800;
+      letter-spacing:.05em;
+      outline:none;
+      padding:10px 12px;
+      text-transform:uppercase;
+      transition:border-color .2s;
+    }
+    .cupon-input:focus { border-color:var(--y); }
+    .cupon-input.ok { border-color:var(--grn); color:var(--grn); }
+    .cupon-input.error { border-color:var(--red); color:var(--red); }
+    .cupon-btn {
+      background:var(--y);
+      border:none;
+      border-radius:10px;
+      color:#000;
+      cursor:pointer;
+      font-family:'Poppins',sans-serif;
+      font-size:11px;
+      font-weight:900;
+      padding:10px 14px;
+      white-space:nowrap;
+    }
+    .cupon-btn.secondary {
+      background:rgba(255,255,255,.08);
+      border:1px solid var(--brd);
+      color:var(--txt);
+    }
+    .cupon-resultado {
+      align-items:center;
+      display:flex;
+      gap:6px;
+      font-size:11px;
+      font-weight:800;
+      margin-top:8px;
+      min-height:16px;
+    }
+    .cupon-resultado.ok { color:var(--grn); }
+    .cupon-resultado.err { color:var(--red); }
+    .cupon-ahorro {
+      display:none;
+      background:rgba(34,197,94,.1);
+      border:1px solid rgba(34,197,94,.3);
+      border-radius:10px;
+      color:var(--grn);
+      font-size:12px;
+      font-weight:800;
+      margin-top:8px;
+      padding:8px 10px;
+      text-align:center;
+    }
+    .cupon-ahorro.show { display:block; }
 
     /* ══ PAGO v2 — 10 métodos ══ */
     .pgrd-top,.pgrd-top-2,.pgrd-bot {
@@ -2343,6 +2437,27 @@
       <span class="rst" id="rst"></span>
     </div>
     <div class="fld">
+      <div class="cupon-wrap" id="cuponWrap">
+        <div class="cupon-header" onclick="toggleCuponPanel()">
+          <div class="cupon-ico">%</div>
+          <div style="flex:1">
+            <div class="cupon-title">Cupon de descuento</div>
+            <div class="cupon-sub">Ingresa tu codigo promocional si tienes uno.</div>
+          </div>
+        </div>
+        <div id="cuponPanel" style="display:none">
+          <div class="cupon-input-wrap">
+            <input id="cuponInput" class="cupon-input" maxlength="24" placeholder="EJ: ASWA10"
+                   oninput="this.value=this.value.toUpperCase().replace(/[^A-Z0-9_-]/g,'')"
+                   onkeydown="if(event.key==='Enter'){event.preventDefault();aplicarCupon()}">
+            <button id="cuponBtn" type="button" class="cupon-btn" onclick="aplicarCupon()">APLICAR</button>
+          </div>
+          <div id="cuponResultado" class="cupon-resultado"></div>
+          <div id="cuponAhorro" class="cupon-ahorro"></div>
+        </div>
+      </div>
+    </div>
+    <div class="fld">
       <label>Dirección de entrega</label>
       <input type="text" id="direccion" class="inp"
              placeholder="Calle, número, referencia" autocomplete="street-address">
@@ -3990,7 +4105,7 @@
       </div>
 
       <!-- Tabs -->
-      <div class="adm-tabs" style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px">
+      <div class="adm-tabs" style="display:grid;grid-template-columns:repeat(5,1fr);gap:6px">
         <button class="adm-tab active" id="tabYape" onclick="admTab('yape')" style="font-size:10px;padding:10px 4px">
           📱 Yapes<br><span id="badgeYape" style="font-size:16px;color:var(--y);font-weight:900">—</span>
         </button>
@@ -4002,6 +4117,9 @@
         </button>
         <button class="adm-tab" id="tabClientes" onclick="admTab('clientes')" style="font-size:10px;padding:10px 4px">
           👥 Clientes<br><span id="badgeClientes" style="font-size:16px;color:var(--y);font-weight:900">—</span>
+        </button>
+        <button class="adm-tab" id="tabCupones" onclick="admTab('cupones')" style="font-size:10px;padding:10px 4px">
+          % Cupones<br><span id="badgeCupones" style="font-size:16px;color:var(--y);font-weight:900">—</span>
         </button>
       </div>
 
@@ -4021,6 +4139,7 @@
       <div id="admContenidoPedidos" style="display:none"></div>
       <div id="admContenidoStats" style="display:none"></div>
       <div id="admContenidoClientes" style="display:none"></div>
+      <div id="admContenidoCupones" style="display:none"></div>
 
     </div>
   </div>
@@ -4421,7 +4540,7 @@ const ST = {
   raw: 0,
   final: 0,
   delivery: 0,
-  disc: { fid: 0, bon: 0, ref: 0 },
+  disc: { fid: 0, bon: 0, ref: 0, cup: 0, cupFijo: 0, cupCod: '' },
   cli: {
     id: '',
     tel: '',
@@ -4445,17 +4564,37 @@ function qty(id, d) {
   calcTotal();
 }
 
+function getDescuentoPct() {
+  return Math.min(30,
+    (ST.disc.fid || 0) +
+    (ST.disc.bon || 0) +
+    (ST.disc.ref || 0) +
+    (ST.disc.cup || 0)
+  );
+}
+
+function getDescuentoFijoAplicado(discPct = getDescuentoPct()) {
+  const monto = Math.max(0, ST.disc.cupFijo || 0);
+  const totalConPct = Math.max(0, ST.raw * (1 - discPct / 100));
+  return Math.min(monto, totalConPct);
+}
+
+function getDescuentoTotal() {
+  return Math.max(0, +(ST.raw - ST.final).toFixed(2));
+}
+
 function calcTotal() {
   // ✅ BUG #3 CORREGIDO: usa ST.precio (cargado desde Firestore, no hardcodeado)
   const base = ST.cart.p2l*ST.precio.p2l + ST.cart.p3l*ST.precio.p3l + ST.cart.p4l*ST.precio.p4l;
   ST.delivery = Number(document.getElementById('zona').value) || 0;
   ST.raw      = base + ST.delivery;
-  const disc  = Math.min(30, ST.disc.fid + ST.disc.bon + ST.disc.ref); // Tope 30%
-  ST.final    = +(ST.raw * (1 - disc/100)).toFixed(2);
+  const disc  = getDescuentoPct();
+  const fixed = getDescuentoFijoAplicado(disc);
+  ST.final    = Math.max(0, +(ST.raw * (1 - disc/100) - fixed).toFixed(2));
 
   document.getElementById('pbig').textContent = 'S/ ' + ST.final.toFixed(2);
   const oel = document.getElementById('pold');
-  if (disc > 0 && ST.raw > 0) { oel.textContent = 'S/ '+ST.raw.toFixed(2); oel.style.display='block'; }
+  if ((disc > 0 || fixed > 0) && ST.raw > 0) { oel.textContent = 'S/ '+ST.raw.toFixed(2); oel.style.display='block'; }
   else oel.style.display = 'none';
 
   ['p2l','p3l','p4l'].forEach(id => {
@@ -4464,6 +4603,128 @@ function calcTotal() {
       ? 'S/ '+f.toFixed(2)+' <span class="po">S/ '+b.toFixed(2)+'</span>'
       : 'S/ '+b.toFixed(2);
   });
+}
+
+function toggleCuponPanel() {
+  const panel = document.getElementById('cuponPanel');
+  if (!panel) return;
+  panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+  if (panel.style.display === 'block') document.getElementById('cuponInput')?.focus();
+}
+
+function setCuponEstado(tipo, msg) {
+  const res = document.getElementById('cuponResultado');
+  const inp = document.getElementById('cuponInput');
+  if (res) {
+    res.className = 'cupon-resultado ' + (tipo || '');
+    res.textContent = msg || '';
+  }
+  if (inp) {
+    inp.classList.remove('ok', 'error');
+    if (tipo === 'ok') inp.classList.add('ok');
+    if (tipo === 'err') inp.classList.add('error');
+  }
+}
+
+function limpiarCupon() {
+  ST.disc.cup = 0;
+  ST.disc.cupFijo = 0;
+  ST.disc.cupCod = '';
+  document.getElementById('cuponWrap')?.classList.remove('aplicado');
+  const input = document.getElementById('cuponInput');
+  if (input) input.value = '';
+  const ahorro = document.getElementById('cuponAhorro');
+  if (ahorro) {
+    ahorro.classList.remove('show');
+    ahorro.textContent = '';
+  }
+  const btn = document.getElementById('cuponBtn');
+  if (btn) {
+    btn.textContent = 'APLICAR';
+    btn.classList.remove('secondary');
+    btn.onclick = aplicarCupon;
+  }
+  setCuponEstado('', '');
+  calcTotal();
+}
+
+async function aplicarCupon() {
+  const input = document.getElementById('cuponInput');
+  const codigo = (input?.value || '').trim().toUpperCase();
+  if (!codigo) return setCuponEstado('err', 'Ingresa un codigo.');
+
+  const hayProductos = ST.cart.p2l + ST.cart.p3l + ST.cart.p4l > 0;
+  if (!hayProductos) return setCuponEstado('err', 'Elige una presentacion antes de aplicar el cupon.');
+
+  await esperarFB();
+  setCuponEstado('', 'Validando cupon...');
+
+  try {
+    const { doc:d, getDoc:gd } = window.FB;
+    const snap = await gd(d(db, 'cupones', codigo));
+    if (!snap.exists()) return setCuponEstado('err', 'Cupon no encontrado.');
+
+    const cup = snap.data() || {};
+    if (cup.businessId && cup.businessId !== BUSINESS_ID) return setCuponEstado('err', 'Este cupon no pertenece a este negocio.');
+    if (cup.activo === false) return setCuponEstado('err', 'Este cupon esta desactivado.');
+    if (cup.expira && new Date(cup.expira) < new Date()) return setCuponEstado('err', 'Este cupon ya vencio.');
+    if (cup.usos_max && (cup.usos_actuales || 0) >= cup.usos_max) return setCuponEstado('err', 'Este cupon ya alcanzo su limite.');
+    if (cup.min_compra && ST.raw < Number(cup.min_compra)) {
+      return setCuponEstado('err', 'Compra minima: S/ ' + Number(cup.min_compra).toFixed(2));
+    }
+    if (cup.solo_nuevos && (ST.cli.pedidos || 0) > 0) {
+      return setCuponEstado('err', 'Este cupon es solo para clientes nuevos.');
+    }
+    if (cup.telefono && document.getElementById('telefono')?.value.trim() !== String(cup.telefono)) {
+      return setCuponEstado('err', 'Este cupon es personal.');
+    }
+
+    const tipo = cup.tipo === 'fijo' ? 'fijo' : 'porcentaje';
+    const valor = Math.max(0, Number(cup.valor) || 0);
+    if (!valor) return setCuponEstado('err', 'Cupon sin valor configurado.');
+
+    ST.disc.cup = tipo === 'porcentaje' ? valor : 0;
+    ST.disc.cupFijo = tipo === 'fijo' ? valor : 0;
+    ST.disc.cupCod = codigo;
+    calcTotal();
+
+    const ahorroMonto = getDescuentoTotal();
+    const ahorroTxt = tipo === 'fijo' ? 'S/ ' + valor.toFixed(2) : valor + '%';
+    document.getElementById('cuponWrap')?.classList.add('aplicado');
+    const ahorro = document.getElementById('cuponAhorro');
+    if (ahorro) {
+      ahorro.textContent = 'Cupon ' + codigo + ' aplicado: ' + ahorroTxt + ' de descuento. Ahorras S/ ' + ahorroMonto.toFixed(2);
+      ahorro.classList.add('show');
+    }
+    const btn = document.getElementById('cuponBtn');
+    if (btn) {
+      btn.textContent = 'QUITAR';
+      btn.classList.add('secondary');
+      btn.onclick = limpiarCupon;
+    }
+    setCuponEstado('ok', 'Cupon aplicado correctamente.');
+  } catch (err) {
+    console.error('Error aplicando cupon:', err);
+    setCuponEstado('err', 'No se pudo validar el cupon.');
+  }
+}
+
+async function registrarUsoCupon(codigo) {
+  if (!codigo) return;
+  try {
+    await esperarFB();
+    const { doc:d, getDoc:gd, updateDoc:ud, serverTimestamp:ts } = window.FB;
+    const ref = d(db, 'cupones', codigo);
+    const snap = await gd(ref);
+    if (!snap.exists()) return;
+    const data = snap.data() || {};
+    await ud(ref, {
+      usos_actuales: (Number(data.usos_actuales) || 0) + 1,
+      ultimo_uso: ts()
+    });
+  } catch (err) {
+    console.warn('No se pudo registrar uso de cupon:', err);
+  }
 }
 
 /* ── PAGO ── */
@@ -4919,16 +5180,20 @@ function abrirResumen() {
   if (ST.cart.p4l) row(ST.cart.p4l+'× ASWA 4L Familiar','S/ '+(ST.cart.p4l*ST.precio.p4l).toFixed(2));
   if (ST.delivery) row('Delivery','S/ '+ST.delivery.toFixed(2));
 
-  const disc = Math.min(30, ST.disc.fid+ST.disc.bon+ST.disc.ref); // Tope 30%
+  const disc = getDescuentoPct();
+  const fixed = getDescuentoFijoAplicado(disc);
   const db2  = document.getElementById('dban');
-  if (disc > 0) {
+  if (disc > 0 || fixed > 0) {
     const pts=[];
     if(ST.disc.fid) pts.push(ST.disc.fid+'% fidelidad');
     if(ST.disc.bon) pts.push(ST.disc.bon+'% bonos');
     if(ST.disc.ref) pts.push(ST.disc.ref+'% referido');
-    db2.textContent = '🎉 Oferta '+disc+'% ('+pts.join(' + ')+') aplicado';
+    if(ST.disc.cup) pts.push(ST.disc.cup+'% cupon '+ST.disc.cupCod);
+    if(ST.disc.cupFijo) pts.push('S/ '+fixed.toFixed(2)+' cupon '+ST.disc.cupCod);
+    db2.textContent = '🎉 Descuento aplicado ('+pts.join(' + ')+')';
     db2.classList.add('on');
-    row('Oferta '+disc+'%','−S/ '+(ST.raw*disc/100).toFixed(2),'rdesc');
+    if (disc > 0) row('Oferta '+disc+'%','−S/ '+(ST.raw*disc/100).toFixed(2),'rdesc');
+    if (fixed > 0) row('Cupon '+ST.disc.cupCod,'−S/ '+fixed.toFixed(2),'rdesc');
   } else db2.classList.remove('on');
   row('<strong>TOTAL</strong>','<strong>S/ '+ST.final.toFixed(2)+'</strong>','tot');
 
@@ -4977,7 +5242,10 @@ async function enviarPedido() {
   const zonaTexto   = zonaSel.options[zonaSel.selectedIndex]?.text || '';
   const codigoUsado = document.getElementById('codigoUsado').value.trim().toUpperCase();
   const pagoCon     = Number(document.getElementById('pagoCon').value) || ST.final;
-  const disc        = Math.min(30, ST.disc.fid+ST.disc.bon+ST.disc.ref); // Tope 30%
+  const disc        = getDescuentoPct();
+  const descPctAmt  = +(ST.raw * disc / 100).toFixed(2);
+  const descFijoAmt = +getDescuentoFijoAplicado(disc).toFixed(2);
+  const descTotal   = +(descPctAmt + descFijoAmt).toFixed(2);
   const pid         = '#'+Date.now().toString(36).slice(-6).toUpperCase();
 
   /* Construir mensaje WhatsApp */
@@ -5023,7 +5291,10 @@ async function enviarPedido() {
     +items
     +sep+'\n'
     +(disc>0
-      ? '🎁 *Oferta -'+disc+'%:*   _−S/ '+(ST.raw*disc/100).toFixed(2)+'_\n'
+      ? '🎁 *Oferta -'+disc+'%:*   _−S/ '+descPctAmt.toFixed(2)+'_\n'
+      : '')
+    +(descFijoAmt>0
+      ? '🎟 *Cupon '+ST.disc.cupCod+':*   _−S/ '+descFijoAmt.toFixed(2)+'_\n'
       : '')
     +'🚚 *Delivery:*   _+S/ '+ST.delivery.toFixed(2)+'_\n'
     +sep+'\n'
@@ -5092,7 +5363,10 @@ async function enviarPedido() {
       subtotal:       ST.raw,
       delivery:       ST.delivery,
       oferta_pct:  disc,
-      descuento_amt:  +(ST.raw*disc/100).toFixed(2),
+      descuento_amt:  descTotal,
+      cupon_codigo:   ST.disc.cupCod || null,
+      cupon_descuento_pct: ST.disc.cup || 0,
+      cupon_descuento_fijo: descFijoAmt,
       total:          ST.final,
       pago:           ST.pago,
       pago_con:       pagoCon,
@@ -5111,6 +5385,7 @@ async function enviarPedido() {
       fecha:          ts()
     });
     ST.pedidoFbId = ref.id;
+    await registrarUsoCupon(ST.disc.cupCod);
     // Guardar en sessionStorage por si hay reload
     lsSet('pedido_id', ref.id);
     // Iniciar tracking en tiempo real para el cliente
@@ -7927,9 +8202,9 @@ async function crearUsuariosDefault() {
 let _admTabActiva = 'yape';
 function admTab(tab) {
   _admTabActiva = tab;
-  const tabs = ['yape','pedidos','stats','clientes'];
-  const ids  = { yape:'tabYape', pedidos:'tabPedidos', stats:'tabStats', clientes:'tabClientes' };
-  const conts= { yape:'admContenidoYape', pedidos:'admContenidoPedidos', stats:'admContenidoStats', clientes:'admContenidoClientes' };
+  const tabs = ['yape','pedidos','stats','clientes','cupones'];
+  const ids  = { yape:'tabYape', pedidos:'tabPedidos', stats:'tabStats', clientes:'tabClientes', cupones:'tabCupones' };
+  const conts= { yape:'admContenidoYape', pedidos:'admContenidoPedidos', stats:'admContenidoStats', clientes:'admContenidoClientes', cupones:'admContenidoCupones' };
   tabs.forEach(t => {
     document.getElementById(ids[t])?.classList.toggle('active', t === tab);
     const c = document.getElementById(conts[t]);
@@ -7937,10 +8212,121 @@ function admTab(tab) {
   });
   if (tab === 'stats')    admCargarStats();
   if (tab === 'clientes') admCargarClientes();
+  if (tab === 'cupones')  admRenderCupones();
+}
+
+async function admCrearCupon(codigo, tipo, valor, opciones = {}) {
+  await esperarFB();
+  const { doc:d, setDoc, serverTimestamp:ts } = window.FB;
+  const id = String(codigo || '').trim().toUpperCase();
+  if (!id) throw new Error('Codigo requerido');
+  await setDoc(d(db, 'cupones', id), {
+    businessId: BUSINESS_ID,
+    codigo: id,
+    tipo: tipo === 'fijo' ? 'fijo' : 'porcentaje',
+    valor: Number(valor) || 0,
+    descripcion: opciones.descripcion || '',
+    min_compra: Number(opciones.min_compra) || 0,
+    usos_max: Number(opciones.usos_max) || 0,
+    usos_actuales: 0,
+    solo_nuevos: !!opciones.solo_nuevos,
+    activo: true,
+    expira: opciones.expira || '',
+    creado_at: ts()
+  }, { merge: true });
+}
+
+async function admCrearCuponDesdePanel() {
+  const codigo = document.getElementById('admCupCodigo')?.value.trim().toUpperCase();
+  const tipo = document.getElementById('admCupTipo')?.value || 'porcentaje';
+  const valor = Number(document.getElementById('admCupValor')?.value) || 0;
+  const min = Number(document.getElementById('admCupMin')?.value) || 0;
+  const max = Number(document.getElementById('admCupMax')?.value) || 0;
+  const expira = document.getElementById('admCupExpira')?.value || '';
+  const soloNuevos = !!document.getElementById('admCupSoloNuevos')?.checked;
+  if (!codigo || !valor) return tst('Completa codigo y valor del cupon');
+  try {
+    await admCrearCupon(codigo, tipo, valor, {
+      min_compra: min,
+      usos_max: max,
+      expira,
+      solo_nuevos: soloNuevos,
+      descripcion: document.getElementById('admCupDesc')?.value.trim() || ''
+    });
+    tst('Cupon guardado');
+    admRenderCupones();
+  } catch (err) {
+    console.error(err);
+    tst('No se pudo crear el cupon: ' + (err.message || ''));
+  }
+}
+
+async function admToggleCupon(codigo, activo) {
+  try {
+    await esperarFB();
+    const { doc:d, updateDoc:ud } = window.FB;
+    await ud(d(db, 'cupones', codigo), { activo: !!activo });
+    admRenderCupones();
+  } catch (err) {
+    console.error(err);
+    tst('No se pudo actualizar el cupon');
+  }
+}
+
+async function admRenderCupones() {
+  const cont = document.getElementById('admContenidoCupones');
+  if (!cont) return;
+  cont.innerHTML =
+    '<div style="background:var(--s1);border:1px solid var(--brd);border-radius:14px;padding:14px;margin-bottom:14px">' +
+      '<div style="font-weight:900;color:var(--y);font-size:13px;margin-bottom:10px">Crear cupon</div>' +
+      '<div style="display:grid;grid-template-columns:1fr 110px 90px;gap:8px;margin-bottom:8px">' +
+        '<input id="admCupCodigo" class="inp" placeholder="CODIGO" style="font-size:12px;text-transform:uppercase">' +
+        '<select id="admCupTipo" class="inp" style="font-size:12px"><option value="porcentaje">%</option><option value="fijo">S/ fijo</option></select>' +
+        '<input id="admCupValor" class="inp" type="number" min="1" placeholder="Valor" style="font-size:12px">' +
+      '</div>' +
+      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">' +
+        '<input id="admCupMin" class="inp" type="number" min="0" placeholder="Compra minima S/" style="font-size:12px">' +
+        '<input id="admCupMax" class="inp" type="number" min="0" placeholder="Limite usos" style="font-size:12px">' +
+      '</div>' +
+      '<input id="admCupDesc" class="inp" placeholder="Descripcion interna" style="font-size:12px;margin-bottom:8px">' +
+      '<div style="display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center;margin-bottom:10px">' +
+        '<input id="admCupExpira" class="inp" type="date" style="font-size:12px">' +
+        '<label style="display:flex;align-items:center;gap:6px;color:var(--mut);font-size:11px;font-weight:700;text-transform:none;letter-spacing:0;margin:0"><input id="admCupSoloNuevos" type="checkbox"> Solo nuevos</label>' +
+      '</div>' +
+      '<button class="adm-refresh" onclick="admCrearCuponDesdePanel()" style="width:100%;background:var(--y);color:#000;border-color:var(--y)">Guardar cupon</button>' +
+    '</div>' +
+    '<div class="adm-loading">Cargando cupones...</div>';
+
+  try {
+    await esperarFB();
+    const { collection:col, query:q, where:wh, getDocs:gd } = window.FB;
+    const snap = await gd(q(col(db, 'cupones'), wh('businessId', '==', BUSINESS_ID)));
+    const items = [];
+    snap.forEach(docSnap => items.push({ id: docSnap.id, ...docSnap.data() }));
+    document.getElementById('badgeCupones').textContent = items.length;
+    const list = items.map(c => {
+      const valor = c.tipo === 'fijo' ? 'S/ ' + Number(c.valor || 0).toFixed(2) : Number(c.valor || 0) + '%';
+      const estado = c.activo === false ? 'Inactivo' : 'Activo';
+      const usado = Number(c.usos_actuales || 0);
+      const max = Number(c.usos_max || 0);
+      return '<div style="background:var(--s1);border:1px solid var(--brd);border-radius:12px;padding:12px;margin-bottom:8px">' +
+        '<div style="display:flex;justify-content:space-between;gap:8px;align-items:center">' +
+          '<div><div style="font-weight:900;color:var(--txt);font-size:14px">' + c.id + '</div>' +
+          '<div style="color:var(--mut);font-size:11px">' + valor + ' · ' + estado + ' · Usos ' + usado + (max ? '/' + max : '') + '</div></div>' +
+          '<button class="adm-refresh" onclick="admToggleCupon(\'' + c.id + '\',' + (c.activo === false ? 'true' : 'false') + ')" style="width:auto;padding:8px 10px;font-size:11px">' + (c.activo === false ? 'Activar' : 'Pausar') + '</button>' +
+        '</div>' +
+      '</div>';
+    }).join('');
+    cont.querySelector('.adm-loading')?.remove();
+    cont.insertAdjacentHTML('beforeend', list || '<div style="color:var(--mut);font-size:12px;text-align:center;padding:18px">Aun no hay cupones creados.</div>');
+  } catch (err) {
+    console.error(err);
+    cont.insertAdjacentHTML('beforeend', '<div style="color:var(--red);font-size:12px">No se pudieron cargar los cupones.</div>');
+  }
 }
 
 async function admCargar() {
-  ['Yape','Pedidos','Stats','Clientes'].forEach(t => {
+  ['Yape','Pedidos','Stats','Clientes','Cupones'].forEach(t => {
     const el = document.getElementById('admContenido'+t);
     if (el) el.innerHTML = '<div class="adm-loading">⏳ Cargando...</div>';
   });
@@ -7996,6 +8382,7 @@ async function admCargar() {
     admRenderPedidos(snapPed.docs);
     admRenderStats(snapTodos.docs, { totalVentas, totalPedidos, pedHoy, ventasHoy, totalCli: snapCli.size });
     admRenderClientes(snapCli.docs);
+    admRenderCupones();
 
     // Guardar globalmente para búsqueda
     window._admTodosPedidos = snapTodos.docs;
@@ -8816,16 +9203,23 @@ function downloadNotaPDF() {
     doc.text('DETALLE', 20, 82);
     doc.setFont(undefined,'normal'); doc.setFontSize(9);
     let y = 90;
-    if (ST.cart.p2l > 0) { doc.text(`Chicha ASWA 2L × ${ST.cart.p2l}`, 20, y); doc.text(`S/ ${(ST.cart.p2l*9).toFixed(2)}`,  170, y, {align:'right'}); y += 7; }
-    if (ST.cart.p3l > 0) { doc.text(`Chicha ASWA 3L × ${ST.cart.p3l}`, 20, y); doc.text(`S/ ${(ST.cart.p3l*13).toFixed(2)}`, 170, y, {align:'right'}); y += 7; }
-    if (ST.cart.p4l > 0) { doc.text(`Chicha ASWA 4L × ${ST.cart.p4l}`, 20, y); doc.text(`S/ ${(ST.cart.p4l*15).toFixed(2)}`, 170, y, {align:'right'}); y += 7; }
+    if (ST.cart.p2l > 0) { doc.text(`Chicha ASWA 2L × ${ST.cart.p2l}`, 20, y); doc.text(`S/ ${(ST.cart.p2l*ST.precio.p2l).toFixed(2)}`,  170, y, {align:'right'}); y += 7; }
+    if (ST.cart.p3l > 0) { doc.text(`Chicha ASWA 3L × ${ST.cart.p3l}`, 20, y); doc.text(`S/ ${(ST.cart.p3l*ST.precio.p3l).toFixed(2)}`, 170, y, {align:'right'}); y += 7; }
+    if (ST.cart.p4l > 0) { doc.text(`Chicha ASWA 4L × ${ST.cart.p4l}`, 20, y); doc.text(`S/ ${(ST.cart.p4l*ST.precio.p4l).toFixed(2)}`, 170, y, {align:'right'}); y += 7; }
     if (ST.delivery > 0) { doc.text(`Envío (${zona})`, 20, y); doc.text(`S/ ${ST.delivery.toFixed(2)}`, 170, y, {align:'right'}); y += 7; }
 
-    const disc = Math.min(50, (ST.disc?.fid||0) + (ST.disc?.bon||0) + (ST.disc?.ref||0));
+    const disc = getDescuentoPct();
+    const fixed = getDescuentoFijoAplicado(disc);
     if (disc > 0) {
       doc.setTextColor(0,150,0);
       doc.text(`Oferta (-${disc}%)`, 20, y);
       doc.text(`- S/ ${(ST.raw * disc/100).toFixed(2)}`, 170, y, {align:'right'});
+      doc.setTextColor(0,0,0); y += 7;
+    }
+    if (fixed > 0) {
+      doc.setTextColor(0,150,0);
+      doc.text(`Cupon ${ST.disc.cupCod || ''}`, 20, y);
+      doc.text(`- S/ ${fixed.toFixed(2)}`, 170, y, {align:'right'});
       doc.setTextColor(0,0,0); y += 7;
     }
 
