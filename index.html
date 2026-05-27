@@ -6820,6 +6820,7 @@ async function enviarPedido() {
     // 1. Guardar pedido
     const ref = await ad(col(db,'pedidos'), {
       businessId:     BUSINESS_ID,
+      cliente_uid:    window.currentUser?.uid || null,
       nombre, telefono, direccion,
       nota_entrega:    notaEntrega || null,
       distrito:       zonaTexto,
@@ -14396,7 +14397,7 @@ function registrarSW() {
   if (!('serviceWorker' in navigator)) return;
 
   const SW_CODE = `
-const CACHE_NAME = 'aswa-v16';
+const CACHE_NAME = 'aswa-v17';
 const SHELL = [
   './',
   './index.html'
