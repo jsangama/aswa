@@ -2291,6 +2291,30 @@
     .adm-chat-msg { border-radius:12px; padding:9px 11px; font-size:12px; max-width:84%; }
     .adm-chat-msg.cliente { align-self:flex-start; background:#18181b; color:#fff; }
     .adm-chat-msg.negocio { align-self:flex-end; background:rgba(250,204,21,.18); color:#fff; }
+
+    /* Acceso rapido operativo */
+    .quick-access-btn {
+      position:fixed; right:16px; bottom:206px; z-index:1500;
+      width:46px; height:46px; border-radius:16px; border:1px solid rgba(250,204,21,.36);
+      background:rgba(250,204,21,.14); color:var(--y); font-size:20px; font-weight:900;
+      display:flex; align-items:center; justify-content:center; cursor:pointer;
+      box-shadow:0 12px 28px rgba(0,0,0,.32); backdrop-filter:blur(10px);
+    }
+    .quick-access-panel {
+      position:fixed; right:16px; bottom:260px; z-index:1600; display:none;
+      width:min(310px,calc(100vw - 32px)); padding:14px; border-radius:16px;
+      background:var(--s1); border:1px solid var(--brd); box-shadow:0 20px 60px rgba(0,0,0,.52);
+    }
+    .quick-access-panel.open { display:block; }
+    .quick-access-title { color:var(--txt); font-size:13px; font-weight:900; margin-bottom:10px; }
+    .quick-access-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+    .quick-access-item {
+      border:1px solid rgba(255,255,255,.08); border-radius:12px; padding:12px 10px;
+      background:var(--bg); color:var(--txt); cursor:pointer; font-family:'Poppins',sans-serif;
+      font-size:12px; font-weight:800; text-align:center;
+    }
+    .quick-access-item.admin { color:#fde68a; border-color:rgba(250,204,21,.28); }
+    .quick-access-item.delivery { color:#86efac; border-color:rgba(34,197,94,.28); }
   </style>
 </head>
 <body>
@@ -2336,6 +2360,18 @@
         oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px'"></textarea>
       <button class="chat-send" id="chatSendBtn" onclick="enviarMensajeChat()" type="button">➤</button>
     </div>
+  </div>
+</div>
+
+<!-- Acceso rapido operativo -->
+<button class="quick-access-btn" id="btnAccesoRapido" onclick="toggleAccesoRapido()" type="button" title="Acceso rapido">
+  ⚡
+</button>
+<div class="quick-access-panel" id="modalAccesoRapido">
+  <div class="quick-access-title">Acceso rapido</div>
+  <div class="quick-access-grid">
+    <button class="quick-access-item admin" onclick="abrirPanelAdminDirecto()" type="button">⚙️ Admin</button>
+    <button class="quick-access-item delivery" onclick="abrirPanelDeliveryDirecto()" type="button">🏍️ Delivery</button>
   </div>
 </div>
 
@@ -8861,6 +8897,32 @@ async function admEnviarRespuesta() {
     ultimo_msg:texto, ultimo_de:'negocio', actualizado_en:ts(), no_leidos_cliente:1
   }, { merge:true });
 }
+
+function toggleAccesoRapido() {
+  document.getElementById('modalAccesoRapido')?.classList.toggle('open');
+}
+
+function cerrarAccesoRapido() {
+  document.getElementById('modalAccesoRapido')?.classList.remove('open');
+}
+
+function abrirPanelAdminDirecto() {
+  cerrarAccesoRapido();
+  abrirAdmin();
+}
+
+function abrirPanelDeliveryDirecto() {
+  cerrarAccesoRapido();
+  abrirPanelDeliverista();
+}
+
+document.addEventListener('click', e => {
+  const panel = document.getElementById('modalAccesoRapido');
+  const btn = document.getElementById('btnAccesoRapido');
+  if (!panel?.classList.contains('open')) return;
+  if (panel.contains(e.target) || btn?.contains(e.target)) return;
+  cerrarAccesoRapido();
+});
 
 let _admTabActiva = 'yape';
 function admTab(tab) {
