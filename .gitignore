@@ -42,5 +42,6 @@ firebase-debug.log
 secret/
 credentials.json
 firebase-key.json
+service-account*.json
 *.pem
 *.key

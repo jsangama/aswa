@@ -38,3 +38,11 @@ await admin.auth().setCustomUserClaims(uid, {
   businessId: 'aswa001'
 });
 ```
+
+Tambien puedes usar la herramienta incluida en este repositorio:
+
+```bash
+npm run claims:set -- --uid UID_DEL_USUARIO --role owner --business aswa001
+```
+
+Ver guia completa: `docs/FIREBASE_CLAIMS.md`.
