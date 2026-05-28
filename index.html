@@ -822,6 +822,43 @@
     .qplus  { background:var(--y); color:#000; }
     .qminus { background:var(--s2); color:var(--txt); }
     .qn { font-size:18px; font-weight:800; min-width:22px; text-align:center; }
+    .san-juan-card {
+      background:linear-gradient(160deg, rgba(250,204,21,.13), rgba(20,83,45,.18));
+      border:1px solid rgba(250,204,21,.35);
+      border-radius:18px;
+      padding:14px;
+      margin:16px 0 10px;
+      box-shadow:0 14px 35px rgba(0,0,0,.22);
+    }
+    .sj-badge {
+      display:inline-flex; align-items:center; gap:6px;
+      background:rgba(250,204,21,.18); color:#fde68a;
+      border:1px solid rgba(250,204,21,.36); border-radius:999px;
+      padding:5px 9px; font-size:9px; font-weight:900;
+      letter-spacing:.11em; text-transform:uppercase;
+    }
+    .sj-title { font-family:'Bebas Neue',cursive; font-size:26px; color:var(--y); letter-spacing:.05em; margin-top:8px; line-height:1; }
+    .sj-sub { font-size:11px; color:#d6d3d1; line-height:1.5; margin:6px 0 12px; }
+    .sj-media { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:12px; }
+    .sj-media img {
+      width:100%; height:132px; object-fit:cover; border-radius:14px;
+      background:#050505; border:1px solid rgba(255,255,255,.1);
+    }
+    .school-grid { display:grid; gap:8px; margin-bottom:10px; }
+    .school-product { background:rgba(0,0,0,.22); border-color:rgba(250,204,21,.22); }
+    .school-product .pimg { background:#050505; }
+    .school-note {
+      font-size:10px; color:#fde68a; background:rgba(250,204,21,.1);
+      border:1px dashed rgba(250,204,21,.42); border-radius:12px;
+      padding:9px 10px; line-height:1.45; margin-top:10px;
+    }
+    .school-toggle {
+      display:flex; gap:8px; align-items:flex-start;
+      font-size:11px; color:#fef3c7; line-height:1.35;
+      background:rgba(0,0,0,.18); border:1px solid rgba(255,255,255,.08);
+      border-radius:12px; padding:10px; margin:8px 0;
+    }
+    .school-toggle input { accent-color:#facc15; margin-top:2px; }
 
     /* ══ INPUTS ══ */
     .fld { margin-bottom:12px; position:relative; }
@@ -2785,6 +2822,83 @@
         <span class="qn" id="q-p4l">0</span>
         <button class="qb qplus"  onclick="qty('p4l',+1)">+</button>
       </div>
+    </div>
+
+    <div class="san-juan-card" id="sanJuanEscolar">
+      <span class="sj-badge">San Juan 2026 - colegios</span>
+      <div class="sj-title">Promo escolar sanjuanera</div>
+      <div class="sj-sub">Para aulas y colegios de Banda de Shilcayo, Morales y Tarapoto. Reserva tu pedido con pago anticipado por billeteras o transferencia.</div>
+      <div class="sj-media">
+        <img src="assets/images/products/san-juan-bidon-20l.png" alt="Bidon escolar san juanero 20 litros">
+        <img src="assets/images/products/san-juan-combo-escolar.png" alt="Combo escolar San Juan con juane y chicha">
+      </div>
+      <div class="school-grid">
+        <input type="text" id="colegioNombre" class="inp" maxlength="90" placeholder="Colegio o escuela">
+        <input type="text" id="colegioAula" class="inp" maxlength="60" placeholder="Aula, grado o salon">
+        <select id="colegioDistrito" class="inp">
+          <option value="">Distrito del colegio</option>
+          <option value="Banda de Shilcayo">Banda de Shilcayo</option>
+          <option value="Morales">Morales</option>
+          <option value="Tarapoto">Tarapoto</option>
+        </select>
+      </div>
+      <label class="school-toggle">
+        <input type="checkbox" id="colegioTieneBidon" checked onchange="actualizarPromoEscolarUI()">
+        <span>El aula entrega bidon vacio. Si no tiene bidon se agrega S/ 20 al bidon escolar.</span>
+      </label>
+      <div class="pc school-product" id="c-sjBidon">
+        <img src="assets/images/products/san-juan-bidon-20l.png" alt="Bidon 20 litros" class="pimg">
+        <div style="flex:1">
+          <div class="pn">Bidon escolar sanjuanero</div>
+          <div class="pd" id="sjBidonDesc">20 litros con bidon vacio</div>
+          <div class="pp" id="pr-sjBidon">S/ 50.00</div>
+        </div>
+        <div class="qw">
+          <button class="qb qminus" onclick="qty('sjBidon',-1)">-</button>
+          <span class="qn" id="q-sjBidon">0</span>
+          <button class="qb qplus" onclick="qty('sjBidon',+1)">+</button>
+        </div>
+      </div>
+      <div class="pc school-product" id="c-sjChicha04">
+        <img src="assets/images/products/san-juan-combo-escolar.png" alt="Chicha escolar 400 ml" class="pimg">
+        <div style="flex:1">
+          <div class="pn">ASWA escolar sanjuanera</div>
+          <div class="pd">Botella 0.4 litros para alumnos</div>
+          <div class="pp" id="pr-sjChicha04">S/ 2.00</div>
+        </div>
+        <div class="qw">
+          <button class="qb qminus" onclick="qty('sjChicha04',-1)">-</button>
+          <span class="qn" id="q-sjChicha04">0</span>
+          <button class="qb qplus" onclick="qty('sjChicha04',+1)">+</button>
+        </div>
+      </div>
+      <div class="pc school-product" id="c-sjCombo">
+        <img src="assets/images/products/san-juan-combo-escolar.png" alt="Combo escolar San Juan" class="pimg">
+        <div style="flex:1">
+          <div class="pn">Combo escolar sanjuanero</div>
+          <div class="pd">Juane + chicha ASWA 0.4 L</div>
+          <div class="pp" id="pr-sjCombo">S/ 3.50</div>
+        </div>
+        <div class="qw">
+          <button class="qb qminus" onclick="qty('sjCombo',-1)">-</button>
+          <span class="qn" id="q-sjCombo">0</span>
+          <button class="qb qplus" onclick="qty('sjCombo',+1)">+</button>
+        </div>
+      </div>
+      <div class="pc school-product" id="c-sjJuane">
+        <img src="assets/images/products/san-juan-combo-escolar.png" alt="Juane familiar" class="pimg">
+        <div style="flex:1">
+          <div class="pn">Juane familiar</div>
+          <div class="pd">Frejol con cuerito y aji de cocona</div>
+          <div class="pp" id="pr-sjJuane">S/ 25.00</div>
+        </div>
+        <div class="qw">
+          <button class="qb qminus" onclick="qty('sjJuane',-1)">-</button>
+          <span class="qn" id="q-sjJuane">0</span>
+          <button class="qb qplus" onclick="qty('sjJuane',+1)">+</button>
+        </div>
+      </div>
+      <div class="school-note">Pedido escolar temporal por Fiestas de San Juan. Se atiende solo con reserva y pago anticipado: Yape, Plin, Agora, BIM o transferencia bancaria. No aplica efectivo.</div>
     </div>
   </section>
 
@@ -5114,8 +5228,8 @@ function esperarFB() {
 
 /* ── ESTADO GLOBAL ── */
 const ST = {
-  cart: { p2l: 0, p3l: 0, p4l: 0 },
-  precio: { p2l: 9, p3l: 13, p4l: 15 },
+  cart: { p2l: 0, p3l: 0, p4l: 0, sjBidon: 0, sjChicha04: 0, sjCombo: 0, sjJuane: 0 },
+  precio: { p2l: 9, p3l: 13, p4l: 15, sjBidon: 50, sjChicha04: 2, sjCombo: 3.5, sjJuane: 25 },
   pago: 'Efectivo',
   raw: 0,
   final: 0,
@@ -5136,11 +5250,129 @@ const ST = {
   gpsCoords: null
 };
 
+const PRODUCT_META = {
+  p2l: { nombre:'ASWA 2L', corto:'2L', regular:true },
+  p3l: { nombre:'ASWA 3L', corto:'3L', regular:true },
+  p4l: { nombre:'ASWA 4L Familiar', corto:'4L', regular:true },
+  sjBidon: { nombre:'Bidon escolar sanjuanero 20L', corto:'Bidon San Juan 20L', escolar:true },
+  sjChicha04: { nombre:'ASWA escolar sanjuanera 0.4L', corto:'ASWA escolar 0.4L', escolar:true },
+  sjCombo: { nombre:'Combo escolar sanjuanero', corto:'Combo San Juan', escolar:true },
+  sjJuane: { nombre:'Juane familiar con frejol, cuerito y aji de cocona', corto:'Juane familiar', escolar:true }
+};
+const PRODUCT_IDS = Object.keys(PRODUCT_META);
+
+function normalizarCarrito() {
+  PRODUCT_IDS.forEach(id => {
+    if (!Number.isFinite(Number(ST.cart[id]))) ST.cart[id] = 0;
+    if (!Number.isFinite(Number(ST.precio[id]))) ST.precio[id] = 0;
+  });
+}
+
+function productoIds() {
+  normalizarCarrito();
+  return PRODUCT_IDS;
+}
+
+function pedidoItemsLista(cart = ST.cart, precios = ST.precio) {
+  normalizarCarrito();
+  return PRODUCT_IDS
+    .filter(id => Number(cart?.[id] || 0) > 0)
+    .map(id => {
+      const qty = Number(cart[id] || 0);
+      const precio = Number(precios[id] || 0);
+      return { id, qty, precio, total: +(qty * precio).toFixed(2), nombre: PRODUCT_META[id]?.nombre || id, corto: PRODUCT_META[id]?.corto || id };
+    });
+}
+
+function pedidoItemsTexto(cart = ST.cart, precios = ST.precio) {
+  return pedidoItemsLista(cart, precios)
+    .map(it => '• ' + it.qty + '× ' + it.nombre + ' → S/ ' + it.total.toFixed(2))
+    .join('\n');
+}
+
+function promoEscolarActiva() {
+  return pedidoItemsLista().some(it => PRODUCT_META[it.id]?.escolar);
+}
+
+function actualizarPromoEscolarUI() {
+  const conBidon = document.getElementById('colegioTieneBidon')?.checked !== false;
+  ST.precio.sjBidon = conBidon ? 50 : 70;
+  const desc = document.getElementById('sjBidonDesc');
+  if (desc) desc.textContent = conBidon ? '20 litros con bidon vacio' : '20 litros + bidon nuevo incluido';
+  const reserva = document.getElementById('reservaActiva');
+  if (promoEscolarActiva() && reserva && !reserva.checked) {
+    reserva.checked = true;
+    actualizarReservaUI();
+  }
+  if (promoEscolarActiva() && ST.pago === 'Efectivo') setPago('Yape');
+  calcTotal();
+}
+
+function obtenerPromoEscolar(mostrarErrores = false) {
+  if (!promoEscolarActiva()) return { ok:true, activo:false };
+  const colegio = sanitizeInput(document.getElementById('colegioNombre')?.value || '', 90);
+  const aula = sanitizeInput(document.getElementById('colegioAula')?.value || '', 60);
+  const distrito = sanitizeInput(document.getElementById('colegioDistrito')?.value || '', 40);
+  const conBidon = document.getElementById('colegioTieneBidon')?.checked !== false;
+  const fail = (error, campo = 'colegioNombre') => {
+    if (mostrarErrores) marcarCampoPedido(campo, error);
+    return { ok:false, activo:true, error };
+  };
+  if (!colegio) return fail('Ingresa el nombre del colegio o escuela.', 'colegioNombre');
+  if (!aula) return fail('Ingresa el aula, grado o salon que reserva.', 'colegioAula');
+  if (!distrito) return fail('Selecciona el distrito del colegio.', 'colegioDistrito');
+  if (ST.pago === 'Efectivo') return fail('La promo escolar San Juan solo acepta pago anticipado. Cambia el metodo de pago.', 'colegioNombre');
+  if (!document.getElementById('reservaActiva')?.checked) return fail('La promo escolar San Juan debe reservarse con fecha y hora.', 'reservaActiva');
+  return {
+    ok:true,
+    activo:true,
+    colegio,
+    aula,
+    distrito,
+    con_bidon_vacio: conBidon,
+    extra_bidon: conBidon ? 0 : 20,
+    campania:'san_juan_escolar_2026',
+    texto: colegio + ' - ' + aula + ' (' + distrito + ')'
+  };
+}
+
+function pedidoItemsHtml(items = pedidoItemsLista()) {
+  return items.map(it => `${it.qty}× ${esc(it.corto)}`).join(' · ') || '—';
+}
+
+function pedidoItemsDesdePedido(pedido) {
+  if (Array.isArray(pedido?.items_detalle) && pedido.items_detalle.length) {
+    return pedido.items_detalle
+      .filter(it => Number(it.qty || it.cantidad || 0) > 0)
+      .map(it => ({
+        id: it.id || '',
+        qty: Number(it.qty || it.cantidad || 0),
+        nombre: it.nombre || PRODUCT_META[it.id]?.nombre || it.id || 'Producto',
+        corto: it.corto || PRODUCT_META[it.id]?.corto || it.nombre || it.id || 'Producto',
+        precio: Number(it.precio || 0),
+        total: Number(it.total || 0)
+      }));
+  }
+  const items = pedido?.items || {};
+  return PRODUCT_IDS
+    .filter(id => Number(items[id] || 0) > 0)
+    .map(id => {
+      const qty = Number(items[id] || 0);
+      const precio = Number(pedido?.precios?.[id] || ST.precio?.[id] || 0);
+      return { id, qty, nombre: PRODUCT_META[id]?.nombre || id, corto: PRODUCT_META[id]?.corto || id, precio, total: +(qty * precio).toFixed(2) };
+    });
+}
+
+window.ST = ST;
+window.PRODUCT_META = PRODUCT_META;
+
 /* ── CARRITO ── */
 function qty(id, d) {
+  normalizarCarrito();
   ST.cart[id] = Math.max(0, ST.cart[id] + d);
   document.getElementById('q-' + id).textContent = ST.cart[id];
   document.getElementById('c-' + id).classList.toggle('on', ST.cart[id] > 0);
+  if (PRODUCT_META[id]?.escolar) actualizarPromoEscolarUI();
   calcTotal();
 }
 
@@ -5165,7 +5397,10 @@ function getDescuentoTotal() {
 
 function calcTotal() {
   // ✅ BUG #3 CORREGIDO: usa ST.precio (cargado desde Firestore, no hardcodeado)
-  const base = ST.cart.p2l*ST.precio.p2l + ST.cart.p3l*ST.precio.p3l + ST.cart.p4l*ST.precio.p4l;
+  normalizarCarrito();
+  const base = PRODUCT_IDS.reduce((sum, id) => {
+    return sum + (Number(ST.cart[id] || 0) * Number(ST.precio[id] || 0));
+  }, 0);
   ST.delivery = Number(document.getElementById('zona').value) || 0;
   ST.raw      = base + ST.delivery;
   const disc  = getDescuentoPct();
@@ -5177,9 +5412,11 @@ function calcTotal() {
   if ((disc > 0 || fixed > 0) && ST.raw > 0) { oel.textContent = 'S/ '+ST.raw.toFixed(2); oel.style.display='block'; }
   else oel.style.display = 'none';
 
-  ['p2l','p3l','p4l'].forEach(id => {
+  productoIds().forEach(id => {
+    const priceEl = document.getElementById('pr-'+id);
+    if (!priceEl) return;
     const b = ST.precio[id], f = +(b*(1-disc/100)).toFixed(2);
-    document.getElementById('pr-'+id).innerHTML = disc > 0
+    priceEl.innerHTML = disc > 0
       ? 'S/ '+f.toFixed(2)+' <span class="po">S/ '+b.toFixed(2)+'</span>'
       : 'S/ '+b.toFixed(2);
   });
@@ -5233,7 +5470,7 @@ async function aplicarCupon() {
   const codigo = (input?.value || '').trim().toUpperCase();
   if (!codigo) return setCuponEstado('err', 'Ingresa un codigo.');
 
-  const hayProductos = ST.cart.p2l + ST.cart.p3l + ST.cart.p4l > 0;
+  const hayProductos = pedidoItemsLista().length > 0;
   if (!hayProductos) return setCuponEstado('err', 'Elige una presentacion antes de aplicar el cupon.');
 
   await esperarFB();
@@ -5457,7 +5694,7 @@ const METODOS_PAGO = {
 
 function setPago(metodo) {
   if (metodo === 'Efectivo' && pedidoEspecialRequierePagoDigital()) {
-    tst('Reservas y regalos solo aceptan pago anticipado: Yape, Plin, Agora, BIM o transferencia.', 3600);
+    tst('Reservas, regalos y promo escolar solo aceptan pago anticipado: Yape, Plin, Agora, BIM o transferencia.', 3600);
     metodo = 'Yape';
   }
   ST.pago = metodo;
@@ -5669,7 +5906,7 @@ function obtenerPedidoRegalo(mostrarErrores = false) {
 }
 
 function pedidoEspecialRequierePagoDigital() {
-  return pedidoRegaloActivo() || !!document.getElementById('reservaActiva')?.checked;
+  return pedidoRegaloActivo() || promoEscolarActiva() || !!document.getElementById('reservaActiva')?.checked;
 }
 
 function coordsPlantaNegocio() {
@@ -5756,7 +5993,9 @@ function reservaInit() {
 }
 
 function actualizarReservaUI() {
-  const activa = !!document.getElementById('reservaActiva')?.checked;
+  const reservaCheck = document.getElementById('reservaActiva');
+  if (promoEscolarActiva() && reservaCheck && !reservaCheck.checked) reservaCheck.checked = true;
+  const activa = !!reservaCheck?.checked;
   const detalle = document.getElementById('reservaDetalle');
   const info = document.getElementById('reservaInfo');
   const notifBtn = document.getElementById('reservaNotifBtn');
@@ -5782,7 +6021,7 @@ function actualizarReservaUI() {
   const reserva = obtenerReservaPedido(false);
   info.classList.add(reserva.ok ? 'ok' : 'err');
   info.textContent = reserva.ok
-    ? 'Reserva programada: ' + reserva.texto + '. El pedido se activa con pago digital verificado.'
+    ? (promoEscolarActiva() ? 'Promo escolar San Juan reservada: ' : 'Reserva programada: ') + reserva.texto + '. El pedido se activa con pago digital verificado.'
     : reserva.error;
 }
 
@@ -6791,6 +7030,8 @@ function abrirResumen() {
   if (!reservaPedido.ok) return false;
   const regaloPedido = obtenerPedidoRegalo(true);
   if (!regaloPedido.ok) return false;
+  const promoEscolar = obtenerPromoEscolar(true);
+  if (!promoEscolar.ok) return false;
 
   // ── Pago digital requiere comprobante antes de continuar ──
   const esDigitalPago = ST.pago !== 'Efectivo';
@@ -6813,11 +7054,10 @@ function abrirResumen() {
     lista.insertAdjacentHTML('beforeend',
       '<div class="rrow '+cls+'"><span>'+a+'</span><span>'+b+'</span></div>');
 
-  if (ST.cart.p2l) row(ST.cart.p2l+'× ASWA 2L',         'S/ '+(ST.cart.p2l*ST.precio.p2l).toFixed(2));
-  if (ST.cart.p3l) row(ST.cart.p3l+'× ASWA 3L',         'S/ '+(ST.cart.p3l*ST.precio.p3l).toFixed(2));
-  if (ST.cart.p4l) row(ST.cart.p4l+'× ASWA 4L Familiar','S/ '+(ST.cart.p4l*ST.precio.p4l).toFixed(2));
+  pedidoItemsLista().forEach(it => row(it.qty+'× '+it.nombre, 'S/ '+it.total.toFixed(2)));
   if (ST.delivery) row('Delivery','S/ '+ST.delivery.toFixed(2));
   if (reservaPedido.activa) row('Reserva de entrega', reservaPedido.texto);
+  if (promoEscolar.activo) row('Colegio / aula', promoEscolar.texto);
 
   const disc = getDescuentoPct();
   const fixed = getDescuentoFijoAplicado(disc);
@@ -6878,6 +7118,8 @@ async function enviarPedido() {
   if (!reservaPedido.ok) return;
   const regaloPedido = obtenerPedidoRegalo(true);
   if (!regaloPedido.ok) return;
+  const promoEscolar = obtenerPromoEscolar(true);
+  if (!promoEscolar.ok) return;
 
   _enviandoPedido = true;
   btn.disabled = true; btn.textContent = 'Enviando...';
@@ -6899,10 +7141,9 @@ async function enviarPedido() {
   perfilGuardarCliente(true);
 
   /* Construir mensaje WhatsApp */
-  let items = '';
-  if (ST.cart.p2l) items += '• '+ST.cart.p2l+'× ASWA 2L → S/ '+(ST.cart.p2l*ST.precio.p2l).toFixed(2)+'\n';
-  if (ST.cart.p3l) items += '• '+ST.cart.p3l+'× ASWA 3L → S/ '+(ST.cart.p3l*ST.precio.p3l).toFixed(2)+'\n';
-  if (ST.cart.p4l) items += '• '+ST.cart.p4l+'× ASWA 4L Familiar → S/ '+(ST.cart.p4l*ST.precio.p4l).toFixed(2)+'\n';
+  const itemsLista = pedidoItemsLista();
+  let items = pedidoItemsTexto();
+  if (items) items += '\n';
 
   // Línea de ubicación: si tiene GPS, incluir link de Maps
   const lineaUbicacion = ST.gpsUrl
@@ -6957,6 +7198,7 @@ async function enviarPedido() {
     +(notaEntrega ? '📝 *Nota:* '+notaEntrega+'\n' : '')
     +(ST.gpsUrl ? '📡 *GPS:* '+ST.gpsUrl+'\n' : '')
     +(reservaPedido.activa ? 'Reserva programada: '+reservaPedido.texto+'\n' : '')
+    +(promoEscolar.activo ? 'PROMO ESCOLAR SAN JUAN: '+promoEscolar.texto+'\nBidon vacio: '+(promoEscolar.con_bidon_vacio ? 'Si' : 'No, incluye bidon nuevo (+S/ 20)')+'\n' : '')
     +(regaloPedido.activo ? 'REGALO PARA ('+regaloPedido.relacion+'): '+regaloPedido.nombre+' - '+regaloPedido.telefono+'\n' : '')
     +(regaloPedido.activo && regaloPedido.mensaje ? 'Mensaje regalo: '+regaloPedido.mensaje+'\n' : '')
     +'Distancia planta-cliente: '+distanciaRuta.texto+'\n'
@@ -7025,6 +7267,7 @@ async function enviarPedido() {
       nota_entrega:    notaEntrega || null,
       distrito:       zonaTexto,
       items:          { ...ST.cart },
+      items_detalle:  itemsLista,
       subtotal:       ST.raw,
       delivery:       ST.delivery,
       oferta_pct:  disc,
@@ -7055,7 +7298,16 @@ async function enviarPedido() {
       reserva_alertas_cliente: reservaPedido.activa ? reservaAlertasMeta(reservaPedido) : null,
       es_regalo:      !!regaloPedido.activo,
       regalo_para:    regaloPedido.activo ? { relacion: regaloPedido.relacion, nombre: regaloPedido.nombre, telefono: regaloPedido.telefono, mensaje: regaloPedido.mensaje || '' } : null,
-      pago_anticipado_obligatorio: !!(reservaPedido.activa || regaloPedido.activo),
+      es_promo_san_juan_escolar: !!promoEscolar.activo,
+      promo_san_juan_escolar: promoEscolar.activo ? {
+        campania: promoEscolar.campania,
+        colegio: promoEscolar.colegio,
+        aula: promoEscolar.aula,
+        distrito: promoEscolar.distrito,
+        con_bidon_vacio: promoEscolar.con_bidon_vacio,
+        extra_bidon: promoEscolar.extra_bidon
+      } : null,
+      pago_anticipado_obligatorio: !!(reservaPedido.activa || regaloPedido.activo || promoEscolar.activo),
       planta_coords:  distanciaRuta.planta || null,
       distancia_planta_m: distanciaRuta.metros,
       distancia_planta_txt: distanciaRuta.texto,
@@ -7260,6 +7512,7 @@ function mostrarNotaVenta() {
     try {
       const savedCart = lsGet('cart');
       if (savedCart) ST.cart = JSON.parse(savedCart);
+      normalizarCarrito();
     } catch(e) {}
   }
   if (!ST.final || ST.final < 1) {
@@ -7345,8 +7598,15 @@ function mostrarNotaVenta() {
   let itemsHtml = '';
   Object.entries(ST.cart).forEach(([k, qty]) => {
     if (qty < 1) return;
-    const p = PROD[k];
-    const sub = (qty * p.precio).toFixed(2);
+    const p = PROD[k] || {
+      nom: PRODUCT_META[k]?.nombre || k,
+      sz: PRODUCT_META[k]?.corto || k,
+      img: PRODUCT_META[k]?.escolar ? 'assets/images/products/san-juan-combo-escolar.png' : fallback,
+      precio: ST.precio[k] || 0
+    };
+    if (k === 'sjBidon') p.img = 'assets/images/products/san-juan-bidon-20l.png';
+    const precioUnit = Number(ST.precio[k] || p.precio || 0);
+    const sub = (qty * precioUnit).toFixed(2);
     itemsHtml += `
       <div class="nota-prod-row">
         <div class="nota-prod-cell">
@@ -7358,7 +7618,7 @@ function mostrarNotaVenta() {
           </div>
         </div>
         <div class="nota-prod-cant">${qty}</div>
-        <div class="nota-prod-unit">S/ ${p.precio}.00</div>
+        <div class="nota-prod-unit">S/ ${precioUnit.toFixed(2)}</div>
         <div class="nota-prod-sub">S/ ${sub}</div>
       </div>`;
   });
@@ -7412,8 +7672,13 @@ function _generarHtmlNota() {
   let prodRows = '';
   Object.entries(ST.cart).forEach(([k, qty]) => {
     if (qty < 1) return;
-    const p   = PROD[k];
-    const sub = (qty * p.precio).toFixed(2);
+    const p = PROD[k] || {
+      nom: PRODUCT_META[k]?.nombre || k,
+      sz: PRODUCT_META[k]?.corto || k,
+      img: baseUrl + (k === 'sjBidon' ? 'assets/images/products/san-juan-bidon-20l.png' : 'assets/images/products/san-juan-combo-escolar.png')
+    };
+    const precioUnit = Number(ST.precio[k] || p.precio || 0);
+    const sub = (qty * precioUnit).toFixed(2);
     prodRows += `
       <tr>
         <td style="padding:10px 8px;border-bottom:1px solid #f3f4f6">
@@ -7428,7 +7693,7 @@ function _generarHtmlNota() {
           </div>
         </td>
         <td style="text-align:center;padding:10px 8px;border-bottom:1px solid #f3f4f6;font-size:13px">${qty}</td>
-        <td style="text-align:right;padding:10px 8px;border-bottom:1px solid #f3f4f6;font-size:13px">S/ ${p.precio}.00</td>
+        <td style="text-align:right;padding:10px 8px;border-bottom:1px solid #f3f4f6;font-size:13px">S/ ${precioUnit.toFixed(2)}</td>
         <td style="text-align:right;padding:10px 8px;border-bottom:1px solid #f3f4f6;font-size:13px;font-weight:800;color:#c27c00">S/ ${sub}</td>
       </tr>`;
   });
@@ -8465,6 +8730,7 @@ document.addEventListener('DOMContentLoaded', () => {
     try {
       const prevCart = lsGet('cart');
       if (prevCart) ST.cart = JSON.parse(prevCart);
+      normalizarCarrito();
       ST.final    = parseFloat(lsGet('total')    || 0);
       ST.delivery = parseFloat(lsGet('delivery') || 0);
       ST.raw      = parseFloat(lsGet('raw')      || 0);
@@ -12421,12 +12687,7 @@ function cargarPedidosAsignados(deliverista) {
     window._dlvPedidoAsignadoData = window._dlvPedidoAsignadoData || {};
     pedidos.forEach(p => { if (p.id) window._dlvPedidoAsignadoData[p.id] = p; });
     lista.innerHTML = pedidos.slice(0, 10).map(p => {
-      const items = p.items || {};
-      const itxt  = [
-        items.p2l ? items.p2l+'×2L' : '',
-        items.p3l ? items.p3l+'×3L' : '',
-        items.p4l ? items.p4l+'×4L' : ''
-      ].filter(Boolean).join(' ');
+      const itxt = pedidoItemsHtml(pedidoItemsDesdePedido(p));
       const color = colorEstado[p.estado] || '#888';
       const live = coordsDeliveryPedido(p);
       const distancia = p.delivery_distance_m !== null && p.delivery_distance_m !== undefined ? textoDistancia(p.delivery_distance_m) : '';
@@ -12478,11 +12739,7 @@ function armarResumenPedidoCliente() {
   const direccion = document.getElementById('direccion')?.value || 'No especificada';
   const notaEntrega = document.getElementById('notaEntrega')?.value || '';
   const codigoPedido = ST.pedidoFbId ? ST.pedidoFbId.slice(0, 8).toUpperCase() : (lsGet('pedido_id') || '').slice(0, 8).toUpperCase();
-  const lineas = [];
-
-  if (ST.cart?.p2l > 0) lineas.push('- ' + ST.cart.p2l + ' x ASWA 2L: S/ ' + (ST.cart.p2l * ST.precio.p2l).toFixed(2));
-  if (ST.cart?.p3l > 0) lineas.push('- ' + ST.cart.p3l + ' x ASWA 3L: S/ ' + (ST.cart.p3l * ST.precio.p3l).toFixed(2));
-  if (ST.cart?.p4l > 0) lineas.push('- ' + ST.cart.p4l + ' x ASWA Familiar: S/ ' + (ST.cart.p4l * ST.precio.p4l).toFixed(2));
+  const lineas = pedidoItemsLista().map(it => '- ' + it.qty + ' x ' + it.nombre + ': S/ ' + it.total.toFixed(2));
 
   return [
     'ASWA La Rica Chicha - Resumen de pedido',
@@ -12617,9 +12874,11 @@ async function downloadNotaPDF() {
     doc.text('DETALLE', 20, clienteY + 8);
     doc.setFont(undefined,'normal'); doc.setFontSize(9);
     let y = clienteY + 16;
-    if (ST.cart.p2l > 0) { doc.text(`Chicha ASWA 2L × ${ST.cart.p2l}`, 20, y); doc.text(`S/ ${(ST.cart.p2l*ST.precio.p2l).toFixed(2)}`,  170, y, {align:'right'}); y += 7; }
-    if (ST.cart.p3l > 0) { doc.text(`Chicha ASWA 3L × ${ST.cart.p3l}`, 20, y); doc.text(`S/ ${(ST.cart.p3l*ST.precio.p3l).toFixed(2)}`, 170, y, {align:'right'}); y += 7; }
-    if (ST.cart.p4l > 0) { doc.text(`Chicha ASWA 4L × ${ST.cart.p4l}`, 20, y); doc.text(`S/ ${(ST.cart.p4l*ST.precio.p4l).toFixed(2)}`, 170, y, {align:'right'}); y += 7; }
+    pedidoItemsLista().forEach(it => {
+      doc.text(`${it.nombre} x ${it.qty}`, 20, y);
+      doc.text(`S/ ${it.total.toFixed(2)}`, 170, y, {align:'right'});
+      y += 7;
+    });
     if (ST.delivery > 0) { doc.text(`Envío (${zona})`, 20, y); doc.text(`S/ ${ST.delivery.toFixed(2)}`, 170, y, {align:'right'}); y += 7; }
 
     const disc = getDescuentoPct();
@@ -14723,12 +14982,7 @@ function histRenderLista(filtro) {
     const fecha  = p.fecha?.seconds
       ? new Date(p.fecha.seconds*1000).toLocaleDateString('es-PE',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'})
       : '—';
-    const items  = p.items || {};
-    const itxt   = [
-      items.p2l > 0 ? `${items.p2l}× ASWA 2L` : '',
-      items.p3l > 0 ? `${items.p3l}× ASWA 3L` : '',
-      items.p4l > 0 ? `${items.p4l}× ASWA 4L` : '',
-    ].filter(Boolean).join(' · ') || '—';
+    const itxt = pedidoItemsHtml(pedidoItemsDesdePedido(p));
     const idCorto = p.id.slice(0,8).toUpperCase();
     const calif   = p.calificacion ? '⭐'.repeat(p.calificacion) : '';
 
@@ -14763,12 +15017,9 @@ function histVerDetalle(pedidoId) {
   const fecha = p.fecha?.seconds
     ? new Date(p.fecha.seconds*1000).toLocaleString('es-PE')
     : '—';
-  const items = p.items || {};
-  const itxt  = [
-    items.p2l > 0 ? `${items.p2l}× Chicha ASWA 2L — S/ ${(items.p2l*9).toFixed(2)}` : '',
-    items.p3l > 0 ? `${items.p3l}× Chicha ASWA 3L — S/ ${(items.p3l*13).toFixed(2)}` : '',
-    items.p4l > 0 ? `${items.p4l}× Chicha ASWA 4L — S/ ${(items.p4l*15).toFixed(2)}` : '',
-  ].filter(Boolean).join('<br>');
+  const itxt = pedidoItemsDesdePedido(p)
+    .map(it => `${it.qty}× ${esc(it.nombre)} — S/ ${Number(it.total || it.qty * it.precio || 0).toFixed(2)}`)
+    .join('<br>') || '—';
   const calif = p.calificacion ? '⭐'.repeat(p.calificacion) : 'Sin calificación';
 
   // Mostrar modal con detalle
@@ -14917,7 +15168,7 @@ function registrarSW() {
   if (!('serviceWorker' in navigator)) return;
 
   const SW_CODE = `
-const CACHE_NAME = 'aswa-v17';
+const CACHE_NAME = 'aswa-v18';
 const SHELL = [
   './',
   './index.html'
@@ -14941,7 +15192,7 @@ self.addEventListener('activate', e => {
   );
 });
 
-// Fetch: network-first para Firebase, cache-first para assets
+// Fetch: network-first para Firebase y HTML, cache-first para assets
 self.addEventListener('fetch', e => {
   const url = e.request.url;
 
@@ -14950,6 +15201,21 @@ self.addEventListener('fetch', e => {
       url.includes('firebase') ||
       url.includes('googleapis.com')) {
     e.respondWith(fetch(e.request).catch(() => new Response('', {status: 503})));
+    return;
+  }
+
+  const accept = e.request.headers.get('accept') || '';
+  const isHtml = e.request.mode === 'navigate' || accept.includes('text/html');
+  if (isHtml) {
+    e.respondWith(
+      fetch(e.request).then(response => {
+        if (response && response.status === 200 && response.type === 'basic') {
+          const toCache = response.clone();
+          caches.open(CACHE_NAME).then(cache => cache.put(e.request, toCache));
+        }
+        return response;
+      }).catch(() => caches.match(e.request).then(cached => cached || caches.match('./')))
+    );
     return;
   }
 
@@ -15170,6 +15436,11 @@ function sincronizarPreciosGlobales() {
   const nuevoCart   = {};
   const nuevoPrecio = {};
 
+  PRODUCT_IDS.forEach(id => {
+    nuevoCart[id] = ST.cart[id] || 0;
+    nuevoPrecio[id] = ST.precio[id] || 0;
+  });
+
   _catalogoCache.filter(p => p.activo !== false).forEach(p => {
     nuevoCart[p.id]   = ST.cart[p.id]   || 0;
     nuevoPrecio[p.id] = parseFloat(p.precio) || 0;
@@ -15177,6 +15448,7 @@ function sincronizarPreciosGlobales() {
 
   ST.cart   = nuevoCart;
   ST.precio = nuevoPrecio;
+  actualizarPromoEscolarUI();
 }
 
 // ── abrirCatalogo [from index__3_]
