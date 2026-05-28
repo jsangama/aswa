@@ -5,6 +5,7 @@ import process from 'node:process';
 
 const REQUIRED_FILES = [
   'firestore.rules',
+  'firestore.indexes.json',
   'firebase.json',
   'scripts/set-firebase-claims.mjs',
   'scripts/upsert-operator-user.mjs',
@@ -66,6 +67,7 @@ function readJson(path) {
 function localChecks(businessId) {
   const packageJson = readJson('package.json');
   const firebaseJson = readJson('firebase.json');
+  const firestoreIndexes = readJson('firestore.indexes.json');
   const rules = readFileSync('firestore.rules', 'utf8');
   const index = readFileSync('index.html', 'utf8');
 
@@ -75,6 +77,9 @@ function localChecks(businessId) {
     check(packageJson.scripts?.['operators:upsert'], 'Existe script operators:upsert'),
     check(packageJson.scripts?.['referrals:sync'], 'Existe script referrals:sync'),
     check(firebaseJson.firestore?.rules === 'firestore.rules', 'firebase.json apunta a firestore.rules'),
+    check(firebaseJson.firestore?.indexes === 'firestore.indexes.json', 'firebase.json despliega indices Firestore'),
+    check(Array.isArray(firestoreIndexes.indexes) && firestoreIndexes.indexes.some((idx) => idx.collectionGroup === 'chats'), 'Indices Firestore incluyen chats'),
+    check(Array.isArray(firestoreIndexes.indexes) && firestoreIndexes.indexes.some((idx) => idx.collectionGroup === 'pedidos'), 'Indices Firestore incluyen pedidos'),
     check(rules.includes('claimRole()'), 'Reglas validan role por custom claims'),
     check(rules.includes('claimBusinessId()'), 'Reglas validan businessId por custom claims'),
     check(rules.includes('cliente_uid'), 'Reglas protegen pedidos por cliente_uid'),
