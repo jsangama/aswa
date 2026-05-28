@@ -15230,6 +15230,8 @@ async function guardarTokenFCM(token) {
   try {
     // Guardar token en Firestore para que el admin pueda enviar notificaciones
     await window.db.collection('fcm_tokens').doc(token.substring(0, 20)).set({
+      businessId: BUSINESS_ID,
+      cliente_uid: window.currentUser?.uid || null,
       token,
       fecha: firebase.firestore.FieldValue.serverTimestamp(),
       ua: navigator.userAgent.substring(0, 100),
@@ -15248,6 +15250,8 @@ async function admEnviarPushATodos(titulo, cuerpo, url = '/') {
   }
   try {
     await window.db.collection('push_queue').add({
+      businessId: BUSINESS_ID,
+      cliente_uid: window.currentUser?.uid || null,
       titulo, cuerpo, url,
       fecha: firebase.firestore.FieldValue.serverTimestamp(),
       enviado: false
