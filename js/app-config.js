@@ -3,6 +3,7 @@
     BUSINESS_ID: 'aswa001',
     BUSINESS_NAME: 'La Rica Chicha',
     ALLOW_LEGACY_LOCAL_ACCESS: false,
+    STORAGE_MODE: 'whatsapp_manual',
     HORARIO: {
       activo: true,
       inicio: '07:00',

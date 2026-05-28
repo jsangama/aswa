@@ -83,6 +83,7 @@
       serverTimestamp, doc, updateDoc, getDoc, setDoc, deleteDoc, orderBy, limit
     };
     window.FBStorage = { ref, uploadBytes, getDownloadURL };
+    window.ASWA_STORAGE_ENABLED = window.ASWA_CONFIG?.STORAGE_MODE === 'firebase_storage';
     // Aliases directos para evidEnviar (sistema de misiones)
     window.ST_REF = ref;
     window.ST_UP  = uploadBytes;
@@ -3117,13 +3118,13 @@
           </div>
         </div>
         <div class="paybox-nota" id="payboxNota">
-          Realiza tu pago y sube la captura del comprobante.
+          Realiza tu pago, selecciona la captura y enviala por WhatsApp para verificar.
         </div>
         <div class="yape-upload-box show" id="yapeUploadBox">
           <div class="yape-upload-label">
-            <strong>📸 Sube tu comprobante de pago</strong><br>
-            Captura tu <span id="uploadMetodoNombre">Yape</span> y súbela aquí.<br>
-            Verificamos y activamos tu pedido al instante.
+            <strong>📸 Comprobante de pago</strong><br>
+            Selecciona tu captura de <span id="uploadMetodoNombre">Yape</span> para marcarla en el pedido.<br>
+            Luego enviala por WhatsApp para que podamos verificarla.
           </div>
           <label class="yape-file-btn" for="yapeFileInput">📷 Seleccionar foto</label>
           <input type="file" id="yapeFileInput" accept="image/*" capture="environment"
@@ -3866,8 +3867,8 @@
         <div style="font-size:28px">📱</div>
         <div>
           <div style="font-size:13px;font-weight:800;color:#fff">Yape / Plin / BIM</div>
-          <div style="font-size:12px;color:var(--mut);margin-top:2px;line-height:1.5">Selecciona el método, toca "Copiar número", abre tu app de pagos y transfiere. Luego sube el comprobante desde la galería o toma una foto.</div>
-          <div class="tut-tip">📸 El comprobante se envía automáticamente con tu pedido</div>
+          <div style="font-size:12px;color:var(--mut);margin-top:2px;line-height:1.5">Selecciona el método, toca "Copiar número", abre tu app de pagos y transfiere. Luego selecciona el comprobante y envíalo por WhatsApp para verificar.</div>
+          <div class="tut-tip">📸 En modo gratis, el comprobante se verifica por WhatsApp</div>
         </div>
       </div>
 
@@ -5307,7 +5308,7 @@ async function registrarUsoCupon(codigo) {
 }
 
 async function subirComprobantePago() {
-  if (!yapeFileData || !window.FBStorage || !window.storage) return null;
+  if (!yapeFileData || !window.ASWA_STORAGE_ENABLED || !window.FBStorage || !window.storage) return null;
 
   try {
     const { ref: fbRef, uploadBytes, getDownloadURL } = window.FBStorage;
@@ -5334,6 +5335,28 @@ async function subirComprobantePago() {
     console.warn('No se pudo subir comprobante a Storage:', err);
     return null;
   }
+}
+
+function comprobantePagoMeta(esDigitalPago, yapePhotoUrl) {
+  if (!esDigitalPago) {
+    return {
+      yape_foto_url: null,
+      yape_foto_base64: null,
+      yape_estado: null,
+      yape_verificacion: null,
+      yape_foto_local: false,
+      requiere_comprobante_whatsapp: false
+    };
+  }
+
+  return {
+    yape_foto_url: yapePhotoUrl || null,
+    yape_foto_base64: null,
+    yape_estado: 'pendiente',
+    yape_verificacion: yapePhotoUrl ? 'firebase_storage' : 'whatsapp_manual',
+    yape_foto_local: !!(yapeFileData && !yapePhotoUrl),
+    requiere_comprobante_whatsapp: !yapePhotoUrl
+  };
 }
 
 /* ── PAGO ── */
@@ -5523,7 +5546,12 @@ function setPago(metodo) {
   }
 
   // Nota
-  if (el('payboxNota')) el('payboxNota').innerHTML = cfg.nota || '';
+  if (el('payboxNota')) {
+    const extra = window.ASWA_STORAGE_ENABLED
+      ? ''
+      : '<br><strong>Importante:</strong> despues de confirmar, envia la captura por WhatsApp para verificar el pago.';
+    el('payboxNota').innerHTML = (cfg.nota || '') + extra;
+  }
 
   // Upload comprobante
   if (uploadBox) {
@@ -5543,6 +5571,17 @@ function _limpiarFotoComprobante() {
   if (prev) { prev.src = ''; prev.style.display = 'none'; }
   const ok = document.getElementById('yapeOkTag');
   if (ok) ok.classList.remove('show');
+}
+
+function abrirWhatsAppComprobante(nombre, telefono, pid) {
+  const texto =
+    'Hola ASWA, ya realice mi pago de ' + (ST.pago || 'pago') + '.\n'
+    + 'Pedido: ' + (pid || ST.pedidoFbId || 'pendiente') + '\n'
+    + 'Cliente: ' + (nombre || '') + '\n'
+    + 'Celular: ' + (telefono || '') + '\n'
+    + 'Monto: S/ ' + Number(ST.final || 0).toFixed(2) + '\n\n'
+    + 'Adjunto aqui mi comprobante para verificacion.';
+  window.open('https://wa.me/' + getWA1() + '?text=' + encodeURIComponent(texto), '_blank');
 }
 
 
@@ -6797,11 +6836,14 @@ function abrirResumen() {
   } else db2.classList.remove('on');
   row('<strong>TOTAL</strong>','<strong>S/ '+ST.final.toFixed(2)+'</strong>','tot');
 
-  // Si pagó con método digital, mostrar confirmación de comprobante adjunto
+  // Si pago con metodo digital, mostrar confirmacion de comprobante local/manual
   if (esDigitalPago && yapeFileData) {
+    const compTxt = window.ASWA_STORAGE_ENABLED
+      ? '📸 Comprobante de ' + ST.pago + ' adjunto ✅'
+      : '📸 Comprobante seleccionado. Envíalo por WhatsApp al confirmar ✅';
     lista.insertAdjacentHTML('beforeend',
       '<div style="background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.3);border-radius:10px;padding:10px 14px;margin-top:8px;font-size:12px;color:#86efac;font-weight:700;display:flex;align-items:center;gap:8px">'
-      + '📸 Comprobante de ' + ST.pago + ' adjunto ✅'
+      + compTxt
       + '</div>');
   }
 
@@ -6930,7 +6972,7 @@ async function enviarPedido() {
     +(ST.pago==='Efectivo'
       ? '💵 *Paga con:* S/ '+pagoCon.toFixed(2)+'\n'
         +'🔄 *Vuelto:* *S/ '+Math.max(0,pagoCon-ST.final).toFixed(2)+'*\n'
-      : '')
+      : '📸 *Comprobante:* verificar por WhatsApp/manual\n')
     +'\n'+sep+'\n'
     +'⚠️ *Para registrar como VENTA REAL:*\n'
     +'  1️⃣ Deliverista confirma entrega (PIN)\n'
@@ -6954,12 +6996,17 @@ async function enviarPedido() {
       + '💰 Monto a verificar: *S/ ' + ST.final.toFixed(2) + '*\n'
       + '💳 Método: *' + ST.pago + '*\n\n'
       + (yapeFileData
-        ? '📸 El cliente adjuntó foto del comprobante en el sistema.\n'
+        ? (window.ASWA_STORAGE_ENABLED
+          ? '📸 El cliente adjuntó foto del comprobante en el sistema.\n'
+          : '📸 El cliente seleccionó comprobante. Solicita que lo adjunte por WhatsApp.\n')
         : '⚠️ El cliente NO adjuntó foto. Pídele comprobante.\n')
       + '\n👉 Entra al Panel Admin para APROBAR o RECHAZAR:\n'
       + 'https://jsangama.github.io/aswa → ⚙️ Admin\n\n'
       + '_LA RICA CHICHA - ASWA_ 🌿';
     setTimeout(() => window.open('https://wa.me/'+getWA1()+'?text='+encodeURIComponent(msgComp), '_blank'), 1800);
+    if (!window.ASWA_STORAGE_ENABLED) {
+      setTimeout(() => abrirWhatsAppComprobante(nombre, telefono, pid), 2600);
+    }
   }
 
   /* Guardar en Firestore */
@@ -6968,6 +7015,7 @@ async function enviarPedido() {
             getDocs:gd, doc:d, updateDoc:ud, serverTimestamp:ts } = window.FB;
 
     const yapePhotoUrl = esDigitalPago ? await subirComprobantePago() : null;
+    const comprobanteMeta = comprobantePagoMeta(esDigitalPago, yapePhotoUrl);
 
     // 1. Guardar pedido
     const ref = await ad(col(db,'pedidos'), {
@@ -6994,10 +7042,8 @@ async function enviarPedido() {
       confirmacion_cliente: false, // Cloud Function escucha este campo
       gps_url:        ST.gpsUrl || null,
       gps_coords:     ST.gpsCoords || null,
-      // Comprobante digital: URL de Storage. Si Storage falla, mantiene fallback base64.
-      yape_foto_url:    yapePhotoUrl || null,
-      yape_foto_base64: (!yapePhotoUrl && esDigitalPago && yapeFileData) ? yapeFileData : null,
-      yape_estado:      esDigitalPago ? 'pendiente' : null,
+      // Comprobante digital: Storage si esta habilitado; si no, verificacion manual por WhatsApp.
+      ...comprobanteMeta,
       compartido:     false,   // se actualiza cuando cliente comparte en redes
       asignado_a:     null,    // se asigna cuando deliverista acepta
       es_reserva:     !!reservaPedido.activa,
@@ -11287,9 +11333,12 @@ function admRenderYapes(docs) {
     const d = doc.data();
     const fecha = d.fecha?.seconds ? new Date(d.fecha.seconds*1000).toLocaleString('es-PE') : '—';
     const fotoSrc = d.yape_foto_url || d.yape_foto_base64 || '';
+    const manualMsg = d.requiere_comprobante_whatsapp
+      ? 'Verificacion manual: pide o revisa el comprobante recibido por WhatsApp.'
+      : 'Sin foto adjunta';
     const fotoHtml = fotoSrc
       ? `<img src="${esc(fotoSrc)}" class="adm-yape-foto" onclick="this.style.maxHeight=this.style.maxHeight?'':'none'" alt="Comprobante de pago">`
-      : '<div style="background:var(--s2);border:1px solid var(--brd);border-radius:10px;padding:20px;text-align:center;color:var(--mut);font-size:12px;margin:8px 0">Sin foto adjunta</div>';
+      : '<div style="background:var(--s2);border:1px solid var(--brd);border-radius:10px;padding:20px;text-align:center;color:var(--mut);font-size:12px;margin:8px 0">'+manualMsg+'</div>';
 
     return `
       <div class="adm-pedido yape-pendiente" id="admped-${doc.id}">
@@ -11980,6 +12029,7 @@ function _actualizarTrackUI(ped, pedidoId) {
 ══════════════════════════════════════ */
 async function subirArchivoUGC(file, onProgress) {
   await esperarFB();
+  if (!window.ASWA_STORAGE_ENABLED) return null;
   if (!window.FBStorage) throw new Error('Firebase Storage no disponible');
 
   const { ref: fbRef, uploadBytes, getDownloadURL } = window.FBStorage;
@@ -12039,13 +12089,16 @@ async function enviarBonoConStorage() {
   try {
     let imageUrl = null;
 
-    // Si hay archivo, subirlo a Storage
-    if (file) {
+    // Si hay archivo, subirlo a Storage solo cuando el proyecto lo tenga activo.
+    if (file && window.ASWA_STORAGE_ENABLED) {
       document.getElementById('uploadStatus').textContent = 'Subiendo imagen...';
       imageUrl = await subirArchivoUGC(file, pct => {
         document.getElementById('uploadFill').style.width = pct + '%';
         document.getElementById('uploadStatus').textContent = `Subiendo... ${pct}%`;
       });
+    } else if (file) {
+      document.getElementById('uploadFill').style.width = '50%';
+      document.getElementById('uploadStatus').textContent = 'Guardando solicitud sin Storage...';
     } else {
       document.getElementById('uploadFill').style.width = '50%';
     }
@@ -12061,6 +12114,8 @@ async function enviarBonoConStorage() {
       tipo, plataforma, usuario, link_publicacion: link,
       texto: mensaje, campana,
       imagen_url: imageUrl || null,
+      imagen_local_pendiente: !!(file && !imageUrl),
+      verificacion_archivo: imageUrl ? 'firebase_storage' : (file ? 'whatsapp_manual' : null),
       estado: 'pendiente',
       likes: 0, destacado: false,
       created_at: ts()
@@ -14981,9 +15036,9 @@ function limpiarComprobante() {
   if (fi)   fi.value = '';
   _setPasoActivo(2);
   document.getElementById('pagoInstruccion').innerHTML =
-    '<strong>📸 Paso 2 — Sube tu comprobante</strong><br>Toma captura de tu ' +
-    '<span id="uploadMetodoNombre">' + (ST.pago||'pago') + '</span> y súbela.<br>' +
-    '<span style="color:var(--grn);font-weight:700">Verificamos en segundos ⚡</span>';
+    '<strong>📸 Paso 2 — Comprobante</strong><br>Toma captura de tu ' +
+    '<span id="uploadMetodoNombre">' + (ST.pago||'pago') + '</span> y seleccionala.<br>' +
+    '<span style="color:var(--grn);font-weight:700">En modo gratis se verifica por WhatsApp</span>';
 }
 
 // ── abrirGuionModal [from index__3_]
