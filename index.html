@@ -848,6 +848,7 @@
     .school-product { background:rgba(0,0,0,.22); border-color:rgba(250,204,21,.22); }
     .school-product .pimg { background:#050505; object-fit:contain; padding:3px; }
     #c-sjBidon .pimg { width:76px; height:76px; padding:2px; }
+    #c-sjBidonPublic .pimg { width:76px; height:76px; padding:2px; object-fit:contain; }
     .bidon-price-options {
       display:grid; grid-template-columns:1fr 1fr; gap:8px; margin:8px 0 10px;
     }
@@ -2845,6 +2846,44 @@
         <span class="qn" id="q-p4l">0</span>
         <button class="qb qplus"  onclick="qty('p4l',+1)">+</button>
       </div>
+    </div>
+
+    <div class="san-juan-card" id="sanJuanPublico">
+      <span class="sj-badge">San Juan 2026 - publico general</span>
+      <div class="sj-title">Bidon San Juanero ASWA 20L</div>
+      <div class="sj-sub">Para familias, reuniones, amigos y pedidos generales. Mismo precio de campana, con delivery normal segun tu zona.</div>
+      <div class="bidon-price-options" aria-label="Opciones de precio para bidon publico">
+        <label class="bidon-price-option is-active" id="bidonPublicOptRecarga">
+          <input type="radio" name="publicBidonModo" id="publicBidonRecarga" value="recarga" checked onchange="actualizarBidonPublicoUI()">
+          <span>
+            <strong>Ya tengo bidon vacio</strong>
+            <small>Solo contenido: 20 litros. Entregas tu bidon vacio al recibir.</small>
+            <span class="price-pill">S/ 50.00</span>
+          </span>
+        </label>
+        <label class="bidon-price-option" id="bidonPublicOptIncluido">
+          <input type="radio" name="publicBidonModo" id="publicBidonIncluido" value="incluido" onchange="actualizarBidonPublicoUI()">
+          <span>
+            <strong>Comprar con bidon incluido</strong>
+            <small>Contenido 20 litros + bidon nuevo. Se agrega S/ 20.</small>
+            <span class="price-pill">S/ 70.00</span>
+          </span>
+        </label>
+      </div>
+      <div class="pc school-product" id="c-sjBidonPublic">
+        <img src="assets/images/products/optimized/san-juan-bidon-20l.png" alt="Bidon San Juanero 20 litros" class="pimg">
+        <div style="flex:1">
+          <div class="pn">Bidon San Juanero ASWA</div>
+          <div class="pd" id="sjBidonPublicDesc">Solo contenido 20 litros. Debes entregar bidon vacio al recibir.</div>
+          <div class="pp" id="pr-sjBidonPublic">S/ 50.00</div>
+        </div>
+        <div class="qw">
+          <button class="qb qminus" onclick="qty('sjBidonPublic',-1)">-</button>
+          <span class="qn" id="q-sjBidonPublic">0</span>
+          <button class="qb qplus" onclick="qty('sjBidonPublic',+1)">+</button>
+        </div>
+      </div>
+      <div class="school-note">Venta al publico general por temporada San Juan. Este producto si cobra delivery segun la zona seleccionada.</div>
     </div>
 
     <div class="san-juan-card" id="sanJuanEscolar">
@@ -5316,8 +5355,8 @@ function esperarFB() {
 
 /* ── ESTADO GLOBAL ── */
 const ST = {
-  cart: { p2l: 0, p3l: 0, p4l: 0, sjBidon: 0, sjChicha04: 0, sjCombo: 0, sjJuane: 0, sjJuaneFamiliar: 0 },
-  precio: { p2l: 9, p3l: 13, p4l: 15, sjBidon: 50, sjChicha04: 2, sjCombo: 3.5, sjJuane: 1.5, sjJuaneFamiliar: 25 },
+  cart: { p2l: 0, p3l: 0, p4l: 0, sjBidonPublic: 0, sjBidon: 0, sjChicha04: 0, sjCombo: 0, sjJuane: 0, sjJuaneFamiliar: 0 },
+  precio: { p2l: 9, p3l: 13, p4l: 15, sjBidonPublic: 50, sjBidon: 50, sjChicha04: 2, sjCombo: 3.5, sjJuane: 1.5, sjJuaneFamiliar: 25 },
   pago: 'Efectivo',
   raw: 0,
   final: 0,
@@ -5342,6 +5381,7 @@ const PRODUCT_META = {
   p2l: { nombre:'ASWA 2L', corto:'2L', regular:true },
   p3l: { nombre:'ASWA 3L', corto:'3L', regular:true },
   p4l: { nombre:'ASWA 4L Familiar', corto:'4L', regular:true },
+  sjBidonPublic: { nombre:'Bidon San Juanero ASWA 20L', corto:'Bidon San Juan 20L', sanJuanPublico:true },
   sjBidon: { nombre:'Bidon escolar sanjuanero 20L', corto:'Bidon San Juan 20L', escolar:true },
   sjChicha04: { nombre:'ASWA escolar sanjuanera 0.4L', corto:'ASWA escolar 0.4L', escolar:true },
   sjCombo: { nombre:'Combo escolar sanjuanero', corto:'Combo San Juan', escolar:true },
@@ -5350,6 +5390,7 @@ const PRODUCT_META = {
 };
 const PRODUCT_IDS = Object.keys(PRODUCT_META);
 const PRODUCT_IMAGE_SRC = {
+  sjBidonPublic: 'assets/images/products/optimized/san-juan-bidon-20l.png',
   sjBidon: 'assets/images/products/optimized/san-juan-bidon-20l.png',
   sjChicha04: 'assets/images/products/optimized/san-juan-chicha-400ml.jpg',
   sjCombo: 'assets/images/products/optimized/san-juan-combo-escolar.jpg',
@@ -5453,6 +5494,21 @@ function actualizarNivelEscolarUI() {
   }
   grado.innerHTML = opts.map(opt => '<option value="' + opt.value + '">' + opt.text + '</option>').join('');
   if (actual && Array.from(grado.options).some(opt => opt.value === actual)) grado.value = actual;
+}
+
+function actualizarBidonPublicoUI() {
+  const modoBidon = document.querySelector('input[name="publicBidonModo"]:checked')?.value || 'recarga';
+  const conBidon = modoBidon !== 'incluido';
+  ST.precio.sjBidonPublic = conBidon ? 50 : 70;
+  const desc = document.getElementById('sjBidonPublicDesc');
+  if (desc) desc.textContent = conBidon
+    ? 'Solo contenido 20 litros. Debes entregar bidon vacio al recibir.'
+    : 'Contenido 20 litros + bidon incluido. Precio final S/ 70.';
+  const precioBidon = document.getElementById('pr-sjBidonPublic');
+  if (precioBidon) precioBidon.textContent = 'S/ ' + ST.precio.sjBidonPublic.toFixed(2);
+  document.getElementById('bidonPublicOptRecarga')?.classList.toggle('is-active', conBidon);
+  document.getElementById('bidonPublicOptIncluido')?.classList.toggle('is-active', !conBidon);
+  calcTotal();
 }
 
 function actualizarPromoEscolarUI() {
@@ -5593,6 +5649,7 @@ function qty(id, d) {
   ST.cart[id] = Math.max(0, ST.cart[id] + d);
   document.getElementById('q-' + id).textContent = ST.cart[id];
   document.getElementById('c-' + id).classList.toggle('on', ST.cart[id] > 0);
+  if (PRODUCT_META[id]?.sanJuanPublico) actualizarBidonPublicoUI();
   if (PRODUCT_META[id]?.escolar || PRODUCT_META[id]?.sanJuanInstitucional) actualizarPromoEscolarUI();
   calcTotal();
 }
@@ -8973,6 +9030,7 @@ document.addEventListener('DOMContentLoaded', () => {
   limpiarEstadoLocalObsoleto();
   setPago('Yape');
   actualizarNivelEscolarUI();
+  actualizarBidonPublicoUI();
   reservaInit();
   actualizarHorarioMini();
   perfilInit();
@@ -15730,6 +15788,7 @@ function sincronizarPreciosGlobales() {
 
   ST.cart   = nuevoCart;
   ST.precio = nuevoPrecio;
+  actualizarBidonPublicoUI();
   actualizarPromoEscolarUI();
 }
 
