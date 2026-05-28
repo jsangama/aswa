@@ -2851,7 +2851,7 @@
     <div class="san-juan-card" id="sanJuanPublico">
       <span class="sj-badge">San Juan 2026 - publico general</span>
       <div class="sj-title">Bidon San Juanero ASWA 20L</div>
-      <div class="sj-sub">Para familias, reuniones, amigos y pedidos generales. Mismo precio de campana, con delivery normal segun tu zona.</div>
+      <div class="sj-sub">Ideal para obras de construccion, cuadrillas, familias, reuniones y pedidos generales. Mismo precio de campana, con delivery normal segun tu zona. Pago solo con billeteras digitales o transferencia bancaria.</div>
       <div class="bidon-price-options" aria-label="Opciones de precio para bidon publico">
         <label class="bidon-price-option is-active" id="bidonPublicOptRecarga">
           <input type="radio" name="publicBidonModo" id="publicBidonRecarga" value="recarga" checked onchange="actualizarBidonPublicoUI()">
@@ -2883,7 +2883,7 @@
           <button class="qb qplus" onclick="qty('sjBidonPublic',+1)">+</button>
         </div>
       </div>
-      <div class="school-note">Venta al publico general por temporada San Juan. Este producto si cobra delivery segun la zona seleccionada.</div>
+      <div class="school-note">Venta al publico general por temporada San Juan. Este producto si cobra delivery segun la zona seleccionada. No aplica efectivo: paga con Yape, Plin, Agora, BIM o transferencia bancaria.</div>
     </div>
 
     <div class="san-juan-card" id="sanJuanEscolar">
@@ -5508,6 +5508,7 @@ function actualizarBidonPublicoUI() {
   if (precioBidon) precioBidon.textContent = 'S/ ' + ST.precio.sjBidonPublic.toFixed(2);
   document.getElementById('bidonPublicOptRecarga')?.classList.toggle('is-active', conBidon);
   document.getElementById('bidonPublicOptIncluido')?.classList.toggle('is-active', !conBidon);
+  if (Number(ST.cart.sjBidonPublic || 0) > 0 && ST.pago === 'Efectivo') setPago('Yape');
   calcTotal();
 }
 
@@ -5972,7 +5973,7 @@ const METODOS_PAGO = {
 
 function setPago(metodo) {
   if (metodo === 'Efectivo' && pedidoEspecialRequierePagoDigital()) {
-    tst('Reservas, regalos y promo escolar solo aceptan pago anticipado: Yape, Plin, Agora, BIM o transferencia.', 3600);
+    tst('Reservas, regalos y bidon San Juanero solo aceptan Yape, Plin, Agora, BIM o transferencia.', 3600);
     metodo = 'Yape';
   }
   ST.pago = metodo;
@@ -6183,8 +6184,12 @@ function obtenerPedidoRegalo(mostrarErrores = false) {
   return { ok:true, activo:true, relacion, nombre, telefono, mensaje };
 }
 
+function bidonPublicoActivo() {
+  return Number(ST.cart.sjBidonPublic || 0) > 0;
+}
+
 function pedidoEspecialRequierePagoDigital() {
-  return pedidoRegaloActivo() || promoSanJuanActiva() || !!document.getElementById('reservaActiva')?.checked;
+  return pedidoRegaloActivo() || promoSanJuanActiva() || bidonPublicoActivo() || !!document.getElementById('reservaActiva')?.checked;
 }
 
 function coordsPlantaNegocio() {
@@ -7422,6 +7427,11 @@ async function enviarPedido() {
   if (!promoEscolar.ok) return;
   const promoInstitucional = obtenerPromoInstitucionalSanJuan(true);
   if (!promoInstitucional.ok) return;
+  if (bidonPublicoActivo() && ST.pago === 'Efectivo') {
+    setPago('Yape');
+    tst('El bidon San Juanero para obra o publico general solo acepta Yape, Plin, Agora, BIM o transferencia.', 4200);
+    return;
+  }
 
   _enviandoPedido = true;
   btn.disabled = true; btn.textContent = 'Enviando...';
