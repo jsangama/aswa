@@ -2,6 +2,7 @@
   const defaultConfig = {
     BUSINESS_ID: 'aswa001',
     BUSINESS_NAME: 'La Rica Chicha',
+    ALLOW_LEGACY_LOCAL_ACCESS: false,
     HORARIO: {
       activo: true,
       inicio: '07:00',

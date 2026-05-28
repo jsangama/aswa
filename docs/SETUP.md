@@ -27,6 +27,9 @@ cp js/local-config.example.js js/local-config.js
 ```javascript
 window.ASWA_CONFIG = {
   ...(window.ASWA_CONFIG || {}),
+  // Solo para pruebas locales con PIN/password legacy.
+  // En produccion debe quedar false o no definirse.
+  ALLOW_LEGACY_LOCAL_ACCESS: true,
   ADMIN_PIN: '1234',
   DELIVERY_PIN: '1234',
   ADMIN_CREDENTIALS: {
@@ -36,7 +39,7 @@ window.ASWA_CONFIG = {
 };
 ```
 
-`js/local-config.js` esta en `.gitignore` para que no se publique. La app no lo solicita automaticamente, asi se evitan errores 404 en GitHub Pages. Si no cargas una configuracion privada antes de `js/app-config.js`, los accesos privados que dependan de PIN/password no estaran habilitados.
+`js/local-config.js` esta en `.gitignore` para que no se publique. La app no lo solicita automaticamente, asi se evitan errores 404 en GitHub Pages. Si no cargas una configuracion privada antes de `js/app-config.js`, los accesos privados que dependan de PIN/password no estaran habilitados. En produccion, Admin/Delivery/TV deben usar Firebase Auth y roles operativos.
 
 4. Ejecuta localmente:
 
@@ -72,5 +75,6 @@ tests/        Tests unitarios
 - No publiques `.env`.
 - No publiques `js/local-config.js`.
 - Cambia los PIN y passwords antes de usar en produccion.
+- No actives `ALLOW_LEGACY_LOCAL_ACCESS` fuera de localhost.
 - Las claves Firebase de frontend son publicas por naturaleza; protege datos con reglas de Firestore/Storage.
 - No agregues nuevas credenciales dentro de `index.html`, `ugc.html` o archivos versionados.
