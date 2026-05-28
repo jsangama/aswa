@@ -96,6 +96,7 @@ function localChecks(businessId) {
     check(index.includes("db.collection('sugerencias').add") && index.includes('businessId: BUSINESS_ID') && index.includes('cliente_uid: window.currentUser?.uid || null'), 'Sugerencias guardan businessId y cliente_uid'),
     check(index.includes("window.db.collection('pagos_culqi').add") && index.includes('businessId: BUSINESS_ID') && index.includes('cliente_uid: window.currentUser?.uid || null'), 'Pagos Culqi legacy guardan businessId y cliente_uid'),
     check(index.includes("window.db.collection('calificaciones').add") && index.includes('businessId: BUSINESS_ID') && index.includes('cliente_uid: window.currentUser?.uid || null'), 'Calificaciones legacy guardan businessId y cliente_uid'),
+    check(index.includes("col(db, 'chats'),") && index.includes("wh('businessId', '==', BUSINESS_ID)") && index.includes("orderBy:ob"), 'Panel admin consulta chats filtrados por negocio'),
     check(index.includes("referral_codes"), 'La app usa referral_codes para validar referidos'),
     check(!index.includes("wh('codigo_referido','==',codigoUsado)") && !index.includes("wh('codigo_referido','==',cod)"), 'La app no consulta clientes por codigo_referido'),
     check(index.includes('function abrirDashboardTVSeguro()'), 'Modo TV usa entrada segura'),
