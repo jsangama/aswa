@@ -12254,6 +12254,25 @@ async function pwaCopiarEnlace() {
   }
 }
 
+async function pwaPrepararInstalador() {
+  if (!('serviceWorker' in navigator)) return false;
+  try {
+    registrarSW();
+    await navigator.serviceWorker.ready;
+    return true;
+  } catch (err) {
+    console.warn('pwaPrepararInstalador:', err);
+    return false;
+  }
+}
+
+function pwaRecargarParaInstalar() {
+  const url = new URL(location.href);
+  url.searchParams.set('install', '1');
+  url.searchParams.set('v', 'pwa-ready-' + Date.now());
+  location.href = url.toString();
+}
+
 function pwaTextoInstrucciones() {
   const playStore = ASWA_PLAY_STORE_URL
     ? '<br><a href="' + ASWA_PLAY_STORE_URL + '" target="_blank" rel="noopener" style="display:block;margin-top:10px;text-align:center;background:#16a34a;color:#fff;text-decoration:none;border-radius:12px;padding:10px 12px;font-weight:900">Ver ASWA en Play Store</a>'
@@ -12262,15 +12281,15 @@ function pwaTextoInstrucciones() {
     return '<strong style="color:#facc15">Listo para instalar.</strong><br>Presiona "Instalar ahora" y confirma. Despues ASWA aparecera como app en la pantalla de inicio.' + playStore;
   }
   if (pwaEsNavegadorInterno()) {
-    return '<strong style="color:#facc15">Abre ASWA en Chrome o Safari.</strong><br>Este navegador interno no permite instalar apps. Copia el enlace, abrelo en Chrome o Safari y luego toca instalar.<br><button type="button" onclick="pwaCopiarEnlace()" style="width:100%;margin-top:10px;background:#facc15;color:#111;border:0;border-radius:12px;padding:10px 12px;font-weight:900;cursor:pointer">Copiar enlace de ASWA</button>' + playStore;
+    return '<strong style="color:#facc15">Abre ASWA en Chrome o Safari.</strong><br>Este navegador interno no permite instalar apps directamente. Abre este mismo enlace en Chrome o Safari y luego toca el boton de instalacion.' + playStore;
   }
   if (pwaEsIOS()) {
-    return '<strong style="color:#facc15">Instalar en iPhone.</strong><br>1. Abre esta pagina en Safari.<br>2. Toca Compartir.<br>3. Elige "Agregar a pantalla de inicio".<br>4. Toca "Agregar".<br><button type="button" onclick="pwaCopiarEnlace()" style="width:100%;margin-top:10px;background:#facc15;color:#111;border:0;border-radius:12px;padding:10px 12px;font-weight:900;cursor:pointer">Copiar enlace de ASWA</button>' + playStore;
+    return '<strong style="color:#facc15">Instalar en iPhone.</strong><br>1. Abre esta pagina en Safari.<br>2. Toca Compartir.<br>3. Elige "Agregar a pantalla de inicio".<br>4. Toca "Agregar".' + playStore;
   }
   if (pwaEsAndroid()) {
-    return '<strong style="color:#facc15">Instalar en Android.</strong><br>1. Usa Chrome o Edge.<br>2. Toca el menu de tres puntos.<br>3. Toca "Instalar app" o "Agregar a pantalla principal".<br>4. Confirma la instalacion.<br><button type="button" onclick="pwaCopiarEnlace()" style="width:100%;margin-top:10px;background:#facc15;color:#111;border:0;border-radius:12px;padding:10px 12px;font-weight:900;cursor:pointer">Copiar enlace de ASWA</button>' + playStore;
+    return '<strong style="color:#facc15">Instalar en Android.</strong><br>1. Usa Chrome o Edge.<br>2. Toca "Instalar ahora" si aparece.<br>3. Si no aparece, abre el menu de tres puntos.<br>4. Toca "Instalar app" o "Agregar a pantalla principal".' + playStore;
   }
-  return '<strong style="color:#facc15">Instalacion manual.</strong><br>En Chrome o Edge busca el icono de instalar en la barra de direcciones, o abre el menu y elige "Instalar ASWA".<br><button type="button" onclick="pwaCopiarEnlace()" style="width:100%;margin-top:10px;background:#facc15;color:#111;border:0;border-radius:12px;padding:10px 12px;font-weight:900;cursor:pointer">Copiar enlace de ASWA</button>' + playStore;
+  return '<strong style="color:#facc15">Instalacion desde Chrome o Edge.</strong><br>Busca el icono de instalar en la barra de direcciones, o abre el menu y elige "Instalar ASWA". Si acabas de entrar por primera vez, toca el boton de abajo para preparar el instalador y recargar una vez.' + playStore;
 }
 
 function pwaAbrirModal() {
@@ -12280,9 +12299,9 @@ function pwaAbrirModal() {
   if (!modal) return;
   if (body) body.innerHTML = pwaTextoInstrucciones();
   if (btn) {
-    btn.textContent = _pwaPrompt ? 'Instalar ahora' : 'Copiar enlace de ASWA';
+    btn.textContent = _pwaPrompt ? 'Instalar ahora' : 'Ver pasos para instalar';
     btn.style.display = 'block';
-    btn.onclick = _pwaPrompt ? pwaInstalarApp : pwaCopiarEnlace;
+    btn.onclick = _pwaPrompt ? pwaInstalarApp : pwaMostrarAyudaManual;
   }
   modal.style.display = 'flex';
 }
@@ -12300,7 +12319,7 @@ function pwaMostrarSugerencia() {
   const btn = document.getElementById('pwaInstallMainBtn');
   const help = document.getElementById('pwaInstallHelp');
   if (!_pwaPrompt) {
-    if (btn) btn.textContent = pwaEsIOS() ? 'Ver como instalar en iPhone' : 'Descargar / instalar ASWA';
+    if (btn) btn.textContent = pwaEsIOS() ? 'Ver como instalar en iPhone' : 'Instalar app ASWA';
     if (help) {
       help.style.display = 'block';
       help.innerHTML = 'Presiona el boton. Si no aparece el instalador automatico, ASWA te dara los pasos exactos para tu celular.';
@@ -12316,6 +12335,15 @@ function pwaCerrarSugerencia() {
   if (card) card.style.display = 'none';
 }
 
+function pwaMostrarAyudaManual() {
+  const help = document.getElementById('pwaInstallHelp');
+  if (help) {
+    help.style.display = 'block';
+    help.innerHTML = 'Si no aparece el instalador automatico, usa el menu del navegador. En Chrome busca el icono de instalar en la barra de direcciones o abre el menu y toca "Instalar app".';
+  }
+  tst('Tu navegador necesita usar el instalador del menu o barra de direcciones.', 4200);
+}
+
 async function pwaInstalarApp() {
   const help = document.getElementById('pwaInstallHelp');
   if (pwaEsStandalone()) {
@@ -12324,9 +12352,17 @@ async function pwaInstalarApp() {
     return;
   }
   if (!_pwaPrompt) {
+    const prepared = await pwaPrepararInstalador();
+    const alreadyReloaded = sessionStorage.getItem('pwa_install_reload_tried') === '1';
+    if (prepared && !alreadyReloaded && !pwaEsIOS() && !pwaEsNavegadorInterno()) {
+      sessionStorage.setItem('pwa_install_reload_tried', '1');
+      tst('Preparando instalador de ASWA. Recargare una vez para activar la descarga.', 4200);
+      setTimeout(pwaRecargarParaInstalar, 700);
+      return;
+    }
     if (help) {
       help.style.display = 'block';
-      help.innerHTML = 'Tu navegador necesita instalacion manual. Abre las instrucciones y sigue los pasos segun tu celular.';
+      help.innerHTML = 'No aparecio el instalador automatico. Abre las instrucciones y usa el menu del navegador para instalar ASWA.';
     }
     pwaAbrirModal();
     tst('Te muestro como instalar ASWA en este navegador.', 3500);
@@ -12365,6 +12401,7 @@ window.addEventListener('beforeinstallprompt', e => {
 });
 
 document.addEventListener('DOMContentLoaded', () => {
+  registrarSW();
   pwaMostrarBotonDescarga();
   setTimeout(pwaMostrarSugerencia, 1600);
 });
@@ -15618,10 +15655,7 @@ self.addEventListener('message', e => {
 });
 `;
 
-  const blob   = new Blob([SW_CODE], { type: 'application/javascript' });
-  const swUrl  = URL.createObjectURL(blob);
-
-  navigator.serviceWorker.register(swUrl, { scope: './' })
+  navigator.serviceWorker.register('./sw.js', { scope: './' })
     .then(reg => {
       console.log('[SW] Registrado:', reg.scope);
 
