@@ -64,7 +64,26 @@ Si tienes `GOOGLE_APPLICATION_CREDENTIALS` configurado, tambien validara que exi
 
 No despliegues reglas si este comando falla.
 
-## 6. Desplegar reglas Firestore
+## 6. Revisar referidos
+
+Los codigos de referido se validan desde `referral_codes`, no desde `clientes`.
+Antes de activar reglas estrictas, confirma que los clientes activos tengan su codigo publicado al menos despues de su siguiente pedido, o migralos con una herramienta admin/backend.
+
+Para migrar codigos existentes:
+
+```bash
+npm run referrals:sync -- --business aswa001
+```
+
+Para revisar sin escribir:
+
+```bash
+npm run referrals:sync -- --business aswa001 --dry-run yes
+```
+
+Los usos de codigo quedan en `referral_events` como pendientes para que el negocio los procese sin abrir datos privados de clientes.
+
+## 7. Desplegar reglas Firestore
 
 Solo cuando todo lo anterior este OK:
 
@@ -72,7 +91,7 @@ Solo cuando todo lo anterior este OK:
 firebase deploy --only firestore:rules --project pedidos-aswa-peru
 ```
 
-## 7. Verificacion final
+## 8. Verificacion final
 
 Despues del deploy:
 

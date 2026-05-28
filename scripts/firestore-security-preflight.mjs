@@ -8,6 +8,7 @@ const REQUIRED_FILES = [
   'firebase.json',
   'scripts/set-firebase-claims.mjs',
   'scripts/upsert-operator-user.mjs',
+  'scripts/sync-referral-codes.mjs',
   'docs/FIREBASE_CLAIMS.md',
   'docs/FIRESTORE_SECURITY.md',
 ];
@@ -72,13 +73,18 @@ function localChecks(businessId) {
     ...REQUIRED_FILES.map((file) => check(existsSync(file), `Existe ${file}`)),
     check(packageJson.scripts?.['claims:set'], 'Existe script claims:set'),
     check(packageJson.scripts?.['operators:upsert'], 'Existe script operators:upsert'),
+    check(packageJson.scripts?.['referrals:sync'], 'Existe script referrals:sync'),
     check(firebaseJson.firestore?.rules === 'firestore.rules', 'firebase.json apunta a firestore.rules'),
     check(rules.includes('claimRole()'), 'Reglas validan role por custom claims'),
     check(rules.includes('claimBusinessId()'), 'Reglas validan businessId por custom claims'),
     check(rules.includes('cliente_uid'), 'Reglas protegen pedidos por cliente_uid'),
+    check(rules.includes('match /referral_codes/{codigo}'), 'Reglas permiten validar codigos referidos sin leer clientes'),
+    check(rules.includes('match /referral_events/{eventId}'), 'Reglas registran eventos de referido para revision admin'),
     check(index.includes('aswaSignInOperativo'), 'La app tiene login operativo con Firebase Auth'),
     check(index.includes('OPERATOR_AUTH_EMAILS'), 'La app soporta mapeo OPERATOR_AUTH_EMAILS'),
     check(index.includes('cliente_uid:    window.currentUser?.uid'), 'Pedidos nuevos guardan cliente_uid'),
+    check(index.includes("referral_codes"), 'La app usa referral_codes para validar referidos'),
+    check(!index.includes("wh('codigo_referido','==',codigoUsado)") && !index.includes("wh('codigo_referido','==',cod)"), 'La app no consulta clientes por codigo_referido'),
     check(Boolean(businessId), 'Business ID definido', businessId || 'No definido'),
   ];
 }
