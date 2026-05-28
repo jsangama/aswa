@@ -49,3 +49,5 @@ npm run claims:set -- --uid UID_DEL_USUARIO --role owner --business aswa001
 ```
 
 Ver guia completa: `docs/FIREBASE_CLAIMS.md`.
+
+Checklist completo de activacion: `docs/SECURITY_ROLLOUT_CHECKLIST.md`.

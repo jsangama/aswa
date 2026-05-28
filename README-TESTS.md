@@ -28,3 +28,6 @@ npm run test:coverage
 - `tests/orders.test.js`: total calculation behavior.
 
 The Jest coverage gate is configured in `package.json` for `js/login.js`.
+# Seguridad operativa
+
+Antes de desplegar reglas Firestore en produccion, revisa `docs/SECURITY_ROLLOUT_CHECKLIST.md`.
