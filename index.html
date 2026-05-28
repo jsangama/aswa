@@ -5965,6 +5965,7 @@ async function crearAlertasReservaPush(pedidoId, reserva, cliente = {}) {
   const { addDoc:ad, collection:col, serverTimestamp:ts } = window.FB;
   const base = {
     businessId: BUSINESS_ID,
+    cliente_uid: window.currentUser?.uid || null,
     pedidoId,
     telefono: cliente.telefono || '',
     nombre: cliente.nombre || '',
@@ -6459,7 +6460,7 @@ document.getElementById('telefono').addEventListener('input', async e => {
 
   try {
     const { query:q, collection:col, where:wh, getDocs:gd } = window.FB;
-    const snap = await gd(q(col(db,'clientes'), wh('businessId','==',BUSINESS_ID), wh('telefono','==',tel)));
+    const snap = await gd(q(col(db,'clientes'), wh('businessId','==',BUSINESS_ID), wh('telefono','==',tel), wh('cliente_uid','==',window.currentUser.uid)));
 
     if (!snap.empty) {
       const data = snap.docs[0].data();
@@ -6614,7 +6615,7 @@ document.getElementById('codigoUsado').addEventListener('input', e => {
         el.textContent='⚠ Tu código'; el.style.color='#f59e0b'; ST.disc.ref=0;
       } else {
         const telActual = ST.cli.tel || document.getElementById('telefono')?.value.trim() || '';
-        const miSnap = await gd(q(col(db,'clientes'), wh('businessId','==',BUSINESS_ID), wh('telefono','==',telActual)));
+        const miSnap = await gd(q(col(db,'clientes'), wh('businessId','==',BUSINESS_ID), wh('telefono','==',telActual), wh('cliente_uid','==',window.currentUser.uid)));
         const esPrimerPedido = miSnap.empty || (miSnap.docs[0].data().pedidos_totales || 0) === 0;
         if (!esPrimerPedido) {
           el.textContent='⚠ Solo primer pedido'; el.style.color='#f59e0b'; ST.disc.ref=0;
@@ -6965,13 +6966,14 @@ async function enviarPedido() {
     if (typeof trackOrder === 'function') trackOrder(ref.id);
 
     // 2. Upsert cliente
-    const snapC = await gd(q(col(db,'clientes'), wh('businessId','==',BUSINESS_ID), wh('telefono','==',telefono)));
+    const snapC = await gd(q(col(db,'clientes'), wh('businessId','==',BUSINESS_ID), wh('telefono','==',telefono), wh('cliente_uid','==',window.currentUser.uid)));
     const clienteDoc = snapC.empty ? null : snapC.docs[0];
     const clientePrevio = clienteDoc?.data() || {};
     const esClienteNuevo = !clienteDoc || (clientePrevio.pedidos_totales || 0) === 0;
     const codFin = ST.cli.cod || await genCod();
     const cdata  = {
       businessId: BUSINESS_ID,
+      cliente_uid: window.currentUser?.uid || null,
       nombre, telefono,
       nivel:           ST.cli.nivel || 'BRONCE',
       pedidos_totales: (ST.cli.pedidos||0) + 1,
@@ -7631,7 +7633,7 @@ async function buscarCodPorTel(tel) {
   if (tel.length !== 9 || !tel.startsWith('9')) return;
   try {
     const { query:q, collection:col, where:wh, getDocs:gd } = window.FB;
-    const snap = await gd(q(col(db,'clientes'), wh('businessId','==',BUSINESS_ID), wh('telefono','==',tel)));
+    const snap = await gd(q(col(db,'clientes'), wh('businessId','==',BUSINESS_ID), wh('telefono','==',tel), wh('cliente_uid','==',window.currentUser.uid)));
     let cod = '';
     if (!snap.empty) {
       const data = snap.docs[0].data();
@@ -8216,6 +8218,7 @@ async function enviarBono() {
     const { addDoc:ad, collection:col, serverTimestamp:ts } = window.FB;
     await ad(col(db, 'ugc_posts'), {
       businessId: BUSINESS_ID,
+      cliente_uid: window.currentUser?.uid || null,
       nombre, telefono: celular, primera_compra: primera,
       tipo, plataforma, usuario, link_publicacion: link,
       texto: mensaje, campana,
@@ -9984,6 +9987,7 @@ async function iniciarChat(telefono, nombre) {
   const { doc:d, setDoc, collection:col, query:q, orderBy:ob, limit:lm, onSnapshot:os, serverTimestamp:ts } = window.FB;
   await setDoc(d(db, 'chats', _chatId), {
     businessId: BUSINESS_ID,
+    cliente_uid: window.currentUser?.uid || null,
     telefono: tel,
     nombre: _chatNombre,
     actualizado_en: ts()
@@ -10034,11 +10038,12 @@ async function enviarMensajeChat() {
   try {
     const { doc:d, collection:col, addDoc:ad, setDoc, serverTimestamp:ts } = window.FB;
     await ad(col(db, 'chats', _chatId, 'mensajes'), {
+      cliente_uid: window.currentUser?.uid || null,
       de:'cliente', texto, nombre:_chatNombre, telefono:_chatTelefono,
       fecha:ts(), leido_cliente:true, leido_negocio:false
     });
     await setDoc(d(db, 'chats', _chatId), {
-      businessId:BUSINESS_ID, telefono:_chatTelefono, nombre:_chatNombre,
+      businessId:BUSINESS_ID, cliente_uid: window.currentUser?.uid || null, telefono:_chatTelefono, nombre:_chatNombre,
       ultimo_msg:texto, ultimo_de:'cliente', actualizado_en:ts(), no_leidos_negocio:1
     }, { merge:true });
   } catch(err) {
@@ -11830,6 +11835,7 @@ async function enviarBonoConStorage() {
     const { addDoc: ad, collection: col, serverTimestamp: ts } = window.FB;
     await ad(col(db, 'ugc_posts'), {
       businessId: BUSINESS_ID,
+      cliente_uid: window.currentUser?.uid || null,
       nombre, telefono: celular, primera_compra: primera,
       tipo, plataforma, usuario, link_publicacion: link,
       texto: mensaje, campana,
@@ -12678,6 +12684,7 @@ async function evidEnviar() {
     const { collection:col, addDoc:ad, serverTimestamp:ts } = window.FB;
     await ad(col(db, 'evidencias_misiones'), {
       businessId:   BUSINESS_ID,
+      cliente_uid:  window.currentUser?.uid || null,
       tipo:         tipo,
       titulo:       mision.titulo,
       pct:          mision.pct,
@@ -13106,6 +13113,7 @@ async function enviarCalificacion() {
     const calificacion = {
       pedidoId,
       business_id: BUSINESS_ID,
+      cliente_uid: window.currentUser?.uid || null,
       producto: calificacionActual.producto,
       delivery: calificacionActual.delivery,
       promedio: (calificacionActual.producto + calificacionActual.delivery) / 2,
@@ -13859,6 +13867,7 @@ async function _procesarPagoCulqi(token, nombre, email, total) {
 
     const cargoRef = await ad(col(db, 'pagos_culqi'), {
       businessId:  BUSINESS_ID,
+      cliente_uid: window.currentUser?.uid || null,
       token:       token.id,
       monto:       Math.round(total * 100),
       moneda:      'PEN',
@@ -14186,6 +14195,7 @@ async function ratingEnviar() {
     // Guardar calificación en Firestore
     await ad(col(db, 'calificaciones'), {
       businessId:  BUSINESS_ID,
+      cliente_uid: window.currentUser?.uid || null,
       pedidoId:    ST.pedidoFbId || '',
       telefono:    ST.cli.tel    || '',
       nombre:      ST.cli.nom    || '',
