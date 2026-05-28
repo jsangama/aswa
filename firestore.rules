@@ -157,9 +157,9 @@ service cloud.firestore {
     }
 
     match /sugerencias/{sugerenciaId} {
-      allow create: if signedIn();
+      allow create: if isClientOwnedCreate();
       allow read: if true;
-      allow update, delete: if isAdmin(resource.data);
+      allow update, delete: if isAdmin(resource.data) || isAdmin(request.resource.data);
     }
 
     match /evidencias/{evidenciaId} {
