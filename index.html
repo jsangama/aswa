@@ -876,6 +876,11 @@
       border:1px dashed rgba(250,204,21,.42); border-radius:12px;
       padding:9px 10px; line-height:1.45; margin-top:10px;
     }
+    .school-minimum-note {
+      font-size:11px; color:#fff7cc; background:rgba(250,204,21,.16);
+      border-style:solid; font-weight:800;
+    }
+    .school-minimum-note strong { color:#facc15; }
     .school-toggle {
       display:flex; gap:8px; align-items:flex-start;
       font-size:11px; color:#fef3c7; line-height:1.35;
@@ -2949,7 +2954,7 @@
         <img src="assets/images/products/optimized/san-juan-chicha-400ml.jpg" alt="Chicha escolar 400 ml" class="pimg">
         <div style="flex:1">
           <div class="pn">ASWA escolar sanjuanera</div>
-          <div class="pd">Solo chicha 400 ml por alumno</div>
+          <div class="pd">Minimo 15 unidades por presentacion. Chicha 400 ml por alumno</div>
           <div class="pp" id="pr-sjChicha04">S/ 2.00</div>
         </div>
         <div class="qw">
@@ -2962,7 +2967,7 @@
         <img src="assets/images/products/optimized/san-juan-combo-escolar.jpg" alt="Combo escolar San Juan" class="pimg">
         <div style="flex:1">
           <div class="pn">Combo escolar sanjuanero</div>
-          <div class="pd">Juane + chicha ASWA 400 ml por alumno</div>
+          <div class="pd">Minimo 15 unidades por presentacion. Juane + chicha 400 ml</div>
           <div class="pp" id="pr-sjCombo">S/ 3.50</div>
         </div>
         <div class="qw">
@@ -2975,7 +2980,7 @@
         <img src="assets/images/products/optimized/san-juan-juane-escolar.jpg" alt="Solo juane escolar" class="pimg">
         <div style="flex:1">
           <div class="pn">Solo juane escolar</div>
-          <div class="pd">Juane por alumno para la seccion</div>
+          <div class="pd">Minimo 15 unidades por presentacion. Juane por alumno</div>
           <div class="pp" id="pr-sjJuane">S/ 1.50</div>
         </div>
         <div class="qw">
@@ -2984,7 +2989,8 @@
           <button class="qb qplus" onclick="qty('sjJuane',+1)">+</button>
         </div>
       </div>
-      <div class="school-note">Pedido escolar temporal por Fiestas de San Juan. Los combos, chichas o juanes son por seccion completa: minimo 15 unidades por cada producto elegido. El bidon de 20 litros no tiene minimo. Se atiende durante junio, excepto el 24 de junio. No se cobra delivery en esta promocion. Solo con reserva y pago anticipado: Yape, Plin, Agora, BIM o transferencia bancaria. No aplica efectivo.</div>
+      <div class="school-note school-minimum-note"><strong>Compra minima escolar:</strong> cada presentacion se vende desde 15 unidades: solo juane, solo chicha ASWA 400 ml, o combo juane + chicha ASWA 400 ml. El bidon de 20 litros no tiene minimo.</div>
+      <div class="school-note">Pedido escolar temporal por Fiestas de San Juan. La compra minima es de 15 unidades por cada presentacion elegida: juane, chicha ASWA 400 ml, o juane + chicha ASWA juntas. El bidon de 20 litros no tiene minimo. Se atiende durante junio, excepto el 24 de junio. No se cobra delivery en esta promocion. Solo con reserva y pago anticipado: Yape, Plin, Agora, BIM o transferencia bancaria. No aplica efectivo.</div>
       <div class="school-note" style="margin-top:12px">
         <strong>Juane familiar institucional</strong><br>
         Para bancos, empresas, oficinas y grupos de trabajadores. Entrega unica por reserva el 22 de junio, dos dias antes de San Juan. No se cobra delivery en esta promocion.
@@ -5564,7 +5570,7 @@ function obtenerPromoEscolar(mostrarErrores = false) {
   if (!Number.isFinite(alumnos) || alumnos < 1) return fail('Ingresa la cantidad aproximada de alumnos de la seccion.', 'colegioAlumnos');
   if (!distrito) return fail('Selecciona el distrito del centro educativo.', 'colegioDistrito');
   if (productoMenorAlMinimo) {
-    return fail('El pedido minimo de ' + productoMenorAlMinimo.nombre + ' es de 15 unidades. El bidon de 20 litros no tiene minimo.', 'colegioAlumnos');
+    return fail('La compra minima de ' + productoMenorAlMinimo.nombre + ' es de 15 unidades por presentacion. Sube la cantidad a 15 o mas para continuar. El bidon de 20 litros no tiene minimo.', 'colegioAlumnos');
   }
   if (ST.pago === 'Efectivo') return fail('La promo escolar San Juan solo acepta pago anticipado. Cambia el metodo de pago.', 'colegioNombre');
   if (!document.getElementById('reservaActiva')?.checked) return fail('La promo escolar San Juan debe reservarse con fecha y hora.', 'reservaActiva');
