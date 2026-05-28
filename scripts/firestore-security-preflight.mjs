@@ -90,6 +90,12 @@ function localChecks(businessId) {
     check(index.includes('TV real es privado') && index.includes('Acceso privado:'), 'Modo TV comunica acceso privado'),
     check(index.includes('function tvPedidoVisibleHoy(p)') && index.includes('pedidos.filter(tvPedidoVisibleHoy)'), 'Modo TV filtra pedidos activos de hoy'),
     check(index.includes('function tvTelefonoSeguro(tel)') && index.includes('tvTelefonoSeguro(p.telefono)'), 'Modo TV oculta telefono completo del cliente'),
+    check(index.includes('function obtenerReservaPedido') && index.includes('if (ST.pago === \'Efectivo\') return fail(\'Las reservas solo se aceptan'), 'Reservas bloquean pago en efectivo'),
+    check(index.includes('function obtenerPedidoRegalo') && index.includes('if (ST.pago === \'Efectivo\') return fail(\'Los regalos solo se aceptan'), 'Regalos bloquean pago en efectivo'),
+    check(index.includes('Pareja') && index.includes('Esposo(a)') && index.includes('Enamorado(a)'), 'Regalos incluyen pareja, esposo(a) y enamorado(a)'),
+    check(index.includes('reserva_alertas_cliente') && index.includes('crearAlertasReservaPush') && index.includes("col(db, 'push_queue')"), 'Reservas registran alertas para cliente'),
+    check(index.includes('distanciaPlantaCliente()') && index.includes('distancia_planta_m') && index.includes('delivery_carga'), 'Pedidos guardan distancia y carga para delivery'),
+    check(rules.includes('match /push_queue/{pushId}') && rules.includes('allow create: if isClientOwnedCreate() || isAdmin(request.resource.data);'), 'Reglas permiten cola de alertas de reserva controlada'),
     check(Boolean(businessId), 'Business ID definido', businessId || 'No definido'),
   ];
 }

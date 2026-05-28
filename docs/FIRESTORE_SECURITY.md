@@ -39,6 +39,18 @@ El Modo TV debe ser una vista operativa, no publica:
 
 `npm run security:preflight` revisa estas protecciones en `index.html` antes de desplegar cambios.
 
+## Reservas y regalos
+
+Las reservas y regalos son pedidos especiales y deben mantenerse con estas reglas de producto:
+
+- No aceptan efectivo; requieren pago anticipado con billetera digital o transferencia.
+- La app guarda `es_reserva`, fecha, hora, texto de reserva y metadatos de alerta.
+- La app guarda `es_regalo` y `regalo_para` para amigo(a), familiar, pareja, esposo(a) o enamorado(a).
+- Las reservas escriben en `push_queue` para que un backend/Cloud Function pueda enviar alertas al cliente.
+- Cada pedido guarda distancia desde planta y carga esperada para delivery.
+
+`security:preflight` valida que estas piezas sigan presentes antes de desplegar.
+
 ## Despliegue recomendado
 
 No despliegues estas reglas hasta configurar custom claims para usuarios operativos. Si se despliegan sin claims, el panel admin/delivery no podrá leer pedidos.
