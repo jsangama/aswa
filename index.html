@@ -4611,7 +4611,7 @@
       </div>
 
       <!-- Tabs -->
-      <div class="adm-tabs" style="display:grid;grid-template-columns:repeat(6,1fr);gap:6px">
+      <div class="adm-tabs" style="display:grid;grid-template-columns:repeat(7,1fr);gap:6px">
         <button class="adm-tab active" id="tabYape" onclick="admTab('yape')" style="font-size:10px;padding:10px 4px">
           📱 Yapes<br><span id="badgeYape" style="font-size:16px;color:var(--y);font-weight:900">—</span>
         </button>
@@ -4629,6 +4629,9 @@
         </button>
         <button class="adm-tab" id="tabCupones" onclick="admTab('cupones')" style="font-size:10px;padding:10px 4px">
           % Cupones<br><span id="badgeCupones" style="font-size:16px;color:var(--y);font-weight:900">—</span>
+        </button>
+        <button class="adm-tab" id="tabReferidos" onclick="admTab('referidos')" style="font-size:10px;padding:10px 4px">
+          Referidos<br><span id="badgeReferidos" style="font-size:16px;color:var(--y);font-weight:900">0</span>
         </button>
       </div>
 
@@ -4654,6 +4657,7 @@
       <div id="admContenidoStats" style="display:none"></div>
       <div id="admContenidoClientes" style="display:none"></div>
       <div id="admContenidoCupones" style="display:none"></div>
+      <div id="admContenidoReferidos" style="display:none"></div>
       <div id="admContenidoChat" style="display:none"></div>
 
     </div>
@@ -8599,6 +8603,135 @@ async function admCargarClientes() {
   }
 }
 
+function admEventoFecha(fecha) {
+  if (!fecha) return '—';
+  const d = fecha.seconds ? new Date(fecha.seconds * 1000) : new Date(fecha);
+  return Number.isFinite(d.getTime()) ? d.toLocaleString('es-PE') : '—';
+}
+
+function admRenderReferidos(docs) {
+  const cont = document.getElementById('admContenidoReferidos');
+  if (!cont) return;
+  const eventos = docs.map(doc => ({ id:doc.id, ...doc.data() }))
+    .sort((a,b) => {
+      if (a.estado === 'pendiente' && b.estado !== 'pendiente') return -1;
+      if (a.estado !== 'pendiente' && b.estado === 'pendiente') return 1;
+      return ownerTimestampMs(b.created_at || b.resuelto_at) - ownerTimestampMs(a.created_at || a.resuelto_at);
+    });
+  const pendientes = eventos.filter(e => e.estado === 'pendiente').length;
+  const badge = document.getElementById('badgeReferidos');
+  if (badge) badge.textContent = pendientes || '0';
+  if (!eventos.length) {
+    cont.innerHTML = '<div class="adm-empty"><div class="adm-empty-emo">👥</div><p>No hay referidos pendientes.</p></div>';
+    return;
+  }
+  cont.innerHTML = `
+    <div style="background:rgba(250,204,21,.08);border:1px solid rgba(250,204,21,.22);border-radius:14px;padding:12px;margin-bottom:12px">
+      <div style="font-size:13px;font-weight:900;color:var(--y);margin-bottom:4px">Referidos por revisar</div>
+      <div style="font-size:11px;color:var(--mut);line-height:1.5">Aprueba solo si el pedido fue real. Al aprobar, el referidor recibe un bono de 5% por 2 meses y el evento queda cerrado.</div>
+    </div>
+    ${eventos.map(e => {
+      const pendiente = e.estado === 'pendiente';
+      const estadoColor = pendiente ? 'var(--y)' : e.estado === 'aprobado' ? '#86efac' : '#fca5a5';
+      return `<div style="background:var(--s1);border:1px solid ${pendiente ? 'rgba(250,204,21,.36)' : 'var(--brd)'};border-radius:14px;padding:14px;margin-bottom:10px">
+        <div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-start;margin-bottom:10px">
+          <div>
+            <div style="font-size:14px;font-weight:900;color:#fff">${esc(e.nombre_nuevo || 'Cliente nuevo')}</div>
+            <div style="font-size:12px;color:var(--mut)">Cel: ${esc(e.telefono_nuevo || '—')} · Código: <strong style="color:var(--y)">${esc(e.codigo_usado || '—')}</strong></div>
+          </div>
+          <span style="background:rgba(0,0,0,.28);border:1px solid ${estadoColor};color:${estadoColor};border-radius:999px;padding:5px 9px;font-size:10px;font-weight:900;text-transform:uppercase">${esc(e.estado || 'pendiente')}</span>
+        </div>
+        <div style="font-size:11px;color:var(--mut);line-height:1.7;margin-bottom:10px">
+          Pedido: ${esc(e.pedido_id || '—')}<br>
+          Creado: ${admEventoFecha(e.created_at)}${e.resuelto_at ? '<br>Resuelto: ' + admEventoFecha(e.resuelto_at) : ''}
+        </div>
+        ${pendiente ? `<div class="adm-acciones">
+          <button class="adm-btn-aprobar" onclick="admAprobarReferido('${e.id}')">Aprobar bono</button>
+          <button class="adm-btn-rechazar" onclick="admRechazarReferido('${e.id}')">Rechazar</button>
+        </div>` : ''}
+      </div>`;
+    }).join('')}`;
+}
+
+async function admAprobarReferido(eventId) {
+  if (!confirm('¿Aprobar este referido y dar bono de 5% al referidor?')) return;
+  try {
+    await esperarFB();
+    const { doc:d, getDoc:gd, query:q, collection:col, where:wh, getDocs:gds, updateDoc:ud, serverTimestamp:ts } = window.FB;
+    const eventoSnap = await gd(d(db, 'referral_events', eventId));
+    if (!eventoSnap.exists()) throw new Error('No se encontro el evento de referido.');
+    const evento = eventoSnap.data();
+    const codigoUsado = evento.codigo_usado || '';
+    const telefonoNuevo = evento.telefono_nuevo || '';
+    const nombreNuevo = evento.nombre_nuevo || '';
+    const codigoSnap = await gd(d(db, 'referral_codes', normalizarCodigoReferido(codigoUsado)));
+    if (!codigoSnap.exists()) throw new Error('No se encontro el codigo referido.');
+    const codigoData = codigoSnap.data();
+    const refUid = codigoData.cliente_uid;
+    if (!refUid) throw new Error('El codigo no tiene cliente referidor asignado.');
+    const refSnap = await gds(q(col(db,'clientes'), wh('businessId','==',BUSINESS_ID), wh('cliente_uid','==',refUid)));
+    if (refSnap.empty) throw new Error('No se encontro el cliente referidor.');
+    const refDoc = refSnap.docs[0];
+    const refData = refDoc.data();
+    const referidos = refData.referidos || [];
+    if (!referidos.includes(telefonoNuevo)) {
+      const ahora = new Date().toISOString();
+      const exp = new Date();
+      exp.setMonth(exp.getMonth() + 2);
+      exp.setDate(0);
+      exp.setHours(23, 59, 59, 0);
+      const expira = exp.toISOString();
+      const bonos = (refData.bonos_activos || [])
+        .filter(b => !b.expira || new Date(b.expira) > new Date());
+      bonos.push({
+        tipo:'referido',
+        valor:5,
+        origen:telefonoNuevo,
+        nombre_origen:nombreNuevo,
+        fecha:ahora,
+        expira
+      });
+      await ud(d(db,'clientes',refDoc.id), {
+        bonos_activos: bonos,
+        referidos: [...referidos, telefonoNuevo]
+      });
+    }
+    await ud(d(db,'referral_events',eventId), {
+      estado:'aprobado',
+      resuelto_at:ts(),
+      resuelto_por: _sesionAdmin?.username || _ownerSesion?.username || 'admin'
+    });
+    tst('Referido aprobado y bono aplicado', 3200);
+    window._admReferidos = null;
+    await admCargar();
+    admTab('referidos');
+  } catch (err) {
+    console.error('admAprobarReferido:', err);
+    tst('No se pudo aprobar referido: ' + (err.message || ''), 4200);
+  }
+}
+
+async function admRechazarReferido(eventId) {
+  const motivo = prompt('Motivo del rechazo (opcional):') || '';
+  try {
+    await esperarFB();
+    const { doc:d, updateDoc:ud, serverTimestamp:ts } = window.FB;
+    await ud(d(db,'referral_events',eventId), {
+      estado:'rechazado',
+      motivo_rechazo:motivo,
+      resuelto_at:ts(),
+      resuelto_por: _sesionAdmin?.username || _ownerSesion?.username || 'admin'
+    });
+    tst('Referido rechazado', 2600);
+    window._admReferidos = null;
+    await admCargar();
+    admTab('referidos');
+  } catch (err) {
+    console.error('admRechazarReferido:', err);
+    tst('No se pudo rechazar referido', 3200);
+  }
+}
+
 async function admDarBono(clienteId, nombre, telefono) {
   const pct = prompt(`¿Qué % de descuento dar a ${nombre}? (ej: 10)`);
   if (!pct || isNaN(pct) || Number(pct) <= 0) return;
@@ -10490,6 +10623,10 @@ function ownerClienteResumen(clientes, pedidos) {
   return [...map.values()].sort((a,b) => b.monto - a.monto).slice(0, 10);
 }
 
+function ownerReferidosPendientes(refEvents) {
+  return refEvents.filter(e => e.estado === 'pendiente').length;
+}
+
 async function ownerCargar() {
   const resumen = document.getElementById('ownerResumen');
   const detalle = document.getElementById('ownerDetalle');
@@ -10499,16 +10636,18 @@ async function ownerCargar() {
   try {
     await esperarFB();
     const { collection:col, query:q, where:wh, getDocs:gd, limit:lim } = window.FB;
-    const [pedSnap, cliSnap, userSnap, pushSnap] = await Promise.all([
+    const [pedSnap, cliSnap, userSnap, pushSnap, refSnap] = await Promise.all([
       gd(q(col(db,'pedidos'), wh('businessId','==',BUSINESS_ID), lim(200))),
       gd(q(col(db,'clientes'), wh('businessId','==',BUSINESS_ID), lim(200))),
       gd(q(col(db,'app_users'), wh('business_id','==',BUSINESS_ID), lim(80))),
-      gd(q(col(db,'push_queue'), wh('businessId','==',BUSINESS_ID), lim(80))).catch(() => ({ docs:[] }))
+      gd(q(col(db,'push_queue'), wh('businessId','==',BUSINESS_ID), lim(80))).catch(() => ({ docs:[] })),
+      gd(q(col(db,'referral_events'), wh('businessId','==',BUSINESS_ID), lim(80))).catch(() => ({ docs:[] }))
     ]);
     const pedidos = pedSnap.docs.map(d => ({ id:d.id, ...d.data() }));
     const clientes = cliSnap.docs.map(d => ({ id:d.id, ...d.data() }));
     const usuarios = userSnap.docs.map(d => ({ id:d.id, ...d.data() }));
     const push = pushSnap.docs.map(d => ({ id:d.id, ...d.data() }));
+    const refEvents = refSnap.docs.map(d => ({ id:d.id, ...d.data() }));
     const hoy = ownerFechaLocal(new Date());
     const pedidosHoy = pedidos.filter(p => ownerEsHoy(p.fecha));
     const ventasHoy = pedidosHoy.reduce((s,p) => s + (Number(p.total) || 0), 0);
@@ -10530,6 +10669,7 @@ async function ownerCargar() {
       ${ownerCard('Clientes', clientes.length, '#34d399', 'Base real del negocio')}
       ${ownerCard('Usuarios', usuarios.length, '#c4b5fd', 'Admin, delivery y dueno')}
       ${ownerCard('Alertas reserva', alertasPend, '#fca5a5', 'Cola push pendiente')}
+      ${ownerCard('Referidos pendientes', ownerReferidosPendientes(refEvents), '#fde68a', 'Bonos por revisar')}
       ${ownerCard('2 litros hoy', productosHoy.p2l, '#fde68a', productosTotal.p2l + ' historico')}
       ${ownerCard('3 litros hoy', productosHoy.p3l, '#fde68a', productosTotal.p3l + ' historico')}
       ${ownerCard('4 litros hoy', productosHoy.p4l, '#fde68a', productosTotal.p4l + ' historico')}
@@ -10872,9 +11012,9 @@ document.addEventListener('click', e => {
 let _admTabActiva = 'yape';
 function admTab(tab) {
   _admTabActiva = tab;
-  const tabs = ['yape','pedidos','reservas','stats','clientes','cupones','chat'];
-  const ids  = { yape:'tabYape', pedidos:'tabPedidos', reservas:'tabReservas', stats:'tabStats', clientes:'tabClientes', cupones:'tabCupones', chat:'tabChat' };
-  const conts= { yape:'admContenidoYape', pedidos:'admContenidoPedidos', reservas:'admContenidoReservas', stats:'admContenidoStats', clientes:'admContenidoClientes', cupones:'admContenidoCupones', chat:'admContenidoChat' };
+  const tabs = ['yape','pedidos','reservas','stats','clientes','cupones','referidos','chat'];
+  const ids  = { yape:'tabYape', pedidos:'tabPedidos', reservas:'tabReservas', stats:'tabStats', clientes:'tabClientes', cupones:'tabCupones', referidos:'tabReferidos', chat:'tabChat' };
+  const conts= { yape:'admContenidoYape', pedidos:'admContenidoPedidos', reservas:'admContenidoReservas', stats:'admContenidoStats', clientes:'admContenidoClientes', cupones:'admContenidoCupones', referidos:'admContenidoReferidos', chat:'admContenidoChat' };
   tabs.forEach(t => {
     document.getElementById(ids[t])?.classList.toggle('active', t === tab);
     const c = document.getElementById(conts[t]);
@@ -10884,6 +11024,7 @@ function admTab(tab) {
   if (tab === 'reservas') admRenderReservas(window._admReservas || []);
   if (tab === 'clientes') admCargarClientes();
   if (tab === 'cupones')  admRenderCupones();
+  if (tab === 'referidos') admRenderReferidos(window._admReferidos || []);
   if (tab === 'chat')     admRenderChat();
 }
 
@@ -11003,7 +11144,7 @@ async function admCargar() {
     abrirAdmin();
     return;
   }
-  ['Yape','Pedidos','Reservas','Stats','Clientes','Cupones','Chat'].forEach(t => {
+  ['Yape','Pedidos','Reservas','Stats','Clientes','Cupones','Referidos','Chat'].forEach(t => {
     const el = document.getElementById('admContenido'+t);
     if (el) el.innerHTML = '<div class="adm-loading">⏳ Cargando...</div>';
   });
@@ -11033,6 +11174,8 @@ async function admCargar() {
     const snapTodos = await gd(q(col(db,'pedidos'), wh('businessId','==',BUSINESS_ID), ob('fecha','desc'), lm(200)));
     // Clientes
     const snapCli  = await gd(q(col(db,'clientes'), wh('businessId','==',BUSINESS_ID)));
+    // Eventos de referido pendientes o recientes
+    const snapRef  = await gd(q(col(db,'referral_events'), wh('businessId','==',BUSINESS_ID), lm(100))).catch(() => ({ docs:[] }));
     const reservasDocs = snapTodos.docs.filter(docSnap => {
       const d = docSnap.data();
       return d.es_reserva && !['entregado','cerrado','rechazado','cancelado'].includes(d.estado);
@@ -11058,6 +11201,8 @@ async function admCargar() {
     document.getElementById('badgeReservas').textContent = reservasDocs.length || '0';
     document.getElementById('badgeStats').textContent   = 'S/'+ventasHoy.toFixed(0);
     document.getElementById('badgeClientes').textContent = snapCli.size || '0';
+    const refPendientes = snapRef.docs.filter(docSnap => docSnap.data().estado === 'pendiente').length;
+    document.getElementById('badgeReferidos').textContent = refPendientes || '0';
 
     // Render
     admRenderYapes(snapYape.docs);
@@ -11066,12 +11211,14 @@ async function admCargar() {
     admRenderStats(snapTodos.docs, { totalVentas, totalPedidos, pedHoy, ventasHoy, totalCli: snapCli.size });
     admRenderClientes(snapCli.docs);
     admRenderCupones();
+    admRenderReferidos(snapRef.docs);
     admRenderChat();
 
     // Guardar globalmente para búsqueda
     window._admTodosPedidos = snapTodos.docs;
     window._admReservas = reservasDocs;
     window._admTodosClientes = snapCli.docs;
+    window._admReferidos = snapRef.docs;
 
   } catch(err) {
     console.error('admCargar:', err);
