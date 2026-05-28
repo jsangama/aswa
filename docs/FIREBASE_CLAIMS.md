@@ -104,6 +104,17 @@ npm run operators:config -- --owner dueno@aswa.pe --admin admin@aswa.pe --delive
 
 Puedes usar varios deliveristas (`delivery1`, `delivery2`, `delivery3`). El usuario que escriben en el login debe coincidir con la llave configurada.
 
+## Dominios autorizados de Firebase Auth
+
+Si en desarrollo local ves un error parecido a `auth/requests-from-referer...are-blocked` o la app indica que Firebase Auth bloqueo el dominio, agrega el host exacto en Firebase Console:
+
+1. Abre Firebase Console.
+2. Entra a `Authentication`.
+3. Abre `Settings`.
+4. En `Authorized domains`, agrega el dominio que muestra la app.
+
+Para pruebas locales normalmente debes agregar `127.0.0.1`, `localhost` o el host que uses. Para produccion debe estar autorizado `jsangama.github.io`.
+
 ## Importante despues de asignar claims
 
 El usuario debe cerrar sesion y volver a entrar para que Firebase emita un token nuevo con los claims.
