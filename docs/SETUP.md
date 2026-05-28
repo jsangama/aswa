@@ -78,3 +78,7 @@ tests/        Tests unitarios
 - No actives `ALLOW_LEGACY_LOCAL_ACCESS` fuera de localhost.
 - Las claves Firebase de frontend son publicas por naturaleza; protege datos con reglas de Firestore/Storage.
 - No agregues nuevas credenciales dentro de `index.html`, `ugc.html` o archivos versionados.
+
+## Firebase Auth local
+
+Si pruebas en `127.0.0.1:8094` o `localhost` y Firebase Auth muestra que el dominio esta bloqueado, agrega ese host en Firebase Console > Authentication > Settings > Authorized domains. La app mostrara el dominio exacto que debes autorizar.

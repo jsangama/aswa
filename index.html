@@ -98,6 +98,23 @@
       return actualRole === 'owner' || actualRole === 'admin' || actualRole === 'delivery';
     }
 
+    function _aswaAuthErrorMessage(error) {
+      const code = error?.code || String(error?.message || error || '');
+      const host = window.location?.host || window.location?.hostname || 'este dominio';
+      if (code.includes('requests-from-referer') || code.includes('unauthorized-domain')) {
+        return `Firebase Auth bloqueo este dominio (${host}). Agregalo en Firebase Console > Authentication > Settings > Authorized domains.`;
+      }
+      if (code === 'auth/invalid-credential' || code === 'auth/wrong-password' || code === 'auth/user-not-found') {
+        return 'Usuario Firebase no autorizado o contrasena incorrecta.';
+      }
+      if (code === 'auth/too-many-requests') {
+        return 'Demasiados intentos. Espera un momento y vuelve a intentar.';
+      }
+      return code || 'Error de autenticacion Firebase.';
+    }
+
+    window.aswaAuthErrorMessage = _aswaAuthErrorMessage;
+
     async function _aswaEnsureAnonymousAuth() {
       if (!window.auth.currentUser) {
         await signInAnonymously(window.auth);
@@ -155,8 +172,9 @@
 
         return { ok: true, configured: true, user: credential.user, claims };
       } catch (error) {
+        const message = _aswaAuthErrorMessage(error);
         await _aswaEnsureAnonymousAuth().catch(() => {});
-        return { ok: false, configured: true, error: error.code || error.message };
+        return { ok: false, configured: true, error: error.code || error.message, message };
       }
     };
 
@@ -174,7 +192,10 @@
         window.currentUser = u;
         _aswaApplyClaims(u).catch(e => console.warn('Claims:', e.code || e.message));
       } else {
-        signInAnonymously(window.auth).catch(e => console.warn('Auth:', e.code));
+        signInAnonymously(window.auth).catch(e => {
+          window.aswaAuthStartupError = _aswaAuthErrorMessage(e);
+          console.warn('Auth:', e.code, window.aswaAuthStartupError);
+        });
       }
     });
 
@@ -9654,7 +9675,7 @@ async function admIniciarSesion() {
     if (authLogin?.configured) {
       _admIntentos++;
       _admChequearBloqueo('adm');
-      _admMostrarError('âŒ Usuario Firebase no autorizado o contraseÃ±a incorrecta');
+      _admMostrarError(authLogin.message || authLogin.error || 'Usuario Firebase no autorizado o contrasena incorrecta');
       btn.disabled = false; btn.textContent = 'ðŸ”“ INGRESAR';
       return;
     }
@@ -10453,7 +10474,7 @@ async function ownerLogin() {
     return;
   }
 
-  if (authLogin?.configured) return ownerError('Usuario Firebase no autorizado o contrasena incorrecta');
+  if (authLogin?.configured) return ownerError(authLogin.message || authLogin.error || 'Usuario Firebase no autorizado o contrasena incorrecta');
 
   const fallback = legacyLocalAccessAllowed() ? window.CREDENTIALS?.[username] : null;
   if (fallback?.role === 'owner' && fallback.password && fallback.password === password) {
@@ -12622,7 +12643,7 @@ async function attemptLogin() {
   }
 
   if (authLogin?.configured) {
-    if (errEl) { errEl.textContent = 'âŒ Usuario Firebase no autorizado o contraseÃ±a incorrecta'; errEl.style.display = 'block'; }
+    if (errEl) { errEl.textContent = authLogin.message || authLogin.error || 'Usuario Firebase no autorizado o contrasena incorrecta'; errEl.style.display = 'block'; }
     return;
   }
 
