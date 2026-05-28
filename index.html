@@ -2827,16 +2827,26 @@
     <div class="san-juan-card" id="sanJuanEscolar">
       <span class="sj-badge">San Juan 2026 - colegios</span>
       <div class="sj-title">Promo escolar sanjuanera</div>
-      <div class="sj-sub">Para aulas y colegios de Banda de Shilcayo, Morales y Tarapoto. Reserva tu pedido con pago anticipado por billeteras o transferencia.</div>
+      <div class="sj-sub">Pedidos por seccion para jardines, primarias y colegios de Banda de Shilcayo, Morales y Tarapoto. Reserva con pago anticipado por billeteras o transferencia.</div>
       <div class="sj-media">
         <img src="assets/images/products/san-juan-bidon-20l.png" alt="Bidon escolar san juanero 20 litros">
         <img src="assets/images/products/san-juan-combo-escolar.png" alt="Combo escolar San Juan con juane y chicha">
       </div>
       <div class="school-grid">
-        <input type="text" id="colegioNombre" class="inp" maxlength="90" placeholder="Colegio o escuela">
-        <input type="text" id="colegioAula" class="inp" maxlength="60" placeholder="Aula, grado o salon">
+        <input type="text" id="colegioNombre" class="inp" maxlength="90" placeholder="Nombre de la institucion. Ej: Jardin de ninos 301 Tarapoto">
+        <select id="colegioTipo" class="inp" onchange="actualizarNivelEscolarUI()">
+          <option value="">Tipo de institucion</option>
+          <option value="jardin">Jardin / inicial</option>
+          <option value="primaria">Primaria</option>
+          <option value="colegio">Colegio / secundaria</option>
+        </select>
+        <select id="colegioGrado" class="inp">
+          <option value="">Grado o edad</option>
+        </select>
+        <input type="text" id="colegioSeccion" class="inp" maxlength="40" placeholder="Seccion. Ej: A, B, C o Los Conejitos">
+        <input type="number" id="colegioAlumnos" class="inp" min="1" max="80" inputmode="numeric" placeholder="Cantidad aproximada de alumnos por seccion">
         <select id="colegioDistrito" class="inp">
-          <option value="">Distrito del colegio</option>
+          <option value="">Distrito del centro educativo</option>
           <option value="Banda de Shilcayo">Banda de Shilcayo</option>
           <option value="Morales">Morales</option>
           <option value="Tarapoto">Tarapoto</option>
@@ -2844,13 +2854,13 @@
       </div>
       <label class="school-toggle">
         <input type="checkbox" id="colegioTieneBidon" checked onchange="actualizarPromoEscolarUI()">
-        <span>El aula entrega bidon vacio. Si no tiene bidon se agrega S/ 20 al bidon escolar.</span>
+        <span>La seccion entrega bidon vacio. Si entregamos en el centro educativo y no tienen bidon, compra con bidon incluido por S/ 70.</span>
       </label>
       <div class="pc school-product" id="c-sjBidon">
         <img src="assets/images/products/san-juan-bidon-20l.png" alt="Bidon 20 litros" class="pimg">
         <div style="flex:1">
           <div class="pn">Bidon escolar sanjuanero</div>
-          <div class="pd" id="sjBidonDesc">20 litros con bidon vacio</div>
+          <div class="pd" id="sjBidonDesc">20 litros con bidon vacio del aula</div>
           <div class="pp" id="pr-sjBidon">S/ 50.00</div>
         </div>
         <div class="qw">
@@ -2863,7 +2873,7 @@
         <img src="assets/images/products/san-juan-combo-escolar.png" alt="Chicha escolar 400 ml" class="pimg">
         <div style="flex:1">
           <div class="pn">ASWA escolar sanjuanera</div>
-          <div class="pd">Botella 0.4 litros para alumnos</div>
+          <div class="pd">Solo chicha 400 ml por alumno</div>
           <div class="pp" id="pr-sjChicha04">S/ 2.00</div>
         </div>
         <div class="qw">
@@ -2876,7 +2886,7 @@
         <img src="assets/images/products/san-juan-combo-escolar.png" alt="Combo escolar San Juan" class="pimg">
         <div style="flex:1">
           <div class="pn">Combo escolar sanjuanero</div>
-          <div class="pd">Juane + chicha ASWA 0.4 L</div>
+          <div class="pd">Juane + chicha ASWA 400 ml por alumno</div>
           <div class="pp" id="pr-sjCombo">S/ 3.50</div>
         </div>
         <div class="qw">
@@ -2886,11 +2896,11 @@
         </div>
       </div>
       <div class="pc school-product" id="c-sjJuane">
-        <img src="assets/images/products/san-juan-combo-escolar.png" alt="Juane familiar" class="pimg">
+        <img src="assets/images/products/san-juan-combo-escolar.png" alt="Solo juane escolar" class="pimg">
         <div style="flex:1">
-          <div class="pn">Juane familiar</div>
-          <div class="pd">Frejol con cuerito y aji de cocona</div>
-          <div class="pp" id="pr-sjJuane">S/ 25.00</div>
+          <div class="pn">Solo juane escolar</div>
+          <div class="pd">Juane por alumno para la seccion</div>
+          <div class="pp" id="pr-sjJuane">S/ 1.50</div>
         </div>
         <div class="qw">
           <button class="qb qminus" onclick="qty('sjJuane',-1)">-</button>
@@ -2898,7 +2908,7 @@
           <button class="qb qplus" onclick="qty('sjJuane',+1)">+</button>
         </div>
       </div>
-      <div class="school-note">Pedido escolar temporal por Fiestas de San Juan. Se atiende solo con reserva y pago anticipado: Yape, Plin, Agora, BIM o transferencia bancaria. No aplica efectivo.</div>
+      <div class="school-note">Pedido escolar temporal por Fiestas de San Juan. Los combos, chichas o juanes son por seccion completa: recomendado desde 20 alumnos. Se atiende solo con reserva y pago anticipado: Yape, Plin, Agora, BIM o transferencia bancaria. No aplica efectivo.</div>
     </div>
   </section>
 
@@ -5229,7 +5239,7 @@ function esperarFB() {
 /* ── ESTADO GLOBAL ── */
 const ST = {
   cart: { p2l: 0, p3l: 0, p4l: 0, sjBidon: 0, sjChicha04: 0, sjCombo: 0, sjJuane: 0 },
-  precio: { p2l: 9, p3l: 13, p4l: 15, sjBidon: 50, sjChicha04: 2, sjCombo: 3.5, sjJuane: 25 },
+  precio: { p2l: 9, p3l: 13, p4l: 15, sjBidon: 50, sjChicha04: 2, sjCombo: 3.5, sjJuane: 1.5 },
   pago: 'Efectivo',
   raw: 0,
   final: 0,
@@ -5257,7 +5267,7 @@ const PRODUCT_META = {
   sjBidon: { nombre:'Bidon escolar sanjuanero 20L', corto:'Bidon San Juan 20L', escolar:true },
   sjChicha04: { nombre:'ASWA escolar sanjuanera 0.4L', corto:'ASWA escolar 0.4L', escolar:true },
   sjCombo: { nombre:'Combo escolar sanjuanero', corto:'Combo San Juan', escolar:true },
-  sjJuane: { nombre:'Juane familiar con frejol, cuerito y aji de cocona', corto:'Juane familiar', escolar:true }
+  sjJuane: { nombre:'Solo juane escolar', corto:'Juane escolar', escolar:true }
 };
 const PRODUCT_IDS = Object.keys(PRODUCT_META);
 
@@ -5294,11 +5304,38 @@ function promoEscolarActiva() {
   return pedidoItemsLista().some(it => PRODUCT_META[it.id]?.escolar);
 }
 
+function actualizarNivelEscolarUI() {
+  const tipo = document.getElementById('colegioTipo')?.value || '';
+  const grado = document.getElementById('colegioGrado');
+  const seccion = document.getElementById('colegioSeccion');
+  if (!grado) return;
+  const actual = grado.value;
+  const opts = [{ value:'', text:'Grado o edad' }];
+  if (tipo === 'jardin') {
+    opts.push(
+      { value:'4 anos', text:'4 anos' },
+      { value:'5 anos', text:'5 anos' },
+      { value:'6 anos', text:'6 anos' }
+    );
+    if (seccion) seccion.placeholder = 'Seccion o nombre del aula. Ej: Los Conejitos';
+  } else if (tipo === 'primaria') {
+    for (let i = 1; i <= 6; i++) opts.push({ value:i + ' grado', text:i + ' grado' });
+    if (seccion) seccion.placeholder = 'Seccion alfabetica. Ej: A, B, C';
+  } else if (tipo === 'colegio') {
+    for (let i = 1; i <= 5; i++) opts.push({ value:i + ' grado', text:i + ' grado' });
+    if (seccion) seccion.placeholder = 'Seccion alfabetica. Ej: A hasta J';
+  } else if (seccion) {
+    seccion.placeholder = 'Seccion. Ej: A, B, C o Los Conejitos';
+  }
+  grado.innerHTML = opts.map(opt => '<option value="' + opt.value + '">' + opt.text + '</option>').join('');
+  if (actual && Array.from(grado.options).some(opt => opt.value === actual)) grado.value = actual;
+}
+
 function actualizarPromoEscolarUI() {
   const conBidon = document.getElementById('colegioTieneBidon')?.checked !== false;
   ST.precio.sjBidon = conBidon ? 50 : 70;
   const desc = document.getElementById('sjBidonDesc');
-  if (desc) desc.textContent = conBidon ? '20 litros con bidon vacio' : '20 litros + bidon nuevo incluido';
+  if (desc) desc.textContent = conBidon ? '20 litros con bidon vacio del aula' : '20 litros + bidon nuevo incluido';
   const reserva = document.getElementById('reservaActiva');
   if (promoEscolarActiva() && reserva && !reserva.checked) {
     reserva.checked = true;
@@ -5311,28 +5348,42 @@ function actualizarPromoEscolarUI() {
 function obtenerPromoEscolar(mostrarErrores = false) {
   if (!promoEscolarActiva()) return { ok:true, activo:false };
   const colegio = sanitizeInput(document.getElementById('colegioNombre')?.value || '', 90);
-  const aula = sanitizeInput(document.getElementById('colegioAula')?.value || '', 60);
+  const tipo = sanitizeInput(document.getElementById('colegioTipo')?.value || '', 30);
+  const grado = sanitizeInput(document.getElementById('colegioGrado')?.value || '', 30);
+  const seccion = sanitizeInput(document.getElementById('colegioSeccion')?.value || '', 40);
+  const alumnos = Number(document.getElementById('colegioAlumnos')?.value || 0);
   const distrito = sanitizeInput(document.getElementById('colegioDistrito')?.value || '', 40);
   const conBidon = document.getElementById('colegioTieneBidon')?.checked !== false;
+  const porAlumno = Number(ST.cart.sjCombo || 0) + Number(ST.cart.sjChicha04 || 0) + Number(ST.cart.sjJuane || 0);
   const fail = (error, campo = 'colegioNombre') => {
     if (mostrarErrores) marcarCampoPedido(campo, error);
     return { ok:false, activo:true, error };
   };
-  if (!colegio) return fail('Ingresa el nombre del colegio o escuela.', 'colegioNombre');
-  if (!aula) return fail('Ingresa el aula, grado o salon que reserva.', 'colegioAula');
-  if (!distrito) return fail('Selecciona el distrito del colegio.', 'colegioDistrito');
+  if (!colegio) return fail('Ingresa el nombre de la institucion educativa.', 'colegioNombre');
+  if (!tipo) return fail('Selecciona si es jardin, primaria o colegio.', 'colegioTipo');
+  if (!grado) return fail('Selecciona el grado o edad.', 'colegioGrado');
+  if (!seccion) return fail('Ingresa la seccion o nombre del aula.', 'colegioSeccion');
+  if (!Number.isFinite(alumnos) || alumnos < 1) return fail('Ingresa la cantidad aproximada de alumnos de la seccion.', 'colegioAlumnos');
+  if (!distrito) return fail('Selecciona el distrito del centro educativo.', 'colegioDistrito');
+  if (porAlumno > 0 && porAlumno < 20) return fail('Los combos, chichas o juanes son por seccion completa. Ingresa al menos 20 unidades o deja solo bidon.', 'colegioAlumnos');
   if (ST.pago === 'Efectivo') return fail('La promo escolar San Juan solo acepta pago anticipado. Cambia el metodo de pago.', 'colegioNombre');
   if (!document.getElementById('reservaActiva')?.checked) return fail('La promo escolar San Juan debe reservarse con fecha y hora.', 'reservaActiva');
+  const tipoLabel = { jardin:'Jardin / inicial', primaria:'Primaria', colegio:'Colegio / secundaria' }[tipo] || tipo;
+  const seccionTexto = tipoLabel + ' - ' + grado + ' - seccion ' + seccion + ' - ' + alumnos + ' alumnos aprox.';
   return {
     ok:true,
     activo:true,
     colegio,
-    aula,
+    tipo,
+    tipo_label: tipoLabel,
+    grado,
+    seccion,
+    alumnos,
     distrito,
     con_bidon_vacio: conBidon,
     extra_bidon: conBidon ? 0 : 20,
     campania:'san_juan_escolar_2026',
-    texto: colegio + ' - ' + aula + ' (' + distrito + ')'
+    texto: colegio + ' - ' + seccionTexto + ' (' + distrito + ')'
   };
 }
 
@@ -5365,6 +5416,7 @@ function pedidoItemsDesdePedido(pedido) {
 
 window.ST = ST;
 window.PRODUCT_META = PRODUCT_META;
+window.actualizarNivelEscolarUI = actualizarNivelEscolarUI;
 
 /* ── CARRITO ── */
 function qty(id, d) {
@@ -7057,7 +7109,7 @@ function abrirResumen() {
   pedidoItemsLista().forEach(it => row(it.qty+'× '+it.nombre, 'S/ '+it.total.toFixed(2)));
   if (ST.delivery) row('Delivery','S/ '+ST.delivery.toFixed(2));
   if (reservaPedido.activa) row('Reserva de entrega', reservaPedido.texto);
-  if (promoEscolar.activo) row('Colegio / aula', promoEscolar.texto);
+  if (promoEscolar.activo) row('Centro educativo / seccion', promoEscolar.texto);
 
   const disc = getDescuentoPct();
   const fixed = getDescuentoFijoAplicado(disc);
@@ -7198,7 +7250,7 @@ async function enviarPedido() {
     +(notaEntrega ? '📝 *Nota:* '+notaEntrega+'\n' : '')
     +(ST.gpsUrl ? '📡 *GPS:* '+ST.gpsUrl+'\n' : '')
     +(reservaPedido.activa ? 'Reserva programada: '+reservaPedido.texto+'\n' : '')
-    +(promoEscolar.activo ? 'PROMO ESCOLAR SAN JUAN: '+promoEscolar.texto+'\nBidon vacio: '+(promoEscolar.con_bidon_vacio ? 'Si' : 'No, incluye bidon nuevo (+S/ 20)')+'\n' : '')
+    +(promoEscolar.activo ? 'PROMO ESCOLAR SAN JUAN: '+promoEscolar.texto+'\nBidon vacio: '+(promoEscolar.con_bidon_vacio ? 'Si' : 'No, compra con bidon incluido (+S/ 20)')+'\n' : '')
     +(regaloPedido.activo ? 'REGALO PARA ('+regaloPedido.relacion+'): '+regaloPedido.nombre+' - '+regaloPedido.telefono+'\n' : '')
     +(regaloPedido.activo && regaloPedido.mensaje ? 'Mensaje regalo: '+regaloPedido.mensaje+'\n' : '')
     +'Distancia planta-cliente: '+distanciaRuta.texto+'\n'
@@ -7302,7 +7354,11 @@ async function enviarPedido() {
       promo_san_juan_escolar: promoEscolar.activo ? {
         campania: promoEscolar.campania,
         colegio: promoEscolar.colegio,
-        aula: promoEscolar.aula,
+        tipo: promoEscolar.tipo,
+        tipo_label: promoEscolar.tipo_label,
+        grado: promoEscolar.grado,
+        seccion: promoEscolar.seccion,
+        alumnos: promoEscolar.alumnos,
         distrito: promoEscolar.distrito,
         con_bidon_vacio: promoEscolar.con_bidon_vacio,
         extra_bidon: promoEscolar.extra_bidon
@@ -8701,6 +8757,7 @@ async function cargarConcurso() {
 /* ── INIT ── */
 document.addEventListener('DOMContentLoaded', () => {
   setPago('Yape');
+  actualizarNivelEscolarUI();
   reservaInit();
   actualizarHorarioMini();
   perfilInit();
