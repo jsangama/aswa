@@ -2927,7 +2927,7 @@
           <option value="">Grado o edad</option>
         </select>
         <input type="text" id="colegioSeccion" class="inp" maxlength="40" placeholder="Seccion. Ej: A, B, C o Los Conejitos">
-        <input type="number" id="colegioAlumnos" class="inp" min="1" max="80" inputmode="numeric" placeholder="Cantidad aproximada de alumnos por seccion">
+        <input type="number" id="colegioAlumnos" class="inp" min="1" max="80" inputmode="numeric" placeholder="Cantidad aproximada de alumnos de la seccion">
         <select id="colegioDistrito" class="inp">
           <option value="">Distrito del centro educativo</option>
           <option value="Banda de Shilcayo">Banda de Shilcayo</option>
@@ -2969,13 +2969,13 @@
           <button class="qb qplus" onclick="qty('sjBidon',+1)">+</button>
         </div>
       </div>
-      <div class="school-section-label">Presentaciones por alumno</div>
-      <div class="school-section-help">Estas presentaciones son para cada seccion o salon: chicha 400 ml, combo juane + chicha, o solo juane. Cada una tiene minimo 15 unidades por presentacion.</div>
+      <div class="school-section-label">Presentaciones por seccion</div>
+      <div class="school-section-help">Estas presentaciones las solicita el encargado del pedido de la seccion o salon, normalmente un padre de familia, madre de familia o tesorero del aula. Cada presentacion tiene minimo 15 unidades.</div>
       <div class="pc school-product" id="c-sjChicha04">
         <img src="assets/images/products/optimized/san-juan-chicha-400ml.jpg" alt="Chicha escolar 400 ml" class="pimg">
         <div style="flex:1">
           <div class="pn">ASWA escolar sanjuanera</div>
-          <div class="pd">Minimo 15 unidades por presentacion. Chicha 400 ml por alumno</div>
+          <div class="pd">Minimo 15 unidades por presentacion. Chicha 400 ml para la seccion</div>
           <div class="pp" id="pr-sjChicha04">S/ 2.00</div>
         </div>
         <div class="qw">
@@ -2988,7 +2988,7 @@
         <img src="assets/images/products/optimized/san-juan-combo-escolar.jpg" alt="Combo escolar San Juan" class="pimg">
         <div style="flex:1">
           <div class="pn">Combo escolar sanjuanero</div>
-          <div class="pd">Minimo 15 unidades por presentacion. Juane + chicha 400 ml</div>
+          <div class="pd">Minimo 15 unidades por presentacion. Juane + chicha 400 ml para la seccion</div>
           <div class="pp" id="pr-sjCombo">S/ 3.50</div>
         </div>
         <div class="qw">
@@ -3001,7 +3001,7 @@
         <img src="assets/images/products/optimized/san-juan-juane-escolar.jpg" alt="Solo juane escolar" class="pimg">
         <div style="flex:1">
           <div class="pn">Solo juane escolar</div>
-          <div class="pd">Minimo 15 unidades por presentacion. Juane por alumno</div>
+          <div class="pd">Minimo 15 unidades por presentacion. Juane para la seccion</div>
           <div class="pp" id="pr-sjJuane">S/ 1.50</div>
         </div>
         <div class="qw">
@@ -5588,7 +5588,7 @@ function obtenerPromoEscolar(mostrarErrores = false) {
   if (!tipo) return fail('Selecciona si es jardin, primaria o colegio.', 'colegioTipo');
   if (!grado) return fail('Selecciona el grado o edad.', 'colegioGrado');
   if (!seccion) return fail('Ingresa la seccion o nombre del aula.', 'colegioSeccion');
-  if (!Number.isFinite(alumnos) || alumnos < 1) return fail('Ingresa la cantidad aproximada de alumnos de la seccion.', 'colegioAlumnos');
+  if (!Number.isFinite(alumnos) || alumnos < 1) return fail('Ingresa la cantidad aproximada de alumnos de la seccion para orientar al encargado del pedido.', 'colegioAlumnos');
   if (!distrito) return fail('Selecciona el distrito del centro educativo.', 'colegioDistrito');
   if (productoMenorAlMinimo) {
     return fail('La compra minima de ' + productoMenorAlMinimo.nombre + ' es de 15 unidades por presentacion. Sube la cantidad a 15 o mas para continuar. El bidon de 20 litros no tiene minimo.', 'colegioAlumnos');
