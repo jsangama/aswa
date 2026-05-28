@@ -5213,12 +5213,24 @@
 ══════════════════════════════════════ -->
 <script>
 /* ── HELPERS localStorage con prefijo dinámico (Bug #2 fix) ── */
+const ASWA_STORAGE_VERSION = '2026-05-28-no-default-balance';
 function lsGet(key)      { return localStorage.getItem(BUSINESS_ID + '_' + key); }
 function lsSet(key, val) { localStorage.setItem(BUSINESS_ID + '_' + key, val); }
 function lsDel(key)      { localStorage.removeItem(BUSINESS_ID + '_' + key); }
 function lsDelAll()      {
-  ['pedido_id','succ_active','cart','total','delivery','raw','pago','nombre','tel','nivel','cod']
+  ['pedido_id','succ_active','cart','total','delivery','raw','pago','nombre','tel','nivel','cod','nota_entrega']
     .forEach(k => lsDel(k));
+}
+
+function limpiarEstadoLocalObsoleto() {
+  try {
+    const versionKey = BUSINESS_ID + '_storage_version';
+    if (localStorage.getItem(versionKey) === ASWA_STORAGE_VERSION) return;
+    lsDelAll();
+    localStorage.setItem(versionKey, ASWA_STORAGE_VERSION);
+  } catch(e) {
+    console.warn('No se pudo limpiar almacenamiento local:', e);
+  }
 }
 
 function sanitizeInput(val, maxLen = 200) {
@@ -8906,6 +8918,7 @@ async function cargarConcurso() {
 
 /* ── INIT ── */
 document.addEventListener('DOMContentLoaded', () => {
+  limpiarEstadoLocalObsoleto();
   setPago('Yape');
   actualizarNivelEscolarUI();
   reservaInit();
