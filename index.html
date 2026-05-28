@@ -2909,6 +2909,35 @@
         </div>
       </div>
       <div class="school-note">Pedido escolar temporal por Fiestas de San Juan. Los combos, chichas o juanes son por seccion completa: recomendado desde 20 alumnos. Se atiende solo con reserva y pago anticipado: Yape, Plin, Agora, BIM o transferencia bancaria. No aplica efectivo.</div>
+      <div class="school-note" style="margin-top:12px">
+        <strong>Juane familiar institucional</strong><br>
+        Para bancos, empresas, oficinas y grupos de trabajadores. Reserva hasta el 23 de junio; el 24 de junio no se programa reserva previa.
+      </div>
+      <div class="school-grid" style="margin-top:10px">
+        <input type="text" id="instNombre" class="inp" maxlength="90" placeholder="Institucion, empresa, banco u oficina">
+        <select id="instTipo" class="inp">
+          <option value="">Tipo de grupo</option>
+          <option value="Banco">Banco</option>
+          <option value="Empresa">Empresa</option>
+          <option value="Oficina">Oficina</option>
+          <option value="Trabajadores">Grupo de trabajadores</option>
+          <option value="Otro">Otro</option>
+        </select>
+        <input type="text" id="instArea" class="inp" maxlength="70" placeholder="Area, sede o grupo. Ej: Agencia Morales">
+      </div>
+      <div class="pc school-product" id="c-sjJuaneFamiliar">
+        <img src="assets/images/products/san-juan-combo-escolar.png" alt="Juane familiar institucional" class="pimg">
+        <div style="flex:1">
+          <div class="pn">Juane familiar institucional</div>
+          <div class="pd">Frejol con cuerito y aji de cocona</div>
+          <div class="pp" id="pr-sjJuaneFamiliar">S/ 25.00</div>
+        </div>
+        <div class="qw">
+          <button class="qb qminus" onclick="qty('sjJuaneFamiliar',-1)">-</button>
+          <span class="qn" id="q-sjJuaneFamiliar">0</span>
+          <button class="qb qplus" onclick="qty('sjJuaneFamiliar',+1)">+</button>
+        </div>
+      </div>
     </div>
   </section>
 
@@ -5238,8 +5267,8 @@ function esperarFB() {
 
 /* ── ESTADO GLOBAL ── */
 const ST = {
-  cart: { p2l: 0, p3l: 0, p4l: 0, sjBidon: 0, sjChicha04: 0, sjCombo: 0, sjJuane: 0 },
-  precio: { p2l: 9, p3l: 13, p4l: 15, sjBidon: 50, sjChicha04: 2, sjCombo: 3.5, sjJuane: 1.5 },
+  cart: { p2l: 0, p3l: 0, p4l: 0, sjBidon: 0, sjChicha04: 0, sjCombo: 0, sjJuane: 0, sjJuaneFamiliar: 0 },
+  precio: { p2l: 9, p3l: 13, p4l: 15, sjBidon: 50, sjChicha04: 2, sjCombo: 3.5, sjJuane: 1.5, sjJuaneFamiliar: 25 },
   pago: 'Efectivo',
   raw: 0,
   final: 0,
@@ -5267,9 +5296,11 @@ const PRODUCT_META = {
   sjBidon: { nombre:'Bidon escolar sanjuanero 20L', corto:'Bidon San Juan 20L', escolar:true },
   sjChicha04: { nombre:'ASWA escolar sanjuanera 0.4L', corto:'ASWA escolar 0.4L', escolar:true },
   sjCombo: { nombre:'Combo escolar sanjuanero', corto:'Combo San Juan', escolar:true },
-  sjJuane: { nombre:'Solo juane escolar', corto:'Juane escolar', escolar:true }
+  sjJuane: { nombre:'Solo juane escolar', corto:'Juane escolar', escolar:true },
+  sjJuaneFamiliar: { nombre:'Juane familiar institucional', corto:'Juane familiar', sanJuanInstitucional:true }
 };
 const PRODUCT_IDS = Object.keys(PRODUCT_META);
+const SAN_JUAN_RESERVA_MAX = '2026-06-23';
 
 function normalizarCarrito() {
   PRODUCT_IDS.forEach(id => {
@@ -5302,6 +5333,14 @@ function pedidoItemsTexto(cart = ST.cart, precios = ST.precio) {
 
 function promoEscolarActiva() {
   return pedidoItemsLista().some(it => PRODUCT_META[it.id]?.escolar);
+}
+
+function promoInstitucionalSanJuanActiva() {
+  return Number(ST.cart.sjJuaneFamiliar || 0) > 0;
+}
+
+function promoSanJuanActiva() {
+  return promoEscolarActiva() || promoInstitucionalSanJuanActiva();
 }
 
 function actualizarNivelEscolarUI() {
@@ -5337,11 +5376,16 @@ function actualizarPromoEscolarUI() {
   const desc = document.getElementById('sjBidonDesc');
   if (desc) desc.textContent = conBidon ? '20 litros con bidon vacio del aula' : '20 litros + bidon nuevo incluido';
   const reserva = document.getElementById('reservaActiva');
-  if (promoEscolarActiva() && reserva && !reserva.checked) {
+  const fechaReserva = document.getElementById('reservaFecha');
+  if (fechaReserva) {
+    if (promoSanJuanActiva()) fechaReserva.max = SAN_JUAN_RESERVA_MAX;
+    else fechaReserva.removeAttribute('max');
+  }
+  if (promoSanJuanActiva() && reserva && !reserva.checked) {
     reserva.checked = true;
     actualizarReservaUI();
   }
-  if (promoEscolarActiva() && ST.pago === 'Efectivo') setPago('Yape');
+  if (promoSanJuanActiva() && ST.pago === 'Efectivo') setPago('Yape');
   calcTotal();
 }
 
@@ -5387,6 +5431,32 @@ function obtenerPromoEscolar(mostrarErrores = false) {
   };
 }
 
+function obtenerPromoInstitucionalSanJuan(mostrarErrores = false) {
+  if (!promoInstitucionalSanJuanActiva()) return { ok:true, activo:false };
+  const institucion = sanitizeInput(document.getElementById('instNombre')?.value || '', 90);
+  const tipo = sanitizeInput(document.getElementById('instTipo')?.value || '', 40);
+  const area = sanitizeInput(document.getElementById('instArea')?.value || '', 70);
+  const fail = (error, campo = 'instNombre') => {
+    if (mostrarErrores) marcarCampoPedido(campo, error);
+    return { ok:false, activo:true, error };
+  };
+  if (!institucion) return fail('Ingresa el nombre del banco, empresa, oficina o institucion.', 'instNombre');
+  if (!tipo) return fail('Selecciona el tipo de grupo institucional.', 'instTipo');
+  if (!area) return fail('Ingresa el area, sede o grupo de trabajadores.', 'instArea');
+  if (ST.pago === 'Efectivo') return fail('El juane familiar institucional solo acepta pago anticipado. Cambia el metodo de pago.', 'instNombre');
+  if (!document.getElementById('reservaActiva')?.checked) return fail('El juane familiar institucional debe reservarse con fecha y hora.', 'reservaActiva');
+  return {
+    ok:true,
+    activo:true,
+    institucion,
+    tipo,
+    area,
+    campania:'san_juan_institucional_2026',
+    fecha_limite: SAN_JUAN_RESERVA_MAX,
+    texto: institucion + ' - ' + tipo + ' - ' + area
+  };
+}
+
 function pedidoItemsHtml(items = pedidoItemsLista()) {
   return items.map(it => `${it.qty}× ${esc(it.corto)}`).join(' · ') || '—';
 }
@@ -5424,7 +5494,7 @@ function qty(id, d) {
   ST.cart[id] = Math.max(0, ST.cart[id] + d);
   document.getElementById('q-' + id).textContent = ST.cart[id];
   document.getElementById('c-' + id).classList.toggle('on', ST.cart[id] > 0);
-  if (PRODUCT_META[id]?.escolar) actualizarPromoEscolarUI();
+  if (PRODUCT_META[id]?.escolar || PRODUCT_META[id]?.sanJuanInstitucional) actualizarPromoEscolarUI();
   calcTotal();
 }
 
@@ -5958,7 +6028,7 @@ function obtenerPedidoRegalo(mostrarErrores = false) {
 }
 
 function pedidoEspecialRequierePagoDigital() {
-  return pedidoRegaloActivo() || promoEscolarActiva() || !!document.getElementById('reservaActiva')?.checked;
+  return pedidoRegaloActivo() || promoSanJuanActiva() || !!document.getElementById('reservaActiva')?.checked;
 }
 
 function coordsPlantaNegocio() {
@@ -6046,7 +6116,12 @@ function reservaInit() {
 
 function actualizarReservaUI() {
   const reservaCheck = document.getElementById('reservaActiva');
-  if (promoEscolarActiva() && reservaCheck && !reservaCheck.checked) reservaCheck.checked = true;
+  if (promoSanJuanActiva() && reservaCheck && !reservaCheck.checked) reservaCheck.checked = true;
+  const fechaReserva = document.getElementById('reservaFecha');
+  if (fechaReserva) {
+    if (promoSanJuanActiva()) fechaReserva.max = SAN_JUAN_RESERVA_MAX;
+    else fechaReserva.removeAttribute('max');
+  }
   const activa = !!reservaCheck?.checked;
   const detalle = document.getElementById('reservaDetalle');
   const info = document.getElementById('reservaInfo');
@@ -6071,9 +6146,12 @@ function actualizarReservaUI() {
     return;
   }
   const reserva = obtenerReservaPedido(false);
+  const etiquetaReserva = promoEscolarActiva()
+    ? 'Promo escolar San Juan reservada: '
+    : (promoInstitucionalSanJuanActiva() ? 'Juane familiar institucional reservado: ' : 'Reserva programada: ');
   info.classList.add(reserva.ok ? 'ok' : 'err');
   info.textContent = reserva.ok
-    ? (promoEscolarActiva() ? 'Promo escolar San Juan reservada: ' : 'Reserva programada: ') + reserva.texto + '. El pedido se activa con pago digital verificado.'
+    ? etiquetaReserva + reserva.texto + (promoSanJuanActiva() ? '. Reservas San Juan solo hasta el 23/06/2026.' : '') + ' El pedido se activa con pago digital verificado.'
     : reserva.error;
 }
 
@@ -6090,6 +6168,9 @@ function obtenerReservaPedido(mostrarErrores = false) {
   if (!fecha) return fail('Selecciona la fecha de reserva.', 'reservaFecha');
   if (!hora) return fail('Selecciona la hora de entrega.', 'reservaHora');
   if (fecha < reservaFechaLimaISO()) return fail('La reserva no puede ser para una fecha pasada.', 'reservaFecha');
+  if (promoSanJuanActiva() && fecha > SAN_JUAN_RESERVA_MAX) {
+    return fail('Las reservas San Juan se reciben solo hasta el 23/06/2026. El 24 de junio no se programa reserva previa.', 'reservaFecha');
+  }
   if (!reservaEnHorario(fecha, hora)) {
     return fail('Horario no disponible. Lunes a viernes 7:00 am - 5:30 pm y sabados 7:00 am - 2:00 pm.', 'reservaHora');
   }
@@ -7084,6 +7165,8 @@ function abrirResumen() {
   if (!regaloPedido.ok) return false;
   const promoEscolar = obtenerPromoEscolar(true);
   if (!promoEscolar.ok) return false;
+  const promoInstitucional = obtenerPromoInstitucionalSanJuan(true);
+  if (!promoInstitucional.ok) return false;
 
   // ── Pago digital requiere comprobante antes de continuar ──
   const esDigitalPago = ST.pago !== 'Efectivo';
@@ -7110,6 +7193,7 @@ function abrirResumen() {
   if (ST.delivery) row('Delivery','S/ '+ST.delivery.toFixed(2));
   if (reservaPedido.activa) row('Reserva de entrega', reservaPedido.texto);
   if (promoEscolar.activo) row('Centro educativo / seccion', promoEscolar.texto);
+  if (promoInstitucional.activo) row('Institucion / grupo', promoInstitucional.texto);
 
   const disc = getDescuentoPct();
   const fixed = getDescuentoFijoAplicado(disc);
@@ -7172,6 +7256,8 @@ async function enviarPedido() {
   if (!regaloPedido.ok) return;
   const promoEscolar = obtenerPromoEscolar(true);
   if (!promoEscolar.ok) return;
+  const promoInstitucional = obtenerPromoInstitucionalSanJuan(true);
+  if (!promoInstitucional.ok) return;
 
   _enviandoPedido = true;
   btn.disabled = true; btn.textContent = 'Enviando...';
@@ -7251,6 +7337,7 @@ async function enviarPedido() {
     +(ST.gpsUrl ? '📡 *GPS:* '+ST.gpsUrl+'\n' : '')
     +(reservaPedido.activa ? 'Reserva programada: '+reservaPedido.texto+'\n' : '')
     +(promoEscolar.activo ? 'PROMO ESCOLAR SAN JUAN: '+promoEscolar.texto+'\nBidon vacio: '+(promoEscolar.con_bidon_vacio ? 'Si' : 'No, compra con bidon incluido (+S/ 20)')+'\n' : '')
+    +(promoInstitucional.activo ? 'JUANE FAMILIAR INSTITUCIONAL SAN JUAN: '+promoInstitucional.texto+'\nReserva maxima: 23/06/2026. El 24/06/2026 no se programa reserva previa.\n' : '')
     +(regaloPedido.activo ? 'REGALO PARA ('+regaloPedido.relacion+'): '+regaloPedido.nombre+' - '+regaloPedido.telefono+'\n' : '')
     +(regaloPedido.activo && regaloPedido.mensaje ? 'Mensaje regalo: '+regaloPedido.mensaje+'\n' : '')
     +'Distancia planta-cliente: '+distanciaRuta.texto+'\n'
@@ -7363,7 +7450,15 @@ async function enviarPedido() {
         con_bidon_vacio: promoEscolar.con_bidon_vacio,
         extra_bidon: promoEscolar.extra_bidon
       } : null,
-      pago_anticipado_obligatorio: !!(reservaPedido.activa || regaloPedido.activo || promoEscolar.activo),
+      es_promo_san_juan_institucional: !!promoInstitucional.activo,
+      promo_san_juan_institucional: promoInstitucional.activo ? {
+        campania: promoInstitucional.campania,
+        institucion: promoInstitucional.institucion,
+        tipo: promoInstitucional.tipo,
+        area: promoInstitucional.area,
+        fecha_limite: promoInstitucional.fecha_limite
+      } : null,
+      pago_anticipado_obligatorio: !!(reservaPedido.activa || regaloPedido.activo || promoEscolar.activo || promoInstitucional.activo),
       planta_coords:  distanciaRuta.planta || null,
       distancia_planta_m: distanciaRuta.metros,
       distancia_planta_txt: distanciaRuta.texto,
