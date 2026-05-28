@@ -20,8 +20,26 @@ service cloud.firestore {
 
     function sameBusiness(data) {
       return signedIn() &&
-        data.businessId is string &&
-        claimBusinessId() == data.businessId;
+        (
+          (data.businessId is string && claimBusinessId() == data.businessId) ||
+          (data.business_id is string && claimBusinessId() == data.business_id)
+        );
+    }
+
+    function hasBusinessId(data) {
+      return data.businessId is string || data.business_id is string;
+    }
+
+    function isClientOwner(data) {
+      return signedIn() &&
+        data.cliente_uid is string &&
+        data.cliente_uid == request.auth.uid;
+    }
+
+    function isClientOwnedCreate() {
+      return signedIn() &&
+        request.resource.data.cliente_uid == request.auth.uid &&
+        hasBusinessId(request.resource.data);
     }
 
     function isOwner(data) {
@@ -37,9 +55,7 @@ service cloud.firestore {
     }
 
     function isPedidoOwner(data) {
-      return signedIn() &&
-        data.cliente_uid is string &&
-        data.cliente_uid == request.auth.uid;
+      return isClientOwner(data);
     }
 
     function validPedidoCreate() {
@@ -67,7 +83,14 @@ service cloud.firestore {
     }
 
     match /clientes/{clienteId} {
-      allow read, write: if isAdmin(resource.data) || isAdmin(request.resource.data);
+      allow create: if isClientOwnedCreate();
+      allow read: if isAdmin(resource.data) || isClientOwner(resource.data);
+      allow update: if isAdmin(resource.data) || (
+        isClientOwner(resource.data) &&
+        request.resource.data.cliente_uid == resource.data.cliente_uid &&
+        request.resource.data.businessId == resource.data.businessId
+      );
+      allow delete: if isAdmin(resource.data);
     }
 
     match /app_users/{userId} {
@@ -93,6 +116,60 @@ service cloud.firestore {
     match /evidencias/{evidenciaId} {
       allow create: if signedIn();
       allow read, update, delete: if isAdmin(resource.data) || isAdmin(request.resource.data);
+    }
+
+    match /ugc_posts/{postId} {
+      allow create: if isClientOwnedCreate();
+      allow read: if resource.data.estado == 'aprobado' || isAdmin(resource.data) || isClientOwner(resource.data);
+      allow update, delete: if isAdmin(resource.data);
+    }
+
+    match /evidencias_misiones/{evidenciaId} {
+      allow create: if isClientOwnedCreate();
+      allow read: if isAdmin(resource.data) || isClientOwner(resource.data);
+      allow update, delete: if isAdmin(resource.data);
+    }
+
+    match /calificaciones/{calificacionId} {
+      allow create: if isClientOwnedCreate();
+      allow read: if resource.data.visible == true || isAdmin(resource.data) || isClientOwner(resource.data);
+      allow update, delete: if isAdmin(resource.data);
+    }
+
+    match /push_queue/{pushId} {
+      allow create: if isClientOwnedCreate() || isAdmin(request.resource.data);
+      allow read, update, delete: if isAdmin(resource.data) || isAdmin(request.resource.data);
+    }
+
+    match /pagos_culqi/{pagoId} {
+      allow create: if isClientOwnedCreate();
+      allow read: if isAdmin(resource.data) || isClientOwner(resource.data);
+      allow update, delete: if isAdmin(resource.data);
+    }
+
+    match /dlv_tracking/{trackingId} {
+      allow create: if isDelivery(request.resource.data);
+      allow read: if isDelivery(resource.data);
+      allow update, delete: if isAdmin(resource.data);
+    }
+
+    match /dlv_accesos/{accesoId} {
+      allow create: if isDelivery(request.resource.data);
+      allow read, update, delete: if isAdmin(resource.data);
+    }
+
+    match /chats/{chatId} {
+      allow create: if isClientOwnedCreate() || isAdmin(request.resource.data);
+      allow read, update: if isAdmin(resource.data) || isClientOwner(resource.data);
+      allow delete: if isAdmin(resource.data);
+
+      match /mensajes/{mensajeId} {
+        allow create, read: if signedIn() && (
+          get(/databases/$(database)/documents/chats/$(chatId)).data.cliente_uid == request.auth.uid ||
+          isAdmin(get(/databases/$(database)/documents/chats/$(chatId)).data)
+        );
+        allow update, delete: if isAdmin(get(/databases/$(database)/documents/chats/$(chatId)).data);
+      }
     }
 
     match /negocios/{businessId} {
