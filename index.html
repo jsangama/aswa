@@ -849,6 +849,17 @@
     .school-product .pimg { background:#050505; object-fit:contain; padding:3px; }
     #c-sjBidon .pimg { width:76px; height:76px; padding:2px; }
     #c-sjBidonPublic .pimg { width:76px; height:76px; padding:2px; object-fit:contain; }
+    .school-section-label {
+      display:flex; align-items:center; justify-content:space-between; gap:8px;
+      margin:12px 0 8px; color:#facc15; font-size:11px; font-weight:950;
+      text-transform:uppercase; letter-spacing:.08em;
+    }
+    .school-section-label::after {
+      content:""; flex:1; height:1px; background:rgba(250,204,21,.28);
+    }
+    .school-section-help {
+      margin:-2px 0 8px; color:#d6d3d1; font-size:10px; line-height:1.35;
+    }
     .bidon-price-options {
       display:grid; grid-template-columns:1fr 1fr; gap:8px; margin:8px 0 10px;
     }
@@ -2924,6 +2935,8 @@
           <option value="Tarapoto">Tarapoto</option>
         </select>
       </div>
+      <div class="school-section-label">Bidon 20 litros - envase retornable</div>
+      <div class="school-section-help">Estas opciones pertenecen solo al bidon de 20 litros: puedes pedir recarga con bidon vacio o agregar un bidon nuevo por S/ 20 adicionales.</div>
       <div class="bidon-price-options" aria-label="Opciones de precio para bidon escolar">
         <label class="bidon-price-option is-active" id="bidonOptRecarga">
           <input type="radio" name="colegioBidonModo" id="colegioBidonRecarga" value="recarga" checked onchange="actualizarPromoEscolarUI()">
@@ -2956,6 +2969,8 @@
           <button class="qb qplus" onclick="qty('sjBidon',+1)">+</button>
         </div>
       </div>
+      <div class="school-section-label">Presentaciones por alumno</div>
+      <div class="school-section-help">Estas presentaciones son para cada seccion o salon: chicha 400 ml, combo juane + chicha, o solo juane. Cada una tiene minimo 15 unidades por presentacion.</div>
       <div class="pc school-product" id="c-sjChicha04">
         <img src="assets/images/products/optimized/san-juan-chicha-400ml.jpg" alt="Chicha escolar 400 ml" class="pimg">
         <div style="flex:1">
