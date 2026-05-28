@@ -2908,10 +2908,10 @@
           <button class="qb qplus" onclick="qty('sjJuane',+1)">+</button>
         </div>
       </div>
-      <div class="school-note">Pedido escolar temporal por Fiestas de San Juan. Los combos, chichas o juanes son por seccion completa: minimo 15 unidades por cada producto elegido. El bidon de 20 litros no tiene minimo. Se atiende durante junio, excepto el 24 de junio. Solo con reserva y pago anticipado: Yape, Plin, Agora, BIM o transferencia bancaria. No aplica efectivo.</div>
+      <div class="school-note">Pedido escolar temporal por Fiestas de San Juan. Los combos, chichas o juanes son por seccion completa: minimo 15 unidades por cada producto elegido. El bidon de 20 litros no tiene minimo. Se atiende durante junio, excepto el 24 de junio. No se cobra delivery en esta promocion. Solo con reserva y pago anticipado: Yape, Plin, Agora, BIM o transferencia bancaria. No aplica efectivo.</div>
       <div class="school-note" style="margin-top:12px">
         <strong>Juane familiar institucional</strong><br>
-        Para bancos, empresas, oficinas y grupos de trabajadores. Entrega unica por reserva el 22 de junio, dos dias antes de San Juan.
+        Para bancos, empresas, oficinas y grupos de trabajadores. Entrega unica por reserva el 22 de junio, dos dias antes de San Juan. No se cobra delivery en esta promocion.
       </div>
       <div class="school-grid" style="margin-top:10px">
         <input type="text" id="instNombre" class="inp" maxlength="90" placeholder="Institucion, empresa, banco u oficina">
@@ -5353,6 +5353,10 @@ function promoSanJuanActiva() {
   return promoEscolarActiva() || promoInstitucionalSanJuanActiva();
 }
 
+function promoSinDeliveryActiva() {
+  return promoSanJuanActiva();
+}
+
 function maxFechaISO(a, b) {
   return String(a || '') > String(b || '') ? a : b;
 }
@@ -5565,7 +5569,7 @@ function calcTotal() {
   const base = PRODUCT_IDS.reduce((sum, id) => {
     return sum + (Number(ST.cart[id] || 0) * Number(ST.precio[id] || 0));
   }, 0);
-  ST.delivery = Number(document.getElementById('zona').value) || 0;
+  ST.delivery = promoSinDeliveryActiva() ? 0 : (Number(document.getElementById('zona').value) || 0);
   ST.raw      = base + ST.delivery;
   const disc  = getDescuentoPct();
   const fixed = getDescuentoFijoAplicado(disc);
@@ -7240,6 +7244,7 @@ function abrirResumen() {
 
   pedidoItemsLista().forEach(it => row(it.qty+'× '+it.nombre, 'S/ '+it.total.toFixed(2)));
   if (ST.delivery) row('Delivery','S/ '+ST.delivery.toFixed(2));
+  else if (promoSinDeliveryActiva()) row('Delivery promocion San Juan','S/ 0.00');
   if (reservaPedido.activa) row('Reserva de entrega', reservaPedido.texto);
   if (promoEscolar.activo) row('Centro educativo / seccion', promoEscolar.texto);
   if (promoInstitucional.activo) row('Institucion / grupo', promoInstitucional.texto);
@@ -7374,7 +7379,9 @@ async function enviarPedido() {
     +(descFijoAmt>0
       ? '🎟 *Cupon '+ST.disc.cupCod+':*   _−S/ '+descFijoAmt.toFixed(2)+'_\n'
       : '')
-    +'🚚 *Delivery:*   _+S/ '+ST.delivery.toFixed(2)+'_\n'
+    +(promoSinDeliveryActiva()
+      ? '🚚 *Delivery promo San Juan:*   _S/ 0.00_\n'
+      : '🚚 *Delivery:*   _+S/ '+ST.delivery.toFixed(2)+'_\n')
     +sep+'\n'
     +'💰 *TOTAL A PAGAR*\n'
     +'> 🟡 *S/ '+ST.final.toFixed(2)+' PEN*\n'
