@@ -9751,6 +9751,16 @@ function _admChequearBloqueo(tipo) {
    DELIVERISTA — LOGIN
 ══════════════════════════════════════ */
 /* ══ DELIVERISTA — LOGIN PIN (de archivo 5) ══ */
+function legacyLocalAccessAllowed() {
+  const host = window.location?.hostname || '';
+  const isLocalHost = ['localhost', '127.0.0.1', '::1'].includes(host);
+  return Boolean(window.ASWA_CONFIG?.ALLOW_LEGACY_LOCAL_ACCESS) && isLocalHost;
+}
+
+function legacyAccessBlockedMessage() {
+  return 'Acceso local legacy desactivado. Usa Firebase Auth / usuarios operativos.';
+}
+
 const DELIVERY_PIN = window.ASWA_CONFIG?.DELIVERY_PIN || ""; // ← PIN Deliverista
 let dlvPinIngresado = '';
 
@@ -9794,7 +9804,13 @@ function actualizarDots() {
 }
 
 function verificarPin() {
-  if (dlvPinIngresado === DELIVERY_PIN) {
+  if (!legacyLocalAccessAllowed()) {
+    dlvPinIngresado = '';
+    actualizarDots();
+    tst(legacyAccessBlockedMessage(), 3500);
+    return;
+  }
+  if (DELIVERY_PIN && dlvPinIngresado === DELIVERY_PIN) {
     _sesionDelivery = { username:'delivery_pin', nombre:'Deliverista', rol:'delivery', permisos:{ tv:true } };
     sessionStorage.setItem('aswaRole', 'delivery');
     sessionStorage.setItem('deliveryUser', 'delivery_pin');
@@ -10439,7 +10455,7 @@ async function ownerLogin() {
 
   if (authLogin?.configured) return ownerError('Usuario Firebase no autorizado o contrasena incorrecta');
 
-  const fallback = window.CREDENTIALS?.[username];
+  const fallback = legacyLocalAccessAllowed() ? window.CREDENTIALS?.[username] : null;
   if (fallback?.role === 'owner' && fallback.password && fallback.password === password) {
     _ownerSesion = { username, nombre:fallback.name || 'Dueno', rol:'owner', permisos:{ super:true } };
     _sesionAdmin = { ..._ownerSesion, id:'owner-fallback' };
@@ -12598,6 +12614,9 @@ async function attemptLogin() {
       sessionStorage.setItem('deliveryUser', username);
       sessionStorage.setItem('deliveryName', deliveryName);
       abrirPanelDeliverista();
+      document.querySelectorAll('.dlv-step').forEach(s => s.classList.remove('active'));
+      document.getElementById('dlvStep2')?.classList.add('active');
+      if (typeof cargarPedidosAsignados === 'function') cargarPedidosAsignados(username);
     }
     return;
   }
@@ -12607,10 +12626,15 @@ async function attemptLogin() {
     return;
   }
 
+  if (!legacyLocalAccessAllowed()) {
+    if (errEl) { errEl.textContent = legacyAccessBlockedMessage(); errEl.style.display = 'block'; }
+    return;
+  }
+
   const creds = window.CREDENTIALS || {};
   const cred  = creds[username];
 
-  if (!cred || cred.password !== password) {
+  if (!cred || cred.password !== password || cred.role !== expectedRole) {
     if (errEl) { errEl.textContent = '❌ Usuario o contraseña incorrectos'; errEl.style.display = 'block'; }
     const sheet = document.getElementById('loginModalSheet');
     if (sheet) { sheet.style.animation = 'none'; setTimeout(() => sheet.style.animation = 'shake .4s ease', 10); }
@@ -13396,6 +13420,11 @@ async function dlvLogin() {
     return;
   }
 
+  if (!legacyLocalAccessAllowed()) {
+    if (errEl) { errEl.textContent = legacyAccessBlockedMessage(); errEl.style.display = 'block'; }
+    return;
+  }
+
   try {
     await esperarFB();
     const { query:q, collection:col, where:wh, getDocs:gd } = window.FB;
@@ -13468,6 +13497,7 @@ function _esc(str) {
 
 // ── _getDeliveryPin [from index.html]
 function _getDeliveryPin() {
+  if (!legacyLocalAccessAllowed()) return '';
   return window._DELIVERY_PIN_OVERRIDE || window.ASWA_CONFIG?.DELIVERY_PIN || '';
 }
 
@@ -13529,7 +13559,13 @@ function actualizarPuntosPinRapido() {
 
 // ── verificarPinRapido [from ASWA_FINAL_V2]
 function verificarPinRapido() {
-  if (_pinRapidoIngresado === ADMIN_PIN_RAPIDO) {
+  if (!legacyLocalAccessAllowed()) {
+    mostrarErrorPinRapido(legacyAccessBlockedMessage());
+    _pinRapidoIngresado = "";
+    actualizarPuntosPinRapido();
+    return;
+  }
+  if (ADMIN_PIN_RAPIDO && _pinRapidoIngresado === ADMIN_PIN_RAPIDO) {
     // ✅ PIN correcto
     ocultarErrorPinRapido();
     
@@ -15969,6 +16005,11 @@ function doAdminLogin() {
     alert('Por favor ingresa usuario y contraseña');
     return;
   }
+
+  if (!legacyLocalAccessAllowed()) {
+    alert(legacyAccessBlockedMessage());
+    return;
+  }
   
   // Verificar credenciales
   if (ADMIN_CREDENTIALS[user] === pass) {
@@ -16040,7 +16081,14 @@ function verifyPin() {
     return;
   }
   
-  if (pin === ADMIN_PIN) {
+  if (!legacyLocalAccessAllowed()) {
+    alert(legacyAccessBlockedMessage());
+    clearPinInputs();
+    document.getElementById('pin1').focus();
+    return;
+  }
+
+  if (ADMIN_PIN && pin === ADMIN_PIN) {
     closeAdminLogin();
     window.location.hash = 'admin';
   } else {
@@ -16361,7 +16409,16 @@ function _admPinVerificar() {
     return;
   }
 
-  if (_admPinBuffer === ADMIN_PIN_4) {
+  if (!legacyLocalAccessAllowed()) {
+    const err = document.getElementById('admPinError');
+    err.textContent = legacyAccessBlockedMessage();
+    err.style.display = 'block';
+    _admPinBuffer = '';
+    _admPinActualizar();
+    return;
+  }
+
+  if (ADMIN_PIN_4 && _admPinBuffer === ADMIN_PIN_4) {
     // PIN correcto → ingresar como admin
     _sesionAdmin = { username: 'admin', nombre: 'Admin PIN', rol: 'admin' };
     document.getElementById('admPinStep').style.display = 'none';

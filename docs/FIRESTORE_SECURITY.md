@@ -39,6 +39,12 @@ El Modo TV debe ser una vista operativa, no publica:
 
 `npm run security:preflight` revisa estas protecciones en `index.html` antes de desplegar cambios.
 
+## Accesos legacy bloqueados
+
+Los accesos antiguos por PIN o `window.CREDENTIALS` solo pueden usarse para pruebas locales si `ALLOW_LEGACY_LOCAL_ACCESS` esta activado y la app corre en `localhost`, `127.0.0.1` o `::1`.
+
+En GitHub Pages y produccion el acceso operativo debe pasar por Firebase Auth/custom claims o por el flujo operativo autorizado. Esto evita que Admin, Delivery, Owner o Modo TV se abran con credenciales estaticas publicadas en el frontend.
+
 ## Reservas y regalos
 
 Las reservas y regalos son pedidos especiales y deben mantenerse con estas reglas de producto:
