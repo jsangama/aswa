@@ -2870,7 +2870,7 @@
         </div>
       </div>
       <div class="pc school-product" id="c-sjChicha04">
-        <img src="assets/images/products/san-juan-combo-escolar.png" alt="Chicha escolar 400 ml" class="pimg">
+        <img src="assets/images/products/san-juan-chicha-400ml.png" alt="Chicha escolar 400 ml" class="pimg">
         <div style="flex:1">
           <div class="pn">ASWA escolar sanjuanera</div>
           <div class="pd">Solo chicha 400 ml por alumno</div>
@@ -5300,6 +5300,13 @@ const PRODUCT_META = {
   sjJuaneFamiliar: { nombre:'Juane familiar institucional', corto:'Juane familiar', sanJuanInstitucional:true }
 };
 const PRODUCT_IDS = Object.keys(PRODUCT_META);
+const PRODUCT_IMAGE_SRC = {
+  sjBidon: 'assets/images/products/san-juan-bidon-20l.png',
+  sjChicha04: 'assets/images/products/san-juan-chicha-400ml.png',
+  sjCombo: 'assets/images/products/san-juan-combo-escolar.png',
+  sjJuane: 'assets/images/products/san-juan-juane-escolar.png',
+  sjJuaneFamiliar: 'assets/images/products/san-juan-juane-institucional.jpeg'
+};
 const SAN_JUAN_ESCOLAR_INICIO = '2026-06-01';
 const SAN_JUAN_ESCOLAR_FIN = '2026-06-30';
 const SAN_JUAN_FECHA_BLOQUEADA = '2026-06-24';
@@ -7780,10 +7787,9 @@ function mostrarNotaVenta() {
     const p = PROD[k] || {
       nom: PRODUCT_META[k]?.nombre || k,
       sz: PRODUCT_META[k]?.corto || k,
-      img: PRODUCT_META[k]?.escolar ? 'assets/images/products/san-juan-combo-escolar.png' : fallback,
+      img: PRODUCT_IMAGE_SRC[k] || fallback,
       precio: ST.precio[k] || 0
     };
-    if (k === 'sjBidon') p.img = 'assets/images/products/san-juan-bidon-20l.png';
     const precioUnit = Number(ST.precio[k] || p.precio || 0);
     const sub = (qty * precioUnit).toFixed(2);
     itemsHtml += `
@@ -7854,7 +7860,7 @@ function _generarHtmlNota() {
     const p = PROD[k] || {
       nom: PRODUCT_META[k]?.nombre || k,
       sz: PRODUCT_META[k]?.corto || k,
-      img: baseUrl + (k === 'sjBidon' ? 'assets/images/products/san-juan-bidon-20l.png' : 'assets/images/products/san-juan-combo-escolar.png')
+      img: baseUrl + (PRODUCT_IMAGE_SRC[k] || 'assets/images/products/san-juan-combo-escolar.png')
     };
     const precioUnit = Number(ST.precio[k] || p.precio || 0);
     const sub = (qty * precioUnit).toFixed(2);
