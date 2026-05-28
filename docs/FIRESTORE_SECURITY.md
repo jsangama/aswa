@@ -58,6 +58,7 @@ Ademas de pedidos/clientes, la app usa estas colecciones con reglas explicitas:
 - `catalogo`: lectura publica para mostrar productos; escritura solo owner/admin.
 - `fcm_tokens`: escritura solo del cliente autenticado que registra su token; lectura solo owner/admin.
 - `push_queue`: escritura de clientes para alertas propias o de owner/admin para campañas operativas.
+- `sugerencias`: lectura publica, creacion ligada al cliente autenticado y moderacion por owner/admin.
 
 Estas colecciones son necesarias para que el catalogo, las notificaciones y las alertas de reserva funcionen con reglas estrictas.
 

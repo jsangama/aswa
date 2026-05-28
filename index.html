@@ -16196,6 +16196,8 @@ async function enviarSugerencia() {
   try {
     const db = await esperarFB();
     await db.collection('sugerencias').add({
+      businessId: BUSINESS_ID,
+      cliente_uid: window.currentUser?.uid || null,
       texto, nombre: nombre||'Anónimo', tel,
       categoria: _sugCat,
       fecha: firebase.firestore.FieldValue.serverTimestamp(),
