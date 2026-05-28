@@ -1,5 +1,5 @@
-// ASWA Service Worker v17 - https://jsangama.github.io/aswa/
-const CACHE_NAME = 'aswa-v17';
+// ASWA Service Worker v18 - https://jsangama.github.io/aswa/
+const CACHE_NAME = 'aswa-v18';
 const BASE = '/aswa/';
 const ASSETS = [
   BASE,
@@ -29,6 +29,22 @@ self.addEventListener('activate', e => {
 
 self.addEventListener('fetch', e => {
   if (!e.request.url.startsWith(self.location.origin)) return;
+
+  const accept = e.request.headers.get('accept') || '';
+  const isHtml = e.request.mode === 'navigate' || accept.includes('text/html');
+  if (isHtml) {
+    e.respondWith(
+      fetch(e.request).then(resp => {
+        if (resp.status === 200) {
+          const clone = resp.clone();
+          caches.open(CACHE_NAME).then(c => c.put(e.request, clone));
+        }
+        return resp;
+      }).catch(() => caches.match(e.request).then(cached => cached || caches.match(BASE)))
+    );
+    return;
+  }
+
   e.respondWith(
     caches.match(e.request).then(cached => {
       return cached || fetch(e.request).then(resp => {
