@@ -1,5 +1,29 @@
 # Firebase Storage para ASWA
 
+## Modo gratis actual
+
+El proyecto esta configurado por defecto con:
+
+```js
+STORAGE_MODE: 'whatsapp_manual'
+```
+
+Esto permite trabajar sin pagar Firebase Storage:
+
+- El cliente selecciona la captura del comprobante para marcar el pedido.
+- La app guarda el pedido en Firestore con `yape_verificacion: "whatsapp_manual"`.
+- No se guarda la imagen en Firestore para evitar errores por limite de tamano.
+- La app abre WhatsApp para que el cliente adjunte la captura manualmente.
+- El panel admin muestra que el pago requiere verificacion manual por WhatsApp.
+
+Cuando el proyecto tenga Firebase Storage activo, se puede cambiar a:
+
+```js
+STORAGE_MODE: 'firebase_storage'
+```
+
+en `js/app-config.js` o en `js/local-config.js`, y luego desplegar reglas.
+
 La app usa Firebase Storage para:
 
 - Comprobantes de pago: `comprobantes/{businessId}/...`
