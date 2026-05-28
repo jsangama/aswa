@@ -848,6 +848,28 @@
     .school-product { background:rgba(0,0,0,.22); border-color:rgba(250,204,21,.22); }
     .school-product .pimg { background:#050505; object-fit:contain; padding:3px; }
     #c-sjBidon .pimg { width:76px; height:76px; padding:2px; }
+    .bidon-price-options {
+      display:grid; grid-template-columns:1fr 1fr; gap:8px; margin:8px 0 10px;
+    }
+    .bidon-price-option {
+      display:flex; align-items:flex-start; gap:8px; cursor:pointer;
+      background:rgba(0,0,0,.24); border:1px solid rgba(255,255,255,.12);
+      border-radius:13px; padding:10px; color:#fef3c7;
+    }
+    .bidon-price-option input { accent-color:#facc15; margin-top:3px; }
+    .bidon-price-option strong { display:block; color:#fff; font-size:12px; line-height:1.2; }
+    .bidon-price-option small { display:block; color:#d6d3d1; font-size:10px; line-height:1.25; margin-top:3px; }
+    .bidon-price-option .price-pill {
+      display:inline-flex; margin-top:7px; background:#facc15; color:#000;
+      border-radius:999px; padding:4px 8px; font-size:12px; font-weight:950;
+    }
+    .bidon-price-option.is-active {
+      border-color:#facc15; box-shadow:0 0 0 1px rgba(250,204,21,.34), 0 10px 24px rgba(250,204,21,.08);
+      background:rgba(250,204,21,.12);
+    }
+    @media (max-width:420px) {
+      .bidon-price-options { grid-template-columns:1fr; }
+    }
     .school-note {
       font-size:10px; color:#fde68a; background:rgba(250,204,21,.1);
       border:1px dashed rgba(250,204,21,.42); border-radius:12px;
@@ -2853,15 +2875,29 @@
           <option value="Tarapoto">Tarapoto</option>
         </select>
       </div>
-      <label class="school-toggle">
-        <input type="checkbox" id="colegioTieneBidon" checked onchange="actualizarPromoEscolarUI()">
-        <span>Tengo bidon vacio para entregar al recibir el pedido. Si no tienen bidon, el pedido se vende con bidon incluido por S/ 70.</span>
-      </label>
+      <div class="bidon-price-options" aria-label="Opciones de precio para bidon escolar">
+        <label class="bidon-price-option is-active" id="bidonOptRecarga">
+          <input type="radio" name="colegioBidonModo" id="colegioBidonRecarga" value="recarga" checked onchange="actualizarPromoEscolarUI()">
+          <span>
+            <strong>Ya tengo timbo vacio</strong>
+            <small>Solo contenido: 20 litros. Entregas tu timbo vacio al recibir.</small>
+            <span class="price-pill">S/ 50.00</span>
+          </span>
+        </label>
+        <label class="bidon-price-option" id="bidonOptIncluido">
+          <input type="radio" name="colegioBidonModo" id="colegioBidonIncluido" value="incluido" onchange="actualizarPromoEscolarUI()">
+          <span>
+            <strong>Comprar con timbo incluido</strong>
+            <small>Contenido 20 litros + timbo nuevo. Se agrega S/ 20.</small>
+            <span class="price-pill">S/ 70.00</span>
+          </span>
+        </label>
+      </div>
       <div class="pc school-product" id="c-sjBidon">
         <img src="assets/images/products/optimized/san-juan-bidon-20l.png" alt="Bidon 20 litros" class="pimg">
         <div style="flex:1">
           <div class="pn">Bidon escolar sanjuanero</div>
-          <div class="pd" id="sjBidonDesc">Contenido 20 litros. Deben entregar bidon vacio.</div>
+          <div class="pd" id="sjBidonDesc">Solo contenido 20 litros. Deben entregar timbo vacio al recibir.</div>
           <div class="pp" id="pr-sjBidon">S/ 50.00</div>
         </div>
         <div class="qw">
@@ -5420,14 +5456,17 @@ function actualizarNivelEscolarUI() {
 }
 
 function actualizarPromoEscolarUI() {
-  const conBidon = document.getElementById('colegioTieneBidon')?.checked !== false;
+  const modoBidon = document.querySelector('input[name="colegioBidonModo"]:checked')?.value || 'recarga';
+  const conBidon = modoBidon !== 'incluido';
   ST.precio.sjBidon = conBidon ? 50 : 70;
   const desc = document.getElementById('sjBidonDesc');
   if (desc) desc.textContent = conBidon
-    ? 'Contenido 20 litros. Deben entregar bidon vacio.'
-    : 'Contenido 20 litros + bidon incluido (+S/ 20).';
+    ? 'Solo contenido 20 litros. Deben entregar timbo vacio al recibir.'
+    : 'Contenido 20 litros + timbo incluido. Precio final S/ 70.';
   const precioBidon = document.getElementById('pr-sjBidon');
   if (precioBidon) precioBidon.textContent = 'S/ ' + ST.precio.sjBidon.toFixed(2);
+  document.getElementById('bidonOptRecarga')?.classList.toggle('is-active', conBidon);
+  document.getElementById('bidonOptIncluido')?.classList.toggle('is-active', !conBidon);
   const reserva = document.getElementById('reservaActiva');
   aplicarLimitesFechaSanJuan();
   if (promoSanJuanActiva() && reserva && !reserva.checked) {
@@ -5446,7 +5485,8 @@ function obtenerPromoEscolar(mostrarErrores = false) {
   const seccion = sanitizeInput(document.getElementById('colegioSeccion')?.value || '', 40);
   const alumnos = Number(document.getElementById('colegioAlumnos')?.value || 0);
   const distrito = sanitizeInput(document.getElementById('colegioDistrito')?.value || '', 40);
-  const conBidon = document.getElementById('colegioTieneBidon')?.checked !== false;
+  const modoBidon = document.querySelector('input[name="colegioBidonModo"]:checked')?.value || 'recarga';
+  const conBidon = modoBidon !== 'incluido';
   const productosPorAlumno = [
     { id:'sjCombo', nombre:'combo escolar con juane y chicha' },
     { id:'sjChicha04', nombre:'chicha escolar 400 ml' },
