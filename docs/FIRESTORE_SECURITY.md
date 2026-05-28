@@ -28,6 +28,17 @@ Para eso existen dos colecciones separadas:
 
 Esto mantiene `clientes` privado y evita que un cliente modifique bonos o referidos de otra persona.
 
+## Modo TV privado
+
+El Modo TV debe ser una vista operativa, no publica:
+
+- Solo debe abrir con sesion de `owner`, `admin` o `delivery`.
+- Debe mostrar pedidos reales de Firebase, no datos inventados.
+- Debe filtrar pedidos activos de hoy para evitar exponer historial completo.
+- Debe ocultar el telefono completo del cliente en pantalla grande.
+
+`npm run security:preflight` revisa estas protecciones en `index.html` antes de desplegar cambios.
+
 ## Despliegue recomendado
 
 No despliegues estas reglas hasta configurar custom claims para usuarios operativos. Si se despliegan sin claims, el panel admin/delivery no podrá leer pedidos.

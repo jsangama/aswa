@@ -85,6 +85,11 @@ function localChecks(businessId) {
     check(index.includes('cliente_uid:    window.currentUser?.uid'), 'Pedidos nuevos guardan cliente_uid'),
     check(index.includes("referral_codes"), 'La app usa referral_codes para validar referidos'),
     check(!index.includes("wh('codigo_referido','==',codigoUsado)") && !index.includes("wh('codigo_referido','==',cod)"), 'La app no consulta clientes por codigo_referido'),
+    check(index.includes('function abrirDashboardTVSeguro()'), 'Modo TV usa entrada segura'),
+    check(index.includes('function abrirDashboardTV()') && index.includes('const sesion = tvSesionOperativa();'), 'Modo TV valida sesion operativa antes de abrir'),
+    check(index.includes('TV real es privado') && index.includes('Acceso privado:'), 'Modo TV comunica acceso privado'),
+    check(index.includes('function tvPedidoVisibleHoy(p)') && index.includes('pedidos.filter(tvPedidoVisibleHoy)'), 'Modo TV filtra pedidos activos de hoy'),
+    check(index.includes('function tvTelefonoSeguro(tel)') && index.includes('tvTelefonoSeguro(p.telefono)'), 'Modo TV oculta telefono completo del cliente'),
     check(Boolean(businessId), 'Business ID definido', businessId || 'No definido'),
   ];
 }
