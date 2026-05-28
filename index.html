@@ -5323,7 +5323,12 @@ async function subirComprobantePago() {
 
     const ruta = `comprobantes/${BUSINESS_ID}/${Date.now()}_${ST.pago}.${ext}`;
     const storageRef = fbRef(window.storage, ruta);
-    const snap = await uploadBytes(storageRef, fileToUpload);
+    const snap = await uploadBytes(storageRef, fileToUpload, {
+      customMetadata: {
+        businessId: BUSINESS_ID,
+        clienteUid: window.currentUser?.uid || ''
+      }
+    });
     return await getDownloadURL(snap.ref);
   } catch (err) {
     console.warn('No se pudo subir comprobante a Storage:', err);
@@ -11987,7 +11992,12 @@ async function subirArchivoUGC(file, onProgress) {
     reader.onload = async e => {
       try {
         if (onProgress) onProgress(30);
-        const snap = await uploadBytes(storageRef, file);
+        const snap = await uploadBytes(storageRef, file, {
+          customMetadata: {
+            businessId: BUSINESS_ID,
+            clienteUid: window.currentUser?.uid || ''
+          }
+        });
         if (onProgress) onProgress(80);
         const url = await getDownloadURL(snap.ref);
         if (onProgress) onProgress(100);
@@ -12893,7 +12903,12 @@ async function evidEnviar() {
     const ext      = _evidData.file.name.split('.').pop() || 'jpg';
     const fileName = `misiones/${BUSINESS_ID}/${tipo}_${tel}_${Date.now()}.${ext}`;
     const fileRef  = window.ST_REF(window.storage, fileName);
-    await window.ST_UP(fileRef, _evidData.file);
+    await window.ST_UP(fileRef, _evidData.file, {
+      customMetadata: {
+        businessId: BUSINESS_ID,
+        clienteUid: window.currentUser?.uid || ''
+      }
+    });
 
     if (fill) fill.style.width = '70%';
     const urlDescarga = await window.ST_URL(fileRef);

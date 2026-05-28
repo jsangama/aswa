@@ -6,11 +6,13 @@ import process from 'node:process';
 const REQUIRED_FILES = [
   'firestore.rules',
   'firestore.indexes.json',
+  'storage.rules',
   'firebase.json',
   'scripts/set-firebase-claims.mjs',
   'scripts/upsert-operator-user.mjs',
   'scripts/sync-referral-codes.mjs',
   'docs/FIREBASE_CLAIMS.md',
+  'docs/FIREBASE_STORAGE.md',
   'docs/FIRESTORE_SECURITY.md',
 ];
 
@@ -68,6 +70,7 @@ function localChecks(businessId) {
   const packageJson = readJson('package.json');
   const firebaseJson = readJson('firebase.json');
   const firestoreIndexes = readJson('firestore.indexes.json');
+  const storageRules = readFileSync('storage.rules', 'utf8');
   const rules = readFileSync('firestore.rules', 'utf8');
   const index = readFileSync('index.html', 'utf8');
 
@@ -78,9 +81,13 @@ function localChecks(businessId) {
     check(packageJson.scripts?.['referrals:sync'], 'Existe script referrals:sync'),
     check(firebaseJson.firestore?.rules === 'firestore.rules', 'firebase.json apunta a firestore.rules'),
     check(firebaseJson.firestore?.indexes === 'firestore.indexes.json', 'firebase.json despliega indices Firestore'),
+    check(firebaseJson.storage?.rules === 'storage.rules', 'firebase.json apunta a storage.rules'),
     check(Array.isArray(firestoreIndexes.indexes) && firestoreIndexes.indexes.some((idx) => idx.collectionGroup === 'chats'), 'Indices Firestore incluyen chats'),
     check(Array.isArray(firestoreIndexes.indexes) && firestoreIndexes.indexes.some((idx) => idx.collectionGroup === 'pedidos'), 'Indices Firestore incluyen pedidos'),
     check(rules.includes('claimRole()'), 'Reglas validan role por custom claims'),
+    check(storageRules.includes('match /comprobantes/{businessId}/{fileName}') && storageRules.includes('isClientUpload(businessId)'), 'Storage protege comprobantes por negocio y cliente'),
+    check(storageRules.includes('match /ugc/{businessId}/{fileName}') && storageRules.includes('safeMedia(20 * 1024 * 1024)'), 'Storage protege UGC con tipo y tamano permitido'),
+    check(index.includes('customMetadata') && index.includes('clienteUid: window.currentUser?.uid'), 'Uploads Storage guardan metadata de cliente'),
     check(rules.includes('claimBusinessId()'), 'Reglas validan businessId por custom claims'),
     check(rules.includes('cliente_uid'), 'Reglas protegen pedidos por cliente_uid'),
     check(rules.includes('match /referral_codes/{codigo}'), 'Reglas permiten validar codigos referidos sin leer clientes'),
