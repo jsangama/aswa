@@ -849,6 +849,17 @@
     .school-product .pimg { background:#050505; object-fit:contain; padding:3px; }
     #c-sjBidon .pimg { width:76px; height:76px; padding:2px; }
     #c-sjBidonPublic .pimg { width:76px; height:76px; padding:2px; object-fit:contain; }
+    .school-section-label {
+      display:flex; align-items:center; justify-content:space-between; gap:8px;
+      margin:12px 0 8px; color:#facc15; font-size:11px; font-weight:950;
+      text-transform:uppercase; letter-spacing:.08em;
+    }
+    .school-section-label::after {
+      content:""; flex:1; height:1px; background:rgba(250,204,21,.28);
+    }
+    .school-section-help {
+      margin:-2px 0 8px; color:#d6d3d1; font-size:10px; line-height:1.35;
+    }
     .bidon-price-options {
       display:grid; grid-template-columns:1fr 1fr; gap:8px; margin:8px 0 10px;
     }
@@ -863,6 +874,10 @@
     .bidon-price-option .price-pill {
       display:inline-flex; margin-top:7px; background:#facc15; color:#000;
       border-radius:999px; padding:4px 8px; font-size:12px; font-weight:950;
+    }
+    .bidon-extra-label {
+      display:inline-flex; margin-top:6px; color:#facc15; font-size:10px;
+      font-weight:900; text-transform:uppercase; letter-spacing:.04em;
     }
     .bidon-price-option.is-active {
       border-color:#facc15; box-shadow:0 0 0 1px rgba(250,204,21,.34), 0 10px 24px rgba(250,204,21,.08);
@@ -2861,16 +2876,17 @@
         <label class="bidon-price-option is-active" id="bidonPublicOptRecarga">
           <input type="radio" name="publicBidonModo" id="publicBidonRecarga" value="recarga" checked onchange="actualizarBidonPublicoUI()">
           <span>
-            <strong>Ya tengo bidon vacio</strong>
-            <small>Solo contenido: 20 litros. Entregas tu bidon vacio al recibir.</small>
+            <strong>Recarga: ya tengo bidon vacio</strong>
+            <small>Pagas solo la chicha ASWA 20 litros. Entregas tu bidon vacio al recibir.</small>
             <span class="price-pill">S/ 50.00</span>
           </span>
         </label>
         <label class="bidon-price-option" id="bidonPublicOptIncluido">
           <input type="radio" name="publicBidonModo" id="publicBidonIncluido" value="incluido" onchange="actualizarBidonPublicoUI()">
           <span>
-            <strong>Comprar con bidon incluido</strong>
-            <small>Contenido 20 litros + bidon nuevo. Se agrega S/ 20.</small>
+            <strong>Agregar bidon nuevo</strong>
+            <small>Chicha ASWA 20 litros S/ 50 + envase/bidon nuevo S/ 20.</small>
+            <span class="bidon-extra-label">Extra solo por el bidon</span>
             <span class="price-pill">S/ 70.00</span>
           </span>
         </label>
@@ -2879,7 +2895,7 @@
         <img src="assets/images/products/optimized/san-juan-bidon-20l.png" alt="Bidon San Juanero 20 litros" class="pimg">
         <div style="flex:1">
           <div class="pn">Bidon San Juanero ASWA</div>
-          <div class="pd" id="sjBidonPublicDesc">Solo contenido 20 litros. Debes entregar bidon vacio al recibir.</div>
+          <div class="pd" id="sjBidonPublicDesc">Chicha ASWA 20 litros. Precio sin bidon/envase nuevo.</div>
           <div class="pp" id="pr-sjBidonPublic">S/ 50.00</div>
         </div>
         <div class="qw">
@@ -2919,20 +2935,23 @@
           <option value="Tarapoto">Tarapoto</option>
         </select>
       </div>
+      <div class="school-section-label">Bidon 20 litros - envase retornable</div>
+      <div class="school-section-help">Estas opciones pertenecen solo al bidon de 20 litros: puedes pedir recarga con bidon vacio o agregar un bidon nuevo por S/ 20 adicionales.</div>
       <div class="bidon-price-options" aria-label="Opciones de precio para bidon escolar">
         <label class="bidon-price-option is-active" id="bidonOptRecarga">
           <input type="radio" name="colegioBidonModo" id="colegioBidonRecarga" value="recarga" checked onchange="actualizarPromoEscolarUI()">
           <span>
-            <strong>Ya tengo timbo vacio</strong>
-            <small>Solo contenido: 20 litros. Entregas tu timbo vacio al recibir.</small>
+            <strong>Recarga: ya tengo bidon vacio</strong>
+            <small>Pagas solo la chicha ASWA 20 litros. Entregas tu bidon vacio al recibir.</small>
             <span class="price-pill">S/ 50.00</span>
           </span>
         </label>
         <label class="bidon-price-option" id="bidonOptIncluido">
           <input type="radio" name="colegioBidonModo" id="colegioBidonIncluido" value="incluido" onchange="actualizarPromoEscolarUI()">
           <span>
-            <strong>Comprar con timbo incluido</strong>
-            <small>Contenido 20 litros + timbo nuevo. Se agrega S/ 20.</small>
+            <strong>Agregar bidon nuevo</strong>
+            <small>Chicha ASWA 20 litros S/ 50 + envase/bidon nuevo S/ 20.</small>
+            <span class="bidon-extra-label">Extra solo por el bidon</span>
             <span class="price-pill">S/ 70.00</span>
           </span>
         </label>
@@ -2941,7 +2960,7 @@
         <img src="assets/images/products/optimized/san-juan-bidon-20l.png" alt="Bidon 20 litros" class="pimg">
         <div style="flex:1">
           <div class="pn">Bidon escolar sanjuanero</div>
-          <div class="pd" id="sjBidonDesc">Solo contenido 20 litros. Deben entregar timbo vacio al recibir.</div>
+          <div class="pd" id="sjBidonDesc">Chicha ASWA 20 litros. Precio sin bidon/envase nuevo.</div>
           <div class="pp" id="pr-sjBidon">S/ 50.00</div>
         </div>
         <div class="qw">
@@ -2950,6 +2969,8 @@
           <button class="qb qplus" onclick="qty('sjBidon',+1)">+</button>
         </div>
       </div>
+      <div class="school-section-label">Presentaciones por alumno</div>
+      <div class="school-section-help">Estas presentaciones son para cada seccion o salon: chicha 400 ml, combo juane + chicha, o solo juane. Cada una tiene minimo 15 unidades por presentacion.</div>
       <div class="pc school-product" id="c-sjChicha04">
         <img src="assets/images/products/optimized/san-juan-chicha-400ml.jpg" alt="Chicha escolar 400 ml" class="pimg">
         <div style="flex:1">
@@ -5508,8 +5529,8 @@ function actualizarBidonPublicoUI() {
   ST.precio.sjBidonPublic = conBidon ? 50 : 70;
   const desc = document.getElementById('sjBidonPublicDesc');
   if (desc) desc.textContent = conBidon
-    ? 'Solo contenido 20 litros. Debes entregar bidon vacio al recibir.'
-    : 'Contenido 20 litros + bidon incluido. Precio final S/ 70.';
+    ? 'Chicha ASWA 20 litros. Precio sin bidon/envase nuevo.'
+    : 'Chicha ASWA 20 litros + bidon/envase nuevo. Extra S/ 20. Precio final S/ 70.';
   const precioBidon = document.getElementById('pr-sjBidonPublic');
   if (precioBidon) precioBidon.textContent = 'S/ ' + ST.precio.sjBidonPublic.toFixed(2);
   document.getElementById('bidonPublicOptRecarga')?.classList.toggle('is-active', conBidon);
@@ -5524,8 +5545,8 @@ function actualizarPromoEscolarUI() {
   ST.precio.sjBidon = conBidon ? 50 : 70;
   const desc = document.getElementById('sjBidonDesc');
   if (desc) desc.textContent = conBidon
-    ? 'Solo contenido 20 litros. Deben entregar timbo vacio al recibir.'
-    : 'Contenido 20 litros + timbo incluido. Precio final S/ 70.';
+    ? 'Chicha ASWA 20 litros. Precio sin bidon/envase nuevo.'
+    : 'Chicha ASWA 20 litros + bidon/envase nuevo. Extra S/ 20. Precio final S/ 70.';
   const precioBidon = document.getElementById('pr-sjBidon');
   if (precioBidon) precioBidon.textContent = 'S/ ' + ST.precio.sjBidon.toFixed(2);
   document.getElementById('bidonOptRecarga')?.classList.toggle('is-active', conBidon);
