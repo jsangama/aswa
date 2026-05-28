@@ -51,6 +51,16 @@ Las reservas y regalos son pedidos especiales y deben mantenerse con estas regla
 
 `security:preflight` valida que estas piezas sigan presentes antes de desplegar.
 
+## Colecciones operativas
+
+Ademas de pedidos/clientes, la app usa estas colecciones con reglas explicitas:
+
+- `catalogo`: lectura publica para mostrar productos; escritura solo owner/admin.
+- `fcm_tokens`: escritura solo del cliente autenticado que registra su token; lectura solo owner/admin.
+- `push_queue`: escritura de clientes para alertas propias o de owner/admin para campañas operativas.
+
+Estas colecciones son necesarias para que el catalogo, las notificaciones y las alertas de reserva funcionen con reglas estrictas.
+
 ## Despliegue recomendado
 
 No despliegues estas reglas hasta configurar custom claims para usuarios operativos. Si se despliegan sin claims, el panel admin/delivery no podrá leer pedidos.

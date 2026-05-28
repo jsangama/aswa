@@ -146,6 +146,16 @@ service cloud.firestore {
       allow write: if isAdmin(request.resource.data) || isAdmin(resource.data);
     }
 
+    match /catalogo/{productoId} {
+      allow read: if true;
+      allow write: if isAdmin(request.resource.data) || isAdmin(resource.data);
+    }
+
+    match /fcm_tokens/{tokenId} {
+      allow create, update: if isClientOwnedCreate();
+      allow read, delete: if isAdmin(resource.data);
+    }
+
     match /sugerencias/{sugerenciaId} {
       allow create: if signedIn();
       allow read: if true;
