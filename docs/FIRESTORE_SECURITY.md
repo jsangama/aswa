@@ -18,6 +18,16 @@ Los clientes usan sesión anónima y cada pedido nuevo guarda `cliente_uid` para
 3. Dueño/admin/delivery leen pedidos solo si su token tiene el mismo `businessId`.
 4. El cliente no puede leer pedidos de otros clientes.
 
+## Referidos seguros
+
+La app no debe buscar codigos de referido leyendo la coleccion privada `clientes`.
+Para eso existen dos colecciones separadas:
+
+- `referral_codes`: permite validar si un codigo existe sin exponer telefono, nombre ni historial del cliente.
+- `referral_events`: guarda el uso del codigo como evento pendiente para revision admin/backend.
+
+Esto mantiene `clientes` privado y evita que un cliente modifique bonos o referidos de otra persona.
+
 ## Despliegue recomendado
 
 No despliegues estas reglas hasta configurar custom claims para usuarios operativos. Si se despliegan sin claims, el panel admin/delivery no podrá leer pedidos.

@@ -6597,21 +6597,62 @@ document.getElementById('telefono').addEventListener('input', async e => {
   } catch(err) { console.error('Error buscando cliente:', err); }
 });
 
+function normalizarCodigoReferido(raw) {
+  return String(raw || '').trim().toUpperCase().replace(/[^A-Z0-9-]/g, '');
+}
+
+async function obtenerCodigoReferido(codigo) {
+  const cod = normalizarCodigoReferido(codigo);
+  if (!cod || !window.FB || !window.db) return null;
+  const { doc:d, getDoc:gd } = window.FB;
+  const snap = await gd(d(db, 'referral_codes', cod));
+  return snap.exists() ? { id: snap.id, ...snap.data() } : null;
+}
+
+async function publicarCodigoReferido(codigo) {
+  const cod = normalizarCodigoReferido(codigo);
+  if (!cod || !window.currentUser?.uid || !window.FB || !window.db) return;
+  const { doc:d, setDoc, serverTimestamp:ts } = window.FB;
+  await setDoc(d(db, 'referral_codes', cod), {
+    businessId: BUSINESS_ID,
+    codigo: cod,
+    cliente_uid: window.currentUser.uid,
+    activo: true,
+    updated_at: ts()
+  }, { merge: true });
+}
+
+async function registrarEventoReferido(codigo, pedidoId, datosCliente) {
+  const cod = normalizarCodigoReferido(codigo);
+  if (!cod || !window.currentUser?.uid || !window.FB || !window.db) return;
+  const { collection:col, addDoc:ad, serverTimestamp:ts } = window.FB;
+  await ad(col(db, 'referral_events'), {
+    businessId: BUSINESS_ID,
+    cliente_uid: window.currentUser.uid,
+    codigo_usado: cod,
+    pedido_id: pedidoId,
+    telefono_nuevo: datosCliente.telefono || '',
+    nombre_nuevo: datosCliente.nombre || '',
+    estado: 'pendiente',
+    created_at: ts()
+  });
+}
+
 /* ── VALIDAR CÓDIGO REFERIDO ── */
 let rtmr;
 document.getElementById('codigoUsado').addEventListener('input', e => {
   clearTimeout(rtmr);
-  const cod = e.target.value.trim().toUpperCase();
+  const cod = normalizarCodigoReferido(e.target.value);
   const el  = document.getElementById('rst');
   if (cod.length < 8) { el.textContent=''; ST.disc.ref=0; calcTotal(); return; }
   el.textContent = '⏳';
   rtmr = setTimeout(async () => {
     try {
       const { query:q, collection:col, where:wh, getDocs:gd } = window.FB;
-      const snap = await gd(q(col(db,'clientes'), wh('businessId','==',BUSINESS_ID), wh('codigo_referido','==',cod)));
-      if (snap.empty) {
+      const codigoRef = await obtenerCodigoReferido(cod);
+      if (!codigoRef || codigoRef.businessId !== BUSINESS_ID || codigoRef.activo === false) {
         el.textContent='✗ Inválido'; el.style.color='var(--red)'; ST.disc.ref=0;
-      } else if (snap.docs[0].id === ST.cli.id) {
+      } else if (codigoRef.cliente_uid && codigoRef.cliente_uid === window.currentUser?.uid) {
         el.textContent='⚠ Tu código'; el.style.color='#f59e0b'; ST.disc.ref=0;
       } else {
         const telActual = ST.cli.tel || document.getElementById('telefono')?.value.trim() || '';
@@ -6619,8 +6660,6 @@ document.getElementById('codigoUsado').addEventListener('input', e => {
         const esPrimerPedido = miSnap.empty || (miSnap.docs[0].data().pedidos_totales || 0) === 0;
         if (!esPrimerPedido) {
           el.textContent='⚠ Solo primer pedido'; el.style.color='#f59e0b'; ST.disc.ref=0;
-        } else if ((snap.docs[0].data().referidos || []).includes(telActual)) {
-          el.textContent='✗ Ya usado'; el.style.color='var(--red)'; ST.disc.ref=0;
         } else {
           el.textContent='✓ +5%'; el.style.color='var(--grn)'; ST.disc.ref=5;
         }
@@ -6982,42 +7021,25 @@ async function enviarPedido() {
       codigo_referido: codFin,
       bonos_activos:   ST.cli.bonos || []
     };
-    // 3. Aplicar bono al referidor y al cliente nuevo
+    // 3. Aplicar bono al cliente nuevo y registrar el bono del referidor como pendiente.
     if (codigoUsado && ST.disc.ref > 0 && esClienteNuevo) {
-      const snapR = await gd(q(col(db,'clientes'), wh('businessId','==',BUSINESS_ID), wh('codigo_referido','==',codigoUsado)));
-      if (!snapR.empty) {
-        const rd  = snapR.docs[0].data();
-        const referidos = rd.referidos || [];
-        const yaRegistrado = referidos.includes(telefono);
-        const ahora = new Date().toISOString();
-        // Referidos: válido 2 meses completos (renovable solo para nuevos clientes)
-        const exp = new Date();
-        exp.setMonth(exp.getMonth() + 2);
-        exp.setDate(0); // último día del mes de vencimiento
-        exp.setHours(23, 59, 59, 0);
-        const expira = exp.toISOString();
-        if (!yaRegistrado) {
-          const bonosReferidor = (rd.bonos_activos||[])
-            .filter(b => !b.expira || new Date(b.expira) > new Date());
-          bonosReferidor.push({
-            tipo:'referido', valor:5, origen:telefono, nombre_origen:nombre,
-            fecha: ahora, expira
-          });
-          await ud(d(db,'clientes',snapR.docs[0].id), {
-            bonos_activos: bonosReferidor,
-            referidos: [...referidos, telefono]
-          });
-          cdata.bonos_activos = (cdata.bonos_activos||[])
-            .filter(b => !b.expira || new Date(b.expira) > new Date());
-          cdata.bonos_activos.push({
-            tipo:'primer_referido', valor:5, origen:codigoUsado,
-            fecha: ahora, expira
-          });
-        }
-      }
+      const ahora = new Date().toISOString();
+      const exp = new Date();
+      exp.setMonth(exp.getMonth() + 2);
+      exp.setDate(0);
+      exp.setHours(23, 59, 59, 0);
+      const expira = exp.toISOString();
+      cdata.bonos_activos = (cdata.bonos_activos||[])
+        .filter(b => !b.expira || new Date(b.expira) > new Date());
+      cdata.bonos_activos.push({
+        tipo:'primer_referido', valor:5, origen:codigoUsado,
+        fecha: ahora, expira
+      });
+      await registrarEventoReferido(codigoUsado, ref.id, { telefono, nombre });
     }
     if (clienteDoc) await ud(d(db,'clientes',clienteDoc.id), cdata);
     else            await ad(col(db,'clientes'), cdata);
+    await publicarCodigoReferido(codFin);
 
   } catch(err) {
     console.error('Firebase error:', err);

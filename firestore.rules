@@ -69,6 +69,28 @@ service cloud.firestore {
         ]);
     }
 
+    function validReferralCodeWrite(codigo) {
+      return signedIn() &&
+        request.resource.data.businessId is string &&
+        request.resource.data.codigo == codigo &&
+        request.resource.data.cliente_uid == request.auth.uid &&
+        request.resource.data.keys().hasOnly([
+          'businessId', 'codigo', 'cliente_uid', 'activo',
+          'created_at', 'updated_at'
+        ]);
+    }
+
+    function validReferralEventCreate() {
+      return signedIn() &&
+        request.resource.data.businessId is string &&
+        request.resource.data.cliente_uid == request.auth.uid &&
+        request.resource.data.estado == 'pendiente' &&
+        request.resource.data.keys().hasOnly([
+          'businessId', 'cliente_uid', 'codigo_usado', 'pedido_id',
+          'telefono_nuevo', 'nombre_nuevo', 'estado', 'created_at'
+        ]);
+    }
+
     function clientConfirmOnly() {
       return isPedidoOwner(resource.data) &&
         request.resource.data.diff(resource.data).changedKeys()
@@ -91,6 +113,23 @@ service cloud.firestore {
         request.resource.data.businessId == resource.data.businessId
       );
       allow delete: if isAdmin(resource.data);
+    }
+
+    match /referral_codes/{codigo} {
+      allow read: if true;
+      allow create: if validReferralCodeWrite(codigo) || isAdmin(request.resource.data);
+      allow update: if (
+        validReferralCodeWrite(codigo) &&
+        resource.data.cliente_uid == request.auth.uid &&
+        request.resource.data.businessId == resource.data.businessId
+      ) || isAdmin(resource.data) || isAdmin(request.resource.data);
+      allow delete: if isAdmin(resource.data);
+    }
+
+    match /referral_events/{eventId} {
+      allow create: if validReferralEventCreate();
+      allow read: if isAdmin(resource.data) || isClientOwner(resource.data);
+      allow update, delete: if isAdmin(resource.data);
     }
 
     match /app_users/{userId} {
