@@ -15407,6 +15407,8 @@ async function culqiProcesar() {
     if (!window._fbOffline && window.db) {
       const total = calcularTotal();
       await window.db.collection('pagos_culqi').add({
+        businessId: BUSINESS_ID,
+        cliente_uid: window.currentUser?.uid || null,
         token:    token.id,
         email:    datos.email,
         monto:    Math.round(total * 100),   // en centavos
@@ -15465,6 +15467,8 @@ async function enviarRating() {
 
   try {
     const data = {
+      businessId: BUSINESS_ID,
+      cliente_uid: window.currentUser?.uid || null,
       estrellas: _ratingVal,
       comentario: comment,
       nombre,
