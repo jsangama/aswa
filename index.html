@@ -2854,13 +2854,13 @@
       </div>
       <label class="school-toggle">
         <input type="checkbox" id="colegioTieneBidon" checked onchange="actualizarPromoEscolarUI()">
-        <span>La seccion entrega bidon vacio. Si entregamos en el centro educativo y no tienen bidon, compra con bidon incluido por S/ 70.</span>
+        <span>Tengo bidon vacio para entregar al recibir el pedido. Si no tienen bidon, el pedido se vende con bidon incluido por S/ 70.</span>
       </label>
       <div class="pc school-product" id="c-sjBidon">
         <img src="assets/images/products/san-juan-bidon-20l.png" alt="Bidon 20 litros" class="pimg">
         <div style="flex:1">
           <div class="pn">Bidon escolar sanjuanero</div>
-          <div class="pd" id="sjBidonDesc">20 litros con bidon vacio del aula</div>
+          <div class="pd" id="sjBidonDesc">Contenido 20 litros. Deben entregar bidon vacio.</div>
           <div class="pp" id="pr-sjBidon">S/ 50.00</div>
         </div>
         <div class="qw">
@@ -2908,7 +2908,7 @@
           <button class="qb qplus" onclick="qty('sjJuane',+1)">+</button>
         </div>
       </div>
-      <div class="school-note">Pedido escolar temporal por Fiestas de San Juan. Los combos, chichas o juanes son por seccion completa: recomendado desde 20 alumnos. Se atiende durante junio, excepto el 24 de junio. Solo con reserva y pago anticipado: Yape, Plin, Agora, BIM o transferencia bancaria. No aplica efectivo.</div>
+      <div class="school-note">Pedido escolar temporal por Fiestas de San Juan. Los combos, chichas o juanes son por seccion completa: minimo 15 unidades por cada producto elegido. El bidon de 20 litros no tiene minimo. Se atiende durante junio, excepto el 24 de junio. Solo con reserva y pago anticipado: Yape, Plin, Agora, BIM o transferencia bancaria. No aplica efectivo.</div>
       <div class="school-note" style="margin-top:12px">
         <strong>Juane familiar institucional</strong><br>
         Para bancos, empresas, oficinas y grupos de trabajadores. Entrega unica por reserva el 22 de junio, dos dias antes de San Juan.
@@ -5406,7 +5406,11 @@ function actualizarPromoEscolarUI() {
   const conBidon = document.getElementById('colegioTieneBidon')?.checked !== false;
   ST.precio.sjBidon = conBidon ? 50 : 70;
   const desc = document.getElementById('sjBidonDesc');
-  if (desc) desc.textContent = conBidon ? '20 litros con bidon vacio del aula' : '20 litros + bidon nuevo incluido';
+  if (desc) desc.textContent = conBidon
+    ? 'Contenido 20 litros. Deben entregar bidon vacio.'
+    : 'Contenido 20 litros + bidon incluido (+S/ 20).';
+  const precioBidon = document.getElementById('pr-sjBidon');
+  if (precioBidon) precioBidon.textContent = 'S/ ' + ST.precio.sjBidon.toFixed(2);
   const reserva = document.getElementById('reservaActiva');
   aplicarLimitesFechaSanJuan();
   if (promoSanJuanActiva() && reserva && !reserva.checked) {
@@ -5426,7 +5430,15 @@ function obtenerPromoEscolar(mostrarErrores = false) {
   const alumnos = Number(document.getElementById('colegioAlumnos')?.value || 0);
   const distrito = sanitizeInput(document.getElementById('colegioDistrito')?.value || '', 40);
   const conBidon = document.getElementById('colegioTieneBidon')?.checked !== false;
-  const porAlumno = Number(ST.cart.sjCombo || 0) + Number(ST.cart.sjChicha04 || 0) + Number(ST.cart.sjJuane || 0);
+  const productosPorAlumno = [
+    { id:'sjCombo', nombre:'combo escolar con juane y chicha' },
+    { id:'sjChicha04', nombre:'chicha escolar 400 ml' },
+    { id:'sjJuane', nombre:'juane escolar' }
+  ];
+  const productoMenorAlMinimo = productosPorAlumno.find(p => {
+    const qty = Number(ST.cart[p.id] || 0);
+    return qty > 0 && qty < 15;
+  });
   const fail = (error, campo = 'colegioNombre') => {
     if (mostrarErrores) marcarCampoPedido(campo, error);
     return { ok:false, activo:true, error };
@@ -5437,7 +5449,9 @@ function obtenerPromoEscolar(mostrarErrores = false) {
   if (!seccion) return fail('Ingresa la seccion o nombre del aula.', 'colegioSeccion');
   if (!Number.isFinite(alumnos) || alumnos < 1) return fail('Ingresa la cantidad aproximada de alumnos de la seccion.', 'colegioAlumnos');
   if (!distrito) return fail('Selecciona el distrito del centro educativo.', 'colegioDistrito');
-  if (porAlumno > 0 && porAlumno < 20) return fail('Los combos, chichas o juanes son por seccion completa. Ingresa al menos 20 unidades o deja solo bidon.', 'colegioAlumnos');
+  if (productoMenorAlMinimo) {
+    return fail('El pedido minimo de ' + productoMenorAlMinimo.nombre + ' es de 15 unidades. El bidon de 20 litros no tiene minimo.', 'colegioAlumnos');
+  }
   if (ST.pago === 'Efectivo') return fail('La promo escolar San Juan solo acepta pago anticipado. Cambia el metodo de pago.', 'colegioNombre');
   if (!document.getElementById('reservaActiva')?.checked) return fail('La promo escolar San Juan debe reservarse con fecha y hora.', 'reservaActiva');
   const tipoLabel = { jardin:'Jardin / inicial', primaria:'Primaria', colegio:'Colegio / secundaria' }[tipo] || tipo;
