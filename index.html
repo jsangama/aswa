@@ -10280,10 +10280,15 @@ async function admRenderChat() {
   await esperarFB();
   cont.innerHTML = '<div class="adm-loading">Cargando chats...</div>';
   try {
-    const { collection:col, query:q, orderBy:ob, limit:lm, onSnapshot:os } = window.FB;
+    const { collection:col, query:q, where:wh, orderBy:ob, limit:lm, onSnapshot:os } = window.FB;
     if (window._admChatListUnsub) window._admChatListUnsub();
-    window._admChatListUnsub = os(q(col(db, 'chats'), ob('actualizado_en', 'desc'), lm(50)), snap => {
-      const chats = snap.docs.map(x => ({ id:x.id, ...x.data() })).filter(c => c.businessId === BUSINESS_ID);
+    window._admChatListUnsub = os(q(
+      col(db, 'chats'),
+      wh('businessId', '==', BUSINESS_ID),
+      ob('actualizado_en', 'desc'),
+      lm(50)
+    ), snap => {
+      const chats = snap.docs.map(x => ({ id:x.id, ...x.data() }));
       window._admChats = chats;
       document.getElementById('badgeChat').textContent = chats.length || '0';
       cont.innerHTML = chats.length ? chats.map(ch => {
