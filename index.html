@@ -12257,11 +12257,30 @@ async function pwaCopiarEnlace() {
 async function pwaPrepararInstalador() {
   if (!('serviceWorker' in navigator)) return false;
   try {
-    registrarSW();
+    await pwaLimpiarSWLegacy();
+    await registrarSW();
     await navigator.serviceWorker.ready;
     return true;
   } catch (err) {
     console.warn('pwaPrepararInstalador:', err);
+    return false;
+  }
+}
+
+async function pwaLimpiarSWLegacy() {
+  if (!('serviceWorker' in navigator)) return false;
+  try {
+    const regs = await navigator.serviceWorker.getRegistrations();
+    const legacyRegs = regs.filter(reg => {
+      const script = reg.active?.scriptURL || reg.installing?.scriptURL || reg.waiting?.scriptURL || '';
+      return script && !script.endsWith('/sw.js');
+    });
+    if (!legacyRegs.length) return false;
+    await Promise.all(legacyRegs.map(reg => reg.unregister()));
+    sessionStorage.setItem('pwa_legacy_sw_cleaned', '1');
+    return true;
+  } catch (err) {
+    console.warn('pwaLimpiarSWLegacy:', err);
     return false;
   }
 }
@@ -15655,7 +15674,7 @@ self.addEventListener('message', e => {
 });
 `;
 
-  navigator.serviceWorker.register('./sw.js', { scope: './' })
+  return pwaLimpiarSWLegacy().then(() => navigator.serviceWorker.register('./sw.js', { scope: './' }))
     .then(reg => {
       console.log('[SW] Registrado:', reg.scope);
 
