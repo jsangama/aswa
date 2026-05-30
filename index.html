@@ -10262,6 +10262,18 @@ async function _verificarPasswordHash(hashGuardado, password, username = '') {
   return { ok: hashGuardado === hashLegacy, legacy: hashGuardado === hashLegacy, hash: hashSalted };
 }
 
+function aswaLoginErrorMessage(err, fallback = 'No se pudo verificar el acceso.') {
+  const code = String(err?.code || err?.message || err || '').toLowerCase();
+  if (code.includes('permission-denied')) {
+    return 'Firebase bloqueo app_users. Entra con usuario Firebase Auth con claims o configura OPERATOR_AUTH_EMAILS para este usuario.';
+  }
+  if (code.includes('failed-precondition') || code.includes('requires an index')) {
+    return 'Firebase necesita un indice para esta consulta. Revisa la consola de Firebase.';
+  }
+  if (window.aswaAuthStartupError) return window.aswaAuthStartupError;
+  return fallback;
+}
+
 function businessIdCanonical() {
   return String(BUSINESS_ID || 'aswa001').trim().toLowerCase();
 }
@@ -10469,7 +10481,7 @@ async function admIniciarSesion() {
 
   } catch(err) {
     console.error('admIniciarSesion:', err);
-    _admMostrarError('❌ Error de conexión. Verifica tu internet.');
+    _admMostrarError(aswaLoginErrorMessage(err, 'Error de conexion. Verifica Firebase Auth y tus reglas.'));
     btn.disabled = false; btn.textContent = '🔓 INGRESAR';
   }
 }
@@ -10667,7 +10679,7 @@ async function dlvIniciarSesion() {
 
   } catch(err) {
     console.error('dlvIniciarSesion:', err);
-    _dlvMostrarError('❌ Error de conexión.');
+    _dlvMostrarError(aswaLoginErrorMessage(err, 'Error de conexion. Verifica Firebase Auth y tus reglas.'));
     btn.disabled = false; btn.textContent = '🔓 INGRESAR';
   }
 }
@@ -11261,7 +11273,7 @@ async function ownerLogin() {
     ownerMostrarDash();
   } catch (err) {
     console.error('ownerLogin:', err);
-    ownerError('No se pudo verificar. Revisa Firebase o internet.');
+    ownerError(aswaLoginErrorMessage(err, 'No se pudo verificar. Revisa Firebase Auth y tus reglas.'));
   }
 }
 
