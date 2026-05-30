@@ -4,6 +4,9 @@
     BUSINESS_NAME: 'La Rica Chicha',
     ALLOW_LEGACY_LOCAL_ACCESS: false,
     STORAGE_MODE: 'whatsapp_manual',
+    OPERATOR_AUTH_EMAILS: {
+      admin: 'josue.sangama@gmail.com',
+    },
     HORARIO: {
       activo: true,
       inicio: '07:00',
