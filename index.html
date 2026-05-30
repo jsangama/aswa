@@ -10273,9 +10273,28 @@ function businessIdVariants() {
   return [...new Set([id, lower, title].filter(Boolean))];
 }
 
-function businessIdWhere(whereFn, field = 'business_id') {
-  const ids = businessIdVariants();
-  return ids.length > 1 ? whereFn(field, 'in', ids) : whereFn(field, '==', ids[0]);
+async function getDocsByBusinessIdVariants({ collectionRef, queryFn, whereFn, getDocsFn, extraConstraints = [], field = 'business_id' }) {
+  let emptySnap = null;
+  let lastError = null;
+
+  for (const businessId of businessIdVariants()) {
+    try {
+      const snap = await getDocsFn(queryFn(
+        collectionRef,
+        whereFn(field, '==', businessId),
+        ...extraConstraints
+      ));
+
+      if (!snap.empty) return snap;
+      emptySnap = snap;
+    } catch (err) {
+      lastError = err;
+      console.warn('No se pudo consultar usuarios para business_id:', businessId, err);
+    }
+  }
+
+  if (lastError && !emptySnap) throw lastError;
+  return emptySnap;
 }
 
 function admTogglePass(inputId, btn) {
@@ -10388,12 +10407,13 @@ async function admIniciarSesion() {
     const { collection:col, query:q, where:wh, getDocs:gd, doc:d, updateDoc:ud, serverTimestamp:ts } = window.FB;
 
     // Buscar usuario en Firestore
-    const snap = await gd(q(
-      col(db, 'app_users'),
-      businessIdWhere(wh),
-      wh('rol', '==', 'admin'),
-      wh('username', '==', username)
-    ));
+    const snap = await getDocsByBusinessIdVariants({
+      collectionRef: col(db, 'app_users'),
+      queryFn: q,
+      whereFn: wh,
+      getDocsFn: gd,
+      extraConstraints: [wh('rol', '==', 'admin'), wh('username', '==', username)]
+    });
 
     if (snap.empty) {
       _admIntentos++;
@@ -10593,12 +10613,13 @@ async function dlvIniciarSesion() {
   try {
     const { collection:col, query:q, where:wh, getDocs:gd, doc:d, updateDoc:ud, serverTimestamp:ts } = window.FB;
 
-    const snap = await gd(q(
-      col(db, 'app_users'),
-      businessIdWhere(wh),
-      wh('rol', '==', 'delivery'),
-      wh('username', '==', username)
-    ));
+    const snap = await getDocsByBusinessIdVariants({
+      collectionRef: col(db, 'app_users'),
+      queryFn: q,
+      whereFn: wh,
+      getDocsFn: gd,
+      extraConstraints: [wh('rol', '==', 'delivery'), wh('username', '==', username)]
+    });
 
     if (snap.empty) {
       _dlvIntentos++;
@@ -10697,7 +10718,12 @@ async function admAbrirGestionUsuarios() {
   const cont = document.getElementById('admContenidoClientes');
   try {
     const { collection:col, query:q, where:wh, getDocs:gd } = window.FB;
-    const snap = await gd(q(col(db,'app_users'), businessIdWhere(wh)));
+    const snap = await getDocsByBusinessIdVariants({
+      collectionRef: col(db,'app_users'),
+      queryFn: q,
+      whereFn: wh,
+      getDocsFn: gd
+    });
     const usuarios = snap.docs.map(d => ({ id:d.id, ...d.data() }));
 
     const rolColor = { owner:'#e9d5ff', admin:'#c4b5fd', delivery:'#93c5fd' };
@@ -10771,7 +10797,13 @@ async function admCrearUsuario() {
     const { collection:col, addDoc:ad, query:q, where:wh, getDocs:gd, serverTimestamp:ts } = window.FB;
 
     // Verificar que el username no exista
-    const existe = await gd(q(col(db,'app_users'), businessIdWhere(wh), wh('username','==',username)));
+    const existe = await getDocsByBusinessIdVariants({
+      collectionRef: col(db,'app_users'),
+      queryFn: q,
+      whereFn: wh,
+      getDocsFn: gd,
+      extraConstraints: [wh('username','==',username)]
+    });
     if (!existe.empty) return tst('❌ Ese nombre de usuario ya existe', 3000);
 
     await ad(col(db,'app_users'), {
@@ -11199,7 +11231,13 @@ async function ownerLogin() {
   try {
     await esperarFB();
     const { collection:col, query:q, where:wh, getDocs:gd, doc:d, updateDoc:ud, serverTimestamp:ts } = window.FB;
-    const snap = await gd(q(col(db,'app_users'), businessIdWhere(wh), wh('username','==',username)));
+    const snap = await getDocsByBusinessIdVariants({
+      collectionRef: col(db,'app_users'),
+      queryFn: q,
+      whereFn: wh,
+      getDocsFn: gd,
+      extraConstraints: [wh('username','==',username)]
+    });
     if (snap.empty) return ownerError('Usuario o contrasena incorrectos');
     const userDoc = snap.docs[0];
     const user = userDoc.data();
@@ -11386,7 +11424,13 @@ async function ownerCargar() {
     const [pedSnap, cliSnap, userSnap, pushSnap, refSnap] = await Promise.all([
       gd(q(col(db,'pedidos'), wh('businessId','==',BUSINESS_ID), lim(200))),
       gd(q(col(db,'clientes'), wh('businessId','==',BUSINESS_ID), lim(200))),
-      gd(q(col(db,'app_users'), businessIdWhere(wh), lim(80))),
+      getDocsByBusinessIdVariants({
+        collectionRef: col(db,'app_users'),
+        queryFn: q,
+        whereFn: wh,
+        getDocsFn: gd,
+        extraConstraints: [lim(80)]
+      }),
       gd(q(col(db,'push_queue'), wh('businessId','==',BUSINESS_ID), lim(80))).catch(() => ({ docs:[] })),
       gd(q(col(db,'referral_events'), wh('businessId','==',BUSINESS_ID), lim(80))).catch(() => ({ docs:[] }))
     ]);
@@ -13808,12 +13852,16 @@ async function loginDeliveryUser() {
   
   try {
     const usersRef = window.FB.collection(db, 'app_users');
-    const q = window.FB.query(usersRef, 
-      window.FB.where('username', '==', username),
-      window.FB.where('rol', '==', 'delivery'),
-      businessIdWhere(window.FB.where)
-    );
-    const snapshot = await window.FB.getDocs(q);
+    const snapshot = await getDocsByBusinessIdVariants({
+      collectionRef: usersRef,
+      queryFn: window.FB.query,
+      whereFn: window.FB.where,
+      getDocsFn: window.FB.getDocs,
+      extraConstraints: [
+        window.FB.where('username', '==', username),
+        window.FB.where('rol', '==', 'delivery')
+      ]
+    });
     
     if (snapshot.empty) {
       errorDiv.textContent = 'Usuario no encontrado';
@@ -14482,12 +14530,13 @@ async function dlvLoginConCredenciales() {
     const { collection: col, query: q, where: wh, getDocs: gd } = window.FB;
 
     // Buscar por DNI en app_users
-    const snap = await gd(q(
-      col(db, 'app_users'),
-      businessIdWhere(wh),
-      wh('rol', '==', 'delivery'),
-      wh('dni', '==', dni)
-    ));
+    const snap = await getDocsByBusinessIdVariants({
+      collectionRef: col(db, 'app_users'),
+      queryFn: q,
+      whereFn: wh,
+      getDocsFn: gd,
+      extraConstraints: [wh('rol', '==', 'delivery'), wh('dni', '==', dni)]
+    });
 
     if (snap.empty) {
       errEl.textContent = '❌ DNI no registrado. Contacta al administrador.';
@@ -14634,12 +14683,13 @@ async function dlvLoginBiometrico() {
     // Biometría OK → buscar usuario y entrar
     await esperarFB();
     const { collection: col, query: q, where: wh, getDocs: gd } = window.FB;
-    const snap = await gd(q(
-      col(db, 'app_users'),
-      businessIdWhere(wh),
-      wh('rol', '==', 'delivery'),
-      wh('dni', '==', dni)
-    ));
+    const snap = await getDocsByBusinessIdVariants({
+      collectionRef: col(db, 'app_users'),
+      queryFn: q,
+      whereFn: wh,
+      getDocsFn: gd,
+      extraConstraints: [wh('rol', '==', 'delivery'), wh('dni', '==', dni)]
+    });
 
     if (snap.empty) throw new Error('user-not-found');
 
@@ -14754,11 +14804,13 @@ async function admCargarTracking() {
     const { collection:col, query:q, where:wh, getDocs:gd, orderBy:ob, limit:lm } = window.FB;
 
     // Deliveristas con GPS activo (actualizados en últimas 2 horas)
-    const snapUsers = await gd(q(
-      col(db, 'app_users'),
-      businessIdWhere(wh),
-      wh('rol', '==', 'delivery')
-    ));
+    const snapUsers = await getDocsByBusinessIdVariants({
+      collectionRef: col(db, 'app_users'),
+      queryFn: q,
+      whereFn: wh,
+      getDocsFn: gd,
+      extraConstraints: [wh('rol', '==', 'delivery')]
+    });
 
     const ahora = Date.now();
     let html = '';
