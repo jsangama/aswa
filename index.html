@@ -12815,7 +12815,7 @@ function _chatTieneRespuestaDespues(clienteMsgId) {
 }
 
 function _chatProgramarRespuestaFallback(texto, clienteMsgId) {
-  const espera = window.ASWA_CONFIG?.AI_SUPPORT_BACKEND_ENABLED ? 6500 : 700;
+  const espera = 350;
   setTimeout(() => {
     if (!_chatId) return;
     if (clienteMsgId && _chatTieneRespuestaDespues(clienteMsgId)) return;
@@ -12839,7 +12839,8 @@ async function enviarMensajeChat() {
     const msgRef = await ad(col(db, 'chats', _chatId, 'mensajes'), {
       cliente_uid: window.currentUser?.uid || null,
       de:'cliente', texto, nombre:_chatNombre, telefono:_chatTelefono,
-      fecha:ts(), leido_cliente:true, leido_negocio:false
+      fecha:ts(), leido_cliente:true, leido_negocio:false,
+      ai_omit:true
     });
     await setDoc(d(db, 'chats', _chatId), {
       businessId:BUSINESS_ID, cliente_uid: window.currentUser?.uid || null, telefono:_chatTelefono, nombre:_chatNombre,
