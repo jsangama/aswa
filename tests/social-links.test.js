@@ -35,4 +35,41 @@ describe('official social links', () => {
       expect(window.document.querySelector(`#aswaSocialShareMenu a[href="${url}"]`)).toBeTruthy();
     });
   });
+
+  test('uses real SVG logos in the floating social menu', () => {
+    const window = setupSocialDom();
+
+    window.aswaEnsureOfficialSocialLinks();
+
+    [
+      'facebook',
+      'instagram',
+      'whatsapp',
+      'tiktok',
+      'x',
+      'youtube',
+      'maps',
+      'linkedin',
+      'pinterest',
+      'bluesky',
+      'reddit'
+    ].forEach(key => {
+      const link = window.document.querySelector(`#aswaSocialShareMenu a[data-aswa-social="${key}"]`);
+      expect(link).toBeTruthy();
+      expect(link.querySelector('svg')).toBeTruthy();
+      expect(link.textContent.trim()).toBe('');
+    });
+  });
+
+  test('uses SVG logos for the added social cards', () => {
+    const window = setupSocialDom();
+
+    window.aswaEnsureOfficialSocialLinks();
+
+    ['linkedin', 'pinterest', 'bluesky', 'reddit'].forEach(key => {
+      const card = window.document.querySelector(`#socialGrid a[data-aswa-social="${key}"]`);
+      expect(card).toBeTruthy();
+      expect(card.querySelector('.sico svg')).toBeTruthy();
+    });
+  });
 });

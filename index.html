@@ -2057,6 +2057,11 @@
       display: flex; align-items: center; justify-content: center;
       font-size: 18px; flex-shrink: 0;
     }
+    .social-btn .sico svg {
+      width: 20px;
+      height: 20px;
+      display: block;
+    }
     .social-btn .sname { font-size: 12px; font-weight: 700; }
     .social-btn .ssub  { font-size: 10px; color: var(--mut); margin-top: 1px; }
 
@@ -22534,10 +22539,8 @@ function secRatingOmitir() {
     left: 14px;
     bottom: 92px;
     z-index: 9980;
-    display: flex;
-    flex-direction: column-reverse;
-    align-items: flex-start;
-    gap: 10px;
+    width: 52px;
+    height: 52px;
     pointer-events: none;
   }
   .aswa-social-main-btn,
@@ -22566,16 +22569,37 @@ function secRatingOmitir() {
     list-style: none;
     margin: 0;
     padding: 0;
+    position: absolute;
+    left: 0;
+    bottom: 62px;
     display: grid;
     gap: 8px;
+    max-height: min(520px, calc(100vh - 170px));
+    overflow-y: auto;
+    overflow-x: visible;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(250,204,21,.65) rgba(255,255,255,.08);
+    pointer-events: auto;
+    overscroll-behavior: contain;
+    clip-path: inset(0 -120px 0 0);
+    opacity: 1;
+    transform: translateY(0);
+    transition: max-height .25s ease, opacity .2s ease, transform .2s ease;
+  }
+  .aswa-social-menu-list::-webkit-scrollbar {
+    width: 4px;
+  }
+  .aswa-social-menu-list::-webkit-scrollbar-thumb {
+    background: rgba(250,204,21,.65);
+    border-radius: 999px;
+  }
+  .aswa-social-share-container:not(.open) .aswa-social-menu-list {
     max-height: 0;
     overflow: hidden;
     opacity: 0;
     transform: translateY(12px);
-    transition: max-height .25s ease, opacity .2s ease, transform .2s ease;
   }
   .aswa-social-share-container.open .aswa-social-menu-list {
-    max-height: 520px;
     opacity: 1;
     transform: translateY(0);
   }
@@ -22591,6 +22615,16 @@ function secRatingOmitir() {
     font-weight: 900;
     border: 1px solid rgba(255,255,255,.16);
     position: relative;
+  }
+  .aswa-social-link svg {
+    width: 21px;
+    height: 21px;
+    display: block;
+  }
+  .aswa-social-link.maps svg,
+  .aswa-social-link.reddit svg {
+    width: 23px;
+    height: 23px;
   }
   .aswa-social-link::after {
     content: attr(aria-label);
@@ -22654,13 +22688,13 @@ function secRatingOmitir() {
     +
   </button>
   <ul class="aswa-social-menu-list" role="menu" aria-label="Redes sociales de ASWA">
-    <li><a class="aswa-social-link facebook" href="https://www.facebook.com/profile.php?id=61556816075939" target="_blank" rel="noopener" aria-label="Facebook">FB</a></li>
-    <li><a class="aswa-social-link instagram" href="https://www.instagram.com/aswa.laricachicha" target="_blank" rel="noopener" aria-label="Instagram">IG</a></li>
-    <li><a class="aswa-social-link whatsapp" href="#" onclick="aswaSocialWhatsApp(event)" aria-label="WhatsApp">WA</a></li>
-    <li><a class="aswa-social-link tiktok" href="https://www.tiktok.com/@aswalaricachicha" target="_blank" rel="noopener" aria-label="TikTok">TT</a></li>
-    <li><a class="aswa-social-link x" href="https://x.com/AswaRica_Chicha" target="_blank" rel="noopener" aria-label="X">X</a></li>
-    <li><a class="aswa-social-link youtube" href="https://www.youtube.com/@AswaLaricachicha" target="_blank" rel="noopener" aria-label="YouTube">YT</a></li>
-    <li><a class="aswa-social-link maps" href="https://maps.app.goo.gl/wYw9wLArDkZt8F7b7" target="_blank" rel="noopener" aria-label="Google Maps">MAP</a></li>
+    <li><a class="aswa-social-link facebook" href="https://www.facebook.com/profile.php?id=61556816075939" target="_blank" rel="noopener" aria-label="Facebook" data-aswa-social="facebook">FB</a></li>
+    <li><a class="aswa-social-link instagram" href="https://www.instagram.com/aswa.laricachicha" target="_blank" rel="noopener" aria-label="Instagram" data-aswa-social="instagram">IG</a></li>
+    <li><a class="aswa-social-link whatsapp" href="#" onclick="aswaSocialWhatsApp(event)" aria-label="WhatsApp" data-aswa-social="whatsapp">WA</a></li>
+    <li><a class="aswa-social-link tiktok" href="https://www.tiktok.com/@aswalaricachicha" target="_blank" rel="noopener" aria-label="TikTok" data-aswa-social="tiktok">TT</a></li>
+    <li><a class="aswa-social-link x" href="https://x.com/AswaRica_Chicha" target="_blank" rel="noopener" aria-label="X" data-aswa-social="x">X</a></li>
+    <li><a class="aswa-social-link youtube" href="https://www.youtube.com/@AswaLaricachicha" target="_blank" rel="noopener" aria-label="YouTube" data-aswa-social="youtube">YT</a></li>
+    <li><a class="aswa-social-link maps" href="https://maps.app.goo.gl/wYw9wLArDkZt8F7b7" target="_blank" rel="noopener" aria-label="Google Maps" data-aswa-social="maps">MAP</a></li>
   </ul>
 </div>
 
@@ -22697,6 +22731,39 @@ document.addEventListener('click', function(event) {
 document.addEventListener('keydown', function(event) {
   if (event.key === 'Escape') cerrarSocialMenu();
 });
+
+const ASWA_SOCIAL_LOGOS = {
+  facebook: '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path fill="currentColor" d="M14.1 8.3V6.5c0-.9.6-1.1 1-1.1h2.6V1.3L14.1 1c-4 0-4.9 2.4-4.9 4.8v2.5H6v4.4h3.2V23h4.9V12.7h3.5l.5-4.4h-4Z"/></svg>',
+  instagram: '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path fill="currentColor" d="M7.8 2h8.4C19.4 2 22 4.6 22 7.8v8.4c0 3.2-2.6 5.8-5.8 5.8H7.8C4.6 22 2 19.4 2 16.2V7.8C2 4.6 4.6 2 7.8 2Zm-.2 2A3.6 3.6 0 0 0 4 7.6v8.8A3.6 3.6 0 0 0 7.6 20h8.8a3.6 3.6 0 0 0 3.6-3.6V7.6A3.6 3.6 0 0 0 16.4 4H7.6Zm9.7 1.6a1.3 1.3 0 1 1 0 2.6 1.3 1.3 0 0 1 0-2.6ZM12 7.2a4.8 4.8 0 1 1 0 9.6 4.8 4.8 0 0 1 0-9.6Zm0 2a2.8 2.8 0 1 0 0 5.6 2.8 2.8 0 0 0 0-5.6Z"/></svg>',
+  whatsapp: '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path fill="currentColor" d="M12 2a9.8 9.8 0 0 0-8.4 14.9L2.5 22l5.2-1.1A9.8 9.8 0 1 0 12 2Zm0 1.9a7.9 7.9 0 0 1 6.7 12.1A7.9 7.9 0 0 1 8.1 19l-.4-.2-2.7.6.6-2.7-.3-.4A7.9 7.9 0 0 1 12 3.9Zm-3.4 4c-.2 0-.5.1-.8.4-.2.3-.9.9-.9 2.1s.9 2.4 1 2.6c.1.2 1.8 2.9 4.5 4 .6.3 1 .4 1.4.5.6.2 1.1.2 1.5.1.5-.1 1.5-.6 1.7-1.2.2-.6.2-1.1.2-1.2-.1-.1-.2-.2-.5-.4l-1.7-.8c-.2-.1-.4-.1-.6.2l-.8 1c-.2.2-.3.2-.6.1-.3-.1-1.1-.4-2-1.3-.8-.7-1.3-1.5-1.5-1.8-.1-.3 0-.4.1-.6l.4-.5.2-.4v-.5l-.8-1.8c-.2-.5-.4-.5-.6-.5h-.2Z"/></svg>',
+  tiktok: '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path fill="currentColor" d="M16 2c.3 2.7 1.8 4.3 4.4 4.5v4.1a7.6 7.6 0 0 1-4.3-1.3v6.2A6.5 6.5 0 1 1 10.5 9v4.3a2.3 2.3 0 1 0 1.6 2.2V2H16Z"/></svg>',
+  x: '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path fill="currentColor" d="M17.6 3h3.1l-6.8 7.8 8 10.2h-6.3l-4.9-6.3L5.2 21H2.1l7.2-8.3L1.6 3h6.5l4.4 5.7L17.6 3Zm-1.1 16.2h1.7L7.2 4.7H5.3l11.2 14.5Z"/></svg>',
+  youtube: '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path fill="currentColor" d="M23.5 6.2a3 3 0 0 0-2.1-2.1C19.5 3.6 12 3.6 12 3.6s-7.5 0-9.4.5A3 3 0 0 0 .5 6.2C0 8.1 0 12 0 12s0 3.9.5 5.8a3 3 0 0 0 2.1 2.1c1.9.5 9.4.5 9.4.5s7.5 0 9.4-.5a3 3 0 0 0 2.1-2.1c.5-1.9.5-5.8.5-5.8s0-3.9-.5-5.8ZM9.6 15.6V8.4L15.8 12l-6.2 3.6Z"/></svg>',
+  maps: '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path fill="currentColor" d="M12 2a7.5 7.5 0 0 0-7.5 7.5c0 5.6 7.5 12.5 7.5 12.5s7.5-6.9 7.5-12.5A7.5 7.5 0 0 0 12 2Zm0 10.2a2.7 2.7 0 1 1 0-5.4 2.7 2.7 0 0 1 0 5.4Z"/></svg>',
+  linkedin: '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path fill="currentColor" d="M4.98 3.5a2.5 2.5 0 1 1 0 5.01 2.5 2.5 0 0 1 0-5.01ZM3 9.8h4v11.7H3V9.8Zm6.3 0h3.8v1.6h.1c.5-1 1.8-2 3.7-2 4 0 4.7 2.6 4.7 6v6.1h-4v-5.4c0-1.3 0-3-1.8-3s-2.1 1.4-2.1 2.9v5.5h-4V9.8Z"/></svg>',
+  pinterest: '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path fill="currentColor" d="M12.1 2a10 10 0 0 0-3.7 19.3c-.1-.8-.1-2.1 0-3l1.2-5.1s-.3-.6-.3-1.5c0-1.4.8-2.5 1.8-2.5.9 0 1.3.6 1.3 1.4 0 .9-.6 2.2-.9 3.4-.2 1 .5 1.8 1.5 1.8 1.8 0 3.2-1.9 3.2-4.7 0-2.4-1.8-4.1-4.3-4.1-2.9 0-4.6 2.2-4.6 4.4 0 .9.3 1.8.8 2.3.1.1.1.2.1.4l-.3 1.2c-.1.2-.2.3-.5.2-1.4-.7-2.3-2.7-2.3-4.3 0-3.5 2.6-6.8 7.4-6.8 3.9 0 6.9 2.8 6.9 6.5 0 3.9-2.4 7-5.8 7-1.1 0-2.2-.6-2.6-1.3l-.7 2.7c-.2.8-.8 1.8-1.2 2.5a10 10 0 1 0 3-19.7Z"/></svg>',
+  bluesky: '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path fill="currentColor" d="M12 11.3c-1-2-3.8-5.8-6.4-7.6-2.5-1.7-3.4-1.4-4-.9-.7.6-.8 2.7-.3 4.2.5 1.4 2.2 5 5 5.5-2.4.4-4.5 1.9-1.7 5 3 3.1 5.7.7 6.2-.7l.2-.6.2.6c.5 1.4 3.2 3.8 6.2.7 2.8-3.1.7-4.6-1.7-5 2.8-.5 4.5-4.1 5-5.5.5-1.5.4-3.6-.3-4.2-.6-.5-1.5-.8-4 .9-2.6 1.8-5.4 5.6-6.4 7.6Z"/></svg>',
+  reddit: '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path fill="currentColor" d="M21.7 10.8a2.4 2.4 0 0 0-4-1.8 10.4 10.4 0 0 0-4.8-1.4l.8-3.8 2.6.6a2 2 0 1 0 .3-1.5L13 2.1a.8.8 0 0 0-.9.6l-1 4.9A10.7 10.7 0 0 0 6.4 9a2.4 2.4 0 1 0-2.7 3.9 4.8 4.8 0 0 0 0 .7c0 3.3 3.8 6 8.4 6s8.4-2.7 8.4-6v-.7a2.4 2.4 0 0 0 1.2-2.1ZM8.4 12.5a1.4 1.4 0 1 1 0 2.8 1.4 1.4 0 0 1 0-2.8Zm7.1 4.5c-.9.9-2.2 1.3-3.5 1.3s-2.6-.4-3.5-1.3a.6.6 0 0 1 .8-.9c.7.6 1.6.9 2.7.9s2-.3 2.7-.9a.6.6 0 1 1 .8.9Zm.1-1.7a1.4 1.4 0 1 1 0-2.8 1.4 1.4 0 0 1 0 2.8Z"/></svg>'
+};
+
+function aswaSocialLogo(key, fallback) {
+  return ASWA_SOCIAL_LOGOS[key] || `<span class="aswa-social-glyph">${fallback || ''}</span>`;
+}
+
+function aswaSocialKeyFromLink(anchor) {
+  if (!anchor) return '';
+  if (anchor.dataset && anchor.dataset.aswaSocial) return anchor.dataset.aswaSocial;
+  return Object.keys(ASWA_SOCIAL_LOGOS).find(key => anchor.classList.contains(key)) || '';
+}
+
+function aswaApplySocialLogos() {
+  document.querySelectorAll('#aswaSocialShareMenu a.aswa-social-link').forEach(anchor => {
+    const key = aswaSocialKeyFromLink(anchor);
+    if (!key || anchor.querySelector('svg')) return;
+    anchor.innerHTML = aswaSocialLogo(key, anchor.textContent.trim());
+    anchor.dataset.aswaSocial = key;
+  });
+}
 
 const ASWA_EXTRA_SOCIAL_LINKS = [
   {
@@ -22735,7 +22802,7 @@ const ASWA_EXTRA_SOCIAL_LINKS = [
 
 function aswaOfficialSocialCard(link) {
   return `<a href="${link.href}" target="_blank" rel="noopener" class="social-btn ${link.cls}" data-aswa-social="${link.key}">
-    <div class="sico">${link.icon}</div>
+    <div class="sico">${aswaSocialLogo(link.key, link.icon)}</div>
     <div><div class="sname">${link.name}</div><div class="ssub">${link.sub}</div></div>
   </a>`;
 }
@@ -22757,11 +22824,12 @@ function aswaEnsureOfficialSocialLinks() {
     ASWA_EXTRA_SOCIAL_LINKS.forEach(link => {
       if (!menu.querySelector(`[data-aswa-social="${link.key}"], a[href="${link.href}"]`)) {
         const li = document.createElement('li');
-        li.innerHTML = `<a class="aswa-social-link ${link.key}" href="${link.href}" target="_blank" rel="noopener" aria-label="${link.name}" data-aswa-social="${link.key}">${link.icon}</a>`;
+        li.innerHTML = `<a class="aswa-social-link ${link.key}" href="${link.href}" target="_blank" rel="noopener" aria-label="${link.name}" data-aswa-social="${link.key}">${aswaSocialLogo(link.key, link.icon)}</a>`;
         menu.appendChild(li);
       }
     });
   }
+  aswaApplySocialLogos();
 }
 
 function aswaPatchSocialRenderers() {
