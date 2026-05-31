@@ -180,6 +180,37 @@ describe('support assistant replies', () => {
     expect(confirmation).toEqual({ registrar:true, texto:'Estoy registrando tu pedido en ASWA...' });
   });
 
+  test('treats natural follow-up wording as order confirmation', () => {
+    const api = loadAssistantApi();
+    api.reset();
+    api.setCache([
+      {
+        de: 'negocio',
+        texto: 'Resumen listo: 1 x Chicha ASWA 2L. Total S/ 13.00. Direccion: JR. JIMENES PIMENTEL 521. Cliente: JOSUE SANGAMA PEZO, 950845067. Pago: Efectivo con S/ 20.00; vuelto S/ 7.00. Escribe CONFIRMAR PEDIDO para registrarlo.'
+      }
+    ]);
+    api.dropMemory();
+
+    const confirmation = api.process('pero ya te dije');
+    expect(confirmation).toEqual({ registrar:true, texto:'Estoy registrando tu pedido en ASWA...' });
+  });
+
+  test('answers registered-order follow-up from the last success message', () => {
+    const api = loadAssistantApi();
+    api.reset();
+    api.setCache([
+      {
+        de: 'negocio',
+        texto: 'OK, tu pedido fue registrado. Codigo interno: ABCD1234. Total S/ 13.00. El equipo ASWA lo revisara y el seguimiento aparecera cuando el deliverista lo tome.'
+      }
+    ]);
+
+    const text = api.process('ya lo registraste mi pedido');
+    expect(text).toContain('tu pedido ya fue registrado');
+    expect(text).toContain('ABCD1234');
+    expect(text).not.toContain('Para hacer un pedido');
+  });
+
   test('continues a saved chat order after local memory was lost', () => {
     const api = loadAssistantApi();
     api.reset();

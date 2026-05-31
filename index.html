@@ -12331,6 +12331,36 @@ function _chatEsConfirmacionPedido(t) {
   return /confirmar pedido|confirmado|confirmada|confirmo|si confirmo|sí confirmo|ok confirmo|ok confirmado|listo|de acuerdo|registrar pedido|enviar pedido|ok registra|ok registrar/.test(t);
 }
 
+function _chatEsSeguimientoPedidoChat(t) {
+  return /ya (?:te )?(?:dije|mande|mande|pase|pase|confirme|confirme|lo confirme|lo confirme)|ya (?:lo )?(?:registraste|registraron|registraste mi pedido)|mi pedido|mi compra|se quedo|se quedo|continuar pedido|seguir pedido|retomar pedido/.test(t);
+}
+
+function _chatUltimoPedidoRegistradoDesdeCache() {
+  const mensajes = (typeof _chatMensajesCache !== 'undefined' && Array.isArray(_chatMensajesCache)) ? _chatMensajesCache : [];
+  const texto = [...mensajes]
+    .reverse()
+    .find(m => m?.de === 'negocio' && /OK,\s*tu pedido fue registrado/i.test(m.texto || ''))?.texto || '';
+  if (!texto) return null;
+  const codigo = (texto.match(/Codigo interno:\s*([A-Z0-9]+)/i) || [])[1] || '';
+  const total = (texto.match(/Total\s*S\/\s*([\d.]+)/i) || [])[1] || '';
+  return { codigo, total };
+}
+
+function _chatRespuestaSinPedidoPendiente(t) {
+  const registrado = _chatUltimoPedidoRegistradoDesdeCache();
+  if (registrado) {
+    const partes = ['Si, tu pedido ya fue registrado en ASWA.'];
+    if (registrado.codigo) partes.push(`Codigo interno: ${registrado.codigo}.`);
+    if (registrado.total) partes.push(`Total S/ ${Number(registrado.total).toFixed(2)}.`);
+    partes.push('El seguimiento aparecera cuando el deliverista lo tome.');
+    return partes.join(' ');
+  }
+  if (_chatEsConfirmacionPedido(t) || _chatEsSeguimientoPedidoChat(t)) {
+    return 'No encuentro un resumen pendiente para registrar en este chat. Si ya me diste los datos, escribe nuevamente el producto y lo retomamos rapido. Ejemplo: "quiero 1 galon de 2 litros".';
+  }
+  return '';
+}
+
 function _chatPedidoTotal(draft = _chatPedidoDraft) {
   if (!draft) return 0;
   const subtotal = Object.entries(draft.items || {}).reduce((sum, [id, qty]) => {
@@ -12489,9 +12519,10 @@ function _chatPedidoSiguientePregunta(draft = _chatPedidoDraft) {
 function _chatPedidoProcesarTexto(texto) {
   const t = _chatNormalizar(texto);
   const esConfirmacion = _chatEsConfirmacionPedido(t);
+  const esSeguimiento = _chatEsSeguimientoPedidoChat(t);
   const producto = _chatDetectarProductoPedido(texto);
-  if (!_chatPedidoDraft) _chatPedidoDraft = _chatCargarPedidoDraft() || (esConfirmacion ? _chatReconstruirPedidoDesdeResumen() : null);
-  if (!_chatPedidoDraft && !producto) return '';
+  if (!_chatPedidoDraft) _chatPedidoDraft = _chatCargarPedidoDraft() || ((esConfirmacion || esSeguimiento) ? _chatReconstruirPedidoDesdeResumen() : null);
+  if (!_chatPedidoDraft && !producto) return _chatRespuestaSinPedidoPendiente(t);
   if (!_chatPedidoDraft) _chatPedidoDraft = _chatPedidoNuevoDraft();
   const draft = _chatPedidoDraft;
 
@@ -12500,7 +12531,7 @@ function _chatPedidoProcesarTexto(texto) {
     return 'Listo, cancele el pedido por chat. Puedes empezar otro cuando quieras.';
   }
 
-  if (draft.listoParaConfirmar && esConfirmacion) {
+  if (draft.listoParaConfirmar && (esConfirmacion || esSeguimiento)) {
     _chatGuardarPedidoDraft();
     return { registrar:true, texto:'Estoy registrando tu pedido en ASWA...' };
   }
