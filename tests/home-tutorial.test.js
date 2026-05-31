@@ -39,14 +39,17 @@ describe('home tutorial guide', () => {
     const section = window.document.querySelector('.home-tutorial');
 
     expect(section).toBeTruthy();
-    expect(window.document.getElementById('homeTutTitle').textContent).toBe('Abre la app');
-    expect(window.document.querySelectorAll('.home-tutorial-dot').length).toBe(6);
+    expect(window.document.getElementById('homeTutTitle').textContent).toBe('Entra a ASWA');
+    expect(window.document.querySelectorAll('.home-tutorial-dot').length).toBe(7);
   });
 
-  test('advances steps and shows preparation tab coherently', () => {
+  test('advances steps, jumps by dot, and shows preparation tab coherently', () => {
     const window = setupTutorialDom();
 
     window.tutHomeNext();
+    expect(window.document.getElementById('homeTutTitle').textContent).toBe('Abre la app');
+
+    window.tutHomeSetStep(2);
     expect(window.document.getElementById('homeTutTitle').textContent).toBe('Elige tu chicha');
 
     window.tutHomeSetTab('preparacion');
