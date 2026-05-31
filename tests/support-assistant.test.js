@@ -236,6 +236,8 @@ describe('support assistant replies', () => {
 
   test('exposes chat input unlock helper for recovery', () => {
     const api = loadAssistantApi();
+    expect(api.sourceContains('instalarRescateInputChat')).toBe(true);
+    expect(api.sourceContains('window._chatEarlyInputRescue')).toBe(true);
     expect(api.hasUnlockHelper()).toBe(true);
     expect(api.hasGlobalUnlockHelper()).toBe(true);
     expect(api.hasInputWatchdog()).toBe(true);
