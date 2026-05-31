@@ -26,7 +26,17 @@ const ASWA_APP_KNOWLEDGE = `
 Negocio:
 - ASWA La Rica Chicha vende chicha en Morales, San Martin, Peru.
 - El soporte debe orientar al cliente y escalar a una persona cuando se requiere decision del negocio.
-- Si preguntan por historia, fundacion o cuantos anos tiene ASWA, no hay fecha oficial registrada en la app. No inventes anos; ofrece que el equipo ASWA lo confirme y continua ayudando con pedidos o beneficios.
+
+Historia de ASWA:
+- ASWA La Rica Chicha comenzo en enero del ano 2004 en la region San Martin, en el corazon de la Amazonia peruana.
+- Antes de ser marca, la chicha ya era parte de la vida cotidiana de la familia: se preparaba en casa para acompanar comidas, recibir visitas y compartir reuniones familiares.
+- En sus inicios se elaboraba artesanalmente en baldes y recipientes caseros, y se vendia en pequenas cantidades como ingreso complementario para el hogar.
+- Los primeros anos fueron de aprendizaje: se mejoraron tiempos de coccion, procesos de fermentacion, materias primas, aroma, textura, sabor e higiene.
+- La identidad ASWA nace cuando los clientes empezaron a buscar no solo una bebida, sino un sabor ligado a sus raices, su familia y las costumbres de la Amazonia.
+- "Aswa" viene de una palabra ancestral usada para referirse a la chicha tradicional; "La Rica Chicha" resume la promesa sencilla de la marca.
+- Hoy ASWA representa mas de 20 anos de esfuerzo familiar, madrugadas de trabajo, perseverancia, cultura amazonica y orgullo de San Martin.
+- La vision actual es mantener la tradicion amazonica y mirar al futuro con innovacion, tecnologia y nuevos mercados.
+- La mision es llevar el autentico sabor de la Amazonia peruana a cada hogar, preservando una tradicion de generacion en generacion.
 
 Productos y precios visibles:
 - Chicha ASWA 2L: S/ 9.
