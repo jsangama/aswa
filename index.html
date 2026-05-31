@@ -11014,8 +11014,8 @@ function cerrarChat() {
 const ASWA_SUPPORT_KNOWLEDGE = [
   {
     tema: 'hacer pedido',
-    keywords: ['pedido', 'pedir', 'comprar', 'orden', 'como hago', 'como puedo', 'quiero comprar'],
-    respuesta: 'Para hacer tu pedido: elige la presentacion y cantidad, escribe tu telefono, nombre y direccion, selecciona zona y metodo de pago, revisa el resumen y toca enviar. Si pagas con metodo digital, adjunta o envia tu comprobante.'
+    keywords: ['pedido', 'pedir', 'comprar', 'orden', 'como hago', 'como puedo', 'quiero comprar', 'guiame', 'ayudame', 'ensename'],
+    respuesta: 'Te guio paso a paso: 1) elige tu chicha, por ejemplo 1 botella de 3L, 2) escribe telefono, nombre y direccion con referencia, 3) selecciona tu zona, 4) elige pago, 5) revisa el resumen y envia. Ejemplo: "Quiero 1 chicha 3L para Morales, pago con Yape y mi direccion es...".'
   },
   {
     tema: 'productos y precios',
@@ -11049,8 +11049,13 @@ const ASWA_SUPPORT_KNOWLEDGE = [
   },
   {
     tema: 'referidos y descuentos',
-    keywords: ['referido', 'codigo', 'descuento', 'cupon', 'bono', 'oferta', 'fidelidad'],
-    respuesta: 'Puedes usar codigo referido o cupon si esta disponible. La app calcula los descuentos permitidos en el resumen antes de enviar el pedido. Los bonos y referidos pueden requerir revision del negocio.'
+    keywords: ['referido', 'codigo', 'descuento', 'cupon', 'bono', 'oferta', 'fidelidad', 'ganar', 'beneficio', 'beneficios', 'misiones', 'concurso', 'sugerencia'],
+    respuesta: 'Tambien puedes ganar beneficios: usa codigo referido, cupones si estan activos, misiones por redes, concursos del mes y sugerencias. En referidos, tu amigo puede recibir descuento y tu tambien ganas bono cuando el negocio lo revise. La app muestra lo disponible antes de enviar.'
+  },
+  {
+    tema: 'guia completa',
+    keywords: ['que me recomiendas', 'recomiendame', 'no se', 'primera vez', 'soy nuevo', 'nuevo cliente', 'como funciona'],
+    respuesta: 'Si es tu primera vez, te recomiendo empezar con una presentacion segun tu necesidad: 2L para casa pequena, 3L para compartir y 4L familiar para mas personas. Luego completa tus datos, elige zona y pago. Antes de enviar revisa si tienes cupon, referido o beneficio activo para ahorrar.'
   },
   {
     tema: 'modo prueba',
@@ -11074,7 +11079,7 @@ function _chatRespuestaAutomatica(texto) {
     .map(item => ({ ...item, score: _chatScoreTema(texto, item) }))
     .sort((a, b) => b.score - a.score)[0];
   if (best && best.score > 0) return best.respuesta;
-  return 'Soy el asistente ASWA. Puedo ayudarte con pedidos, productos, precios, pagos, delivery, reservas, regalos, referidos, modo prueba y Nota de Venta. Cuentame que necesitas y, si hace falta, deja tu telefono y detalle para que el equipo ASWA lo revise.';
+  return 'Soy tu guia ASWA en directo. Puedo ensenarte a hacer tu pedido paso a paso, darte ejemplos, recomendar presentacion, explicar pagos, delivery, Nota de Venta y beneficios como cupones, referidos, misiones, concursos y bonos. Escribe, por ejemplo: "quiero hacer mi pedido" o "que beneficios puedo ganar".';
 }
 
 async function _chatResponderAutomatico(texto) {
