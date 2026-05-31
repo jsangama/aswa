@@ -11044,7 +11044,10 @@ function _renderMensajesChat(mensajes) {
   const base = '<div class="chat-msg sistema">Escribenos si necesitas ayuda con tu pedido.</div>';
   cont.innerHTML = base + mensajes.map(m => {
     const cls = m.de === 'negocio' ? 'negocio' : 'cliente';
-    return `<div class="chat-msg ${cls}">${esc(m.texto || '')}<span class="chat-time">${_chatFecha(m.fecha)}</span></div>`;
+    const autor = m.autor === 'ia'
+      ? '<strong style="display:block;color:#86efac;margin-bottom:4px">Asistente ASWA</strong>'
+      : '';
+    return `<div class="chat-msg ${cls}">${autor}${esc(m.texto || '')}<span class="chat-time">${_chatFecha(m.fecha)}</span></div>`;
   }).join('');
   _scrollChatAbajo();
 }
@@ -11127,7 +11130,12 @@ async function admAbrirChat(chatId, nombre, telefono) {
     const msgs = snap.docs.map(x => x.data());
     const box = document.getElementById('admChatMsgs');
     if (!box) return;
-    box.innerHTML = msgs.map(m => `<div class="adm-chat-msg ${m.de === 'negocio' ? 'negocio' : 'cliente'}">${esc(m.texto || '')}<span class="chat-time">${_chatFecha(m.fecha)}</span></div>`).join('');
+    box.innerHTML = msgs.map(m => {
+      const autor = m.autor === 'ia'
+        ? '<strong style="display:block;color:#86efac;margin-bottom:4px">Asistente ASWA</strong>'
+        : '';
+      return `<div class="adm-chat-msg ${m.de === 'negocio' ? 'negocio' : 'cliente'}">${autor}${esc(m.texto || '')}<span class="chat-time">${_chatFecha(m.fecha)}</span></div>`;
+    }).join('');
     box.scrollTop = box.scrollHeight;
   });
   await setDoc(d(db, 'chats', chatId), { no_leidos_negocio:0 }, { merge:true }).catch(()=>{});
