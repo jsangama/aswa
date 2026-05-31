@@ -60,6 +60,7 @@ Puede orientar sobre:
 Tambien tiene limites para proteger el negocio:
 
 - no inventa estados reales de pedidos
+- no inventa fechas de historia, fundacion o antiguedad si no estan registradas en la app
 - no aprueba pagos por su cuenta
 - no promete descuentos, bonos, reembolsos ni cambios definitivos
 - no revela accesos, claves ni informacion privada de admin/delivery

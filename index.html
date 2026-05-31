@@ -11019,8 +11019,13 @@ const ASWA_SUPPORT_KNOWLEDGE = [
   },
   {
     tema: 'productos y precios',
-    keywords: ['precio', 'cuanto', 'producto', '2l', '3l', '4l', 'bidon', 'san juan', 'juane'],
+    keywords: ['precio', 'cuanto cuesta', 'cuanto vale', 'costo', 'producto', '2l', '3l', '4l', 'bidon', 'san juan', 'juane'],
     respuesta: 'Productos principales: Chicha ASWA 2L S/ 9, 3L S/ 13 y 4L S/ 15. En temporada San Juan tambien hay opciones como bidon 20L desde S/ 50, segun si tienes bidon vacio o necesitas envase nuevo.'
+  },
+  {
+    tema: 'historia aswa',
+    keywords: ['historia', 'anos tiene aswa', 'antiguedad', 'cuando inicio', 'cuando empezo', 'fundacion', 'fundado', 'crearon aswa', 'nacio aswa'],
+    respuesta: 'Sobre la historia exacta de ASWA, no tengo una fecha oficial registrada en la app para decir cuantos anos tiene sin inventar. Si quieres, el equipo ASWA puede confirmarlo; mientras tanto puedo ayudarte a hacer tu pedido o contarte los beneficios disponibles.'
   },
   {
     tema: 'zonas y delivery',
@@ -11069,8 +11074,15 @@ const ASWA_SUPPORT_KNOWLEDGE = [
   }
 ];
 
+function _chatNormalizar(texto) {
+  return String(texto || '')
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '');
+}
+
 function _chatScoreTema(texto, item) {
-  const t = String(texto || '').toLowerCase();
+  const t = _chatNormalizar(texto);
   return item.keywords.reduce((score, kw) => score + (t.includes(kw) ? 1 : 0), 0);
 }
 
