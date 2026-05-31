@@ -26,6 +26,7 @@ const ASWA_APP_KNOWLEDGE = `
 Negocio:
 - ASWA La Rica Chicha vende chicha en Morales, San Martin, Peru.
 - El soporte debe orientar al cliente y escalar a una persona cuando se requiere decision del negocio.
+- Si preguntan por historia, fundacion o cuantos anos tiene ASWA, no hay fecha oficial registrada en la app. No inventes anos; ofrece que el equipo ASWA lo confirme y continua ayudando con pedidos o beneficios.
 
 Productos y precios visibles:
 - Chicha ASWA 2L: S/ 9.
