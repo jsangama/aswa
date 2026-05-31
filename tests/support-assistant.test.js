@@ -158,4 +158,26 @@ describe('support assistant replies', () => {
     expect(text).toContain('BBVA');
     expect(text).toContain('Banbif');
   });
+
+  test('clarifies mixed gallon and liter order wording', () => {
+    const api = loadAssistantApi();
+    api.reset();
+
+    const text = api.process('QUIERO EL PEDIDO DE DE 2 GALONES DE 2 LITROS');
+    expect(text).toContain('Para no confundirme');
+    expect(text).toContain('2 botellas de 2L');
+    expect(text).toContain('2 galones');
+    expect(text).toContain('S/ 30');
+  });
+
+  test('turns clear gallon order into an address question', () => {
+    const api = loadAssistantApi();
+    api.reset();
+
+    const text = api.process('quiero hacer pedido de 2 galones');
+    expect(text).toContain('ASWA vende por litros');
+    expect(text).toContain('2 galones');
+    expect(text).toContain('2 botellas familiares de 4L');
+    expect(text).toContain('A que direccion seria el pedido');
+  });
 });

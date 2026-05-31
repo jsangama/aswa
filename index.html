@@ -12243,12 +12243,20 @@ function _chatDetectarProductoPedido(texto) {
   const t = _chatNormalizar(texto);
   if (!/(quiero|deseo|necesito|pedido|pedir|comprar|dame|deme|manda|mandame|llevar)/.test(t)) return null;
   if (!/(chicha|botella|botellas|litro|litros|\bl\b|galon|galones)/.test(t)) return null;
-  if (/\bgalon(?:es)?\b/.test(t)) return null;
+  if (/\bgalon(?:es)?\b/.test(t) && /\b2\s*(?:l|lt|lts|litro|litros)\b/.test(t)) {
+    return { necesitaAclararGalonLitro:true };
+  }
+  if (/\bgalon(?:es)?\b/.test(t)) {
+    if (!/(pedido|pedir|comprar|orden|manda|mandame|enviar|envia|delivery)/.test(t)) return null;
+    const galones = _chatExtraerNumero(t, /(\d+(?:[\.,]\d+)?)\s*galon(?:es)?/) || 1;
+    const litros = galones * 3.785;
+    const qty = Math.max(1, Math.ceil(litros / 4));
+    return { id:'p4l', qty, desdeGalones:{ galones, litros } };
+  }
   const qty = _chatExtraerNumero(t, /(?:quiero|deseo|necesito|dame|deme|manda|mandame|comprar|pedir)?\s*(\d+(?:[\.,]\d+)?)/) || 1;
   let id = '';
   const litros = _chatExtraerNumero(t, /(\d+(?:[\.,]\d+)?)\s*(?:l|lt|lts|litro|litros)\b/);
-  if (/\bgalon(?:es)?\b/.test(t)) id = 'p4l';
-  else if (litros === 2) id = 'p2l';
+  if (litros === 2) id = 'p2l';
   else if (litros === 3) id = 'p3l';
   else if (litros === 4) id = 'p4l';
   if (!id) return { qty: Math.max(1, Math.round(qty)), necesitaPresentacion:true };
@@ -12341,10 +12349,17 @@ function _chatPedidoProcesarTexto(texto) {
   }
 
   if (producto) {
+    if (producto.necesitaAclararGalonLitro) {
+      return 'Para no confundirme: cuando dices "2 galones de 2 litros", quieres 2 botellas de 2L (S/ 18) o quieres el equivalente a 2 galones, aprox. 7.6L (te conviene 2 botellas familiares de 4L por S/ 30)? Responde: 2 botellas de 2L o 2 galones.';
+    }
     if (producto.necesitaPresentacion) return 'Cuantos litros deseas: 2L, 3L o 4L? Por ejemplo: quiero 3 chichas de 4 litros.';
     draft.items = { [producto.id]: producto.qty };
     draft.item = { ...CHAT_ORDER_PRODUCTS[producto.id], qty: producto.qty };
+    draft.galonInfo = producto.desdeGalones || null;
     draft.listoParaConfirmar = false;
+    if (draft.galonInfo && !draft.direccion) {
+      return `ASWA vende por litros, no por galon. Para ${draft.galonInfo.galones} galon${draft.galonInfo.galones === 1 ? '' : 'es'} (${draft.galonInfo.litros.toFixed(1)}L aprox.) te registro ${producto.qty} botella${producto.qty === 1 ? '' : 's'} familiar${producto.qty === 1 ? '' : 'es'} de 4L por S/ ${(_chatPedidoTotal(draft) - Number(draft.delivery || 0)).toFixed(2)}. A que direccion seria el pedido?`;
+    }
   }
 
   const direccion = _chatDetectarZonaDireccion(texto);
