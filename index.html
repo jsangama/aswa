@@ -12782,11 +12782,29 @@ function seleccionarComprobanteChat(input) {
 async function _chatResponderAutomatico(texto) {
   if (!_chatId || !window.FB) return;
   try {
-    const respuesta = await _chatRespuestaConversacional(texto);
+    const respuesta = await _chatRespuestaConversacional(texto) ||
+      'Te sigo atendiendo. Si es sobre tu pedido, escribe el producto o CONFIRMAR PEDIDO y reviso el avance del chat.';
     await _chatEnviarMensajeNegocio(respuesta);
   } catch(err) {
     console.warn('respuesta automatica chat:', err);
+    await _chatEnviarMensajeNegocio('No quiero dejarte sin respuesta. Escribe nuevamente el producto o CONFIRMAR PEDIDO y retomo tu pedido por aqui.').catch(() => {});
   }
+}
+
+function _chatTieneRespuestaDespues(clienteMsgId) {
+  const mensajes = Array.isArray(_chatMensajesCache) ? _chatMensajesCache : [];
+  const idx = mensajes.findIndex(m => m.id === clienteMsgId);
+  if (idx < 0) return false;
+  return mensajes.slice(idx + 1).some(m => m?.de === 'negocio');
+}
+
+function _chatProgramarRespuestaFallback(texto, clienteMsgId) {
+  const espera = window.ASWA_CONFIG?.AI_SUPPORT_BACKEND_ENABLED ? 6500 : 700;
+  setTimeout(() => {
+    if (!_chatId) return;
+    if (clienteMsgId && _chatTieneRespuestaDespues(clienteMsgId)) return;
+    _chatResponderAutomatico(texto);
+  }, espera);
 }
 
 async function enviarMensajeChat() {
@@ -12799,7 +12817,7 @@ async function enviarMensajeChat() {
   if (btn) btn.disabled = true;
   try {
     const { doc:d, collection:col, addDoc:ad, setDoc, serverTimestamp:ts } = window.FB;
-    await ad(col(db, 'chats', _chatId, 'mensajes'), {
+    const msgRef = await ad(col(db, 'chats', _chatId, 'mensajes'), {
       cliente_uid: window.currentUser?.uid || null,
       de:'cliente', texto, nombre:_chatNombre, telefono:_chatTelefono,
       fecha:ts(), leido_cliente:true, leido_negocio:false
@@ -12808,9 +12826,7 @@ async function enviarMensajeChat() {
       businessId:BUSINESS_ID, cliente_uid: window.currentUser?.uid || null, telefono:_chatTelefono, nombre:_chatNombre,
       ultimo_msg:texto, ultimo_de:'cliente', actualizado_en:ts(), no_leidos_negocio:1
     }, { merge:true });
-    if (!window.ASWA_CONFIG?.AI_SUPPORT_BACKEND_ENABLED) {
-      setTimeout(() => _chatResponderAutomatico(texto), 700);
-    }
+    _chatProgramarRespuestaFallback(texto, msgRef.id);
   } catch(err) {
     console.error('enviar chat:', err);
     tst('No se pudo enviar el mensaje', 2500);
