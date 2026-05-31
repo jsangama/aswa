@@ -30,9 +30,12 @@ describe('payment methods layout', () => {
     const document = setupPaymentDom();
     const extraPanel = document.getElementById('pagoBilleterasExtra');
     const extraWallets = Array.from(extraPanel.querySelectorAll('.popt')).map(el => el.id);
+    const html = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
 
     expect(extraPanel.classList.contains('show')).toBe(false);
     expect(extraWallets).toEqual(['pay-BIM', 'pay-Agora', 'pay-Binance']);
     expect(extraPanel.querySelector('.pgrd-crypto-label').textContent).toContain('solo Binance');
+    expect(html).toContain('#pagoPedidoSection #pagoBilleterasExtra.pgrd-top-2');
+    expect(html).toContain('display:none !important');
   });
 });

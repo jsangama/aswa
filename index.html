@@ -1577,14 +1577,14 @@
     .pgrd-top,.pgrd-top-2,.pgrd-bot {
       display:grid; grid-template-columns:repeat(3,1fr); gap:6px; margin-bottom:6px;
     }
-    .pgrd-top-2 {
-      display:none;
+    #pagoPedidoSection #pagoBilleterasExtra.pgrd-top-2 {
+      display:none !important;
       padding:8px;
       border:1px solid rgba(255,255,255,.08);
       border-radius:14px;
       background:rgba(255,255,255,.025);
     }
-    .pgrd-top-2.show { display:grid; }
+    #pagoPedidoSection #pagoBilleterasExtra.pgrd-top-2.show { display:grid !important; }
     .pgrd-label {
       font-size:9px; font-weight:800; color:var(--mut);
       text-transform:uppercase; letter-spacing:.14em;
