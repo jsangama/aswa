@@ -24,13 +24,20 @@ function loadAssistantApi() {
   }
 
   const code = html.slice(start, end);
-  return new Function(`${code}; return {
+  return new Function(`const __aswaStorage = new Map();
+  const localStorage = {
+    setItem: (key, value) => __aswaStorage.set(key, String(value)),
+    getItem: (key) => __aswaStorage.has(key) ? __aswaStorage.get(key) : null,
+    removeItem: (key) => __aswaStorage.delete(key),
+    clear: () => __aswaStorage.clear()
+  };
+  ${code}; return {
     reply: _chatRespuestaAutomatica,
     process: _chatPedidoProcesarTexto,
     attach: () => { _chatPedidoDraft.comprobanteAdjunto = true; return _chatPedidoSiguientePregunta(_chatPedidoDraft); },
     dropMemory: () => { _chatPedidoDraft = null; },
     setCache: (mensajes) => { _chatMensajesCache = mensajes; },
-    reset: () => { _chatPedidoDraft = null; _chatComprobanteData = null; _chatMensajesCache = []; }
+    reset: () => { _chatPedidoDraft = null; _chatComprobanteData = null; _chatMensajesCache = []; localStorage.clear(); }
   };`)();
 }
 
@@ -170,6 +177,22 @@ describe('support assistant replies', () => {
     api.dropMemory();
 
     const confirmation = api.process('CONFIRMO');
+    expect(confirmation).toEqual({ registrar:true, texto:'Estoy registrando tu pedido en ASWA...' });
+  });
+
+  test('continues a saved chat order after local memory was lost', () => {
+    const api = loadAssistantApi();
+    api.reset();
+
+    api.process('quiero 1 galon de 2 litros');
+    api.process('JR. JIMENES PIMENTEL 521 TARAPOTO');
+    api.process('950845067');
+    api.process('JOSUE SANGAMA PEZO');
+    api.process('efectivo');
+    api.process('20');
+    api.dropMemory();
+
+    const confirmation = api.process('CONFIRMADO');
     expect(confirmation).toEqual({ registrar:true, texto:'Estoy registrando tu pedido en ASWA...' });
   });
 
