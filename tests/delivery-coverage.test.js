@@ -45,13 +45,23 @@ describe('home delivery coverage section', () => {
     window.seleccionarZonaInicio('Tarapoto', 4);
 
     const zone = window.document.getElementById('zona');
+    const summary = window.document.getElementById('zonaSelectedText');
     const activeZones = window.document.querySelectorAll(
       '.home-zone-card.active,.home-map-zone.active,.zona-quick-btn.active'
     );
 
     expect(zone.value).toBe('4');
     expect(zone.options[zone.selectedIndex].textContent).toContain('Tarapoto');
+    expect(summary.textContent).toContain('Tarapoto');
     expect(activeZones.length).toBeGreaterThanOrEqual(2);
+  });
+
+  test('does not duplicate the delivery zone cards in the order form', () => {
+    const window = setupCoverageDom();
+
+    expect(window.document.getElementById('zonaQuickGrid')).toBeFalsy();
+    expect(window.document.querySelector('.zona-selected-summary')).toBeTruthy();
+    expect(window.document.querySelectorAll('.home-zone-card')).toHaveLength(5);
   });
 
   test('selects national shipping and keeps agency note available', () => {

@@ -1072,6 +1072,43 @@
     }
     .zona-eta-info.show { display:block; }
     .zona-eta-info strong { color:var(--y); }
+    .zona-selected-summary {
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      border:1px solid rgba(250,204,21,.28);
+      background:rgba(250,204,21,.055);
+      border-radius:14px;
+      padding:11px 12px;
+      margin-bottom:10px;
+    }
+    .zona-selected-label {
+      color:var(--mut);
+      font-size:10px;
+      font-weight:800;
+      letter-spacing:.08em;
+      text-transform:uppercase;
+    }
+    .zona-selected-value {
+      color:var(--txt);
+      font-size:12px;
+      font-weight:900;
+      margin-top:2px;
+    }
+    .zona-change-btn {
+      border:1px solid rgba(250,204,21,.42);
+      background:rgba(250,204,21,.12);
+      color:var(--y);
+      border-radius:999px;
+      padding:8px 10px;
+      font-family:'Poppins',sans-serif;
+      font-size:10px;
+      font-weight:900;
+      cursor:pointer;
+      white-space:nowrap;
+    }
+    .zona-change-btn:active { transform:scale(.98); }
     .home-coverage {
       max-width:430px;
       margin:14px auto 18px;
@@ -3319,7 +3356,7 @@
   </div>
 </section>
 
-<section class="home-coverage" aria-label="Cobertura y costos de entrega">
+<section class="home-coverage" id="homeCoverageSection" aria-label="Cobertura y costos de entrega">
   <div class="home-coverage-head">
     <div>
       <div class="home-coverage-title">Cobertura de entrega ASWA</div>
@@ -3805,24 +3842,12 @@
       </div>
     </div>
     <div class="fld" id="zonaPedidoSection">
-      <label>Zona</label>
-      <div class="zona-quick-grid" id="zonaQuickGrid">
-        <button type="button" class="zona-quick-btn" data-zona-nombre="Morales" data-zona-precio="3" onclick="seleccionarZonaVisual('Morales',3)">
-          <div class="zona-quick-top"><span>Morales</span><span class="zona-quick-price">S/ 3.00</span></div>
-          <div class="zona-quick-sub">Entrega cercana, aprox. 25 min</div>
-        </button>
-        <button type="button" class="zona-quick-btn" data-zona-nombre="Tarapoto" data-zona-precio="4" onclick="seleccionarZonaVisual('Tarapoto',4)">
-          <div class="zona-quick-top"><span>Tarapoto</span><span class="zona-quick-price">S/ 4.00</span></div>
-          <div class="zona-quick-sub">Centro y alrededores, aprox. 35 min</div>
-        </button>
-        <button type="button" class="zona-quick-btn" data-zona-nombre="Banda" data-zona-precio="5" onclick="seleccionarZonaVisual('Banda',5)">
-          <div class="zona-quick-top"><span>Banda de Shilcayo</span><span class="zona-quick-price">S/ 5.00</span></div>
-          <div class="zona-quick-sub">Ruta a La Banda, aprox. 45 min</div>
-        </button>
-        <button type="button" class="zona-quick-btn" data-zona-nombre="Recojo" data-zona-precio="0" onclick="seleccionarZonaVisual('Recojo',0)">
-          <div class="zona-quick-top"><span>Recojo en local</span><span class="zona-quick-price">Gratis</span></div>
-          <div class="zona-quick-sub">Sin delivery, coordinamos el recojo</div>
-        </button>
+      <div class="zona-selected-summary" id="zonaSelectedSummary">
+        <div>
+          <div class="zona-selected-label">Zona de entrega</div>
+          <div class="zona-selected-value" id="zonaSelectedText">Elige tu zona en Cobertura de entrega ASWA</div>
+        </div>
+        <button type="button" class="zona-change-btn" onclick="irACoberturaEntrega()">Cambiar zona</button>
       </div>
       <div class="zona-eta-info" id="zonaEtaInfo"></div>
       <select id="zona" class="inp" style="display:none" onchange="calcTotal(); mostrarNotaNacional(this); actualizarZonaVisual()">
@@ -7472,7 +7497,7 @@ function seleccionarZonaVisual(nombre, precio) {
 
 function seleccionarZonaInicio(nombre, precio) {
   seleccionarZonaVisual(nombre, precio);
-  const section = document.getElementById('zonaPedidoSection');
+  const section = document.getElementById('productosSection');
   if (section) section.scrollIntoView({ behavior:'smooth', block:'center' });
   if (typeof tst === 'function') {
     const label = precio === 0 ? 'Recojo en local' : (precio === 10 ? 'Envio nacional hasta agencia' : `${nombre}: delivery S/ ${Number(precio).toFixed(2)}`);
@@ -7480,10 +7505,19 @@ function seleccionarZonaInicio(nombre, precio) {
   }
 }
 
+function irACoberturaEntrega() {
+  const section = document.getElementById('homeCoverageSection');
+  if (section) {
+    section.scrollIntoView({ behavior:'smooth', block:'center' });
+    section.style.boxShadow = '0 0 0 3px rgba(250,204,21,.18), 0 16px 36px rgba(0,0,0,.24)';
+    setTimeout(() => { section.style.boxShadow = ''; }, 2400);
+  }
+  if (typeof tst === 'function') tst('Elige tu zona en Cobertura de entrega ASWA', 2200);
+}
+
 function actualizarZonaVisual() {
   const sel = document.getElementById('zona');
-  const grid = document.getElementById('zonaQuickGrid');
-  if (!sel || !grid) return;
+  if (!sel) return;
 
   const opt = sel.options[sel.selectedIndex];
   const texto = _zonaNorm(opt?.dataset?.nombre || opt?.textContent || '');
@@ -7499,7 +7533,28 @@ function actualizarZonaVisual() {
     btn.classList.toggle('active', activo);
   });
 
+  actualizarZonaResumen(opt, precio);
   actualizarETAVisual(texto, precio);
+}
+
+function actualizarZonaResumen(opt, precio) {
+  const box = document.getElementById('zonaSelectedSummary');
+  const text = document.getElementById('zonaSelectedText');
+  if (!box || !text) return;
+
+  if (!precio && precio !== '0') {
+    text.textContent = 'Elige tu zona en Cobertura de entrega ASWA';
+    box.classList.remove('active');
+    return;
+  }
+
+  const raw = opt?.textContent || '';
+  const limpio = raw
+    .replace(/^[\s📦]+/, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+  text.textContent = limpio || 'Zona seleccionada';
+  box.classList.add('active');
 }
 
 function actualizarETAVisual(textoZona, precio) {
@@ -8064,16 +8119,14 @@ function marcarCampoPedido(id, msg) {
 }
 
 function marcarZonaPedido(msg) {
-  const grid = document.getElementById('zonaQuickGrid');
-  if (grid) {
-    grid.style.border = '1px solid var(--red)';
-    grid.style.borderRadius = '14px';
-    grid.style.padding = '4px';
-    grid.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  const box = document.getElementById('zonaSelectedSummary') || document.getElementById('homeCoverageSection');
+  if (box) {
+    box.style.borderColor = 'var(--red)';
+    box.style.boxShadow = '0 0 0 3px rgba(239,68,68,.18)';
+    box.scrollIntoView({ behavior: 'smooth', block: 'center' });
     setTimeout(() => {
-      grid.style.border = '';
-      grid.style.borderRadius = '';
-      grid.style.padding = '';
+      box.style.borderColor = '';
+      box.style.boxShadow = '';
     }, 2800);
   }
   tst(msg, 3200);
