@@ -24,7 +24,7 @@ function loadAssistantApi() {
   }
 
   const code = html.slice(start, end);
-  return new Function(`const __aswaStorage = new Map();
+  const api = new Function(`const __aswaStorage = new Map();
   var _chatId = '';
   var window = { FB: null, ASWA_CONFIG: {} };
   const localStorage = {
@@ -43,6 +43,8 @@ function loadAssistantApi() {
     setCache: (mensajes) => { _chatMensajesCache = mensajes; },
     reset: () => { _chatPedidoDraft = null; _chatComprobanteData = null; _chatMensajesCache = []; localStorage.clear(); }
   };`)();
+  api.sourceContains = (needle) => html.includes(needle);
+  return api;
 }
 
 describe('support assistant replies', () => {
@@ -227,6 +229,12 @@ describe('support assistant replies', () => {
   test('exposes chat input unlock helper for recovery', () => {
     const api = loadAssistantApi();
     expect(api.hasUnlockHelper()).toBe(true);
+  });
+
+  test('client chat messages bypass backend and use local reply path', () => {
+    const api = loadAssistantApi();
+    expect(api.sourceContains('ai_omit:true')).toBe(true);
+    expect(api.sourceContains('const espera = 350')).toBe(true);
   });
 
   test('continues a saved chat order after local memory was lost', () => {
