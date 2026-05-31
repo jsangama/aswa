@@ -22808,17 +22808,6 @@ function aswaOfficialSocialCard(link) {
 }
 
 function aswaEnsureOfficialSocialLinks() {
-  const grid = document.getElementById('socialGrid');
-  if (grid) {
-    ASWA_EXTRA_SOCIAL_LINKS.forEach(link => {
-      if (!grid.querySelector(`[data-aswa-social="${link.key}"], a[href="${link.href}"]`)) {
-        const wrap = document.createElement('div');
-        wrap.innerHTML = aswaOfficialSocialCard(link).trim();
-        grid.appendChild(wrap.firstElementChild);
-      }
-    });
-  }
-
   const menu = document.querySelector('#aswaSocialShareMenu .aswa-social-menu-list');
   if (menu) {
     ASWA_EXTRA_SOCIAL_LINKS.forEach(link => {
