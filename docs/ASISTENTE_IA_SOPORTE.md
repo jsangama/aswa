@@ -53,7 +53,7 @@ Puede orientar sobre:
 - zonas de delivery: Morales, Tarapoto, Banda de Shilcayo y recojo en local
 - pagos digitales, efectivo y comprobantes
 - reservas, regalos y pedidos programados
-- nota de venta despues de entrega/confirmacion
+- nota de venta para pedidos reales despues de entrega/confirmacion
 - seguimiento del pedido cuando el delivery lo marque en camino
 - referidos, cupones, misiones, concursos, sugerencias, descuentos y bonos visibles
 - modo prueba separado de pedidos reales
@@ -94,6 +94,10 @@ Tambien puede recordar beneficios:
 - participa en misiones de redes sociales
 - envia sugerencias para optar por premios
 - participa en concursos cuando esten activos
+
+## Nota de Venta
+
+Todo pedido real debe terminar con Nota de Venta. La app no debe generar la venta final apenas se envia el pedido; primero debe entregarse y el cliente debe confirmar la recepcion. Asi se evita mezclar pedidos pendientes con ventas reales.
 
 ## Activar en Firebase
 

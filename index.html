@@ -11014,61 +11014,73 @@ function cerrarChat() {
 const ASWA_SUPPORT_KNOWLEDGE = [
   {
     tema: 'hacer pedido',
+    priority: 1,
     keywords: ['pedido', 'pedir', 'comprar', 'orden', 'como hago', 'como puedo', 'quiero comprar', 'guiame', 'ayudame', 'ensename'],
     respuesta: 'Te guio paso a paso: 1) elige tu chicha, por ejemplo 1 botella de 3L, 2) escribe telefono, nombre y direccion con referencia, 3) selecciona tu zona, 4) elige pago, 5) revisa el resumen y envia. Ejemplo: "Quiero 1 chicha 3L para Morales, pago con Yape y mi direccion es...".'
   },
   {
     tema: 'productos y precios',
+    priority: 2,
     keywords: ['precio', 'cuanto cuesta', 'cuanto vale', 'costo', 'producto', '2l', '3l', '4l', 'bidon', 'san juan', 'juane'],
     respuesta: 'Productos principales: Chicha ASWA 2L S/ 9, 3L S/ 13 y 4L S/ 15. En temporada San Juan tambien hay opciones como bidon 20L desde S/ 50, segun si tienes bidon vacio o necesitas envase nuevo.'
   },
   {
     tema: 'historia aswa',
+    priority: 3,
     keywords: ['historia', 'anos tiene aswa', 'antiguedad', 'cuando inicio', 'cuando empezo', 'fundacion', 'fundado', 'crearon aswa', 'nacio aswa', 'que significa aswa', 'origen'],
     respuesta: 'ASWA La Rica Chicha comenzo en enero de 2004 en San Martin, en el corazon de la Amazonia peruana. Nacio como una preparacion familiar artesanal, hecha en casa y vendida en pequenas cantidades. Con los anos se perfecciono el aroma, sabor, textura e higiene hasta convertirse en una marca con identidad propia. "Aswa" viene de una palabra ancestral usada para referirse a la chicha tradicional. Hoy representa mas de 20 anos de esfuerzo familiar, cultura amazonica y orgullo de San Martin.'
   },
   {
     tema: 'zonas y delivery',
+    priority: 2,
     keywords: ['delivery', 'envio', 'entrega', 'zona', 'direccion', 'llega', 'tarapoto', 'morales', 'banda', 'recojo'],
     respuesta: 'Zonas visibles en la app: Morales S/ 3 aprox. 25 min, Tarapoto S/ 4 aprox. 35 min, Banda de Shilcayo S/ 5 aprox. 45 min y recojo en local gratis. Escribe direccion completa y referencia para evitar demoras.'
   },
   {
     tema: 'pagos',
+    priority: 2,
     keywords: ['pago', 'yape', 'plin', 'efectivo', 'transferencia', 'bim', 'agora', 'binance', 'interbank', 'bbva', 'banbif', 'comprobante', 'voucher'],
     respuesta: 'Aceptamos efectivo al recibir y pagos digitales como Yape, Plin, Agora, BIM, Binance o transferencia bancaria. En pagos digitales debes adjuntar o enviar tu comprobante para validacion.'
   },
   {
     tema: 'reservas y regalos',
+    priority: 3,
     keywords: ['reserva', 'reservar', 'regalo', 'regalar', 'cumpleanos', 'esposa', 'pareja', 'familiar', 'programar'],
     respuesta: 'Puedes reservar una entrega o enviarla como regalo. Reservas y regalos requieren pago anticipado con metodo digital; no aplican con efectivo. Agrega fecha, hora y datos de quien recibe si corresponde.'
   },
   {
     tema: 'nota de venta',
-    keywords: ['nota', 'venta', 'boleta', 'recibo', 'comprobante final', 'confirmar', 'recibi', 'llego'],
-    respuesta: 'La Nota de Venta se genera cuando el pedido llega y confirmas la recepcion en la app. Esto evita registrar como venta real un pedido que todavia no fue entregado.'
+    priority: 8,
+    keywords: ['nota', 'nocta', 'nota de venta', 'nocta de venta', 'venta', 'boleta', 'recibo', 'comprobante final', 'confirmar', 'recibi', 'llego', 'pedidos reales', 'pedido real'],
+    respuesta: 'Si, todo pedido real debe tener Nota de Venta, pero se genera cuando el pedido fue entregado y el cliente confirma la recepcion en la app. Antes de entregar no se marca como venta final, para no mezclar pedidos pendientes con ventas reales.'
   },
   {
     tema: 'seguimiento',
+    priority: 3,
     keywords: ['estado', 'seguimiento', 'track', 'tracking', 'donde esta', 'en camino', 'deliverista', 'repartidor'],
     respuesta: 'Cuando el deliverista marque el pedido en camino, la app te mostrara el seguimiento y podras confirmar al recibir. Si necesitas ayuda, escribe tu telefono y detalle del pedido para que el equipo ASWA lo revise.'
   },
   {
     tema: 'referidos y descuentos',
+    priority: 3,
     keywords: ['referido', 'codigo', 'descuento', 'cupon', 'bono', 'oferta', 'fidelidad', 'ganar', 'beneficio', 'beneficios', 'misiones', 'concurso', 'sugerencia'],
     respuesta: 'Tambien puedes ganar beneficios: usa codigo referido, cupones si estan activos, misiones por redes, concursos del mes y sugerencias. En referidos, tu amigo puede recibir descuento y tu tambien ganas bono cuando el negocio lo revise. La app muestra lo disponible antes de enviar.'
   },
   {
     tema: 'guia completa',
+    priority: 2,
     keywords: ['que me recomiendas', 'recomiendame', 'no se', 'primera vez', 'soy nuevo', 'nuevo cliente', 'como funciona'],
     respuesta: 'Si es tu primera vez, te recomiendo empezar con una presentacion segun tu necesidad: 2L para casa pequena, 3L para compartir y 4L familiar para mas personas. Luego completa tus datos, elige zona y pago. Antes de enviar revisa si tienes cupon, referido o beneficio activo para ahorrar.'
   },
   {
     tema: 'modo prueba',
+    priority: 4,
     keywords: ['prueba', 'test', 'modo prueba', 'pedidos prueba', 'firebase prueba'],
     respuesta: 'El modo prueba usa Firebase separado: pedidos_prueba y clientes_prueba. Sirve para probar el flujo completo sin mezclarlo con pedidos reales.'
   },
   {
     tema: 'humano',
+    priority: 4,
     keywords: ['persona', 'humano', 'asesor', 'admin', 'reclamo', 'problema', 'no responde', 'urgente', 'ayuda'],
     respuesta: 'Puedo orientarte, pero si necesitas atencion humana deja tu telefono, direccion y detalle del problema. El equipo ASWA lo revisara desde el panel de soporte.'
   }
@@ -11083,7 +11095,8 @@ function _chatNormalizar(texto) {
 
 function _chatScoreTema(texto, item) {
   const t = _chatNormalizar(texto);
-  return item.keywords.reduce((score, kw) => score + (t.includes(kw) ? 1 : 0), 0);
+  const matches = item.keywords.reduce((score, kw) => score + (t.includes(kw) ? 1 : 0), 0);
+  return matches > 0 ? matches + (item.priority || 0) : 0;
 }
 
 function _chatRespuestaAutomatica(texto) {
