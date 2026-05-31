@@ -54,6 +54,28 @@ describe('support assistant replies', () => {
     expect(text).not.toContain('centros educativos');
   });
 
+  test('answers a short price question with current product prices', () => {
+    const text = reply('CUANTO ESTA LA CHICHA');
+
+    expect(text).toContain('Chicha ASWA 2L S/ 9');
+    expect(text).toContain('Chicha ASWA 3L S/ 13');
+    expect(text).toContain('Chicha ASWA Familiar 4L S/ 15');
+    expect(text).toContain('Delivery');
+    expect(text).not.toContain('Soy tu guia ASWA');
+    expect(text).not.toContain('Escribe, por ejemplo');
+  });
+
+  test('converts gallon requests into ASWA liter presentations', () => {
+    const text = reply('QUIERO 3 GALONES');
+
+    expect(text).toContain('ASWA vende por litros');
+    expect(text).toContain('3 galones');
+    expect(text).toContain('11.4L');
+    expect(text).toContain('3 botellas familiares de 4L');
+    expect(text).toContain('S/ 45');
+    expect(text).not.toContain('Soy tu guia ASWA');
+  });
+
   test('answers agency delivery specifically instead of a generic first-order guide', () => {
     const text = reply('como funciona el envio a agencia nacional');
 

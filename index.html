@@ -12137,7 +12137,49 @@ function _chatRespuestaDesdeAppVisible(texto) {
   return `En la app encuentro esta informacion relacionada: ${best.line}. Si quieres, tambien puedo guiarte paso a paso para hacer el pedido.`;
 }
 
+function _chatExtraerNumero(textoNormalizado, patron) {
+  const match = textoNormalizado.match(patron);
+  if (!match) return 0;
+  return Number(String(match[1] || '').replace(',', '.')) || 0;
+}
+
+function _chatRespuestaProductoDirecta(texto) {
+  const t = _chatNormalizar(texto);
+  const pidePrecio = /(cuanto|precio|costo|vale|cuesta|esta|estan|sale|salen)/.test(t);
+  const hablaProducto = /(chicha|botella|botellas|litro|litros|\bl\b|galon|galones|presentacion|presentaciones)/.test(t);
+  const quiereComprar = /(quiero|deseo|necesito|deme|dame|pedir|comprar|llevar|manda|mandame)/.test(t);
+
+  if (/\bgalon(?:es)?\b/.test(t)) {
+    const galones = _chatExtraerNumero(t, /(\d+(?:[\.,]\d+)?)\s*galon(?:es)?/) || 1;
+    const litros = galones * 3.785;
+    const botellas4l = Math.max(1, Math.ceil(litros / 4));
+    const totalLitros = botellas4l * 4;
+    const total = botellas4l * 15;
+    return `ASWA vende por litros, no por galon. 1 galon es aprox. 3.8L. Para ${galones} galon${galones === 1 ? '' : 'es'} necesitas aprox. ${litros.toFixed(1)}L; te conviene ${botellas4l} botella${botellas4l === 1 ? '' : 's'} familiar${botellas4l === 1 ? '' : 'es'} de 4L = ${totalLitros}L por S/ ${total}. Tambien tenemos 2L S/ 9 y 3L S/ 13. Delivery: Morales S/ 3, Tarapoto S/ 4, Banda de Shilcayo S/ 5 o recojo gratis.`;
+  }
+
+  const litros = _chatExtraerNumero(t, /(\d+(?:[\.,]\d+)?)\s*(?:l|lt|lts|litro|litros)\b/);
+  if (litros === 2) {
+    return 'Chicha ASWA 2L S/ 9. Es buena para casa pequena o para probar. Para enviar tu pedido agrega nombre, telefono, direccion, zona y metodo de pago.';
+  }
+  if (litros === 3) {
+    return 'Chicha ASWA 3L S/ 13. Es ideal para compartir. Para completar el pedido indica tu nombre, telefono, direccion, zona y metodo de pago.';
+  }
+  if (litros === 4) {
+    return 'Chicha ASWA Familiar 4L S/ 15. Conviene para familia o reunion. Delivery: Morales S/ 3, Tarapoto S/ 4, Banda de Shilcayo S/ 5 o recojo gratis.';
+  }
+
+  if ((pidePrecio && hablaProducto) || (quiereComprar && /(chicha|botella|botellas|presentacion|presentaciones)/.test(t))) {
+    return 'Precios ASWA: Chicha ASWA 2L S/ 9, Chicha ASWA 3L S/ 13 y Chicha ASWA Familiar 4L S/ 15. Te recomiendo 2L para casa pequena, 3L para compartir y 4L para familia o reunion. Delivery: Morales S/ 3, Tarapoto S/ 4, Banda de Shilcayo S/ 5 o recojo gratis.';
+  }
+
+  return '';
+}
+
 function _chatRespuestaAutomatica(texto) {
+  const productoDirecto = _chatRespuestaProductoDirecta(texto);
+  if (productoDirecto) return productoDirecto;
+
   const exact = ASWA_SUPPORT_KNOWLEDGE
     .map(item => ({ ...item, score: _chatScoreTema(texto, item) }))
     .sort((a, b) => b.score - a.score)[0];
