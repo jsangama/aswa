@@ -25,6 +25,8 @@ Responde temas comunes desde la app:
 
 La prioridad es responder primero la consulta especifica del cliente. Por ejemplo, si el mensaje dice "envio a agencia nacional", debe responder sobre agencia/delivery antes que mostrar una guia general de pedido.
 
+Si el cliente pregunta si ya puede responder lo mencionado hasta ahora, debe confirmar que orienta sobre los temas cargados en la app y aclarar sus limites: no inventa estados reales de pedidos, pagos aprobados, stock ni decisiones del negocio.
+
 Cuando actives Functions, configura:
 
 ```js

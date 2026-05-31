@@ -11089,6 +11089,12 @@ const ASWA_SUPPORT_KNOWLEDGE = [
     priority: 4,
     keywords: ['persona', 'humano', 'asesor', 'admin', 'reclamo', 'problema', 'no responde', 'urgente', 'ayuda'],
     respuesta: 'Puedo orientarte, pero si necesitas atencion humana deja tu telefono, direccion y detalle del problema. El equipo ASWA lo revisara desde el panel de soporte.'
+  },
+  {
+    tema: 'capacidades asistente',
+    priority: 9,
+    keywords: ['puedes responder', 'puedes contestar', 'respondes todo', 'responder todo', 'todo lo que te mencione', 'todo lo mencionado', 'hasta ahora', 'que sabes responder', 'que puedes responder'],
+    respuesta: 'Si, puedo responder con coherencia sobre lo trabajado en la app: como hacer pedidos, productos y precios, campana San Juan, centros educativos, pedido minimo, chicha 400 ml, juane, combo, bidon 20L, pagos, delivery, reservas, regalos, beneficios, referidos, concursos, sugerencias, modo prueba, Nota de Venta, seguimiento e historia de ASWA. Si me preguntas por un estado real de pedido, pago aprobado o decision del negocio, necesito el telefono/detalle y lo debe revisar el equipo ASWA.'
   }
 ];
 
@@ -11180,6 +11186,11 @@ const ASWA_APP_KNOWLEDGE_CHUNKS = [
     tema: 'soporte humano',
     terms: ['soporte','ayuda','humano','persona','asesor','admin','reclamo','problema','urgente','no responde'],
     respuesta: 'Puedo orientarte desde la app. Si necesitas revision humana, deja telefono, direccion y detalle del caso para que el equipo ASWA lo revise desde soporte.'
+  },
+  {
+    tema: 'capacidades asistente',
+    terms: ['puedes responder','puedes contestar','respondes todo','responder todo','todo lo que te mencione','todo lo mencionado','hasta ahora','que sabes responder','que puedes responder','capacidad','capacidades'],
+    respuesta: 'Si, puedo responder sobre el contenido trabajado en ASWA: pedidos, productos, precios, campana San Juan para colegios, pedido minimo, productos escolares, pagos, delivery, reservas, regalos, referidos, cupones, concursos, sugerencias, modo prueba, Nota de Venta, seguimiento e historia de ASWA. Mi limite: no debo inventar estados reales de pedidos, pagos aprobados, stock o decisiones del negocio; para eso pido datos y lo revisa el equipo ASWA.'
   }
 ];
 
