@@ -11869,6 +11869,14 @@ async function iniciarChat(telefono, nombre) {
     actualizado_en: ts()
   }, { merge:true }).catch(err => console.warn('chat meta:', err.message));
 
+  const draftRemoto = await _chatCargarPedidoDraftRemoto();
+  if (draftRemoto) {
+    _chatPedidoDraft = draftRemoto;
+    _chatGuardarPedidoDraftLocal(draftRemoto);
+  } else if (!_chatPedidoDraft) {
+    _chatPedidoDraft = _chatCargarPedidoDraft();
+  }
+
   if (_chatUnsub) _chatUnsub();
   _chatUnsub = os(q(col(db, 'chats', _chatId, 'mensajes'), ob('fecha', 'asc'), lm(60)), snap => {
     const mensajes = snap.docs.map(x => ({ id:x.id, ...x.data() }));
@@ -12227,14 +12235,45 @@ function _chatPedidoNuevoDraft() {
 }
 
 function _chatPedidoDraftKey() {
-  return 'aswa_chat_order_draft_' + (_chatId || _chatTelefono || 'local');
+  const chatId = (typeof _chatId !== 'undefined' && _chatId) ? _chatId : '';
+  const telefono = (typeof _chatTelefono !== 'undefined' && _chatTelefono) ? _chatTelefono : '';
+  return 'aswa_chat_order_draft_' + (chatId || telefono || 'local');
+}
+
+function _chatPedidoDraftSeguro(draft = _chatPedidoDraft) {
+  if (!draft) return null;
+  try { return JSON.parse(JSON.stringify(draft)); }
+  catch { return null; }
+}
+
+function _chatGuardarPedidoDraftLocal(draft = _chatPedidoDraft) {
+  try {
+    if (typeof localStorage === 'undefined' || !draft) return;
+    localStorage.setItem(_chatPedidoDraftKey(), JSON.stringify(draft));
+  } catch {}
+}
+
+function _chatGuardarPedidoDraftRemoto(draft = _chatPedidoDraft) {
+  try {
+    const chatId = (typeof _chatId !== 'undefined' && _chatId) ? _chatId : '';
+    if (!chatId || !draft || typeof window === 'undefined' || !window.FB || !window.db) return;
+    const data = _chatPedidoDraftSeguro(draft);
+    if (!data) return;
+    const { doc:d, setDoc, serverTimestamp:ts } = window.FB;
+    setDoc(d(db, 'chats', chatId), {
+      pedido_chat_draft: data,
+      pedido_chat_draft_estado: 'activo',
+      pedido_chat_draft_actualizado: ts(),
+      actualizado_en: ts()
+    }, { merge:true }).catch(err => console.warn('draft remoto chat:', err.message || err));
+  } catch(err) {
+    console.warn('draft remoto chat:', err.message || err);
+  }
 }
 
 function _chatGuardarPedidoDraft() {
-  try {
-    if (typeof localStorage === 'undefined' || !_chatPedidoDraft) return;
-    localStorage.setItem(_chatPedidoDraftKey(), JSON.stringify(_chatPedidoDraft));
-  } catch {}
+  _chatGuardarPedidoDraftLocal();
+  _chatGuardarPedidoDraftRemoto();
 }
 
 function _chatCargarPedidoDraft() {
@@ -12247,10 +12286,43 @@ function _chatCargarPedidoDraft() {
   } catch { return null; }
 }
 
+async function _chatCargarPedidoDraftRemoto() {
+  try {
+    const chatId = (typeof _chatId !== 'undefined' && _chatId) ? _chatId : '';
+    if (!chatId || typeof window === 'undefined' || !window.FB || !window.db) return null;
+    const { doc:d, getDoc:gDoc } = window.FB;
+    if (typeof gDoc !== 'function') return null;
+    const snap = await gDoc(d(db, 'chats', chatId));
+    const data = snap.exists() ? snap.data() : null;
+    const draft = data?.pedido_chat_draft;
+    return draft && draft.items ? draft : null;
+  } catch(err) {
+    console.warn('cargar draft remoto chat:', err.message || err);
+    return null;
+  }
+}
+
+function _chatLimpiarPedidoDraftRemoto() {
+  try {
+    const chatId = (typeof _chatId !== 'undefined' && _chatId) ? _chatId : '';
+    if (!chatId || typeof window === 'undefined' || !window.FB || !window.db) return;
+    const { doc:d, setDoc, serverTimestamp:ts } = window.FB;
+    setDoc(d(db, 'chats', chatId), {
+      pedido_chat_draft: null,
+      pedido_chat_draft_estado: 'cerrado',
+      pedido_chat_draft_actualizado: ts(),
+      actualizado_en: ts()
+    }, { merge:true }).catch(err => console.warn('limpiar draft remoto chat:', err.message || err));
+  } catch(err) {
+    console.warn('limpiar draft remoto chat:', err.message || err);
+  }
+}
+
 function _chatLimpiarPedidoDraft() {
   try {
     if (typeof localStorage !== 'undefined') localStorage.removeItem(_chatPedidoDraftKey());
   } catch {}
+  _chatLimpiarPedidoDraftRemoto();
   _chatPedidoDraft = null;
   _chatComprobanteData = null;
 }
