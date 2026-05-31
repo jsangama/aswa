@@ -8,6 +8,27 @@ El chat de soporte sigue en la app. La IA responde desde Firebase Functions, no 
 - Firebase: se despliega la funcion `responderChatConIa`.
 - OpenAI: la clave API se guarda como secreto de Firebase, nunca en GitHub.
 
+## Respuesta automatica sin Blaze
+
+Mientras Firebase Functions no este activo, `index.html` incluye un asistente basico de preguntas frecuentes. Responde temas comunes desde la app:
+
+- como hacer un pedido
+- pagos y comprobantes
+- delivery y direccion
+- horarios
+- nota de venta
+- modo prueba
+
+No usa OpenAI ni secretos. Cuando actives Functions, configura:
+
+```js
+window.ASWA_CONFIG = {
+  AI_SUPPORT_BACKEND_ENABLED: true
+};
+```
+
+Asi el chat deja de usar el asistente basico y espera la respuesta de Firebase Functions.
+
 ## Como funciona
 
 1. El cliente escribe en el chat de soporte.

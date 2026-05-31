@@ -11011,6 +11011,55 @@ function cerrarChat() {
   document.getElementById('chatModal')?.classList.remove('open');
 }
 
+function _chatRespuestaAutomatica(texto) {
+  const t = String(texto || '').toLowerCase();
+  if (/pedido|pedir|comprar|orden/.test(t)) {
+    return 'Para hacer tu pedido: 1) elige la presentacion y cantidad, 2) escribe tu telefono, nombre y direccion, 3) elige metodo de pago, 4) confirma el pedido. Si ya pusiste tus datos, revisa el resumen y toca enviar.';
+  }
+  if (/pago|yape|plin|efectivo|transferencia|comprobante/.test(t)) {
+    return 'Aceptamos efectivo al recibir y pagos digitales como Yape, Plin o transferencia. Si pagas digital, sube o envia tu comprobante para validar el pedido.';
+  }
+  if (/delivery|envio|entrega|direccion|zona|llega/.test(t)) {
+    return 'Hacemos delivery segun tu zona de entrega. Escribe tu direccion completa y una referencia para calcular o coordinar la entrega.';
+  }
+  if (/horario|hora|atienden|abierto|cerrado/.test(t)) {
+    return 'Nuestro horario se muestra en la app. Si haces un pedido fuera de horario, lo revisamos para la siguiente franja disponible.';
+  }
+  if (/nota|boleta|venta|recibo|confirmar/.test(t)) {
+    return 'La Nota de Venta se genera cuando el pedido llega y confirmas la recepcion en la app. Asi evitamos registrar ventas que aun no fueron entregadas.';
+  }
+  if (/prueba|test|modo/.test(t)) {
+    return 'El modo prueba usa colecciones separadas en Firebase: pedidos_prueba y clientes_prueba. Sirve para revisar el flujo sin mezclarlo con pedidos reales.';
+  }
+  return 'Gracias por escribirnos. Soy el asistente ASWA. Puedo ayudarte con pedidos, pagos, delivery, horarios y nota de venta. Si necesitas atencion humana, deja tu consulta con detalle y el equipo ASWA la revisara.';
+}
+
+async function _chatResponderAutomatico(texto) {
+  if (!_chatId || !window.FB) return;
+  try {
+    const { doc:d, collection:col, addDoc:ad, setDoc, serverTimestamp:ts } = window.FB;
+    const respuesta = _chatRespuestaAutomatica(texto);
+    await ad(col(db, 'chats', _chatId, 'mensajes'), {
+      de:'negocio',
+      autor:'asistente_basico',
+      nombre:'Asistente ASWA',
+      texto:respuesta,
+      fecha:ts(),
+      leido_cliente:false,
+      leido_negocio:true
+    });
+    await setDoc(d(db, 'chats', _chatId), {
+      ultimo_msg:respuesta,
+      ultimo_de:'negocio',
+      ultimo_autor:'asistente_basico',
+      actualizado_en:ts(),
+      no_leidos_cliente:1
+    }, { merge:true });
+  } catch(err) {
+    console.warn('respuesta automatica chat:', err);
+  }
+}
+
 async function enviarMensajeChat() {
   const input = document.getElementById('chatInput');
   const texto = input?.value.trim();
@@ -11030,6 +11079,9 @@ async function enviarMensajeChat() {
       businessId:BUSINESS_ID, cliente_uid: window.currentUser?.uid || null, telefono:_chatTelefono, nombre:_chatNombre,
       ultimo_msg:texto, ultimo_de:'cliente', actualizado_en:ts(), no_leidos_negocio:1
     }, { merge:true });
+    if (!window.ASWA_CONFIG?.AI_SUPPORT_BACKEND_ENABLED) {
+      setTimeout(() => _chatResponderAutomatico(texto), 700);
+    }
   } catch(err) {
     console.error('enviar chat:', err);
     tst('No se pudo enviar el mensaje', 2500);
@@ -11044,7 +11096,7 @@ function _renderMensajesChat(mensajes) {
   const base = '<div class="chat-msg sistema">Escribenos si necesitas ayuda con tu pedido.</div>';
   cont.innerHTML = base + mensajes.map(m => {
     const cls = m.de === 'negocio' ? 'negocio' : 'cliente';
-    const autor = m.autor === 'ia'
+    const autor = ['ia', 'asistente_basico'].includes(m.autor)
       ? '<strong style="display:block;color:#86efac;margin-bottom:4px">Asistente ASWA</strong>'
       : '';
     return `<div class="chat-msg ${cls}">${autor}${esc(m.texto || '')}<span class="chat-time">${_chatFecha(m.fecha)}</span></div>`;
@@ -11131,7 +11183,7 @@ async function admAbrirChat(chatId, nombre, telefono) {
     const box = document.getElementById('admChatMsgs');
     if (!box) return;
     box.innerHTML = msgs.map(m => {
-      const autor = m.autor === 'ia'
+      const autor = ['ia', 'asistente_basico'].includes(m.autor)
         ? '<strong style="display:block;color:#86efac;margin-bottom:4px">Asistente ASWA</strong>'
         : '';
       return `<div class="adm-chat-msg ${m.de === 'negocio' ? 'negocio' : 'cliente'}">${autor}${esc(m.texto || '')}<span class="chat-time">${_chatFecha(m.fecha)}</span></div>`;
