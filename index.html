@@ -12155,8 +12155,12 @@ function _chatExtraerNumero(textoNormalizado, patron) {
 function _chatRespuestaProductoDirecta(texto) {
   const t = _chatNormalizar(texto);
   const pidePrecio = /(cuanto|precio|costo|vale|cuesta|esta|estan|sale|salen)/.test(t);
-  const hablaProducto = /(chicha|botella|botellas|litro|litros|\bl\b|galon|galones|presentacion|presentaciones)/.test(t);
+  const hablaProducto = /(chicha|botella|botellas|litro|litros|\bl\b|galon|galones|bidon|bidones|presentacion|presentaciones)/.test(t);
   const quiereComprar = /(quiero|deseo|necesito|deme|dame|pedir|comprar|llevar|manda|mandame)/.test(t);
+
+  if (/\bbidon(?:es)?\b/.test(t)) {
+    return 'El bidon ASWA es de 20 litros. Precio: recarga con bidon vacio S/ 50; con bidon/envase nuevo S/ 70. No aplica efectivo: se paga con Yape, Plin, Agora, BIM o transferencia. Si quieres pedirlo, escribe por ejemplo: "quiero 1 bidon recarga" o "quiero 1 bidon con envase nuevo".';
+  }
 
   if (/\bgalon(?:es)?\b/.test(t)) {
     return 'En ASWA usamos "galon" como presentacion: Galon ASWA 2L S/ 9 y Galon Familiar ASWA 4L S/ 15. Tambien tenemos Chicha ASWA 3L S/ 13. Si quieres hacer pedido, dime por ejemplo: "quiero 2 galones de 2 litros" o "quiero 1 galon familiar".';
@@ -12183,7 +12187,9 @@ function _chatRespuestaProductoDirecta(texto) {
 const CHAT_ORDER_PRODUCTS = {
   p2l: { id:'p2l', nombre:'Chicha ASWA 2L', litros:2, precio:9 },
   p3l: { id:'p3l', nombre:'Chicha ASWA 3L', litros:3, precio:13 },
-  p4l: { id:'p4l', nombre:'Chicha ASWA Familiar 4L', litros:4, precio:15 }
+  p4l: { id:'p4l', nombre:'Chicha ASWA Familiar 4L', litros:4, precio:15 },
+  sjBidonPublic: { id:'sjBidonPublic', nombre:'Bidon ASWA 20L', litros:20, precio:50 },
+  sjBidonPublicNuevo: { id:'sjBidonPublic', nombre:'Bidon ASWA 20L con envase nuevo', litros:20, precio:70 }
 };
 const CHAT_ORDER_PAYMENT_NAMES = {
   Yape:'Yape', PlinBBVA:'Plin BBVA', PlinIBK:'Plin Interbank', BIM:'BIM', Agora:'Agora',
@@ -12234,10 +12240,19 @@ function _chatPedidoItemsTexto(draft = _chatPedidoDraft) {
     .join(', ');
 }
 
+function _chatPedidoFirestoreProductId(id) {
+  return CHAT_ORDER_PRODUCTS[id]?.id || id;
+}
+
 function _chatDetectarProductoPedido(texto) {
   const t = _chatNormalizar(texto);
   if (!/(quiero|deseo|necesito|pedido|pedir|comprar|dame|deme|manda|mandame|llevar)/.test(t)) return null;
-  if (!/(chicha|botella|botellas|litro|litros|\bl\b|galon|galones)/.test(t)) return null;
+  if (!/(chicha|botella|botellas|litro|litros|\bl\b|galon|galones|bidon|bidones)/.test(t)) return null;
+  if (/\bbidon(?:es)?\b/.test(t)) {
+    const qty = _chatExtraerNumero(t, /(?:quiero|deseo|necesito|dame|deme|manda|mandame|comprar|pedir|pedido)?\s*(\d+(?:[\.,]\d+)?)/) || 1;
+    const nuevo = /nuevo|envase|con bidon|con balde|incluido/.test(t);
+    return { id: nuevo ? 'sjBidonPublicNuevo' : 'sjBidonPublic', qty: Math.max(1, Math.round(qty)), desdeBidon:true };
+  }
   if (/\bgalon(?:es)?\b/.test(t)) {
     if (!/(pedido|pedir|comprar|orden|manda|mandame|enviar|envia|delivery)/.test(t)
         && !/familiar|4\s*(?:l|lt|lts|litro|litros)|2\s*(?:l|lt|lts|litro|litros)/.test(t)) return null;
@@ -12352,6 +12367,10 @@ function _chatPedidoProcesarTexto(texto) {
     draft.item = { ...CHAT_ORDER_PRODUCTS[producto.id], qty: producto.qty };
     draft.galonInfo = null;
     draft.listoParaConfirmar = false;
+    if (producto.desdeBidon) {
+      draft.pagoRestringidoDigital = true;
+      return `Te registro ${_chatPedidoItemsTexto(draft)} por S/ ${(_chatPedidoTotal(draft) - Number(draft.delivery || 0)).toFixed(2)}. El bidon es de 20 litros y no acepta efectivo. A que direccion seria el pedido?`;
+    }
     if (producto.desdeGalonAswa && !draft.direccion) {
       return `Te registro ${_chatPedidoItemsTexto(draft)} por S/ ${(_chatPedidoTotal(draft) - Number(draft.delivery || 0)).toFixed(2)}. A que direccion seria el pedido?`;
     }
@@ -12375,6 +12394,9 @@ function _chatPedidoProcesarTexto(texto) {
   const pagoDetectado = _chatDetectarPago(texto);
   if (pagoDetectado === 'PLIN_AMBIGUO' || pagoDetectado === 'BANCO_AMBIGUO' || pagoDetectado === 'BANCO_NO_DISPONIBLE') return _chatPagoInstrucciones(pagoDetectado, _chatPedidoTotal(draft));
   if (pagoDetectado) {
+    if (draft.pagoRestringidoDigital && pagoDetectado === 'Efectivo') {
+      return 'El bidon ASWA 20L no acepta efectivo. Puedes pagar con Yape, Plin BBVA, Plin Interbank, Agora, BIM o transferencia Interbank/BBVA/Banbif.';
+    }
     draft.pago = pagoDetectado;
     draft.listoParaConfirmar = false;
   }
@@ -12423,7 +12445,7 @@ async function _chatRegistrarPedidoDesdeDraft(draft) {
   const itemsDetalle = Object.entries(draft.items || {})
     .filter(([, qty]) => Number(qty || 0) > 0)
     .map(([id, qty]) => ({
-      id,
+      id: _chatPedidoFirestoreProductId(id),
       qty: Number(qty || 0),
       precio: CHAT_ORDER_PRODUCTS[id].precio,
       total: +(Number(qty || 0) * CHAT_ORDER_PRODUCTS[id].precio).toFixed(2),
@@ -12431,7 +12453,11 @@ async function _chatRegistrarPedidoDesdeDraft(draft) {
       corto: CHAT_ORDER_PRODUCTS[id].litros + 'L'
     }));
   const items = {};
-  Object.keys(CHAT_ORDER_PRODUCTS).forEach(id => { items[id] = Number(draft.items?.[id] || 0); });
+  PRODUCT_IDS.forEach(id => { items[id] = 0; });
+  Object.entries(draft.items || {}).forEach(([id, qty]) => {
+    const firestoreId = _chatPedidoFirestoreProductId(id);
+    items[firestoreId] = (Number(items[firestoreId] || 0) + Number(qty || 0));
+  });
 
   const oldPago = ST.pago;
   ST.pago = draft.pago;
