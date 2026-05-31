@@ -50,6 +50,7 @@ Puede orientar sobre:
 - ejemplos de pedido para que el cliente copie y complete
 - recomendacion de presentacion segun necesidad
 - productos y precios visibles en la app
+- campana San Juan para publico general, colegios e instituciones
 - zonas de delivery: Morales, Tarapoto, Banda de Shilcayo y recojo en local
 - pagos digitales, efectivo y comprobantes
 - reservas, regalos y pedidos programados
@@ -98,6 +99,16 @@ Tambien puede recordar beneficios:
 ## Nota de Venta
 
 Todo pedido real debe terminar con Nota de Venta. La app no debe generar la venta final apenas se envia el pedido; primero debe entregarse y el cliente debe confirmar la recepcion. Asi se evita mezclar pedidos pendientes con ventas reales.
+
+## Campana San Juan
+
+La campana San Juan es temporal por Fiestas de San Juan.
+
+- Publico general: bidon San Juanero ASWA 20L desde S/ 50. Puede ser recarga con bidon vacio o con envase nuevo. Cobra delivery segun zona y no acepta efectivo.
+- Colegios: promo escolar por seccion para jardines, primarias y colegios de Banda de Shilcayo, Morales y Tarapoto. Minimo 15 unidades por presentacion, excepto el bidon 20L.
+- Opciones escolares: chicha ASWA 400 ml, combo juane + chicha, solo juane y bidon 20L.
+- Se atiende durante junio de 2026, excepto el 24 de junio. Requiere reserva y pago anticipado por Yape, Plin, Agora, BIM o transferencia.
+- Juane familiar institucional: para bancos, empresas, oficinas y grupos de trabajadores, con entrega unica el 22/06/2026.
 
 ## Activar en Firebase
 
