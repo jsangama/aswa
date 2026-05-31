@@ -185,4 +185,37 @@ describe('support assistant replies', () => {
     expect(text).toContain('galon ASWA de 2 litros');
     expect(text).toContain('galon familiar de 4 litros');
   });
+
+  test('explains bidon as 20 liter product with prices', () => {
+    const text = reply('cuanto cuesta el bidon');
+
+    expect(text).toContain('bidon ASWA es de 20 litros');
+    expect(text).toContain('recarga con bidon vacio S/ 50');
+    expect(text).toContain('envase nuevo S/ 70');
+  });
+
+  test('registers bidon recarga as 20 liter order and blocks cash', () => {
+    const api = loadAssistantApi();
+    api.reset();
+
+    const first = api.process('quiero 1 bidon recarga');
+    expect(first).toContain('1 x Bidon ASWA 20L');
+    expect(first).toContain('S/ 50.00');
+    expect(first).toContain('no acepta efectivo');
+
+    api.process('JR. JIMENES PIMENTEL 452 TARAPOTO');
+    api.process('950845067');
+    api.process('JOSUE SANGAMA PEZO');
+    const cash = api.process('efectivo');
+    expect(cash).toContain('El bidon ASWA 20L no acepta efectivo');
+  });
+
+  test('registers bidon with new container at 70 soles', () => {
+    const api = loadAssistantApi();
+    api.reset();
+
+    const text = api.process('quiero 1 bidon con envase nuevo');
+    expect(text).toContain('1 x Bidon ASWA 20L con envase nuevo');
+    expect(text).toContain('S/ 70.00');
+  });
 });
