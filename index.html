@@ -11092,6 +11092,97 @@ const ASWA_SUPPORT_KNOWLEDGE = [
   }
 ];
 
+const ASWA_SUPPORT_STOPWORDS = new Set([
+  'que','como','cuando','donde','cual','cuales','cuanto','cuantos','cuanta','cuantas',
+  'para','pero','porque','por','con','sin','del','de','la','el','los','las','una','uno',
+  'unos','unas','este','esta','esto','ese','esa','eso','tiene','tienen','tengo','quiero',
+  'hacer','hace','hay','me','mi','mis','tu','tus','su','sus','y','o','en','es','son',
+  'explicame','explica','dime','consulta','saber','sabes'
+]);
+
+const ASWA_APP_KNOWLEDGE_CHUNKS = [
+  {
+    tema: 'pedido paso a paso',
+    terms: ['pedido','pedir','comprar','orden','guia','tutorial','pasos','cliente nuevo','primer pedido'],
+    respuesta: 'Para hacer un pedido en ASWA: 1) elige la presentacion y cantidad, 2) completa telefono, nombre y direccion con referencia, 3) selecciona zona, 4) elige metodo de pago, 5) revisa el resumen y toca enviar. Ejemplo: "Quiero 1 chicha 3L para Morales, pago con Yape, mi direccion es Jr. ... y mi referencia es ...".'
+  },
+  {
+    tema: 'productos normales',
+    terms: ['producto','productos','precio','precios','2l','3l','4l','botella','familiar','presentacion','presentaciones'],
+    respuesta: 'Productos principales: Chicha ASWA 2L S/ 9, Chicha ASWA 3L S/ 13 y Chicha ASWA Familiar 4L S/ 15. Si es para pocas personas conviene 2L; para compartir, 3L; y para familia o reunion, 4L.'
+  },
+  {
+    tema: 'campana san juan completa',
+    terms: ['san juan','sanjuanera','campana','fiestas','colegio','colegios','escolar','juane','bidon','institucional','seccion','salon'],
+    respuesta: 'La campana sanjuanera ASWA es temporal por Fiestas de San Juan. Tiene opciones para publico general, colegios e instituciones: bidon San Juanero 20L desde S/ 50, presentaciones escolares desde 15 unidades, combo juane + chicha, solo juane y juane familiar institucional. En promo escolar no se cobra delivery, se atiende durante junio excepto el 24/06, requiere reserva y pago anticipado por Yape, Plin, Agora, BIM o transferencia. No aplica efectivo.'
+  },
+  {
+    tema: 'bidon san juan',
+    terms: ['bidon','20l','20 litros','recarga','envase','san juanero','obra','cuadrilla'],
+    respuesta: 'El bidon San Juanero ASWA 20L es para publico general, obras, cuadrillas, familias y reuniones. Si ya tienes bidon vacio, pagas la recarga desde S/ 50 y entregas tu bidon al recibir. Si necesitas bidon/envase nuevo, el total es S/ 70. Cobra delivery segun zona y no acepta efectivo.'
+  },
+  {
+    tema: 'promo escolar',
+    terms: ['promo escolar','colegio','colegios','jardin','primaria','secundaria','seccion','salon','estudiantes','aula'],
+    respuesta: 'La promo escolar San Juan es para pedidos por seccion en jardines, primarias y colegios de Banda de Shilcayo, Morales y Tarapoto. Cada presentacion tiene minimo 15 unidades, excepto el bidon 20L. Opciones: chicha ASWA 400 ml, combo juane + chicha, solo juane y bidon 20L. Requiere reserva y pago anticipado; no aplica efectivo.'
+  },
+  {
+    tema: 'juane familiar institucional',
+    terms: ['juane familiar','institucional','banco','empresa','oficina','trabajadores','22/06','22 de junio'],
+    respuesta: 'El juane familiar institucional es para bancos, empresas, oficinas y grupos de trabajadores. Tiene entrega unica el 22/06/2026, dos dias antes de San Juan, y no cobra delivery dentro de esta promocion.'
+  },
+  {
+    tema: 'pagos y comprobantes',
+    terms: ['pago','pagar','yape','plin','bim','agora','binance','interbank','bbva','banbif','transferencia','efectivo','comprobante','voucher','captura'],
+    respuesta: 'ASWA acepta efectivo al recibir cuando la opcion esta disponible, y pagos digitales como Yape, Plin, Agora, BIM, Binance o transferencia Interbank, BBVA y Banbif. En pagos digitales debes adjuntar o enviar tu comprobante para validacion. Reservas, regalos y promos especiales suelen requerir pago anticipado.'
+  },
+  {
+    tema: 'delivery y zonas',
+    terms: ['delivery','envio','entrega','zona','direccion','referencia','morales','tarapoto','banda','shilcayo','recojo','agencia','nacional'],
+    respuesta: 'Zonas visibles: Morales S/ 3 aprox. 25 min, Tarapoto S/ 4 aprox. 35 min, Banda de Shilcayo S/ 5 aprox. 45 min y recojo en local gratis. Para envio a agencia nacional, se cobra el traslado hasta agencia y el flete destino lo paga el cliente al recoger.'
+  },
+  {
+    tema: 'reservas y regalos',
+    terms: ['reserva','reservar','programar','calendario','hora','alerta','regalo','regalar','pareja','esposa','esposo','enamorado','amigo','familiar'],
+    respuesta: 'Puedes reservar un pedido con fecha y hora o enviarlo como regalo. Las reservas y regalos requieren pago anticipado por metodo digital; no aplican con efectivo. Agrega datos de quien recibe, fecha, hora y una referencia clara.'
+  },
+  {
+    tema: 'nota de venta',
+    terms: ['nota','nocta','nota de venta','boleta','recibo','venta final','pedidos reales','pedido real','confirmar recepcion','entregado'],
+    respuesta: 'Todo pedido real debe terminar con Nota de Venta, pero se genera cuando el pedido fue entregado y el cliente confirma la recepcion en la app. Antes de entregar no se marca como venta final, para no mezclar pedidos pendientes con ventas reales.'
+  },
+  {
+    tema: 'seguimiento delivery',
+    terms: ['seguimiento','estado','en camino','tracking','deliverista','repartidor','donde esta','ubicacion','recibi','confirmar'],
+    respuesta: 'Cuando el deliverista marque el pedido en camino, la app muestra el seguimiento. Al recibir, el cliente confirma la recepcion; esa confirmacion ayuda a cerrar el proceso y generar la Nota de Venta cuando corresponde.'
+  },
+  {
+    tema: 'beneficios bonos',
+    terms: ['beneficio','beneficios','bono','bonos','ganar','referido','referidos','cupon','cupones','descuento','misiones','oferta','fidelidad'],
+    respuesta: 'Puedes ganar beneficios con codigo referido, cupones activos, misiones por redes, concursos y sugerencias. En referidos, tu amigo puede recibir descuento y tu tambien ganas bono cuando el negocio lo revise y apruebe. Revisa o agrega tu codigo antes de enviar el pedido.'
+  },
+  {
+    tema: 'concursos y sugerencias',
+    terms: ['concurso','concursos','foto','video','reel','historia','sugerencia','idea','premio','redes','facebook','instagram'],
+    respuesta: 'En la zona de beneficios puedes participar en concursos con foto o video de ASWA y enviar sugerencias. La sugerencia ganadora puede recibir chicha 2L gratis y descuento temporal si el negocio la elige. Las misiones en redes pueden sumar beneficios cuando estan activas.'
+  },
+  {
+    tema: 'historia marca',
+    terms: ['historia','origen','significa','aswa','anos','antiguedad','fundacion','inicio','empezo','amazonica','san martin'],
+    respuesta: 'ASWA La Rica Chicha comenzo en enero de 2004 en San Martin, en el corazon de la Amazonia peruana. Nacio como preparacion familiar artesanal y con los anos perfecciono aroma, sabor, textura e higiene. "Aswa" viene de una palabra ancestral usada para la chicha tradicional. Hoy representa mas de 20 anos de esfuerzo familiar, cultura amazonica y orgullo de San Martin.'
+  },
+  {
+    tema: 'modo prueba',
+    terms: ['modo prueba','prueba','test','pedidos prueba','clientes prueba','firebase prueba','no real'],
+    respuesta: 'El modo prueba se activa con ?aswa_test=1 y usa colecciones separadas en Firebase: pedidos_prueba y clientes_prueba. Sirve para probar el flujo completo sin mezclarlo con pedidos reales.'
+  },
+  {
+    tema: 'soporte humano',
+    terms: ['soporte','ayuda','humano','persona','asesor','admin','reclamo','problema','urgente','no responde'],
+    respuesta: 'Puedo orientarte desde la app. Si necesitas revision humana, deja telefono, direccion y detalle del caso para que el equipo ASWA lo revise desde soporte.'
+  }
+];
+
 function _chatNormalizar(texto) {
   return String(texto || '')
     .toLowerCase()
@@ -11099,17 +11190,73 @@ function _chatNormalizar(texto) {
     .replace(/[\u0300-\u036f]/g, '');
 }
 
+function _chatTokens(texto) {
+  return _chatNormalizar(texto)
+    .replace(/[^a-z0-9/ ]+/g, ' ')
+    .split(/\s+/)
+    .filter(token => token.length > 2 && !ASWA_SUPPORT_STOPWORDS.has(token));
+}
+
+function _chatScoreTexto(textoNormalizado, tokens, terminos, priority = 0) {
+  let score = 0;
+  terminos.forEach(term => {
+    const normalizedTerm = _chatNormalizar(term);
+    if (normalizedTerm.includes(' ')) {
+      if (textoNormalizado.includes(normalizedTerm)) score += 8;
+      return;
+    }
+    if (tokens.includes(normalizedTerm)) score += 3;
+    else if (normalizedTerm.length > 4 && textoNormalizado.includes(normalizedTerm)) score += 1;
+  });
+  return score > 0 ? score + priority : 0;
+}
+
 function _chatScoreTema(texto, item) {
   const t = _chatNormalizar(texto);
-  const matches = item.keywords.reduce((score, kw) => score + (t.includes(kw) ? 1 : 0), 0);
-  return matches > 0 ? matches + (item.priority || 0) : 0;
+  return _chatScoreTexto(t, _chatTokens(texto), item.keywords, item.priority || 0);
+}
+
+function _chatMejorRespuestaDesdeConocimiento(texto) {
+  const t = _chatNormalizar(texto);
+  const tokens = _chatTokens(texto);
+  const best = ASWA_APP_KNOWLEDGE_CHUNKS
+    .map(item => ({ ...item, score: _chatScoreTexto(t, tokens, item.terms, 2) }))
+    .sort((a, b) => b.score - a.score)[0];
+  return best && best.score >= 5 ? best : null;
+}
+
+function _chatRespuestaDesdeAppVisible(texto) {
+  if (typeof document === 'undefined') return '';
+  const tokens = _chatTokens(texto);
+  if (tokens.length < 2) return '';
+  const raw = document.body?.innerText || '';
+  const lines = raw
+    .split(/\n+/)
+    .map(line => line.replace(/\s+/g, ' ').trim())
+    .filter(line => line.length > 35 && line.length < 260);
+  const best = lines
+    .map(line => ({
+      line,
+      score: tokens.reduce((sum, token) => sum + (_chatNormalizar(line).includes(token) ? 1 : 0), 0)
+    }))
+    .sort((a, b) => b.score - a.score)[0];
+  if (!best || best.score < Math.min(3, tokens.length)) return '';
+  return `En la app encuentro esta informacion relacionada: ${best.line}. Si quieres, tambien puedo guiarte paso a paso para hacer el pedido.`;
 }
 
 function _chatRespuestaAutomatica(texto) {
-  const best = ASWA_SUPPORT_KNOWLEDGE
+  const exact = ASWA_SUPPORT_KNOWLEDGE
     .map(item => ({ ...item, score: _chatScoreTema(texto, item) }))
     .sort((a, b) => b.score - a.score)[0];
-  if (best && best.score > 0) return best.respuesta;
+  const knowledge = _chatMejorRespuestaDesdeConocimiento(texto);
+  if (knowledge && (!exact || knowledge.score >= exact.score || exact.tema === 'guia completa')) {
+    return knowledge.respuesta;
+  }
+  if (exact && exact.score >= 7) return exact.respuesta;
+  if (knowledge) return knowledge.respuesta;
+  if (exact && exact.score > 0) return exact.respuesta;
+  const visible = _chatRespuestaDesdeAppVisible(texto);
+  if (visible) return visible;
   return 'Soy tu guia ASWA en directo. Puedo ensenarte a hacer tu pedido paso a paso, darte ejemplos, recomendar presentacion, explicar pagos, delivery, Nota de Venta y beneficios como cupones, referidos, misiones, concursos y bonos. Escribe, por ejemplo: "quiero hacer mi pedido" o "que beneficios puedo ganar".';
 }
 

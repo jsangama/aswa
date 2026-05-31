@@ -10,7 +10,9 @@ El chat de soporte sigue en la app. La IA responde desde Firebase Functions, no 
 
 ## Respuesta automatica sin Blaze
 
-Mientras Firebase Functions no este activo, `index.html` incluye un asistente basico de preguntas frecuentes. Responde temas comunes desde la app:
+Mientras Firebase Functions no este activo, `index.html` incluye un asistente basico inteligente. No usa OpenAI ni secretos, pero combina respuestas especificas con fichas de conocimiento del app y busqueda en el texto visible de la pagina.
+
+Responde temas comunes desde la app:
 
 - como hacer un pedido
 - productos y precios visibles
@@ -21,7 +23,9 @@ Mientras Firebase Functions no este activo, `index.html` incluye un asistente ba
 - nota de venta
 - modo prueba
 
-No usa OpenAI ni secretos. Cuando actives Functions, configura:
+La prioridad es responder primero la consulta especifica del cliente. Por ejemplo, si el mensaje dice "envio a agencia nacional", debe responder sobre agencia/delivery antes que mostrar una guia general de pedido.
+
+Cuando actives Functions, configura:
 
 ```js
 window.ASWA_CONFIG = {
