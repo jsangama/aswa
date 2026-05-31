@@ -11011,27 +11011,70 @@ function cerrarChat() {
   document.getElementById('chatModal')?.classList.remove('open');
 }
 
-function _chatRespuestaAutomatica(texto) {
+const ASWA_SUPPORT_KNOWLEDGE = [
+  {
+    tema: 'hacer pedido',
+    keywords: ['pedido', 'pedir', 'comprar', 'orden', 'como hago', 'como puedo', 'quiero comprar'],
+    respuesta: 'Para hacer tu pedido: elige la presentacion y cantidad, escribe tu telefono, nombre y direccion, selecciona zona y metodo de pago, revisa el resumen y toca enviar. Si pagas con metodo digital, adjunta o envia tu comprobante.'
+  },
+  {
+    tema: 'productos y precios',
+    keywords: ['precio', 'cuanto', 'producto', '2l', '3l', '4l', 'bidon', 'san juan', 'juane'],
+    respuesta: 'Productos principales: Chicha ASWA 2L S/ 9, 3L S/ 13 y 4L S/ 15. En temporada San Juan tambien hay opciones como bidon 20L desde S/ 50, segun si tienes bidon vacio o necesitas envase nuevo.'
+  },
+  {
+    tema: 'zonas y delivery',
+    keywords: ['delivery', 'envio', 'entrega', 'zona', 'direccion', 'llega', 'tarapoto', 'morales', 'banda', 'recojo'],
+    respuesta: 'Zonas visibles en la app: Morales S/ 3 aprox. 25 min, Tarapoto S/ 4 aprox. 35 min, Banda de Shilcayo S/ 5 aprox. 45 min y recojo en local gratis. Escribe direccion completa y referencia para evitar demoras.'
+  },
+  {
+    tema: 'pagos',
+    keywords: ['pago', 'yape', 'plin', 'efectivo', 'transferencia', 'bim', 'agora', 'binance', 'interbank', 'bbva', 'banbif', 'comprobante', 'voucher'],
+    respuesta: 'Aceptamos efectivo al recibir y pagos digitales como Yape, Plin, Agora, BIM, Binance o transferencia bancaria. En pagos digitales debes adjuntar o enviar tu comprobante para validacion.'
+  },
+  {
+    tema: 'reservas y regalos',
+    keywords: ['reserva', 'reservar', 'regalo', 'regalar', 'cumpleanos', 'esposa', 'pareja', 'familiar', 'programar'],
+    respuesta: 'Puedes reservar una entrega o enviarla como regalo. Reservas y regalos requieren pago anticipado con metodo digital; no aplican con efectivo. Agrega fecha, hora y datos de quien recibe si corresponde.'
+  },
+  {
+    tema: 'nota de venta',
+    keywords: ['nota', 'venta', 'boleta', 'recibo', 'comprobante final', 'confirmar', 'recibi', 'llego'],
+    respuesta: 'La Nota de Venta se genera cuando el pedido llega y confirmas la recepcion en la app. Esto evita registrar como venta real un pedido que todavia no fue entregado.'
+  },
+  {
+    tema: 'seguimiento',
+    keywords: ['estado', 'seguimiento', 'track', 'tracking', 'donde esta', 'en camino', 'deliverista', 'repartidor'],
+    respuesta: 'Cuando el deliverista marque el pedido en camino, la app te mostrara el seguimiento y podras confirmar al recibir. Si necesitas ayuda, escribe tu telefono y detalle del pedido para que el equipo ASWA lo revise.'
+  },
+  {
+    tema: 'referidos y descuentos',
+    keywords: ['referido', 'codigo', 'descuento', 'cupon', 'bono', 'oferta', 'fidelidad'],
+    respuesta: 'Puedes usar codigo referido o cupon si esta disponible. La app calcula los descuentos permitidos en el resumen antes de enviar el pedido. Los bonos y referidos pueden requerir revision del negocio.'
+  },
+  {
+    tema: 'modo prueba',
+    keywords: ['prueba', 'test', 'modo prueba', 'pedidos prueba', 'firebase prueba'],
+    respuesta: 'El modo prueba usa Firebase separado: pedidos_prueba y clientes_prueba. Sirve para probar el flujo completo sin mezclarlo con pedidos reales.'
+  },
+  {
+    tema: 'humano',
+    keywords: ['persona', 'humano', 'asesor', 'admin', 'reclamo', 'problema', 'no responde', 'urgente', 'ayuda'],
+    respuesta: 'Puedo orientarte, pero si necesitas atencion humana deja tu telefono, direccion y detalle del problema. El equipo ASWA lo revisara desde el panel de soporte.'
+  }
+];
+
+function _chatScoreTema(texto, item) {
   const t = String(texto || '').toLowerCase();
-  if (/pedido|pedir|comprar|orden/.test(t)) {
-    return 'Para hacer tu pedido: 1) elige la presentacion y cantidad, 2) escribe tu telefono, nombre y direccion, 3) elige metodo de pago, 4) confirma el pedido. Si ya pusiste tus datos, revisa el resumen y toca enviar.';
-  }
-  if (/pago|yape|plin|efectivo|transferencia|comprobante/.test(t)) {
-    return 'Aceptamos efectivo al recibir y pagos digitales como Yape, Plin o transferencia. Si pagas digital, sube o envia tu comprobante para validar el pedido.';
-  }
-  if (/delivery|envio|entrega|direccion|zona|llega/.test(t)) {
-    return 'Hacemos delivery segun tu zona de entrega. Escribe tu direccion completa y una referencia para calcular o coordinar la entrega.';
-  }
-  if (/horario|hora|atienden|abierto|cerrado/.test(t)) {
-    return 'Nuestro horario se muestra en la app. Si haces un pedido fuera de horario, lo revisamos para la siguiente franja disponible.';
-  }
-  if (/nota|boleta|venta|recibo|confirmar/.test(t)) {
-    return 'La Nota de Venta se genera cuando el pedido llega y confirmas la recepcion en la app. Asi evitamos registrar ventas que aun no fueron entregadas.';
-  }
-  if (/prueba|test|modo/.test(t)) {
-    return 'El modo prueba usa colecciones separadas en Firebase: pedidos_prueba y clientes_prueba. Sirve para revisar el flujo sin mezclarlo con pedidos reales.';
-  }
-  return 'Gracias por escribirnos. Soy el asistente ASWA. Puedo ayudarte con pedidos, pagos, delivery, horarios y nota de venta. Si necesitas atencion humana, deja tu consulta con detalle y el equipo ASWA la revisara.';
+  return item.keywords.reduce((score, kw) => score + (t.includes(kw) ? 1 : 0), 0);
+}
+
+function _chatRespuestaAutomatica(texto) {
+  const best = ASWA_SUPPORT_KNOWLEDGE
+    .map(item => ({ ...item, score: _chatScoreTema(texto, item) }))
+    .sort((a, b) => b.score - a.score)[0];
+  if (best && best.score > 0) return best.respuesta;
+  return 'Soy el asistente ASWA. Puedo ayudarte con pedidos, productos, precios, pagos, delivery, reservas, regalos, referidos, modo prueba y Nota de Venta. Cuentame que necesitas y, si hace falta, deja tu telefono y detalle para que el equipo ASWA lo revise.';
 }
 
 async function _chatResponderAutomatico(texto) {

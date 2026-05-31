@@ -13,9 +13,11 @@ El chat de soporte sigue en la app. La IA responde desde Firebase Functions, no 
 Mientras Firebase Functions no este activo, `index.html` incluye un asistente basico de preguntas frecuentes. Responde temas comunes desde la app:
 
 - como hacer un pedido
+- productos y precios visibles
 - pagos y comprobantes
 - delivery y direccion
-- horarios
+- reservas y regalos
+- referidos y descuentos
 - nota de venta
 - modo prueba
 
@@ -36,6 +38,30 @@ Asi el chat deja de usar el asistente basico y espera la respuesta de Firebase F
 3. Firebase Functions detecta el mensaje nuevo.
 4. La funcion llama a OpenAI con instrucciones de soporte ASWA.
 5. La respuesta vuelve al mismo chat como `Asistente ASWA`.
+
+## Que sabe responder
+
+La IA tiene una base de conocimiento ASWA dentro de GitHub, en `functions/index.js`, y una version basica dentro de `index.html`.
+
+Puede orientar sobre:
+
+- pasos para hacer un pedido
+- productos y precios visibles en la app
+- zonas de delivery: Morales, Tarapoto, Banda de Shilcayo y recojo en local
+- pagos digitales, efectivo y comprobantes
+- reservas, regalos y pedidos programados
+- nota de venta despues de entrega/confirmacion
+- seguimiento del pedido cuando el delivery lo marque en camino
+- referidos, cupones y descuentos visibles
+- modo prueba separado de pedidos reales
+
+Tambien tiene limites para proteger el negocio:
+
+- no inventa estados reales de pedidos
+- no aprueba pagos por su cuenta
+- no promete descuentos, reembolsos ni cambios definitivos
+- no revela accesos, claves ni informacion privada de admin/delivery
+- cuando hace falta revision humana, pide telefono y detalle del caso
 
 ## Activar en Firebase
 
