@@ -3125,8 +3125,8 @@
     .chat-msg.negocio { align-self:flex-start; background:#18181b; color:#fff; }
     .chat-msg.sistema { align-self:center; background:transparent; color:var(--mut); border:0; text-align:center; max-width:100%; }
     .chat-time { display:block; margin-top:4px; font-size:9px; color:var(--mut); }
-    .chat-input-bar { display:flex; gap:8px; padding:12px; border-top:1px solid var(--brd); }
-    .chat-input { flex:1; resize:none; max-height:96px; min-height:44px; border:1px solid var(--brd); border-radius:12px; background:var(--bg); color:var(--txt); padding:11px 12px; font-size:13px; font-family:'Poppins',sans-serif; }
+    .chat-input-bar { display:flex; gap:8px; padding:12px; border-top:1px solid var(--brd); flex-shrink:0; position:relative; z-index:3; background:var(--s1); }
+    .chat-input { flex:1; resize:none; max-height:96px; min-height:44px; border:1px solid var(--brd); border-radius:12px; background:var(--bg); color:var(--txt); padding:11px 12px; font-size:13px; font-family:'Poppins',sans-serif; pointer-events:auto; user-select:text; -webkit-user-select:text; }
     .chat-attach { width:42px; border:1px solid rgba(250,204,21,.35); border-radius:12px; background:rgba(250,204,21,.1); color:var(--y); font-size:18px; font-weight:900; cursor:pointer; }
     .chat-send { width:46px; border:0; border-radius:12px; background:var(--y); color:#111; font-size:18px; font-weight:900; cursor:pointer; }
     .adm-chat-item { background:var(--s1); border:1px solid var(--brd); border-radius:12px; padding:12px; margin-bottom:8px; cursor:pointer; }
@@ -12728,16 +12728,40 @@ async function _chatRegistrarPedidoDesdeDraft(draft) {
 function _chatDesbloquearEntrada(focus = false) {
   const input = document.getElementById('chatInput');
   const btn = document.getElementById('chatSendBtn');
+  const bar = document.querySelector('.chat-input-bar');
   if (input) {
     input.disabled = false;
     input.readOnly = false;
     input.style.pointerEvents = 'auto';
+    input.style.userSelect = 'text';
+    input.removeAttribute('disabled');
+    input.removeAttribute('readonly');
   }
   if (btn) btn.disabled = false;
+  if (bar) {
+    bar.style.pointerEvents = 'auto';
+    bar.style.zIndex = '3';
+  }
   if (focus && input && document.getElementById('chatModal')?.classList.contains('open')) {
     setTimeout(() => input.focus(), 20);
   }
 }
+
+window._chatDesbloquearEntrada = _chatDesbloquearEntrada;
+
+function _chatInstalarEntradaWatchdog() {
+  if (window._chatInputWatchdog) return;
+  window._chatInputWatchdog = setInterval(() => {
+    if (document.getElementById('chatModal')?.classList.contains('open')) {
+      _chatDesbloquearEntrada(false);
+    }
+  }, 1000);
+  document.addEventListener('pointerdown', ev => {
+    if (ev.target?.closest?.('.chat-input-bar')) _chatDesbloquearEntrada(true);
+  }, true);
+}
+
+_chatInstalarEntradaWatchdog();
 
 async function _chatRespuestaConversacional(texto) {
   const pedidoChat = _chatPedidoProcesarTexto(texto);
