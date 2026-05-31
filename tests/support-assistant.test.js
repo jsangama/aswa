@@ -26,6 +26,12 @@ function loadAssistantApi() {
   const code = html.slice(start, end);
   const api = new Function(`const __aswaStorage = new Map();
   var _chatId = '';
+  var __listeners = [];
+  var document = {
+    getElementById: () => null,
+    querySelector: () => null,
+    addEventListener: (type) => __listeners.push(type)
+  };
   var window = { FB: null, ASWA_CONFIG: {} };
   const localStorage = {
     setItem: (key, value) => __aswaStorage.set(key, String(value)),
@@ -38,6 +44,8 @@ function loadAssistantApi() {
     process: _chatPedidoProcesarTexto,
     conversational: _chatRespuestaConversacional,
     hasUnlockHelper: () => typeof _chatDesbloquearEntrada === 'function',
+    hasGlobalUnlockHelper: () => typeof window._chatDesbloquearEntrada === 'function',
+    hasInputWatchdog: () => !!window._chatInputWatchdog && __listeners.includes('pointerdown'),
     attach: () => { _chatPedidoDraft.comprobanteAdjunto = true; return _chatPedidoSiguientePregunta(_chatPedidoDraft); },
     dropMemory: () => { _chatPedidoDraft = null; },
     setCache: (mensajes) => { _chatMensajesCache = mensajes; },
@@ -229,6 +237,8 @@ describe('support assistant replies', () => {
   test('exposes chat input unlock helper for recovery', () => {
     const api = loadAssistantApi();
     expect(api.hasUnlockHelper()).toBe(true);
+    expect(api.hasGlobalUnlockHelper()).toBe(true);
+    expect(api.hasInputWatchdog()).toBe(true);
   });
 
   test('client chat messages bypass backend and use local reply path', () => {
