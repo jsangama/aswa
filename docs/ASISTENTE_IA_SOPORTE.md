@@ -45,6 +45,7 @@ La IA tiene una base de conocimiento ASWA dentro de GitHub, en `functions/index.
 
 Puede orientar sobre:
 
+- historia, origen y significado de ASWA La Rica Chicha
 - pasos para hacer un pedido
 - ejemplos de pedido para que el cliente copie y complete
 - recomendacion de presentacion segun necesidad
@@ -57,10 +58,19 @@ Puede orientar sobre:
 - referidos, cupones, misiones, concursos, sugerencias, descuentos y bonos visibles
 - modo prueba separado de pedidos reales
 
+## Historia de marca
+
+ASWA La Rica Chicha comenzo en enero de 2004 en San Martin, en el corazon de la Amazonia peruana.
+
+Nacio como una preparacion familiar artesanal, hecha en casa para acompanar comidas, recibir visitas y compartir reuniones. Al inicio se vendia en pequenas cantidades como ingreso complementario del hogar.
+
+Con los anos se perfeccionaron aroma, sabor, textura, fermentacion, materias primas, higiene y presentacion. La identidad ASWA nace de la palabra ancestral "Aswa", usada para referirse a la chicha tradicional, junto a la promesa "La Rica Chicha".
+
+Hoy representa mas de 20 anos de esfuerzo familiar, perseverancia, cultura amazonica y orgullo de San Martin. Su mision es llevar el autentico sabor de la Amazonia peruana a cada hogar, preservando una tradicion de generacion en generacion.
+
 Tambien tiene limites para proteger el negocio:
 
 - no inventa estados reales de pedidos
-- no inventa fechas de historia, fundacion o antiguedad si no estan registradas en la app
 - no aprueba pagos por su cuenta
 - no promete descuentos, bonos, reembolsos ni cambios definitivos
 - no revela accesos, claves ni informacion privada de admin/delivery
