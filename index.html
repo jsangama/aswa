@@ -1577,6 +1577,60 @@
     .pgrd-top,.pgrd-top-2,.pgrd-bot {
       display:grid; grid-template-columns:repeat(3,1fr); gap:6px; margin-bottom:6px;
     }
+    .pgrd-top-2 {
+      display:none;
+      padding:8px;
+      border:1px solid rgba(255,255,255,.08);
+      border-radius:14px;
+      background:rgba(255,255,255,.025);
+    }
+    .pgrd-top-2.show { display:grid; }
+    .pgrd-label {
+      font-size:9px; font-weight:800; color:var(--mut);
+      text-transform:uppercase; letter-spacing:.14em;
+      margin:0 0 8px; display:flex; align-items:center; gap:8px;
+    }
+    .pgrd-label::after { content:''; flex:1; height:1px; background:var(--brd); }
+    .pgrd-more-btn {
+      width:100%;
+      border:1px dashed rgba(250,204,21,.42);
+      background:rgba(250,204,21,.08);
+      color:var(--y);
+      border-radius:12px;
+      padding:10px 12px;
+      margin:0 0 8px;
+      font-family:'Poppins',sans-serif;
+      font-size:11px;
+      font-weight:900;
+      cursor:pointer;
+      display:flex;
+      justify-content:center;
+      align-items:center;
+      gap:6px;
+    }
+    .pgrd-more-btn:active { transform:scale(.98); }
+    .pgrd-extra-note {
+      grid-column:1/-1;
+      color:var(--mut);
+      font-size:10px;
+      line-height:1.45;
+      margin:-1px 2px 2px;
+      text-align:center;
+    }
+    .pgrd-crypto-label {
+      grid-column:1/-1;
+      display:flex;
+      align-items:center;
+      gap:8px;
+      color:#fcd34d;
+      font-size:9px;
+      font-weight:900;
+      letter-spacing:.11em;
+      text-transform:uppercase;
+      margin:2px 0 -2px;
+    }
+    .pgrd-crypto-label::before,
+    .pgrd-crypto-label::after { content:''; flex:1; height:1px; background:rgba(252,211,77,.22); }
     .popt {
       background:var(--s1); border:2px solid var(--brd); border-radius:12px;
       padding:10px 6px 8px; text-align:center; font-size:10px; font-weight:700;
@@ -3874,6 +3928,8 @@
     <div class="stitle">Método de pago</div>
 
     <!-- Fila 1A: Yape · Plin BBVA · Plin Interbank -->
+    <div class="pgrd-label">Billeteras electronicas</div>
+
     <div class="pgrd-top">
       <div class="popt c-yape on" id="pay-Yape" onclick="setPago('Yape')">
         <img class="plogo-svg" src="assets/images/embedded/embedded-9d9ef08c7068.png" alt="Yape" style="border-radius:8px;object-fit:contain;">
@@ -3890,7 +3946,12 @@
     </div>
 
     <!-- Fila 1B: BIM · Agora · Binance -->
-    <div class="pgrd-top-2">
+    <button type="button" class="pgrd-more-btn" id="btnMasBilleteras" onclick="toggleMasBilleteras()" aria-expanded="false" aria-controls="pagoBilleterasExtra">
+      Ver mas billeteras y Bitcoin
+    </button>
+
+    <div class="pgrd-top-2" id="pagoBilleterasExtra">
+      <div class="pgrd-extra-note">Opciones adicionales para quienes ya usan estas apps.</div>
       <div class="popt c-bim" id="pay-BIM" onclick="setPago('BIM')">
         <img class="plogo-svg" src="assets/images/embedded/embedded-7318b2cb20df.png" alt="BIM" style="border-radius:8px;object-fit:contain;">
         <span class="plbl">BIM</span>
@@ -3899,9 +3960,10 @@
         <img class="plogo-svg" src="assets/images/embedded/embedded-a6502205f410.png" alt="Agora" style="border-radius:8px;object-fit:contain;">
         <span class="plbl">Agora</span>
       </div>
+      <div class="pgrd-crypto-label">Bitcoin / cripto: solo Binance</div>
       <div class="popt c-binance" id="pay-Binance" onclick="setPago('Binance')">
         <img class="plogo-svg" src="assets/images/embedded/embedded-797e90523ee4.png" alt="Binance" style="border-radius:8px;object-fit:contain;">
-        <span class="plbl">Binance</span>
+        <span class="plbl">Binance<br>Pay</span>
       </div>
     </div>
 
@@ -6606,6 +6668,23 @@ const METODOS_PAGO = {
   }
 };
 
+if (METODOS_PAGO.Binance) {
+  METODOS_PAGO.Binance.sub = 'Bitcoin / cripto: solo por Binance Pay';
+  METODOS_PAGO.Binance.nota = '<strong>1.</strong> Abre la app Binance y ve a Binance Pay<br><strong>2.</strong> Escanea el QR para pagar con Binance<br><strong>3.</strong> Captura el comprobante y subelo<br><strong>Importante:</strong> para Bitcoin o cripto, ASWA solo recibe por Binance.';
+}
+
+function toggleMasBilleteras(force) {
+  const panel = document.getElementById('pagoBilleterasExtra');
+  const btn = document.getElementById('btnMasBilleteras');
+  if (!panel) return;
+  const abrir = typeof force === 'boolean' ? force : !panel.classList.contains('show');
+  panel.classList.toggle('show', abrir);
+  if (btn) {
+    btn.setAttribute('aria-expanded', abrir ? 'true' : 'false');
+    btn.textContent = abrir ? 'Ocultar billeteras adicionales' : 'Ver mas billeteras y Bitcoin';
+  }
+}
+
 function setPago(metodo) {
   if (metodo === 'Efectivo' && pedidoEspecialRequierePagoDigital()) {
     tst('Reservas, regalos y bidon San Juanero solo aceptan Yape, Plin, Agora, BIM o transferencia.', 3600);
@@ -6626,6 +6705,7 @@ function setPago(metodo) {
   };
   const btn = document.getElementById(ids[metodo]);
   if (btn) btn.classList.add('on');
+  if (['BIM', 'Agora', 'Binance'].includes(metodo)) toggleMasBilleteras(true);
 
   const paybox    = document.getElementById('payboxPrincipal');
   const vueltoBox = document.getElementById('vueltoBox');
