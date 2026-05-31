@@ -25,6 +25,8 @@ function loadAssistantApi() {
 
   const code = html.slice(start, end);
   return new Function(`const __aswaStorage = new Map();
+  var _chatId = '';
+  var window = { FB: null, ASWA_CONFIG: {} };
   const localStorage = {
     setItem: (key, value) => __aswaStorage.set(key, String(value)),
     getItem: (key) => __aswaStorage.has(key) ? __aswaStorage.get(key) : null,
@@ -34,6 +36,7 @@ function loadAssistantApi() {
   ${code}; return {
     reply: _chatRespuestaAutomatica,
     process: _chatPedidoProcesarTexto,
+    conversational: _chatRespuestaConversacional,
     attach: () => { _chatPedidoDraft.comprobanteAdjunto = true; return _chatPedidoSiguientePregunta(_chatPedidoDraft); },
     dropMemory: () => { _chatPedidoDraft = null; },
     setCache: (mensajes) => { _chatMensajesCache = mensajes; },
@@ -208,6 +211,15 @@ describe('support assistant replies', () => {
     const text = api.process('ya lo registraste mi pedido');
     expect(text).toContain('tu pedido ya fue registrado');
     expect(text).toContain('ABCD1234');
+    expect(text).not.toContain('Para hacer un pedido');
+  });
+
+  test('does not fall back to the long guide for a stuck follow-up', async () => {
+    const api = loadAssistantApi();
+    api.reset();
+
+    const text = await api.conversational('pero ya te dije');
+    expect(text).toContain('No encuentro un resumen pendiente');
     expect(text).not.toContain('Para hacer un pedido');
   });
 
