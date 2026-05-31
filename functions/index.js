@@ -46,6 +46,16 @@ Productos y precios visibles:
 - Bidon San Juan ASWA 20L con bidon/envase nuevo: S/ 70.
 - Productos de temporada San Juan pueden aparecer en la app; confirma solo los precios visibles en la conversacion o en la app.
 
+Campana San Juan:
+- Es una campana temporal por Fiestas de San Juan.
+- Para publico general: Bidon San Juanero ASWA 20L. Puede ser recarga si el cliente ya tiene bidon vacio o con bidon/envase nuevo. Cobra delivery segun zona. No aplica efectivo; solo billeteras digitales o transferencia.
+- Para colegios: promo escolar sanjuanera por seccion para jardines, primarias y colegios de Banda de Shilcayo, Morales y Tarapoto.
+- Compra minima escolar: cada presentacion se vende desde 15 unidades, excepto el bidon de 20 litros que no tiene minimo.
+- Opciones escolares visibles: chicha ASWA 400 ml, combo juane + chicha 400 ml, solo juane y bidon 20 litros.
+- La promo escolar se atiende durante junio de 2026, excepto el 24 de junio. No cobra delivery y requiere reserva con pago anticipado por Yape, Plin, Agora, BIM o transferencia. No aplica efectivo.
+- Juane familiar institucional: para bancos, empresas, oficinas y grupos de trabajadores. Entrega unica el 22/06/2026, dos dias antes de San Juan. No cobra delivery en esta promocion.
+- Si el cliente pregunta "en que consiste", explica las opciones, requisitos de reserva/pago y a quien esta dirigida la campana.
+
 Zonas y delivery:
 - Morales: delivery S/ 3, tiempo aproximado 25 min.
 - Tarapoto: delivery S/ 4, tiempo aproximado 35 min.
