@@ -37,6 +37,7 @@ function loadAssistantApi() {
     reply: _chatRespuestaAutomatica,
     process: _chatPedidoProcesarTexto,
     conversational: _chatRespuestaConversacional,
+    hasUnlockHelper: () => typeof _chatDesbloquearEntrada === 'function',
     attach: () => { _chatPedidoDraft.comprobanteAdjunto = true; return _chatPedidoSiguientePregunta(_chatPedidoDraft); },
     dropMemory: () => { _chatPedidoDraft = null; },
     setCache: (mensajes) => { _chatMensajesCache = mensajes; },
@@ -221,6 +222,11 @@ describe('support assistant replies', () => {
     const text = await api.conversational('pero ya te dije');
     expect(text).toContain('No encuentro un resumen pendiente');
     expect(text).not.toContain('Para hacer un pedido');
+  });
+
+  test('exposes chat input unlock helper for recovery', () => {
+    const api = loadAssistantApi();
+    expect(api.hasUnlockHelper()).toBe(true);
   });
 
   test('continues a saved chat order after local memory was lost', () => {

@@ -11900,7 +11900,7 @@ function abrirChat() {
   document.getElementById('chatFabBadge')?.classList.remove('show');
   document.getElementById('chatModal')?.classList.add('open');
   setTimeout(() => {
-    document.getElementById('chatInput')?.focus();
+    _chatDesbloquearEntrada(true);
     _marcarChatLeidoCliente();
     _scrollChatAbajo();
   }, 120);
@@ -12725,6 +12725,20 @@ async function _chatRegistrarPedidoDesdeDraft(draft) {
   return ref.id;
 }
 
+function _chatDesbloquearEntrada(focus = false) {
+  const input = document.getElementById('chatInput');
+  const btn = document.getElementById('chatSendBtn');
+  if (input) {
+    input.disabled = false;
+    input.readOnly = false;
+    input.style.pointerEvents = 'auto';
+  }
+  if (btn) btn.disabled = false;
+  if (focus && input && document.getElementById('chatModal')?.classList.contains('open')) {
+    setTimeout(() => input.focus(), 20);
+  }
+}
+
 async function _chatRespuestaConversacional(texto) {
   const pedidoChat = _chatPedidoProcesarTexto(texto);
   if (pedidoChat?.registrar) {
@@ -12788,6 +12802,8 @@ async function _chatResponderAutomatico(texto) {
   } catch(err) {
     console.warn('respuesta automatica chat:', err);
     await _chatEnviarMensajeNegocio('No quiero dejarte sin respuesta. Escribe nuevamente el producto o CONFIRMAR PEDIDO y retomo tu pedido por aqui.').catch(() => {});
+  } finally {
+    _chatDesbloquearEntrada(false);
   }
 }
 
@@ -12810,7 +12826,10 @@ function _chatProgramarRespuestaFallback(texto, clienteMsgId) {
 async function enviarMensajeChat() {
   const input = document.getElementById('chatInput');
   const texto = input?.value.trim();
-  if (!texto || !_chatId) return;
+  if (!texto || !_chatId) {
+    _chatDesbloquearEntrada(true);
+    return;
+  }
   input.value = '';
   input.style.height = 'auto';
   const btn = document.getElementById('chatSendBtn');
@@ -12831,7 +12850,7 @@ async function enviarMensajeChat() {
     console.error('enviar chat:', err);
     tst('No se pudo enviar el mensaje', 2500);
   } finally {
-    if (btn) btn.disabled = false;
+    _chatDesbloquearEntrada(true);
   }
 }
 
@@ -12847,6 +12866,7 @@ function _renderMensajesChat(mensajes) {
       : '';
     return `<div class="chat-msg ${cls}">${autor}${esc(m.texto || '')}${_chatMensajeExtraHtml(m.texto || '')}<span class="chat-time">${_chatFecha(m.fecha)}</span></div>`;
   }).join('');
+  _chatDesbloquearEntrada(false);
   _scrollChatAbajo();
 }
 
