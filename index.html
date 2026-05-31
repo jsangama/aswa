@@ -10873,30 +10873,14 @@ async function admToggleUsuario(userId, estaActivo) {
    Llamar desde consola: crearUsuariosDefault()
 ══════════════════════════════════════ */
 async function crearUsuariosDefault() {
-  if (!confirm('¿Crear usuarios por defecto?\nadmin / Admin1234!\ndelivery1 / Delivery1234!\n\n¡CÁMBIALOS DESPUÉS!')) return;
-  try {
-    const { collection:col, addDoc:ad, serverTimestamp:ts } = window.FB;
-    const usuarios = [
-      { username:'owner',     nombre:'Dueno ASWA',      rol:'owner',    password:'Owner1234!',    permisos:{ owner:true, super:true, ver_stats:true, ver_clientes:true, exportar:true } },
-      { username:'admin',     nombre:'Administrador',  rol:'admin',    password:'Admin1234!',    permisos:{ super:true, ver_stats:true, ver_clientes:true, exportar:true } },
-      { username:'delivery1', nombre:'Repartidor 1',   rol:'delivery', password:'Delivery1234!', permisos:{} },
-    ];
-    for (const u of usuarios) {
-      const hash = await hashPassword(u.password, u.username);
-      await ad(col(db,'app_users'), {
-        business_id:businessIdCanonical(), username:u.username, nombre:u.nombre,
-        rol:u.rol, password_hash:hash, password_hash_version:'salted-v1', activo:true,
-        creado_at:ts(), ultimo_login:null, intentos_fallidos:0, permisos:u.permisos
-      });
-      console.log(`✅ Creado: @${u.username} (${u.rol}) — pass: ${u.password}`);
-    }
-    alert('✅ Usuarios creados:\n@admin → Admin1234!\n@delivery1 → Delivery1234!\n\n¡CÁMBIALOS AHORA!');
-  } catch(err) { console.error(err); alert('Error: '+err.message); }
+  alert(
+    'Creacion de usuarios demo deshabilitada en el navegador.\n\n' +
+    'Usa Firebase Admin desde un entorno privado:\n' +
+    'npm run operators:upsert\n' +
+    'npm run claims:set'
+  );
+  console.warn('crearUsuariosDefault bloqueado: usa scripts/upsert-operator-user.mjs y set-firebase-claims.mjs.');
 }
-
-/* ══════════════════════════════════════
-   PANEL ADMIN — JS (mantenido)
-══════════════════════════════════════ */
 
 /* Chat de soporte cliente/admin */
 let _chatUnsub = null;

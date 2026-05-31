@@ -66,6 +66,34 @@ service cloud.firestore {
         request.resource.data.keys().hasAll([
           'businessId', 'cliente_uid', 'nombre', 'telefono',
           'items', 'total', 'pago', 'estado', 'fecha'
+        ]) &&
+        request.resource.data.keys().hasOnly([
+          'businessId', 'cliente_uid', 'nombre', 'telefono', 'direccion',
+          'nota_entrega', 'distrito', 'items', 'items_detalle', 'subtotal',
+          'delivery', 'oferta_pct', 'descuento_amt', 'cupon_codigo',
+          'cupon_descuento_pct', 'cupon_descuento_fijo', 'total', 'pago',
+          'pago_con', 'vuelto', 'codigo_usado', 'nivel_cliente', 'estado',
+          'confirmacion_cliente', 'gps_url', 'gps_coords', 'yape_foto_url',
+          'yape_foto_base64', 'yape_estado', 'yape_verificacion',
+          'yape_foto_local', 'requiere_comprobante_whatsapp', 'compartido',
+          'asignado_a', 'es_reserva', 'reserva_fecha', 'reserva_hora',
+          'reserva_iso', 'reserva_texto', 'reserva_estado',
+          'reserva_alertas_cliente', 'es_regalo', 'regalo_para',
+          'es_promo_san_juan_escolar', 'promo_san_juan_escolar',
+          'es_promo_san_juan_institucional', 'promo_san_juan_institucional',
+          'pago_anticipado_obligatorio', 'planta_coords',
+          'distancia_planta_m', 'distancia_planta_txt', 'delivery_carga',
+          'delivery_carga_confirmada', 'admin_alerta_nueva',
+          'delivery_alerta_nueva', 'fecha'
+        ]);
+    }
+
+    function validClienteSelfWrite() {
+      return isClientOwnedCreate() &&
+        request.resource.data.keys().hasOnly([
+          'businessId', 'cliente_uid', 'nombre', 'telefono', 'nivel',
+          'pedidos_totales', 'total_consumo', 'ultimo_pedido',
+          'codigo_referido', 'bonos_activos'
         ]);
     }
 
@@ -105,12 +133,17 @@ service cloud.firestore {
     }
 
     match /clientes/{clienteId} {
-      allow create: if isClientOwnedCreate();
+      allow create: if validClienteSelfWrite();
       allow read: if isAdmin(resource.data) || isClientOwner(resource.data);
       allow update: if isAdmin(resource.data) || (
         isClientOwner(resource.data) &&
         request.resource.data.cliente_uid == resource.data.cliente_uid &&
-        request.resource.data.businessId == resource.data.businessId
+        request.resource.data.businessId == resource.data.businessId &&
+        request.resource.data.keys().hasOnly([
+          'businessId', 'cliente_uid', 'nombre', 'telefono', 'nivel',
+          'pedidos_totales', 'total_consumo', 'ultimo_pedido',
+          'codigo_referido', 'bonos_activos'
+        ])
       );
       allow delete: if isAdmin(resource.data);
     }
