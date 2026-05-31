@@ -2178,7 +2178,7 @@
 
     /* ══ PANEL ADMIN ══ */
     .adm-btn {
-      position:fixed; bottom:160px; right:16px; z-index:999;
+      position:fixed; bottom:132px; left:16px; z-index:999;
       background:rgba(9,9,11,.8); border:1px solid var(--brd);
       color:var(--mut); padding:8px 12px; border-radius:999px;
       font-size:10px; font-weight:700; cursor:pointer;
@@ -2530,7 +2530,7 @@
     .pod-gps-txt { color:var(--grn); font-weight:700; }
 
     /* Chat de soporte ASWA */
-    .chat-fab { position:fixed; right:16px; bottom:148px; z-index:1500; display:none; align-items:center; gap:8px; border:1px solid rgba(34,197,94,.35); border-radius:999px; background:linear-gradient(135deg,#22c55e,#16a34a); color:#03140a; padding:10px 14px; font-size:12px; font-weight:900; font-family:'Poppins',sans-serif; cursor:pointer; box-shadow:0 12px 28px rgba(34,197,94,.28); }
+    .chat-fab { position:fixed; right:16px; bottom:118px; z-index:1500; display:none; align-items:center; gap:8px; border:1px solid rgba(34,197,94,.35); border-radius:999px; background:linear-gradient(135deg,#22c55e,#16a34a); color:#03140a; padding:10px 14px; font-size:12px; font-weight:900; font-family:'Poppins',sans-serif; cursor:pointer; box-shadow:0 12px 28px rgba(34,197,94,.28); }
     .chat-fab.show { display:flex; }
     .chat-fab-badge { display:none; min-width:18px; height:18px; border-radius:999px; background:#ef4444; color:#fff; align-items:center; justify-content:center; font-size:10px; padding:0 5px; }
     .chat-fab-badge.show { display:flex; }
@@ -2559,14 +2559,14 @@
 
     /* Acceso rapido operativo */
     .quick-access-btn {
-      position:fixed; right:16px; bottom:206px; z-index:1500;
+      position:fixed; right:16px; bottom:176px; z-index:1500;
       width:46px; height:46px; border-radius:16px; border:1px solid rgba(250,204,21,.36);
       background:rgba(250,204,21,.14); color:var(--y); font-size:20px; font-weight:900;
       display:flex; align-items:center; justify-content:center; cursor:pointer;
       box-shadow:0 12px 28px rgba(0,0,0,.32); backdrop-filter:blur(10px);
     }
     .quick-access-panel {
-      position:fixed; right:16px; bottom:260px; z-index:1600; display:none;
+      position:fixed; right:16px; bottom:230px; z-index:1600; display:none;
       width:min(310px,calc(100vw - 32px)); padding:14px; border-radius:16px;
       background:var(--s1); border:1px solid var(--brd); box-shadow:0 20px 60px rgba(0,0,0,.52);
     }
@@ -2617,7 +2617,7 @@
 
 <!-- ══ PWA INSTALL ══ -->
 <button id="installPWA" type="button" onclick="pwaInstalarApp()" style="
-  display:none; position:fixed; bottom:80px; right:16px; z-index:1500;
+  display:none; position:fixed; bottom:64px; right:16px; z-index:1500;
   background:var(--y); color:#000; border:none; border-radius:999px;
   padding:10px 18px; font-size:12px; font-weight:800; cursor:pointer;
   font-family:'Poppins',sans-serif; box-shadow:0 4px 16px rgba(250,204,21,.4);
@@ -11011,6 +11011,55 @@ function cerrarChat() {
   document.getElementById('chatModal')?.classList.remove('open');
 }
 
+function _chatRespuestaAutomatica(texto) {
+  const t = String(texto || '').toLowerCase();
+  if (/pedido|pedir|comprar|orden/.test(t)) {
+    return 'Para hacer tu pedido: 1) elige la presentacion y cantidad, 2) escribe tu telefono, nombre y direccion, 3) elige metodo de pago, 4) confirma el pedido. Si ya pusiste tus datos, revisa el resumen y toca enviar.';
+  }
+  if (/pago|yape|plin|efectivo|transferencia|comprobante/.test(t)) {
+    return 'Aceptamos efectivo al recibir y pagos digitales como Yape, Plin o transferencia. Si pagas digital, sube o envia tu comprobante para validar el pedido.';
+  }
+  if (/delivery|envio|entrega|direccion|zona|llega/.test(t)) {
+    return 'Hacemos delivery segun tu zona de entrega. Escribe tu direccion completa y una referencia para calcular o coordinar la entrega.';
+  }
+  if (/horario|hora|atienden|abierto|cerrado/.test(t)) {
+    return 'Nuestro horario se muestra en la app. Si haces un pedido fuera de horario, lo revisamos para la siguiente franja disponible.';
+  }
+  if (/nota|boleta|venta|recibo|confirmar/.test(t)) {
+    return 'La Nota de Venta se genera cuando el pedido llega y confirmas la recepcion en la app. Asi evitamos registrar ventas que aun no fueron entregadas.';
+  }
+  if (/prueba|test|modo/.test(t)) {
+    return 'El modo prueba usa colecciones separadas en Firebase: pedidos_prueba y clientes_prueba. Sirve para revisar el flujo sin mezclarlo con pedidos reales.';
+  }
+  return 'Gracias por escribirnos. Soy el asistente ASWA. Puedo ayudarte con pedidos, pagos, delivery, horarios y nota de venta. Si necesitas atencion humana, deja tu consulta con detalle y el equipo ASWA la revisara.';
+}
+
+async function _chatResponderAutomatico(texto) {
+  if (!_chatId || !window.FB) return;
+  try {
+    const { doc:d, collection:col, addDoc:ad, setDoc, serverTimestamp:ts } = window.FB;
+    const respuesta = _chatRespuestaAutomatica(texto);
+    await ad(col(db, 'chats', _chatId, 'mensajes'), {
+      de:'negocio',
+      autor:'asistente_basico',
+      nombre:'Asistente ASWA',
+      texto:respuesta,
+      fecha:ts(),
+      leido_cliente:false,
+      leido_negocio:true
+    });
+    await setDoc(d(db, 'chats', _chatId), {
+      ultimo_msg:respuesta,
+      ultimo_de:'negocio',
+      ultimo_autor:'asistente_basico',
+      actualizado_en:ts(),
+      no_leidos_cliente:1
+    }, { merge:true });
+  } catch(err) {
+    console.warn('respuesta automatica chat:', err);
+  }
+}
+
 async function enviarMensajeChat() {
   const input = document.getElementById('chatInput');
   const texto = input?.value.trim();
@@ -11030,6 +11079,9 @@ async function enviarMensajeChat() {
       businessId:BUSINESS_ID, cliente_uid: window.currentUser?.uid || null, telefono:_chatTelefono, nombre:_chatNombre,
       ultimo_msg:texto, ultimo_de:'cliente', actualizado_en:ts(), no_leidos_negocio:1
     }, { merge:true });
+    if (!window.ASWA_CONFIG?.AI_SUPPORT_BACKEND_ENABLED) {
+      setTimeout(() => _chatResponderAutomatico(texto), 700);
+    }
   } catch(err) {
     console.error('enviar chat:', err);
     tst('No se pudo enviar el mensaje', 2500);
@@ -11044,7 +11096,10 @@ function _renderMensajesChat(mensajes) {
   const base = '<div class="chat-msg sistema">Escribenos si necesitas ayuda con tu pedido.</div>';
   cont.innerHTML = base + mensajes.map(m => {
     const cls = m.de === 'negocio' ? 'negocio' : 'cliente';
-    return `<div class="chat-msg ${cls}">${esc(m.texto || '')}<span class="chat-time">${_chatFecha(m.fecha)}</span></div>`;
+    const autor = ['ia', 'asistente_basico'].includes(m.autor)
+      ? '<strong style="display:block;color:#86efac;margin-bottom:4px">Asistente ASWA</strong>'
+      : '';
+    return `<div class="chat-msg ${cls}">${autor}${esc(m.texto || '')}<span class="chat-time">${_chatFecha(m.fecha)}</span></div>`;
   }).join('');
   _scrollChatAbajo();
 }
@@ -11127,7 +11182,12 @@ async function admAbrirChat(chatId, nombre, telefono) {
     const msgs = snap.docs.map(x => x.data());
     const box = document.getElementById('admChatMsgs');
     if (!box) return;
-    box.innerHTML = msgs.map(m => `<div class="adm-chat-msg ${m.de === 'negocio' ? 'negocio' : 'cliente'}">${esc(m.texto || '')}<span class="chat-time">${_chatFecha(m.fecha)}</span></div>`).join('');
+    box.innerHTML = msgs.map(m => {
+      const autor = ['ia', 'asistente_basico'].includes(m.autor)
+        ? '<strong style="display:block;color:#86efac;margin-bottom:4px">Asistente ASWA</strong>'
+        : '';
+      return `<div class="adm-chat-msg ${m.de === 'negocio' ? 'negocio' : 'cliente'}">${autor}${esc(m.texto || '')}<span class="chat-time">${_chatFecha(m.fecha)}</span></div>`;
+    }).join('');
     box.scrollTop = box.scrollHeight;
   });
   await setDoc(d(db, 'chats', chatId), { no_leidos_negocio:0 }, { merge:true }).catch(()=>{});
