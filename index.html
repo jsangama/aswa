@@ -397,6 +397,28 @@
       font-family:'Poppins',sans-serif;
     }
     .btn-ref.on { display:flex; }
+    .btn-tutorial-top {
+      flex-shrink:0;
+      background:rgba(250,204,21,.12);
+      color:var(--y);
+      border:1px solid rgba(250,204,21,.38);
+      padding:8px 12px;
+      border-radius:999px;
+      font-size:11px;
+      font-weight:900;
+      cursor:pointer;
+      display:flex;
+      align-items:center;
+      gap:6px;
+      white-space:nowrap;
+      font-family:'Poppins',sans-serif;
+    }
+    .btn-ref.on + .btn-tutorial-top { display:none; }
+    @media (max-width:390px) {
+      .btn-tutorial-top { padding:8px 10px; font-size:10px; }
+      .bname { font-size:23px; }
+      .bsub { font-size:8px; letter-spacing:.16em; }
+    }
     .sp { height:86px; }
 
     /* ══ LAYOUT ══ */
@@ -1308,10 +1330,18 @@
       height:6px;
       border-radius:999px;
       background:rgba(255,255,255,.25);
+      border:0;
+      padding:0;
+      cursor:pointer;
+      transition:width .18s, background .18s;
     }
     .home-tutorial-dot.active {
       width:18px;
       background:var(--y);
+    }
+    .home-tutorial-dot:focus-visible {
+      outline:2px solid var(--y);
+      outline-offset:3px;
     }
     .home-tutorial-foot {
       background:#17181c;
@@ -1365,6 +1395,19 @@
     }
     .home-prep-title { color:#fff; font-size:11px; font-weight:950; }
     .home-prep-text { color:#9ca3af; font-size:10px; line-height:1.45; margin-top:3px; }
+    .home-prep-action {
+      width:100%;
+      margin-top:12px;
+      border:0;
+      background:linear-gradient(135deg,#facc15,#f59e0b);
+      color:#111;
+      border-radius:12px;
+      padding:11px 12px;
+      font-family:'Poppins',sans-serif;
+      font-size:11px;
+      font-weight:950;
+      cursor:pointer;
+    }
     @media (max-width:390px) {
       .home-tutorial-step { padding-left:46px; padding-right:46px; }
       .home-tutorial-title { font-size:16px; }
@@ -3062,6 +3105,9 @@
       </svg>
       Refiere y Gana
     </button>
+    <button class="btn-tutorial-top" id="btnTutorialTop" type="button" onclick="tutHomeOpenFromHeader()" aria-label="Ver guia para hacer pedido">
+      Tutorial
+    </button>
   </div>
 </header>
 <div class="sp"></div>
@@ -3222,6 +3268,7 @@
           <div><div class="home-prep-title">Entrega coordinada</div><div class="home-prep-text">Delivery en Morales, Tarapoto y Banda; recojo local o envio a agencia.</div></div>
         </div>
       </div>
+      <button type="button" class="home-prep-action" onclick="tutHomeSetTab('pedido'); tutHomeSetStep(1); tutHomeAction()">Hacer mi pedido ahora</button>
     </div>
   </div>
 </section>
@@ -7202,6 +7249,15 @@ document.addEventListener('click', e => {
 
 const ASWA_HOME_TUTORIAL_STEPS = [
   {
+    icon: 'QR',
+    title: 'Entra a ASWA',
+    text: 'Abre el link o escanea el QR de ASWA para hacer tu pedido desde el celular.',
+    foot: 'Paso inicial',
+    footText: 'Comparte el link con familia y amigos para que tambien puedan pedir.',
+    target: '#promoSlider',
+    action: 'Ver inicio'
+  },
+  {
     icon: 'APP',
     title: 'Abre la app',
     text: 'Ingresa al link de ASWA desde tu celular y mira las opciones disponibles.',
@@ -7290,7 +7346,7 @@ function tutHomeRender() {
   const dots = document.getElementById('homeTutDots');
   if (dots) {
     dots.innerHTML = ASWA_HOME_TUTORIAL_STEPS
-      .map((_, i) => `<span class="home-tutorial-dot${i === aswaHomeTutorialStep ? ' active' : ''}"></span>`)
+      .map((_, i) => `<button type="button" class="home-tutorial-dot${i === aswaHomeTutorialStep ? ' active' : ''}" onclick="tutHomeSetStep(${i})" aria-label="Ver paso ${i + 1}"></button>`)
       .join('');
   }
 }
@@ -7326,6 +7382,13 @@ function tutHomeSetTab(tab) {
     tabPrep.classList.toggle('active', isPrep);
     tabPrep.setAttribute('aria-selected', String(isPrep));
   }
+}
+
+function tutHomeOpenFromHeader() {
+  tutHomeSetTab('pedido');
+  tutHomeSetStep(0);
+  const box = document.querySelector('.home-tutorial');
+  if (box) box.scrollIntoView({ behavior:'smooth', block:'start' });
 }
 
 document.addEventListener('DOMContentLoaded', tutHomeRender);
