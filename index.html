@@ -3252,8 +3252,9 @@
     <div class="chat-msgs" id="chatMsgs">
       <div class="chat-msg sistema">Escríbenos si necesitas ayuda con tu pedido.</div>
     </div>
-    <div class="chat-input-bar">
-      <textarea class="chat-input" id="chatInput" rows="1" placeholder="Escribe tu mensaje..."
+    <div class="chat-input-bar" onclick="_chatDesbloquearEntrada(true)">
+      <textarea class="chat-input" id="chatInput" rows="1" placeholder="Escribe tu mensaje..." autocomplete="off" autocorrect="on" spellcheck="true"
+        onclick="_chatDesbloquearEntrada(true)" onfocus="_chatDesbloquearEntrada(false)"
         onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();enviarMensajeChat()}"
         oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px'"></textarea>
       <input type="file" id="chatComprobanteInput" accept="image/*" style="display:none" onchange="seleccionarComprobanteChat(this)">
@@ -12740,7 +12741,7 @@ function _chatDesbloquearEntrada(focus = false) {
   if (btn) btn.disabled = false;
   if (bar) {
     bar.style.pointerEvents = 'auto';
-    bar.style.zIndex = '3';
+    bar.style.zIndex = '30';
   }
   if (focus && input && document.getElementById('chatModal')?.classList.contains('open')) {
     setTimeout(() => input.focus(), 20);
@@ -12748,6 +12749,33 @@ function _chatDesbloquearEntrada(focus = false) {
 }
 
 window._chatDesbloquearEntrada = _chatDesbloquearEntrada;
+
+function _chatInsertarTextoEmergencia(ev) {
+  const modal = document.getElementById('chatModal');
+  const input = document.getElementById('chatInput');
+  if (!modal?.classList.contains('open') || !input) return;
+  if (ev.ctrlKey || ev.metaKey || ev.altKey) return;
+  if (document.activeElement === input) return;
+  if (ev.key === 'Enter') {
+    ev.preventDefault();
+    _chatDesbloquearEntrada(true);
+    enviarMensajeChat();
+    return;
+  }
+  if (ev.key === 'Backspace') {
+    ev.preventDefault();
+    input.value = input.value.slice(0, -1);
+    input.dispatchEvent(new Event('input', { bubbles:true }));
+    _chatDesbloquearEntrada(true);
+    return;
+  }
+  if (ev.key && ev.key.length === 1) {
+    ev.preventDefault();
+    input.value += ev.key;
+    input.dispatchEvent(new Event('input', { bubbles:true }));
+    _chatDesbloquearEntrada(true);
+  }
+}
 
 function _chatInstalarEntradaWatchdog() {
   if (window._chatInputWatchdog) return;
@@ -12757,8 +12785,11 @@ function _chatInstalarEntradaWatchdog() {
     }
   }, 1000);
   document.addEventListener('pointerdown', ev => {
-    if (ev.target?.closest?.('.chat-input-bar')) _chatDesbloquearEntrada(true);
+    if (document.getElementById('chatModal')?.classList.contains('open')) {
+      if (ev.target?.closest?.('.chat-input-bar') || ev.target?.id === 'chatInput') _chatDesbloquearEntrada(true);
+    }
   }, true);
+  document.addEventListener('keydown', _chatInsertarTextoEmergencia, true);
 }
 
 _chatInstalarEntradaWatchdog();

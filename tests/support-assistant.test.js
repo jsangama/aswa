@@ -45,7 +45,7 @@ function loadAssistantApi() {
     conversational: _chatRespuestaConversacional,
     hasUnlockHelper: () => typeof _chatDesbloquearEntrada === 'function',
     hasGlobalUnlockHelper: () => typeof window._chatDesbloquearEntrada === 'function',
-    hasInputWatchdog: () => !!window._chatInputWatchdog && __listeners.includes('pointerdown'),
+    hasInputWatchdog: () => !!window._chatInputWatchdog && __listeners.includes('pointerdown') && __listeners.includes('keydown'),
     attach: () => { _chatPedidoDraft.comprobanteAdjunto = true; return _chatPedidoSiguientePregunta(_chatPedidoDraft); },
     dropMemory: () => { _chatPedidoDraft = null; },
     setCache: (mensajes) => { _chatMensajesCache = mensajes; },
@@ -239,6 +239,7 @@ describe('support assistant replies', () => {
     expect(api.hasUnlockHelper()).toBe(true);
     expect(api.hasGlobalUnlockHelper()).toBe(true);
     expect(api.hasInputWatchdog()).toBe(true);
+    expect(api.sourceContains('function _chatInsertarTextoEmergencia')).toBe(true);
   });
 
   test('client chat messages bypass backend and use local reply path', () => {
