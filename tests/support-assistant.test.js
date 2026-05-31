@@ -28,7 +28,9 @@ function loadAssistantApi() {
     reply: _chatRespuestaAutomatica,
     process: _chatPedidoProcesarTexto,
     attach: () => { _chatPedidoDraft.comprobanteAdjunto = true; return _chatPedidoSiguientePregunta(_chatPedidoDraft); },
-    reset: () => { _chatPedidoDraft = null; _chatComprobanteData = null; }
+    dropMemory: () => { _chatPedidoDraft = null; },
+    setCache: (mensajes) => { _chatMensajesCache = mensajes; },
+    reset: () => { _chatPedidoDraft = null; _chatComprobanteData = null; _chatMensajesCache = []; }
   };`)();
 }
 
@@ -153,6 +155,21 @@ describe('support assistant replies', () => {
     api.process('20');
 
     const confirmation = api.process('CONFIRMADO');
+    expect(confirmation).toEqual({ registrar:true, texto:'Estoy registrando tu pedido en ASWA...' });
+  });
+
+  test('recovers the ready order from the last chat summary when memory was lost', () => {
+    const api = loadAssistantApi();
+    api.reset();
+    api.setCache([
+      {
+        de: 'negocio',
+        texto: 'Resumen listo: 1 x Chicha ASWA 2L. Total S/ 13.00. Direccion: JR. JIMENES PIMENTEL 521. Cliente: JOSUE SANGAMA PEZO, 950845067. Pago: Efectivo con S/ 20.00; vuelto S/ 7.00. Escribe CONFIRMAR PEDIDO para registrarlo.'
+      }
+    ]);
+    api.dropMemory();
+
+    const confirmation = api.process('CONFIRMO');
     expect(confirmation).toEqual({ registrar:true, texto:'Estoy registrando tu pedido en ASWA...' });
   });
 

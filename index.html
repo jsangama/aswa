@@ -11832,6 +11832,7 @@ let _chatTelefono = '';
 let _chatNombre = '';
 let _chatId = '';
 let _chatAbierto = false;
+let _chatMensajesCache = [];
 let _admChatActivo = null;
 let _admChatUnsub = null;
 
@@ -12225,6 +12226,39 @@ function _chatPedidoNuevoDraft() {
   };
 }
 
+function _chatPedidoDraftKey() {
+  return 'aswa_chat_order_draft_' + (_chatId || _chatTelefono || 'local');
+}
+
+function _chatGuardarPedidoDraft() {
+  try {
+    if (typeof localStorage === 'undefined' || !_chatPedidoDraft) return;
+    localStorage.setItem(_chatPedidoDraftKey(), JSON.stringify(_chatPedidoDraft));
+  } catch {}
+}
+
+function _chatCargarPedidoDraft() {
+  try {
+    if (typeof localStorage === 'undefined') return null;
+    const raw = localStorage.getItem(_chatPedidoDraftKey());
+    if (!raw) return null;
+    const draft = JSON.parse(raw);
+    return draft && draft.items ? draft : null;
+  } catch { return null; }
+}
+
+function _chatLimpiarPedidoDraft() {
+  try {
+    if (typeof localStorage !== 'undefined') localStorage.removeItem(_chatPedidoDraftKey());
+  } catch {}
+  _chatPedidoDraft = null;
+  _chatComprobanteData = null;
+}
+
+function _chatEsConfirmacionPedido(t) {
+  return /confirmar pedido|confirmado|confirmada|confirmo|si confirmo|sí confirmo|ok confirmo|ok confirmado|listo|de acuerdo|registrar pedido|enviar pedido|ok registra|ok registrar/.test(t);
+}
+
 function _chatPedidoTotal(draft = _chatPedidoDraft) {
   if (!draft) return 0;
   const subtotal = Object.entries(draft.items || {}).reduce((sum, [id, qty]) => {
@@ -12242,6 +12276,45 @@ function _chatPedidoItemsTexto(draft = _chatPedidoDraft) {
 
 function _chatPedidoFirestoreProductId(id) {
   return CHAT_ORDER_PRODUCTS[id]?.id || id;
+}
+
+function _chatReconstruirPedidoDesdeResumen() {
+  const resumen = [...(_chatMensajesCache || [])]
+    .reverse()
+    .find(m => m?.de === 'negocio' && /Resumen listo:/i.test(m.texto || ''))?.texto || '';
+  if (!resumen) return null;
+
+  const productMap = [
+    { id:'sjBidonPublicNuevo', name:'Bidon ASWA 20L con envase nuevo' },
+    { id:'sjBidonPublic', name:'Bidon ASWA 20L' },
+    { id:'p4l', name:'Chicha ASWA Familiar 4L' },
+    { id:'p3l', name:'Chicha ASWA 3L' },
+    { id:'p2l', name:'Chicha ASWA 2L' }
+  ];
+  const product = productMap.find(p => resumen.includes(p.name));
+  const qtyMatch = resumen.match(/Resumen listo:\s*(\d+)\s*x\s*/i);
+  if (!product || !qtyMatch) return null;
+
+  const qty = Number(qtyMatch[1] || 0) || 1;
+  const direccion = (resumen.match(/Direccion:\s*(.*?)\.\s*Cliente:/i) || [])[1] || '';
+  const cliente = resumen.match(/Cliente:\s*(.*?),\s*(9\d{8})\./i);
+  const pago = resumen.match(/Pago:\s*([^.,;]+)(?:\s*con\s*S\/\s*([\d.]+))?/i);
+  const total = Number((resumen.match(/Total\s*S\/\s*([\d.]+)/i) || [])[1] || 0);
+  const subtotal = qty * Number(CHAT_ORDER_PRODUCTS[product.id]?.precio || 0);
+  const draft = _chatPedidoNuevoDraft();
+  draft.items = { [product.id]: qty };
+  draft.item = { ...CHAT_ORDER_PRODUCTS[product.id], qty };
+  draft.direccion = direccion;
+  draft.zona = _chatDetectarZonaDireccion(direccion)?.zona || '';
+  draft.delivery = Math.max(0, +(total - subtotal).toFixed(2));
+  draft.nombre = cliente?.[1] || '';
+  draft.telefono = cliente?.[2] || '';
+  draft.pago = (pago?.[1] || '').trim();
+  draft.pagoCon = pago?.[2] ? Number(pago[2]) : 0;
+  draft.comprobanteAdjunto = draft.pago && draft.pago !== 'Efectivo';
+  draft.listoParaConfirmar = !!(draft.direccion && draft.nombre && draft.telefono && draft.pago);
+  if (!draft.listoParaConfirmar) return null;
+  return draft;
 }
 
 function _chatDetectarProductoPedido(texto) {
@@ -12343,36 +12416,46 @@ function _chatPedidoSiguientePregunta(draft = _chatPedidoDraft) {
 
 function _chatPedidoProcesarTexto(texto) {
   const t = _chatNormalizar(texto);
+  const esConfirmacion = _chatEsConfirmacionPedido(t);
   const producto = _chatDetectarProductoPedido(texto);
+  if (!_chatPedidoDraft) _chatPedidoDraft = _chatCargarPedidoDraft() || (esConfirmacion ? _chatReconstruirPedidoDesdeResumen() : null);
   if (!_chatPedidoDraft && !producto) return '';
   if (!_chatPedidoDraft) _chatPedidoDraft = _chatPedidoNuevoDraft();
   const draft = _chatPedidoDraft;
 
   if (/cancelar pedido|cancelar chat|cancelar orden/.test(t)) {
-    _chatPedidoDraft = null;
-    _chatComprobanteData = null;
+    _chatLimpiarPedidoDraft();
     return 'Listo, cancele el pedido por chat. Puedes empezar otro cuando quieras.';
   }
 
-  if (draft.listoParaConfirmar && /confirmar pedido|confirmado|confirmada|confirmo|si confirmo|sí confirmo|ok confirmo|ok confirmado|listo|de acuerdo|registrar pedido|enviar pedido|ok registra|ok registrar/.test(t)) {
+  if (draft.listoParaConfirmar && esConfirmacion) {
+    _chatGuardarPedidoDraft();
     return { registrar:true, texto:'Estoy registrando tu pedido en ASWA...' };
   }
 
   if (producto) {
     if (producto.necesitaAclararGalonPresentacion) {
+      _chatGuardarPedidoDraft();
       return 'Para registrar bien tu pedido: quieres galon ASWA de 2 litros o galon familiar de 4 litros? Ejemplo: "2 galones de 2 litros" o "2 galones familiares".';
     }
-    if (producto.necesitaPresentacion) return 'Cuantos litros deseas: 2L, 3L o 4L? Por ejemplo: quiero 3 chichas de 4 litros.';
+    if (producto.necesitaPresentacion) {
+      _chatGuardarPedidoDraft();
+      return 'Cuantos litros deseas: 2L, 3L o 4L? Por ejemplo: quiero 3 chichas de 4 litros.';
+    }
     draft.items = { [producto.id]: producto.qty };
     draft.item = { ...CHAT_ORDER_PRODUCTS[producto.id], qty: producto.qty };
     draft.galonInfo = null;
     draft.listoParaConfirmar = false;
     if (producto.desdeBidon) {
       draft.pagoRestringidoDigital = true;
-      return `Te registro ${_chatPedidoItemsTexto(draft)} por S/ ${(_chatPedidoTotal(draft) - Number(draft.delivery || 0)).toFixed(2)}. El bidon es de 20 litros y no acepta efectivo. A que direccion seria el pedido?`;
+      const respuesta = `Te registro ${_chatPedidoItemsTexto(draft)} por S/ ${(_chatPedidoTotal(draft) - Number(draft.delivery || 0)).toFixed(2)}. El bidon es de 20 litros y no acepta efectivo. A que direccion seria el pedido?`;
+      _chatGuardarPedidoDraft();
+      return respuesta;
     }
     if (producto.desdeGalonAswa && !draft.direccion) {
-      return `Te registro ${_chatPedidoItemsTexto(draft)} por S/ ${(_chatPedidoTotal(draft) - Number(draft.delivery || 0)).toFixed(2)}. A que direccion seria el pedido?`;
+      const respuesta = `Te registro ${_chatPedidoItemsTexto(draft)} por S/ ${(_chatPedidoTotal(draft) - Number(draft.delivery || 0)).toFixed(2)}. A que direccion seria el pedido?`;
+      _chatGuardarPedidoDraft();
+      return respuesta;
     }
   }
 
@@ -12392,9 +12475,13 @@ function _chatPedidoProcesarTexto(texto) {
   }
 
   const pagoDetectado = _chatDetectarPago(texto);
-  if (pagoDetectado === 'PLIN_AMBIGUO' || pagoDetectado === 'BANCO_AMBIGUO' || pagoDetectado === 'BANCO_NO_DISPONIBLE') return _chatPagoInstrucciones(pagoDetectado, _chatPedidoTotal(draft));
+  if (pagoDetectado === 'PLIN_AMBIGUO' || pagoDetectado === 'BANCO_AMBIGUO' || pagoDetectado === 'BANCO_NO_DISPONIBLE') {
+    _chatGuardarPedidoDraft();
+    return _chatPagoInstrucciones(pagoDetectado, _chatPedidoTotal(draft));
+  }
   if (pagoDetectado) {
     if (draft.pagoRestringidoDigital && pagoDetectado === 'Efectivo') {
+      _chatGuardarPedidoDraft();
       return 'El bidon ASWA 20L no acepta efectivo. Puedes pagar con Yape, Plin BBVA, Plin Interbank, Agora, BIM o transferencia Interbank/BBVA/Banbif.';
     }
     draft.pago = pagoDetectado;
@@ -12411,7 +12498,9 @@ function _chatPedidoProcesarTexto(texto) {
     if (/^[a-zA-ZÀ-ÿ\s.'-]{6,80}$/.test(limpio) && limpio.split(/\s+/).length >= 2) draft.nombre = limpio;
   }
 
-  return _chatPedidoSiguientePregunta(draft);
+  const respuesta = _chatPedidoSiguientePregunta(draft);
+  _chatGuardarPedidoDraft();
+  return respuesta;
 }
 
 function _chatRespuestaAutomatica(texto) {
@@ -12540,8 +12629,7 @@ async function _chatRespuestaConversacional(texto) {
     try {
       const pedidoId = await _chatRegistrarPedidoDesdeDraft(draft);
       const total = _chatPedidoTotal(draft);
-      _chatPedidoDraft = null;
-      _chatComprobanteData = null;
+      _chatLimpiarPedidoDraft();
       return `OK, tu pedido fue registrado. Codigo interno: ${pedidoId.slice(0, 8).toUpperCase()}. Total S/ ${total.toFixed(2)}. El equipo ASWA lo revisara y el seguimiento aparecera cuando el deliverista lo tome.`;
     } catch (err) {
       console.warn('pedido por chat:', err);
@@ -12581,6 +12669,7 @@ function seleccionarComprobanteChat(input) {
     _chatComprobanteData = reader.result;
     if (!_chatPedidoDraft) _chatPedidoDraft = _chatPedidoNuevoDraft();
     _chatPedidoDraft.comprobanteAdjunto = true;
+    _chatGuardarPedidoDraft();
     const respuesta = 'Comprobante recibido en el chat. ' + _chatPedidoSiguientePregunta(_chatPedidoDraft);
     try { await _chatEnviarMensajeNegocio(respuesta); } catch(err) { console.warn('comprobante chat:', err); }
   };
@@ -12630,6 +12719,7 @@ async function enviarMensajeChat() {
 function _renderMensajesChat(mensajes) {
   const cont = document.getElementById('chatMsgs');
   if (!cont) return;
+  _chatMensajesCache = Array.isArray(mensajes) ? mensajes : [];
   const base = '<div class="chat-msg sistema">Escribenos si necesitas ayuda con tu pedido.</div>';
   cont.innerHTML = base + mensajes.map(m => {
     const cls = m.de === 'negocio' ? 'negocio' : 'cliente';
