@@ -2073,6 +2073,22 @@
     .sb-tiktok .sico { background: rgba(255,0,80,.1); color: #ff0050; }
     .sb-tiktok:hover { border-color:#ff0050; background:rgba(255,0,80,.06); }
 
+    .sb-linkedin { border-color: rgba(10,102,194,.32); }
+    .sb-linkedin .sico { background: rgba(10,102,194,.13); color: #0a66c2; }
+    .sb-linkedin:hover { border-color:#0a66c2; background:rgba(10,102,194,.06); }
+
+    .sb-pinterest { border-color: rgba(230,0,35,.32); }
+    .sb-pinterest .sico { background: rgba(230,0,35,.12); color: #e60023; }
+    .sb-pinterest:hover { border-color:#e60023; background:rgba(230,0,35,.06); }
+
+    .sb-bluesky { border-color: rgba(0,133,255,.32); }
+    .sb-bluesky .sico { background: rgba(0,133,255,.12); color: #0085ff; }
+    .sb-bluesky:hover { border-color:#0085ff; background:rgba(0,133,255,.06); }
+
+    .sb-reddit { border-color: rgba(255,69,0,.32); }
+    .sb-reddit .sico { background: rgba(255,69,0,.12); color: #ff4500; }
+    .sb-reddit:hover { border-color:#ff4500; background:rgba(255,69,0,.06); }
+
     .sb-x { border-color: rgba(255,255,255,.15); }
     .sb-x .sico { background: rgba(255,255,255,.06); color: var(--txt); }
     .sb-x:hover { border-color:var(--txt); background:rgba(255,255,255,.04); }
@@ -22604,6 +22620,10 @@ function secRatingOmitir() {
   .aswa-social-link.x { background: #000; }
   .aswa-social-link.youtube { background: #ff0000; }
   .aswa-social-link.maps { background: #facc15; color: #111; }
+  .aswa-social-link.linkedin { background: #0a66c2; }
+  .aswa-social-link.pinterest { background: #e60023; }
+  .aswa-social-link.bluesky { background: #0085ff; }
+  .aswa-social-link.reddit { background: #ff4500; color: #111; }
   @media (max-width: 480px) {
     .aswa-social-share-container {
       left: 10px;
@@ -22676,6 +22696,92 @@ document.addEventListener('click', function(event) {
 
 document.addEventListener('keydown', function(event) {
   if (event.key === 'Escape') cerrarSocialMenu();
+});
+
+const ASWA_EXTRA_SOCIAL_LINKS = [
+  {
+    key: 'linkedin',
+    name: 'LinkedIn',
+    sub: 'ASWA La Rica Chicha',
+    icon: 'IN',
+    href: 'https://www.linkedin.com/in/aswa-la-rica-chicha-83000140b',
+    cls: 'sb-linkedin'
+  },
+  {
+    key: 'pinterest',
+    name: 'Pinterest',
+    sub: 'Pines ASWA',
+    icon: 'PIN',
+    href: 'https://pin.it/40HJklUKW',
+    cls: 'sb-pinterest'
+  },
+  {
+    key: 'bluesky',
+    name: 'Bluesky',
+    sub: '@aswalaricachicha.bsky.social',
+    icon: 'BS',
+    href: 'https://bsky.app/profile/aswalaricachicha.bsky.social',
+    cls: 'sb-bluesky'
+  },
+  {
+    key: 'reddit',
+    name: 'Reddit',
+    sub: 'u/HourFoundation2004',
+    icon: 'RD',
+    href: 'https://www.reddit.com/user/HourFoundation2004/',
+    cls: 'sb-reddit'
+  }
+];
+
+function aswaOfficialSocialCard(link) {
+  return `<a href="${link.href}" target="_blank" rel="noopener" class="social-btn ${link.cls}" data-aswa-social="${link.key}">
+    <div class="sico">${link.icon}</div>
+    <div><div class="sname">${link.name}</div><div class="ssub">${link.sub}</div></div>
+  </a>`;
+}
+
+function aswaEnsureOfficialSocialLinks() {
+  const grid = document.getElementById('socialGrid');
+  if (grid) {
+    ASWA_EXTRA_SOCIAL_LINKS.forEach(link => {
+      if (!grid.querySelector(`[data-aswa-social="${link.key}"], a[href="${link.href}"]`)) {
+        const wrap = document.createElement('div');
+        wrap.innerHTML = aswaOfficialSocialCard(link).trim();
+        grid.appendChild(wrap.firstElementChild);
+      }
+    });
+  }
+
+  const menu = document.querySelector('#aswaSocialShareMenu .aswa-social-menu-list');
+  if (menu) {
+    ASWA_EXTRA_SOCIAL_LINKS.forEach(link => {
+      if (!menu.querySelector(`[data-aswa-social="${link.key}"], a[href="${link.href}"]`)) {
+        const li = document.createElement('li');
+        li.innerHTML = `<a class="aswa-social-link ${link.key}" href="${link.href}" target="_blank" rel="noopener" aria-label="${link.name}" data-aswa-social="${link.key}">${link.icon}</a>`;
+        menu.appendChild(li);
+      }
+    });
+  }
+}
+
+function aswaPatchSocialRenderers() {
+  ['cargarRedes', 'cargarRedesCompletas'].forEach(name => {
+    const fn = window[name];
+    if (typeof fn !== 'function' || fn.__aswaSocialPatched) return;
+    window[name] = async function(...args) {
+      const result = await fn.apply(this, args);
+      aswaEnsureOfficialSocialLinks();
+      return result;
+    };
+    window[name].__aswaSocialPatched = true;
+  });
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  aswaPatchSocialRenderers();
+  aswaEnsureOfficialSocialLinks();
+  setTimeout(() => { aswaPatchSocialRenderers(); aswaEnsureOfficialSocialLinks(); }, 1500);
+  setTimeout(aswaEnsureOfficialSocialLinks, 4000);
 });
 </script>
 
