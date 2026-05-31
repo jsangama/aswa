@@ -83,14 +83,12 @@ describe('support assistant replies', () => {
     expect(text).not.toContain('Escribe, por ejemplo');
   });
 
-  test('converts gallon requests into ASWA liter presentations', () => {
+  test('explains ASWA gallon presentations without converting as a measurement', () => {
     const text = reply('QUIERO 3 GALONES');
 
-    expect(text).toContain('ASWA vende por litros');
-    expect(text).toContain('3 galones');
-    expect(text).toContain('11.4L');
-    expect(text).toContain('3 botellas familiares de 4L');
-    expect(text).toContain('S/ 45');
+    expect(text).toContain('Galon ASWA 2L S/ 9');
+    expect(text).toContain('Galon Familiar ASWA 4L S/ 15');
+    expect(text).toContain('Chicha ASWA 3L S/ 13');
     expect(text).not.toContain('Soy tu guia ASWA');
   });
 
@@ -159,25 +157,32 @@ describe('support assistant replies', () => {
     expect(text).toContain('Banbif');
   });
 
-  test('clarifies mixed gallon and liter order wording', () => {
+  test('registers gallon 2 liter wording as the 2L product', () => {
     const api = loadAssistantApi();
     api.reset();
 
     const text = api.process('QUIERO EL PEDIDO DE DE 2 GALONES DE 2 LITROS');
-    expect(text).toContain('Para no confundirme');
-    expect(text).toContain('2 botellas de 2L');
-    expect(text).toContain('2 galones');
-    expect(text).toContain('S/ 30');
+    expect(text).toContain('Te registro 2 x Chicha ASWA 2L');
+    expect(text).toContain('S/ 18.00');
+    expect(text).toContain('A que direccion seria el pedido');
   });
 
-  test('turns clear gallon order into an address question', () => {
+  test('registers familiar gallon wording as the 4L product', () => {
+    const api = loadAssistantApi();
+    api.reset();
+
+    const text = api.process('quiero hacer pedido de 2 galones familiares');
+    expect(text).toContain('Te registro 2 x Chicha ASWA Familiar 4L');
+    expect(text).toContain('S/ 30.00');
+    expect(text).toContain('A que direccion seria el pedido');
+  });
+
+  test('asks which ASWA gallon presentation when customer does not specify liters', () => {
     const api = loadAssistantApi();
     api.reset();
 
     const text = api.process('quiero hacer pedido de 2 galones');
-    expect(text).toContain('ASWA vende por litros');
-    expect(text).toContain('2 galones');
-    expect(text).toContain('2 botellas familiares de 4L');
-    expect(text).toContain('A que direccion seria el pedido');
+    expect(text).toContain('galon ASWA de 2 litros');
+    expect(text).toContain('galon familiar de 4 litros');
   });
 });
