@@ -208,8 +208,12 @@
         callback([]);
         return () => {};
       }
+      const pedidosCol = new URLSearchParams(location.search).get('aswa_test') === '1' ||
+        new URLSearchParams(location.search).get('modo') === 'prueba'
+        ? 'pedidos_prueba'
+        : 'pedidos';
       const q = query(
-        collection(db, 'pedidos'),
+        collection(db, pedidosCol),
         where('asignado_a', '==', deliverista),
         orderBy('fecha', 'desc')
       );
@@ -228,7 +232,11 @@
         }, []);
         return () => {};
       }
-      const q = query(collection(db, 'pedidos'), orderBy('fecha', 'desc'), limit(100));
+      const pedidosCol = new URLSearchParams(location.search).get('aswa_test') === '1' ||
+        new URLSearchParams(location.search).get('modo') === 'prueba'
+        ? 'pedidos_prueba'
+        : 'pedidos';
+      const q = query(collection(db, pedidosCol), orderBy('fecha', 'desc'), limit(100));
       return onSnapshot(q, snap => {
         const pedidos = snap.docs.map(d => ({ id: d.id, ...d.data() }));
         const hoy = new Date(); hoy.setHours(0,0,0,0);
@@ -260,6 +268,14 @@
     // Para agregar otro negocio, solo cambia este valor
     // Futuro: obtener desde URL (?b=aswa001), subdominio (aswa.laricachicha.com) o login
     const BUSINESS_ID = window.ASWA_CONFIG?.BUSINESS_ID || "aswa001";
+    const ASWA_TEST_MODE = (() => {
+      try {
+        const params = new URLSearchParams(window.location.search);
+        return params.get('aswa_test') === '1' || params.get('modo') === 'prueba';
+      } catch(e) {
+        return false;
+      }
+    })();
 
     // 🔐 CREDENCIALES — login modal rápido (complementa el sistema Firestore)
     // ⚠️ CAMBIAR antes de producción
@@ -5321,8 +5337,24 @@ function lsGet(key)      { return localStorage.getItem(BUSINESS_ID + '_' + key);
 function lsSet(key, val) { localStorage.setItem(BUSINESS_ID + '_' + key, val); }
 function lsDel(key)      { localStorage.removeItem(BUSINESS_ID + '_' + key); }
 function lsDelAll()      {
-  ['pedido_id','succ_active','cart','total','delivery','raw','pago','nombre','tel','nivel','cod','nota_entrega']
+  ['pedido_id','pedido_prueba','succ_active','cart','total','delivery','raw','pago','nombre','tel','nivel','cod','nota_entrega']
     .forEach(k => lsDel(k));
+}
+
+function aswaModoPruebaActivo() {
+  return ASWA_TEST_MODE || lsGet('pedido_prueba') === '1' || String(ST?.pedidoFbId || '').startsWith('TEST-');
+}
+
+function aswaPedidoPruebaId() {
+  return 'TEST-' + Date.now().toString(36).toUpperCase();
+}
+
+function pedidosCollectionName() {
+  return aswaModoPruebaActivo() ? 'pedidos_prueba' : 'pedidos';
+}
+
+function clientesCollectionName() {
+  return aswaModoPruebaActivo() ? 'clientes_prueba' : 'clientes';
 }
 
 function limpiarEstadoLocalObsoleto() {
@@ -7096,7 +7128,7 @@ document.getElementById('telefono').addEventListener('input', async e => {
 
   try {
     const { query:q, collection:col, where:wh, getDocs:gd } = window.FB;
-    const snap = await gd(q(col(db,'clientes'), wh('businessId','==',BUSINESS_ID), wh('telefono','==',tel), wh('cliente_uid','==',window.currentUser.uid)));
+    const snap = await gd(q(col(db,clientesCollectionName()), wh('businessId','==',BUSINESS_ID), wh('telefono','==',tel), wh('cliente_uid','==',window.currentUser.uid)));
 
     if (!snap.empty) {
       const data = snap.docs[0].data();
@@ -7292,7 +7324,7 @@ document.getElementById('codigoUsado').addEventListener('input', e => {
         el.textContent='⚠ Tu código'; el.style.color='#f59e0b'; ST.disc.ref=0;
       } else {
         const telActual = ST.cli.tel || document.getElementById('telefono')?.value.trim() || '';
-        const miSnap = await gd(q(col(db,'clientes'), wh('businessId','==',BUSINESS_ID), wh('telefono','==',telActual), wh('cliente_uid','==',window.currentUser.uid)));
+        const miSnap = await gd(q(col(db,clientesCollectionName()), wh('businessId','==',BUSINESS_ID), wh('telefono','==',telActual), wh('cliente_uid','==',window.currentUser.uid)));
         const esPrimerPedido = miSnap.empty || (miSnap.docs[0].data().pedidos_totales || 0) === 0;
         if (!esPrimerPedido) {
           el.textContent='⚠ Solo primer pedido'; el.style.color='#f59e0b'; ST.disc.ref=0;
@@ -7567,6 +7599,10 @@ async function enviarPedido() {
     +'_🌿 ASWA · La Rica Chicha · Morales, San Martín_\n'
     +'_📞 955 273 229 / 986 445 531_';
 
+  if (aswaModoPruebaActivo()) {
+    lsSet('pedido_prueba', '1');
+    tst('MODO PRUEBA: se registrara en Firebase separado de pedidos reales.', 4200);
+  } else {
   /* Enviar a ambos WhatsApp */
   window.open('https://wa.me/'+getWA1()+'?text='+encodeURIComponent(msg), '_blank');
   setTimeout(() => window.open('https://wa.me/'+getWA2()+'?text='+encodeURIComponent(msg), '_blank'), 900);
@@ -7592,6 +7628,7 @@ async function enviarPedido() {
       setTimeout(() => abrirWhatsAppComprobante(nombre, telefono, pid), 2600);
     }
   }
+  }
 
   /* Guardar en Firestore */
   try {
@@ -7602,7 +7639,7 @@ async function enviarPedido() {
     const comprobanteMeta = comprobantePagoMeta(esDigitalPago, yapePhotoUrl);
 
     // 1. Guardar pedido
-    const ref = await ad(col(db,'pedidos'), {
+    const ref = await ad(col(db,pedidosCollectionName()), {
       businessId:     BUSINESS_ID,
       cliente_uid:    window.currentUser?.uid || null,
       nombre, telefono, direccion,
@@ -7624,6 +7661,9 @@ async function enviarPedido() {
       codigo_usado:   codigoUsado || null,
       nivel_cliente:  ST.cli.nivel || 'BRONCE',
       estado:         'Pendiente',
+      es_prueba:      aswaModoPruebaActivo() || null,
+      prueba_modo:    aswaModoPruebaActivo() ? 'flujo_real_separado' : null,
+      prueba_origen:  aswaModoPruebaActivo() ? 'aswa_test_url' : null,
       confirmacion_cliente: false, // Cloud Function escucha este campo
       gps_url:        ST.gpsUrl || null,
       gps_coords:     ST.gpsCoords || null,
@@ -7680,14 +7720,14 @@ async function enviarPedido() {
         console.warn('Reserva push queue:', alertErr);
       }
     }
-    await registrarUsoCupon(ST.disc.cupCod);
+    if (!aswaModoPruebaActivo()) await registrarUsoCupon(ST.disc.cupCod);
     // Guardar en sessionStorage por si hay reload
     lsSet('pedido_id', ref.id);
     // Iniciar tracking en tiempo real para el cliente inmediatamente
     if (typeof trackOrder === 'function') trackOrder(ref.id);
 
     // 2. Upsert cliente
-    const snapC = await gd(q(col(db,'clientes'), wh('businessId','==',BUSINESS_ID), wh('telefono','==',telefono), wh('cliente_uid','==',window.currentUser.uid)));
+    const snapC = await gd(q(col(db,clientesCollectionName()), wh('businessId','==',BUSINESS_ID), wh('telefono','==',telefono), wh('cliente_uid','==',window.currentUser.uid)));
     const clienteDoc = snapC.empty ? null : snapC.docs[0];
     const clientePrevio = clienteDoc?.data() || {};
     const esClienteNuevo = !clienteDoc || (clientePrevio.pedidos_totales || 0) === 0;
@@ -7717,11 +7757,11 @@ async function enviarPedido() {
         tipo:'primer_referido', valor:5, origen:codigoUsado,
         fecha: ahora, expira
       });
-      await registrarEventoReferido(codigoUsado, ref.id, { telefono, nombre });
+      if (!aswaModoPruebaActivo()) await registrarEventoReferido(codigoUsado, ref.id, { telefono, nombre });
     }
-    if (clienteDoc) await ud(d(db,'clientes',clienteDoc.id), cdata);
-    else            await ad(col(db,'clientes'), cdata);
-    await publicarCodigoReferido(codFin);
+    if (clienteDoc) await ud(d(db,clientesCollectionName(),clienteDoc.id), cdata);
+    else            await ad(col(db,clientesCollectionName()), cdata);
+    if (!aswaModoPruebaActivo()) await publicarCodigoReferido(codFin);
 
   } catch(err) {
     console.error('Firebase error:', err);
@@ -7773,6 +7813,14 @@ async function enviarPedido() {
         if (document.getElementById('succScreen').classList.contains('on')) {
           document.getElementById('succScreen').classList.remove('on');
           document.getElementById('mConfirmar').classList.add('on');
+          if (aswaModoPruebaActivo()) {
+            const btnConf = document.getElementById('btnConf');
+            if (btnConf) {
+              btnConf.classList.remove('bloqueado');
+              btnConf.disabled = false;
+              btnConf.innerHTML = 'CONFIRMAR PRUEBA Y VER NOTA';
+            }
+          }
         }
       }, 6000);
     } else {
@@ -7785,6 +7833,11 @@ async function enviarPedido() {
 /* ── CONFIRMAR ENTREGA ── */
 async function confirmarEntrega() {
   const btn = document.getElementById('btnConf');
+
+  if (!ST.pedidoFbId) {
+    const saved = lsGet('pedido_id');
+    if (saved) ST.pedidoFbId = saved;
+  }
 
   // Bloquear si el botón está en estado "bloqueado"
   if (btn.classList.contains('bloqueado')) {
@@ -7817,7 +7870,7 @@ async function confirmarEntrega() {
     const { doc:d, updateDoc:ud, getDoc:gDoc, serverTimestamp:ts } = window.FB;
 
     // Verificar si ya fue confirmado (evitar doble escritura)
-    const pedSnap = await gDoc(d(db,'pedidos',ST.pedidoFbId));
+    const pedSnap = await gDoc(d(db,pedidosCollectionName(),ST.pedidoFbId));
     if (pedSnap.exists() && pedSnap.data().confirmacion_cliente === true) {
       cerrar('mConfirmar');
       tst('✅ Pedido ya confirmado. Mostrando Nota de Venta...', 2500);
@@ -7827,7 +7880,7 @@ async function confirmarEntrega() {
     }
 
     // Solo marcar confirmacion_cliente — el deliverista cierra el pedido
-    await ud(d(db,'pedidos',ST.pedidoFbId), {
+    await ud(d(db,pedidosCollectionName(),ST.pedidoFbId), {
       confirmacion_cliente: true,
       confirmado_at: ts(),
       estado: 'en_camino' // permanece en_camino hasta que deliverista lo cierre
@@ -7892,7 +7945,9 @@ function mostrarNotaVenta() {
   for (let i=0; i<10; i++) nv += chars[Math.floor(Math.random()*chars.length)];
 
   // ── Cabecera ──
-  document.getElementById('nvNumero').textContent = 'N° Nota: ' + nv;
+  document.getElementById('nvNumero').textContent = aswaModoPruebaActivo()
+    ? 'MODO PRUEBA - Nota: ' + nv
+    : 'N° Nota: ' + nv;
   document.getElementById('nvFecha').textContent  = 'Fecha: ' + fechaStr + ', ' + horaStr;
 
   // ── Datos cliente ──
@@ -7999,6 +8054,7 @@ function mostrarNotaVenta() {
 
 function cerrarNota() {
   document.getElementById('notaVentaModal').classList.remove('open');
+  if (aswaModoPruebaActivo()) lsDelAll();
   // Después de cerrar la nota → reload para nuevo pedido
   setTimeout(() => location.reload(), 300);
 }
@@ -8349,7 +8405,7 @@ async function buscarCodPorTel(tel) {
   if (tel.length !== 9 || !tel.startsWith('9')) return;
   try {
     const { query:q, collection:col, where:wh, getDocs:gd } = window.FB;
-    const snap = await gd(q(col(db,'clientes'), wh('businessId','==',BUSINESS_ID), wh('telefono','==',tel), wh('cliente_uid','==',window.currentUser.uid)));
+    const snap = await gd(q(col(db,clientesCollectionName()), wh('businessId','==',BUSINESS_ID), wh('telefono','==',tel), wh('cliente_uid','==',window.currentUser.uid)));
     let cod = '';
     if (!snap.empty) {
       const data = snap.docs[0].data();
@@ -9379,7 +9435,7 @@ async function admAprobarReferido(eventId) {
     const codigoData = codigoSnap.data();
     const refUid = codigoData.cliente_uid;
     if (!refUid) throw new Error('El codigo no tiene cliente referidor asignado.');
-    const refSnap = await gds(q(col(db,'clientes'), wh('businessId','==',BUSINESS_ID), wh('cliente_uid','==',refUid)));
+    const refSnap = await gds(q(col(db,clientesCollectionName()), wh('businessId','==',BUSINESS_ID), wh('cliente_uid','==',refUid)));
     if (refSnap.empty) throw new Error('No se encontro el cliente referidor.');
     const refDoc = refSnap.docs[0];
     const refData = refDoc.data();
@@ -9459,7 +9515,8 @@ async function admDarBono(clienteId, nombre, telefono) {
     });
     // Notificar por WhatsApp
     const msg = `🎁 *¡Tienes una nueva oferta ASWA!*\n\nHola ${nombre}, el equipo de ASWA te regala una *oferta de ${pct}%* en tu próximo pedido.\n\n📅 Válido por ${dias} días\n👉 https://jsangama.github.io/aswa\n\n_LA RICA CHICHA - ASWA · Morales_ 🌿`;
-    window.open('https://wa.me/51'+telefono+'?text='+encodeURIComponent(msg),'_blank');
+    if (aswaModoPruebaActivo()) tst('MODO PRUEBA: no se envio WhatsApp real.', 2600);
+    else window.open('https://wa.me/51'+telefono+'?text='+encodeURIComponent(msg),'_blank');
     tst(`✅ Bono de ${pct}% dado a ${nombre}`, 3000);
     await admCargar();
   } catch(err) { console.error(err); tst('❌ Error al dar bono', 3000); }
@@ -9497,7 +9554,7 @@ async function admExportarCSV() {
   tst('📥 Generando CSV...', 2000);
   try {
     const { collection:col, query:q, where:wh, getDocs:gd, orderBy:ob, limit:lm } = window.FB;
-    const snap = await gd(q(col(db,'pedidos'), wh('businessId','==',BUSINESS_ID), ob('fecha','desc'), lm(500)));
+    const snap = await gd(q(col(db,pedidosCollectionName()), wh('businessId','==',BUSINESS_ID), ob('fecha','desc'), lm(500)));
     const rows = [['Fecha','Nombre','Teléfono','Dirección','Nota entrega','Zona','Productos','Total','Delivery','Oferta%','Pago','Estado','Nivel']];
     snap.docs.forEach(doc => {
       const d = doc.data();
@@ -9531,7 +9588,7 @@ async function admCambiarEstado(pedidoId, nuevoEstado, telefono, nombre) {
   }
   try {
     const { doc:d, updateDoc:ud, serverTimestamp:ts } = window.FB;
-    await ud(d(db,'pedidos',pedidoId), { estado:nuevoEstado, updated_at:ts() });
+    await ud(d(db,pedidosCollectionName(),pedidoId), { estado:nuevoEstado, updated_at:ts() });
     tst('✅ Estado actualizado: '+nuevoEstado, 2500);
     await admCargar();
   } catch(err) { console.error(err); tst('❌ Error al cambiar estado', 3000); }
@@ -9546,7 +9603,7 @@ async function admEliminarPedido(pedidoId) {
   if (!confirm('¿Eliminar este pedido? Esta acción no se puede deshacer.')) return;
   try {
     const { doc:d, deleteDoc } = window.FB;
-    await deleteDoc(d(db,'pedidos',pedidoId));
+    await deleteDoc(d(db,pedidosCollectionName(),pedidoId));
     tst('🗑️ Pedido eliminado', 2500);
     await admCargar();
   } catch(err) { console.error(err); tst('❌ Error al eliminar', 3000); }
@@ -9566,7 +9623,7 @@ async function dlvCargarTodosPedidos() {
   cont.innerHTML = '<div style="text-align:center;padding:20px;color:var(--mut)">⏳ Cargando pedidos...</div>';
   try {
     const { collection:col, query:q, where:wh, getDocs:gd } = window.FB;
-    const snap = await gd(q(col(db,'pedidos'), wh('businessId','==',BUSINESS_ID), wh('estado','in',['Pendiente','en_camino'])));
+    const snap = await gd(q(col(db,pedidosCollectionName()), wh('businessId','==',BUSINESS_ID), wh('estado','in',['Pendiente','en_camino'])));
     if (snap.empty) {
       cont.innerHTML = '<div style="text-align:center;padding:30px;color:var(--mut)"><div style="font-size:40px;margin-bottom:10px">🎉</div><p>No hay pedidos pendientes</p></div>';
       return;
@@ -9618,10 +9675,10 @@ async function dlvCargarTodosPedidos() {
 async function dlvMarcarEnCaminoDesdeListado(pedidoId, nombre, telefono) {
   try {
     const { doc:d, updateDoc:ud, serverTimestamp:ts, getDoc:gd } = window.FB;
-    const pedidoSnap = await gd(d(db,'pedidos',pedidoId)).catch(() => null);
+    const pedidoSnap = await gd(d(db,pedidosCollectionName(),pedidoId)).catch(() => null);
     const pedidoData = pedidoSnap?.exists?.() ? pedidoSnap.data() : {};
     const deliveryUser = _sesionDelivery?.username || sessionStorage.getItem('deliveryUser') || 'delivery';
-    await ud(d(db,'pedidos',pedidoId), {
+    await ud(d(db,pedidosCollectionName(),pedidoId), {
       estado:'en_camino',
       confirmacion_deliverista:true,
       deliverista_at:ts(),
@@ -9630,7 +9687,8 @@ async function dlvMarcarEnCaminoDesdeListado(pedidoId, nombre, telefono) {
     iniciarTrackingEntrega(pedidoId, { ...pedidoData, asignado_a: pedidoData.asignado_a || deliveryUser });
     const link='https://jsangama.github.io/aswa';
     const msg='🏍️ *¡Tu pedido ASWA ya está en camino!*\n\nHola '+nombre+', tu chicha está llegando 🌽\n\n📦 Cuando lo recibas, confirma la entrega en:\n'+link+'\n\nEsto activa tu descuento de fidelidad y genera tu Nota de Venta ✅';
-    window.open('https://wa.me/51'+telefono+'?text='+encodeURIComponent(msg),'_blank');
+    if (aswaModoPruebaActivo()) tst('MODO PRUEBA: no se envio WhatsApp real.', 2600);
+    else window.open('https://wa.me/51'+telefono+'?text='+encodeURIComponent(msg),'_blank');
     tst('🏍️ ¡En camino! Se notificó a '+nombre, 3000);
     await dlvCargarTodosPedidos();
   } catch(err) { tst('❌ Error. Verifica conexión.', 3000); }
@@ -9639,7 +9697,7 @@ async function dlvMarcarEnCaminoDesdeListado(pedidoId, nombre, telefono) {
 async function dlvCerrarDesdeListado(pedidoId, nombre, telefono) {
   try {
     const { doc:d, updateDoc:ud, serverTimestamp:ts } = window.FB;
-    await ud(d(db,'pedidos',pedidoId), { estado:'entregado', cerrado_at:ts(), confirmacion_deliverista:true });
+    await ud(d(db,pedidosCollectionName(),pedidoId), { estado:'entregado', cerrado_at:ts(), confirmacion_deliverista:true });
     if (_deliveryLivePedidoId === pedidoId) detenerTrackingEntrega();
     tst('✅ Pedido cerrado: '+nombre, 3000);
     await dlvCargarTodosPedidos();
@@ -9674,7 +9732,7 @@ async function buscarPedidoDeliverista() {
 
     // Buscar pedidos Pendiente O en_camino O con confirmacion_cliente pendiente de cierre
     const snap = await gd(q(
-      col(db, 'pedidos'),
+      col(db, pedidosCollectionName()),
       wh('businessId', '==', BUSINESS_ID),
       wh('telefono', '==', tel),
       wh('estado', 'in', ['Pendiente', 'en_camino'])
@@ -9753,7 +9811,7 @@ async function dlvConfirmarCarga(pedidoId) {
   try {
     const { doc:d, updateDoc:ud, serverTimestamp:ts } = window.FB;
     const deliveryUser = _sesionDelivery?.username || sessionStorage.getItem('deliveryUser') || window._dlvNombre || 'delivery';
-    await ud(d(db, 'pedidos', pedidoId), {
+    await ud(d(db, pedidosCollectionName(), pedidoId), {
       delivery_carga_confirmada: true,
       delivery_carga_confirmada_at: ts(),
       delivery_carga_confirmada_por: deliveryUser,
@@ -9772,7 +9830,7 @@ async function deliveristaMarcarEnCamino() {
   if (!dlvPedidoActual) return;
   try {
     const { doc:d, updateDoc:ud, serverTimestamp:ts } = window.FB;
-    await ud(d(db, 'pedidos', dlvPedidoActual.id), {
+    await ud(d(db, pedidosCollectionName(), dlvPedidoActual.id), {
       estado: 'en_camino',
       confirmacion_deliverista: true,
       deliverista_at: ts(),
@@ -9786,7 +9844,8 @@ async function deliveristaMarcarEnCamino() {
       + 'Hola ' + (dlvPedidoActual.nombre || '') + ', tu chicha está llegando 🌽\n\n'
       + '📦 Cuando lo recibas, confirma la entrega en:\n' + link + '\n\n'
       + 'Esto activa tu oferta de fidelidad y genera tu Nota de Venta ✅';
-    window.open('https://wa.me/51' + dlvPedidoActual.telefono + '?text=' + encodeURIComponent(msg), '_blank');
+    if (aswaModoPruebaActivo()) tst('MODO PRUEBA: no se envio WhatsApp real.', 2600);
+    else window.open('https://wa.me/51' + dlvPedidoActual.telefono + '?text=' + encodeURIComponent(msg), '_blank');
 
     document.getElementById('dlvSuccMsg').textContent =
       (dlvPedidoActual.nombre || 'El cliente') + ' fue notificado por WhatsApp. Vuelve aquí cuando entregues para cerrar el pedido.';
@@ -10873,30 +10932,14 @@ async function admToggleUsuario(userId, estaActivo) {
    Llamar desde consola: crearUsuariosDefault()
 ══════════════════════════════════════ */
 async function crearUsuariosDefault() {
-  if (!confirm('¿Crear usuarios por defecto?\nadmin / Admin1234!\ndelivery1 / Delivery1234!\n\n¡CÁMBIALOS DESPUÉS!')) return;
-  try {
-    const { collection:col, addDoc:ad, serverTimestamp:ts } = window.FB;
-    const usuarios = [
-      { username:'owner',     nombre:'Dueno ASWA',      rol:'owner',    password:'Owner1234!',    permisos:{ owner:true, super:true, ver_stats:true, ver_clientes:true, exportar:true } },
-      { username:'admin',     nombre:'Administrador',  rol:'admin',    password:'Admin1234!',    permisos:{ super:true, ver_stats:true, ver_clientes:true, exportar:true } },
-      { username:'delivery1', nombre:'Repartidor 1',   rol:'delivery', password:'Delivery1234!', permisos:{} },
-    ];
-    for (const u of usuarios) {
-      const hash = await hashPassword(u.password, u.username);
-      await ad(col(db,'app_users'), {
-        business_id:businessIdCanonical(), username:u.username, nombre:u.nombre,
-        rol:u.rol, password_hash:hash, password_hash_version:'salted-v1', activo:true,
-        creado_at:ts(), ultimo_login:null, intentos_fallidos:0, permisos:u.permisos
-      });
-      console.log(`✅ Creado: @${u.username} (${u.rol}) — pass: ${u.password}`);
-    }
-    alert('✅ Usuarios creados:\n@admin → Admin1234!\n@delivery1 → Delivery1234!\n\n¡CÁMBIALOS AHORA!');
-  } catch(err) { console.error(err); alert('Error: '+err.message); }
+  alert(
+    'Creacion de usuarios demo deshabilitada en el navegador.\n\n' +
+    'Usa Firebase Admin desde un entorno privado:\n' +
+    'npm run operators:upsert\n' +
+    'npm run claims:set'
+  );
+  console.warn('crearUsuariosDefault bloqueado: usa scripts/upsert-operator-user.mjs y set-firebase-claims.mjs.');
 }
-
-/* ══════════════════════════════════════
-   PANEL ADMIN — JS (mantenido)
-══════════════════════════════════════ */
 
 /* Chat de soporte cliente/admin */
 let _chatUnsub = null;
@@ -11434,8 +11477,8 @@ async function ownerCargar() {
     await esperarFB();
     const { collection:col, query:q, where:wh, getDocs:gd, limit:lim } = window.FB;
     const [pedSnap, cliSnap, userSnap, pushSnap, refSnap] = await Promise.all([
-      gd(q(col(db,'pedidos'), wh('businessId','==',BUSINESS_ID), lim(200))),
-      gd(q(col(db,'clientes'), wh('businessId','==',BUSINESS_ID), lim(200))),
+      gd(q(col(db,pedidosCollectionName()), wh('businessId','==',BUSINESS_ID), lim(200))),
+      gd(q(col(db,clientesCollectionName()), wh('businessId','==',BUSINESS_ID), lim(200))),
       getDocsByBusinessIdVariants({
         collectionRef: col(db,'app_users'),
         queryFn: q,
@@ -11697,7 +11740,7 @@ async function escucharPedidosTV() {
   try {
     await esperarFB();
     const { collection:col, query:q, where:wh, limit:lm } = window.FB;
-    suscribirTV(q(col(db,'pedidos'), wh('businessId','==',BUSINESS_ID), wh('estado','in',['Pendiente','preparando','en_camino']), lm(120)));
+    suscribirTV(q(col(db,pedidosCollectionName()), wh('businessId','==',BUSINESS_ID), wh('estado','in',['Pendiente','preparando','en_camino']), lm(120)));
   } catch (err) {
     console.error('TV init:', err);
     if (estado) estado.textContent = 'Conecta Firebase para ver pedidos reales.';
@@ -11709,7 +11752,7 @@ async function escucharPedidosTVFallback() {
   try {
     const { collection:col, query:q, where:wh, onSnapshot:os, limit:lm } = window.FB;
     if (_tvUnsub) _tvUnsub();
-    _tvUnsub = os(q(col(db,'pedidos'), wh('businessId','==',BUSINESS_ID), lm(120)), snap => {
+    _tvUnsub = os(q(col(db,pedidosCollectionName()), wh('businessId','==',BUSINESS_ID), lm(120)), snap => {
       const pedidos = snap.docs
         .map(docSnap => ({ id:docSnap.id, ...docSnap.data() }))
         .filter(p => tvPedidoVisibleHoy(p));
@@ -11970,13 +12013,13 @@ async function admCargar() {
     const { collection:col, query:q, where:wh, getDocs:gd, orderBy:ob, limit:lm } = window.FB;
 
     // Yapes pendientes
-    const snapYape = await gd(q(col(db,'pedidos'), wh('businessId','==',BUSINESS_ID), wh('yape_estado','==','pendiente'), lm(50)));
+    const snapYape = await gd(q(col(db,pedidosCollectionName()), wh('businessId','==',BUSINESS_ID), wh('yape_estado','==','pendiente'), lm(50)));
     // Pedidos activos
-    const snapPed  = await gd(q(col(db,'pedidos'), wh('businessId','==',BUSINESS_ID), wh('estado','in',['Pendiente','en_camino']), lm(100)));
+    const snapPed  = await gd(q(col(db,pedidosCollectionName()), wh('businessId','==',BUSINESS_ID), wh('estado','in',['Pendiente','en_camino']), lm(100)));
     // Ãšltimos pedidos para stats del dashboard
-    const snapTodos = await gd(q(col(db,'pedidos'), wh('businessId','==',BUSINESS_ID), ob('fecha','desc'), lm(200)));
+    const snapTodos = await gd(q(col(db,pedidosCollectionName()), wh('businessId','==',BUSINESS_ID), ob('fecha','desc'), lm(200)));
     // Clientes
-    const snapCli  = await gd(q(col(db,'clientes'), wh('businessId','==',BUSINESS_ID)));
+    const snapCli  = await gd(q(col(db,clientesCollectionName()), wh('businessId','==',BUSINESS_ID)));
     // Eventos de referido pendientes o recientes
     const snapRef  = await gd(q(col(db,'referral_events'), wh('businessId','==',BUSINESS_ID), lm(100))).catch(() => ({ docs:[] }));
     const reservasDocs = snapTodos.docs.filter(docSnap => {
@@ -15400,7 +15443,7 @@ async function cargarHistorial() {
     const { collection:col, query:q, where:wh, orderBy:ob, limit:lm, getDocs:gd } = window.FB;
 
     const snap = await gd(q(
-      col(db, 'pedidos'),
+      col(db, pedidosCollectionName()),
       wh('businessId', '==', BUSINESS_ID),
       wh('telefono',   '==', tel),
       ob('fecha', 'desc'),
@@ -15607,7 +15650,7 @@ async function cargarUltimoPedido(telefono) {
     await esperarFB();
     const { collection:col, query:q, where:wh, orderBy:ob, limit:lm, getDocs:gd } = window.FB;
     const snap = await gd(q(
-      col(db, 'pedidos'),
+      col(db, pedidosCollectionName()),
       wh('businessId', '==', BUSINESS_ID),
       wh('telefono',   '==', telefono),
       ob('fecha', 'desc'),

@@ -66,6 +66,35 @@ service cloud.firestore {
         request.resource.data.keys().hasAll([
           'businessId', 'cliente_uid', 'nombre', 'telefono',
           'items', 'total', 'pago', 'estado', 'fecha'
+        ]) &&
+        request.resource.data.keys().hasOnly([
+          'businessId', 'cliente_uid', 'nombre', 'telefono', 'direccion',
+          'nota_entrega', 'distrito', 'items', 'items_detalle', 'subtotal',
+          'delivery', 'oferta_pct', 'descuento_amt', 'cupon_codigo',
+          'cupon_descuento_pct', 'cupon_descuento_fijo', 'total', 'pago',
+          'pago_con', 'vuelto', 'codigo_usado', 'nivel_cliente', 'estado',
+          'es_prueba', 'prueba_modo', 'prueba_origen',
+          'confirmacion_cliente', 'gps_url', 'gps_coords', 'yape_foto_url',
+          'yape_foto_base64', 'yape_estado', 'yape_verificacion',
+          'yape_foto_local', 'requiere_comprobante_whatsapp', 'compartido',
+          'asignado_a', 'es_reserva', 'reserva_fecha', 'reserva_hora',
+          'reserva_iso', 'reserva_texto', 'reserva_estado',
+          'reserva_alertas_cliente', 'es_regalo', 'regalo_para',
+          'es_promo_san_juan_escolar', 'promo_san_juan_escolar',
+          'es_promo_san_juan_institucional', 'promo_san_juan_institucional',
+          'pago_anticipado_obligatorio', 'planta_coords',
+          'distancia_planta_m', 'distancia_planta_txt', 'delivery_carga',
+          'delivery_carga_confirmada', 'admin_alerta_nueva',
+          'delivery_alerta_nueva', 'fecha'
+        ]);
+    }
+
+    function validClienteSelfWrite() {
+      return isClientOwnedCreate() &&
+        request.resource.data.keys().hasOnly([
+          'businessId', 'cliente_uid', 'nombre', 'telefono', 'nivel',
+          'pedidos_totales', 'total_consumo', 'ultimo_pedido',
+          'codigo_referido', 'bonos_activos'
         ]);
     }
 
@@ -94,7 +123,9 @@ service cloud.firestore {
     function clientConfirmOnly() {
       return isPedidoOwner(resource.data) &&
         request.resource.data.diff(resource.data).changedKeys()
-          .hasOnly(['confirmacion_cliente', 'updated_at']);
+          .hasOnly(['confirmacion_cliente', 'confirmado_at', 'estado', 'updated_at']) &&
+        request.resource.data.confirmacion_cliente == true &&
+        request.resource.data.estado in ['en_camino', resource.data.estado];
     }
 
     match /pedidos/{pedidoId} {
@@ -104,13 +135,41 @@ service cloud.firestore {
       allow delete: if isAdmin(resource.data);
     }
 
+    match /pedidos_prueba/{pedidoId} {
+      allow create: if validPedidoCreate() && request.resource.data.es_prueba == true;
+      allow read: if isAdmin(resource.data) || isDelivery(resource.data) || isPedidoOwner(resource.data);
+      allow update: if isAdmin(resource.data) || isDelivery(resource.data) || clientConfirmOnly();
+      allow delete: if isAdmin(resource.data);
+    }
+
     match /clientes/{clienteId} {
-      allow create: if isClientOwnedCreate();
+      allow create: if validClienteSelfWrite();
       allow read: if isAdmin(resource.data) || isClientOwner(resource.data);
       allow update: if isAdmin(resource.data) || (
         isClientOwner(resource.data) &&
         request.resource.data.cliente_uid == resource.data.cliente_uid &&
-        request.resource.data.businessId == resource.data.businessId
+        request.resource.data.businessId == resource.data.businessId &&
+        request.resource.data.keys().hasOnly([
+          'businessId', 'cliente_uid', 'nombre', 'telefono', 'nivel',
+          'pedidos_totales', 'total_consumo', 'ultimo_pedido',
+          'codigo_referido', 'bonos_activos'
+        ])
+      );
+      allow delete: if isAdmin(resource.data);
+    }
+
+    match /clientes_prueba/{clienteId} {
+      allow create: if validClienteSelfWrite();
+      allow read: if isAdmin(resource.data) || isClientOwner(resource.data);
+      allow update: if isAdmin(resource.data) || (
+        isClientOwner(resource.data) &&
+        request.resource.data.cliente_uid == resource.data.cliente_uid &&
+        request.resource.data.businessId == resource.data.businessId &&
+        request.resource.data.keys().hasOnly([
+          'businessId', 'cliente_uid', 'nombre', 'telefono', 'nivel',
+          'pedidos_totales', 'total_consumo', 'ultimo_pedido',
+          'codigo_referido', 'bonos_activos'
+        ])
       );
       allow delete: if isAdmin(resource.data);
     }

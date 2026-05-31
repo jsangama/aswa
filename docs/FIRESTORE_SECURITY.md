@@ -45,6 +45,13 @@ Los accesos antiguos por PIN o `window.CREDENTIALS` solo pueden usarse para prue
 
 En GitHub Pages y produccion el acceso operativo debe pasar por Firebase Auth/custom claims o por el flujo operativo autorizado. Esto evita que Admin, Delivery, Owner o Modo TV se abran con credenciales estaticas publicadas en el frontend.
 
+La funcion historica `crearUsuariosDefault()` ya no crea usuarios con contrasenas demo desde el navegador. Para crear o actualizar usuarios operativos usa scripts privados con Firebase Admin:
+
+```bash
+npm run operators:upsert
+npm run claims:set -- --uid UID_DEL_USUARIO --role owner --business aswa001
+```
+
 ## Reservas y regalos
 
 Las reservas y regalos son pedidos especiales y deben mantenerse con estas reglas de producto:
