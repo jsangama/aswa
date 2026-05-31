@@ -14,6 +14,24 @@ function loadAssistantReply() {
   return new Function(`${code}; return _chatRespuestaAutomatica;`)();
 }
 
+function loadAssistantApi() {
+  const html = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
+  const start = html.indexOf('const ASWA_SUPPORT_KNOWLEDGE = [');
+  const end = html.indexOf('async function _chatResponderAutomatico', start);
+
+  if (start < 0 || end < 0) {
+    throw new Error('No se encontro el bloque del asistente de soporte');
+  }
+
+  const code = html.slice(start, end);
+  return new Function(`${code}; return {
+    reply: _chatRespuestaAutomatica,
+    process: _chatPedidoProcesarTexto,
+    attach: () => { _chatPedidoDraft.comprobanteAdjunto = true; return _chatPedidoSiguientePregunta(_chatPedidoDraft); },
+    reset: () => { _chatPedidoDraft = null; _chatComprobanteData = null; }
+  };`)();
+}
+
 describe('support assistant replies', () => {
   const reply = loadAssistantReply();
 
@@ -90,5 +108,54 @@ describe('support assistant replies', () => {
     expect(text).toContain('enero de 2004');
     expect(text).toContain('"Aswa"');
     expect(text).toContain('mas de 20 anos');
+  });
+
+  test('guides a complete chat order before registration', () => {
+    const api = loadAssistantApi();
+    api.reset();
+
+    expect(api.process('quiero 3 chichas de 4 litros')).toContain('Subtotal S/ 45.00');
+    expect(api.process('JR. JIMENES PIMENTEL 452 TARAPOTO')).toContain('Cual es tu numero de telefono');
+    expect(api.process('950845067')).toContain('Cual es tu nombre completo');
+    expect(api.process('JOSUE SANGAMA PEZO')).toContain('Cual metodo de pago usaras');
+    expect(api.process('yape')).toContain('Total a pagar: S/ 49.00');
+
+    const ready = api.attach();
+    expect(ready).toContain('Resumen listo');
+    expect(ready).toContain('3 x Chicha ASWA Familiar 4L');
+    expect(ready).toContain('Pago: Yape, comprobante adjunto');
+    expect(ready).toContain('CONFIRMAR PEDIDO');
+  });
+
+  test('asks cash amount and calculates change for chat order', () => {
+    const api = loadAssistantApi();
+    api.reset();
+
+    api.process('quiero 3 chichas de 4 litros');
+    api.process('JR. JIMENES PIMENTEL 452 TARAPOTO');
+    api.process('950845067');
+    api.process('JOSUE SANGAMA PEZO');
+    expect(api.process('efectivo')).toContain('Con cuanto vas a pagar');
+
+    const ready = api.process('50 soles');
+    expect(ready).toContain('Resumen listo');
+    expect(ready).toContain('Total S/ 49.00');
+    expect(ready).toContain('vuelto S/ 1.00');
+  });
+
+  test('rejects unsupported banks and lists available payment options', () => {
+    const api = loadAssistantApi();
+    api.reset();
+
+    api.process('quiero 1 chicha de 2 litros');
+    api.process('JR. JIMENES PIMENTEL 452 TARAPOTO');
+    api.process('950845067');
+    api.process('JOSUE SANGAMA PEZO');
+
+    const text = api.process('quiero pagar con BCP');
+    expect(text).toContain('Ese banco no lo tenemos disponible');
+    expect(text).toContain('Interbank');
+    expect(text).toContain('BBVA');
+    expect(text).toContain('Banbif');
   });
 });

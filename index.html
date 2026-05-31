@@ -3127,6 +3127,7 @@
     .chat-time { display:block; margin-top:4px; font-size:9px; color:var(--mut); }
     .chat-input-bar { display:flex; gap:8px; padding:12px; border-top:1px solid var(--brd); }
     .chat-input { flex:1; resize:none; max-height:96px; min-height:44px; border:1px solid var(--brd); border-radius:12px; background:var(--bg); color:var(--txt); padding:11px 12px; font-size:13px; font-family:'Poppins',sans-serif; }
+    .chat-attach { width:42px; border:1px solid rgba(250,204,21,.35); border-radius:12px; background:rgba(250,204,21,.1); color:var(--y); font-size:18px; font-weight:900; cursor:pointer; }
     .chat-send { width:46px; border:0; border-radius:12px; background:var(--y); color:#111; font-size:18px; font-weight:900; cursor:pointer; }
     .adm-chat-item { background:var(--s1); border:1px solid var(--brd); border-radius:12px; padding:12px; margin-bottom:8px; cursor:pointer; }
     .adm-chat-item.unread { border-color:rgba(34,197,94,.45); background:rgba(34,197,94,.05); }
@@ -3255,6 +3256,8 @@
       <textarea class="chat-input" id="chatInput" rows="1" placeholder="Escribe tu mensaje..."
         onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();enviarMensajeChat()}"
         oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px'"></textarea>
+      <input type="file" id="chatComprobanteInput" accept="image/*" style="display:none" onchange="seleccionarComprobanteChat(this)">
+      <button class="chat-attach" id="chatAttachBtn" onclick="document.getElementById('chatComprobanteInput')?.click()" type="button" title="Adjuntar comprobante">📎</button>
       <button class="chat-send" id="chatSendBtn" onclick="enviarMensajeChat()" type="button">➤</button>
     </div>
   </div>
@@ -11841,6 +11844,12 @@ function _chatFecha(fecha) {
   return d.toLocaleTimeString('es-PE', { hour:'2-digit', minute:'2-digit' });
 }
 
+function _chatMensajeExtraHtml(texto) {
+  const qr = String(texto || '').match(/QR disponible en la app:\s*([^\s.]+\.(?:jpg|jpeg|png|webp))/i);
+  if (!qr) return '';
+  return '<img src="' + escAttr(qr[1]) + '" alt="QR de pago" style="display:block;margin-top:8px;width:148px;max-width:100%;border-radius:12px;background:#fff;padding:6px">';
+}
+
 async function iniciarChat(telefono, nombre) {
   const tel = String(telefono || '').replace(/\D/g, '');
   if (tel.length !== 9 || !tel.startsWith('9')) return;
@@ -12176,7 +12185,208 @@ function _chatRespuestaProductoDirecta(texto) {
   return '';
 }
 
+const CHAT_ORDER_PRODUCTS = {
+  p2l: { id:'p2l', nombre:'Chicha ASWA 2L', litros:2, precio:9 },
+  p3l: { id:'p3l', nombre:'Chicha ASWA 3L', litros:3, precio:13 },
+  p4l: { id:'p4l', nombre:'Chicha ASWA Familiar 4L', litros:4, precio:15 }
+};
+const CHAT_ORDER_PAYMENT_NAMES = {
+  Yape:'Yape', PlinBBVA:'Plin BBVA', PlinIBK:'Plin Interbank', BIM:'BIM', Agora:'Agora',
+  Binance:'Binance Pay', Interbank:'Interbank', BBVA:'BBVA', Banbif:'Banbif', Efectivo:'Efectivo'
+};
+const CHAT_ORDER_PAYMENT_FALLBACK = {
+  Yape: { num:'+51 947 999 736', qr:'assets/images/embedded/qr-1-13161f6f2f35.jpg' },
+  PlinBBVA: { num:'+51 947 999 736', qr:'assets/images/embedded/qr-2-5305f8bf2727.jpg' },
+  PlinIBK: { num:'+51 947 999 736', qr:'assets/images/embedded/qr-3-c5ac10b27d47.jpg' },
+  BIM: { num:'947 999 736', qr:'assets/images/embedded/qr-4-7074a3e7e686.jpg' },
+  Agora: { num:'Telma Pezo Melendez', qr:'assets/images/embedded/qr-5-02a305862e47.jpg' },
+  Binance: { num:'User-be284 / UID: 1225926023', qr:'assets/images/embedded/qr-6-755481b36bc7.jpg' },
+  Interbank: { cuenta:'8983297623941', cci:'00389801329762394149' },
+  BBVA: { cuenta:'0011-0310-0201637924', cci:'01131000020163792406', swift:'BCONPEPL' },
+  Banbif: { cuenta:'008033954299', cci:'03868010803395429956' }
+};
+let _chatPedidoDraft = null;
+let _chatComprobanteData = null;
+
+function _chatPedidoNuevoDraft() {
+  return {
+    items: {},
+    item: null,
+    direccion: '',
+    zona: '',
+    delivery: null,
+    telefono: '',
+    nombre: '',
+    pago: '',
+    pagoCon: 0,
+    comprobanteAdjunto: false,
+    listoParaConfirmar: false
+  };
+}
+
+function _chatPedidoTotal(draft = _chatPedidoDraft) {
+  if (!draft) return 0;
+  const subtotal = Object.entries(draft.items || {}).reduce((sum, [id, qty]) => {
+    return sum + Number(qty || 0) * Number(CHAT_ORDER_PRODUCTS[id]?.precio || 0);
+  }, 0);
+  return +(subtotal + Number(draft.delivery || 0)).toFixed(2);
+}
+
+function _chatPedidoItemsTexto(draft = _chatPedidoDraft) {
+  return Object.entries(draft?.items || {})
+    .filter(([, qty]) => Number(qty || 0) > 0)
+    .map(([id, qty]) => `${qty} x ${CHAT_ORDER_PRODUCTS[id].nombre}`)
+    .join(', ');
+}
+
+function _chatDetectarProductoPedido(texto) {
+  const t = _chatNormalizar(texto);
+  if (!/(quiero|deseo|necesito|pedido|pedir|comprar|dame|deme|manda|mandame|llevar)/.test(t)) return null;
+  if (!/(chicha|botella|botellas|litro|litros|\bl\b|galon|galones)/.test(t)) return null;
+  if (/\bgalon(?:es)?\b/.test(t)) return null;
+  const qty = _chatExtraerNumero(t, /(?:quiero|deseo|necesito|dame|deme|manda|mandame|comprar|pedir)?\s*(\d+(?:[\.,]\d+)?)/) || 1;
+  let id = '';
+  const litros = _chatExtraerNumero(t, /(\d+(?:[\.,]\d+)?)\s*(?:l|lt|lts|litro|litros)\b/);
+  if (/\bgalon(?:es)?\b/.test(t)) id = 'p4l';
+  else if (litros === 2) id = 'p2l';
+  else if (litros === 3) id = 'p3l';
+  else if (litros === 4) id = 'p4l';
+  if (!id) return { qty: Math.max(1, Math.round(qty)), necesitaPresentacion:true };
+  return { id, qty: Math.max(1, Math.round(qty)) };
+}
+
+function _chatDetectarZonaDireccion(texto) {
+  const raw = String(texto || '').trim();
+  const t = _chatNormalizar(raw);
+  let zona = '';
+  let delivery = null;
+  if (/morales/.test(t)) { zona = 'Morales'; delivery = 3; }
+  else if (/tarapoto|jimenez|pimentel|maynas|shapaja|alfonso/.test(t)) { zona = 'Tarapoto'; delivery = 4; }
+  else if (/banda|shilcayo/.test(t)) { zona = 'Banda de Shilcayo'; delivery = 5; }
+  else if (/recojo|local/.test(t)) { zona = 'Recojo en local'; delivery = 0; }
+  else if (/agencia|nacional|envio nacional/.test(t)) { zona = 'Envio nacional'; delivery = 10; }
+  const pareceDireccion = /(jr|jiron|av|avenida|calle|pasaje|mz|lote|urb|aa\.?hh|sector|barrio|tarapoto|morales|banda|shilcayo|\d{2,})/.test(t);
+  if (!pareceDireccion) return null;
+  return { direccion: raw, zona, delivery };
+}
+
+function _chatDetectarPago(texto) {
+  const t = _chatNormalizar(texto);
+  if (/efectivo|contra entrega|al recibir/.test(t)) return 'Efectivo';
+  if (/yape/.test(t)) return 'Yape';
+  if (/plin/.test(t) && /interbank|ibk/.test(t)) return 'PlinIBK';
+  if (/plin/.test(t) && /bbva/.test(t)) return 'PlinBBVA';
+  if (/^plin$| plin |con plin/.test(' ' + t + ' ')) return 'PLIN_AMBIGUO';
+  if (/bim/.test(t)) return 'BIM';
+  if (/agora/.test(t)) return 'Agora';
+  if (/binance|bitcoin|cripto|crypto/.test(t)) return 'Binance';
+  if (/interbank|ibk/.test(t)) return 'Interbank';
+  if (/bbva/.test(t)) return 'BBVA';
+  if (/banbif/.test(t)) return 'Banbif';
+  if (/bcp|scotiabank|nacion|pichincha|caja|mi banco/.test(t)) return 'BANCO_NO_DISPONIBLE';
+  if (/banco|transferencia|mi banco/.test(t)) return 'BANCO_AMBIGUO';
+  return '';
+}
+
+function _chatPagoInstrucciones(metodo, total = 0) {
+  if (metodo === 'PLIN_AMBIGUO') {
+    return 'Tenemos Plin BBVA y Plin Interbank. Escribe: Plin BBVA o Plin Interbank.';
+  }
+  if (metodo === 'BANCO_AMBIGUO') {
+    return 'Para transferencia manejamos Interbank, BBVA y Banbif. Escribe con cual banco deseas pagar.';
+  }
+  if (metodo === 'BANCO_NO_DISPONIBLE') {
+    return 'Ese banco no lo tenemos disponible para transferencia directa. Puedes pagar por Interbank, BBVA, Banbif, Yape, Plin, BIM, Agora, Binance o efectivo al recibir.';
+  }
+  if (metodo === 'Efectivo') return 'Perfecto, pago en efectivo. Con cuanto vas a pagar? Asi calculo tu vuelto.';
+  const cfg = ((typeof METODOS_PAGO !== 'undefined') ? METODOS_PAGO[metodo] : null) || CHAT_ORDER_PAYMENT_FALLBACK[metodo];
+  if (!cfg) return '';
+  const partes = [`Metodo elegido: ${CHAT_ORDER_PAYMENT_NAMES[metodo]}. Total a pagar: S/ ${Number(total || 0).toFixed(2)}.`];
+  if (cfg.num) partes.push(`Numero/usuario: ${cfg.num}.`);
+  if (cfg.cuenta) partes.push(`Cuenta: ${cfg.cuenta}. CCI: ${cfg.cci || 'no disponible'}.`);
+  if (cfg.swift) partes.push(`SWIFT: ${cfg.swift}.`);
+  if (cfg.qr) partes.push(`QR disponible en la app: ${cfg.qr}.`);
+  partes.push('Luego adjunta la captura con el boton de clip del chat y escribe CONFIRMAR PEDIDO.');
+  return partes.join(' ');
+}
+
+function _chatPedidoSiguientePregunta(draft = _chatPedidoDraft) {
+  if (!draft?.item) return 'Que presentacion deseas? Tenemos 2L S/ 9, 3L S/ 13 y 4L S/ 15.';
+  if (!draft.direccion) return `Tu pedido es ${_chatPedidoItemsTexto(draft)}. Subtotal S/ ${(_chatPedidoTotal(draft) - Number(draft.delivery || 0)).toFixed(2)}. A que direccion seria el pedido?`;
+  if (draft.delivery == null) return 'En que zona esta la direccion: Morales, Tarapoto, Banda de Shilcayo, recojo en local o envio nacional?';
+  if (!draft.telefono) return `Con delivery a ${draft.zona} seria S/ ${_chatPedidoTotal(draft).toFixed(2)}. Cual es tu numero de telefono?`;
+  if (!draft.nombre) return 'Cual es tu nombre completo para registrar el pedido?';
+  if (!draft.pago) return 'Cual metodo de pago usaras? Puedes elegir Yape, Plin BBVA, Plin Interbank, BIM, Agora, Binance, transferencia Interbank/BBVA/Banbif o efectivo.';
+  if (draft.pago === 'Efectivo' && !draft.pagoCon) return _chatPagoInstrucciones('Efectivo', _chatPedidoTotal(draft));
+  if (draft.pago !== 'Efectivo' && !draft.comprobanteAdjunto) return _chatPagoInstrucciones(draft.pago, _chatPedidoTotal(draft));
+  draft.listoParaConfirmar = true;
+  return `Resumen listo: ${_chatPedidoItemsTexto(draft)}. Total S/ ${_chatPedidoTotal(draft).toFixed(2)}. Direccion: ${draft.direccion}. Cliente: ${draft.nombre}, ${draft.telefono}. Pago: ${CHAT_ORDER_PAYMENT_NAMES[draft.pago] || draft.pago}${draft.pago === 'Efectivo' ? ` con S/ ${Number(draft.pagoCon).toFixed(2)}; vuelto S/ ${Math.max(0, Number(draft.pagoCon) - _chatPedidoTotal(draft)).toFixed(2)}` : ', comprobante adjunto'}. Escribe CONFIRMAR PEDIDO para registrarlo.`;
+}
+
+function _chatPedidoProcesarTexto(texto) {
+  const t = _chatNormalizar(texto);
+  const producto = _chatDetectarProductoPedido(texto);
+  if (!_chatPedidoDraft && !producto) return '';
+  if (!_chatPedidoDraft) _chatPedidoDraft = _chatPedidoNuevoDraft();
+  const draft = _chatPedidoDraft;
+
+  if (/cancelar pedido|cancelar chat|cancelar orden/.test(t)) {
+    _chatPedidoDraft = null;
+    _chatComprobanteData = null;
+    return 'Listo, cancele el pedido por chat. Puedes empezar otro cuando quieras.';
+  }
+
+  if (/confirmar pedido|registrar pedido|enviar pedido|ok registra|ok registrar|confirmo/.test(t) && draft.listoParaConfirmar) {
+    return { registrar:true, texto:'Estoy registrando tu pedido en ASWA...' };
+  }
+
+  if (producto) {
+    if (producto.necesitaPresentacion) return 'Cuantos litros deseas: 2L, 3L o 4L? Por ejemplo: quiero 3 chichas de 4 litros.';
+    draft.items = { [producto.id]: producto.qty };
+    draft.item = { ...CHAT_ORDER_PRODUCTS[producto.id], qty: producto.qty };
+    draft.listoParaConfirmar = false;
+  }
+
+  const direccion = _chatDetectarZonaDireccion(texto);
+  if (direccion && !draft.direccion) {
+    draft.direccion = direccion.direccion;
+    draft.zona = direccion.zona || draft.zona;
+    draft.delivery = direccion.delivery != null ? direccion.delivery : draft.delivery;
+  } else if (direccion && draft.delivery == null) {
+    draft.zona = direccion.zona || draft.zona;
+    draft.delivery = direccion.delivery != null ? direccion.delivery : draft.delivery;
+  }
+
+  if (!draft.telefono) {
+    const tel = String(texto || '').replace(/\D/g, '').match(/9\d{8}/);
+    if (tel) draft.telefono = tel[0];
+  }
+
+  const pagoDetectado = _chatDetectarPago(texto);
+  if (pagoDetectado === 'PLIN_AMBIGUO' || pagoDetectado === 'BANCO_AMBIGUO' || pagoDetectado === 'BANCO_NO_DISPONIBLE') return _chatPagoInstrucciones(pagoDetectado, _chatPedidoTotal(draft));
+  if (pagoDetectado) {
+    draft.pago = pagoDetectado;
+    draft.listoParaConfirmar = false;
+  }
+
+  if (draft.pago === 'Efectivo' && !draft.pagoCon) {
+    const monto = _chatExtraerNumero(t, /(\d+(?:[\.,]\d+)?)/);
+    if (monto >= _chatPedidoTotal(draft)) draft.pagoCon = monto;
+  }
+
+  if (!draft.nombre && draft.telefono && !pagoDetectado && !direccion && !producto) {
+    const limpio = String(texto || '').trim();
+    if (/^[a-zA-ZÀ-ÿ\s.'-]{6,80}$/.test(limpio) && limpio.split(/\s+/).length >= 2) draft.nombre = limpio;
+  }
+
+  return _chatPedidoSiguientePregunta(draft);
+}
+
 function _chatRespuestaAutomatica(texto) {
+  const pedidoChat = _chatPedidoProcesarTexto(texto);
+  if (pedidoChat && typeof pedidoChat === 'string') return pedidoChat;
+  if (pedidoChat?.registrar) return pedidoChat.texto;
+
   const productoDirecto = _chatRespuestaProductoDirecta(texto);
   if (productoDirecto) return productoDirecto;
 
@@ -12195,27 +12405,157 @@ function _chatRespuestaAutomatica(texto) {
   return 'Soy tu guia ASWA en directo. Puedo ensenarte a hacer tu pedido paso a paso, darte ejemplos, recomendar presentacion, explicar pagos, delivery, Nota de Venta y beneficios como cupones, referidos, misiones, concursos y bonos. Escribe, por ejemplo: "quiero hacer mi pedido" o "que beneficios puedo ganar".';
 }
 
+async function _chatRegistrarPedidoDesdeDraft(draft) {
+  if (!draft || !window.FB || !window.db) throw new Error('Firebase no esta listo');
+  const { addDoc:ad, collection:col, query:q, where:wh, getDocs:gd, doc:d, updateDoc:ud, serverTimestamp:ts } = window.FB;
+  const total = _chatPedidoTotal(draft);
+  const esDigitalPago = draft.pago !== 'Efectivo';
+  const itemsDetalle = Object.entries(draft.items || {})
+    .filter(([, qty]) => Number(qty || 0) > 0)
+    .map(([id, qty]) => ({
+      id,
+      qty: Number(qty || 0),
+      precio: CHAT_ORDER_PRODUCTS[id].precio,
+      total: +(Number(qty || 0) * CHAT_ORDER_PRODUCTS[id].precio).toFixed(2),
+      nombre: CHAT_ORDER_PRODUCTS[id].nombre,
+      corto: CHAT_ORDER_PRODUCTS[id].litros + 'L'
+    }));
+  const items = {};
+  Object.keys(CHAT_ORDER_PRODUCTS).forEach(id => { items[id] = Number(draft.items?.[id] || 0); });
+
+  const oldPago = ST.pago;
+  ST.pago = draft.pago;
+  yapeFileData = _chatComprobanteData || null;
+  const yapePhotoUrl = esDigitalPago ? await subirComprobantePago() : null;
+  const comprobanteMeta = comprobantePagoMeta(esDigitalPago, yapePhotoUrl);
+  ST.pago = oldPago;
+
+  const pedido = {
+    businessId: BUSINESS_ID,
+    cliente_uid: window.currentUser?.uid || null,
+    nombre: sanitizeInput(draft.nombre, 80),
+    telefono: sanitizeInput(draft.telefono, 15),
+    direccion: sanitizeInput(draft.direccion, 200),
+    nota_entrega: 'Pedido creado desde chat IA',
+    distrito: draft.zona || 'Por confirmar',
+    items,
+    items_detalle: itemsDetalle,
+    subtotal: +(total - Number(draft.delivery || 0)).toFixed(2),
+    delivery: Number(draft.delivery || 0),
+    oferta_pct: 0,
+    descuento_amt: 0,
+    total,
+    pago: draft.pago,
+    pago_con: draft.pago === 'Efectivo' ? Number(draft.pagoCon || total) : total,
+    vuelto: draft.pago === 'Efectivo' ? Math.max(0, Number(draft.pagoCon || total) - total) : 0,
+    codigo_usado: null,
+    nivel_cliente: 'BRONCE',
+    estado: 'Pendiente',
+    es_prueba: aswaModoPruebaActivo() || null,
+    prueba_modo: aswaModoPruebaActivo() ? 'flujo_real_separado' : null,
+    prueba_origen: aswaModoPruebaActivo() ? 'chat_ia' : null,
+    origen: 'chat_ia',
+    confirmacion_cliente: false,
+    gps_url: null,
+    gps_coords: null,
+    ...comprobanteMeta,
+    compartido: false,
+    asignado_a: null,
+    es_reserva: false,
+    es_regalo: false,
+    pago_anticipado_obligatorio: esDigitalPago,
+    delivery_carga: items,
+    delivery_carga_confirmada: false,
+    admin_alerta_nueva: true,
+    delivery_alerta_nueva: true,
+    fecha: ts()
+  };
+
+  const ref = await ad(col(db, pedidosCollectionName()), pedido);
+  ST.pedidoFbId = ref.id;
+  lsSet('pedido_id', ref.id);
+  if (typeof trackOrder === 'function') trackOrder(ref.id);
+
+  const snapC = await gd(q(col(db, clientesCollectionName()), wh('businessId','==',BUSINESS_ID), wh('telefono','==',draft.telefono)));
+  const clienteData = {
+    businessId: BUSINESS_ID,
+    cliente_uid: window.currentUser?.uid || null,
+    nombre: draft.nombre,
+    telefono: draft.telefono,
+    nivel: 'BRONCE',
+    ultimo_pedido: ts()
+  };
+  if (snapC.empty) await ad(col(db, clientesCollectionName()), { ...clienteData, pedidos_totales:1, total_consumo:total });
+  else {
+    const prev = snapC.docs[0].data() || {};
+    await ud(d(db, clientesCollectionName(), snapC.docs[0].id), {
+      ...clienteData,
+      pedidos_totales: Number(prev.pedidos_totales || 0) + 1,
+      total_consumo: Number(prev.total_consumo || 0) + total
+    });
+  }
+  return ref.id;
+}
+
+async function _chatRespuestaConversacional(texto) {
+  const pedidoChat = _chatPedidoProcesarTexto(texto);
+  if (pedidoChat?.registrar) {
+    const draft = _chatPedidoDraft;
+    try {
+      const pedidoId = await _chatRegistrarPedidoDesdeDraft(draft);
+      const total = _chatPedidoTotal(draft);
+      _chatPedidoDraft = null;
+      _chatComprobanteData = null;
+      return `OK, tu pedido fue registrado. Codigo interno: ${pedidoId.slice(0, 8).toUpperCase()}. Total S/ ${total.toFixed(2)}. El equipo ASWA lo revisara y el seguimiento aparecera cuando el deliverista lo tome.`;
+    } catch (err) {
+      console.warn('pedido por chat:', err);
+      return 'No pude registrar el pedido en este momento. Revisa conexion o intenta nuevamente. Tus datos del chat se mantienen para confirmar otra vez.';
+    }
+  }
+  if (pedidoChat && typeof pedidoChat === 'string') return pedidoChat;
+  return _chatRespuestaAutomatica(texto);
+}
+
+async function _chatEnviarMensajeNegocio(texto) {
+  if (!_chatId || !window.FB || !texto) return;
+  const { doc:d, collection:col, addDoc:ad, setDoc, serverTimestamp:ts } = window.FB;
+  await ad(col(db, 'chats', _chatId, 'mensajes'), {
+    de:'negocio',
+    autor:'asistente_basico',
+    nombre:'Asistente ASWA',
+    texto,
+    fecha:ts(),
+    leido_cliente:false,
+    leido_negocio:true
+  });
+  await setDoc(d(db, 'chats', _chatId), {
+    ultimo_msg:texto,
+    ultimo_de:'negocio',
+    ultimo_autor:'asistente_basico',
+    actualizado_en:ts(),
+    no_leidos_cliente:1
+  }, { merge:true });
+}
+
+function seleccionarComprobanteChat(input) {
+  const file = input?.files?.[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = async () => {
+    _chatComprobanteData = reader.result;
+    if (!_chatPedidoDraft) _chatPedidoDraft = _chatPedidoNuevoDraft();
+    _chatPedidoDraft.comprobanteAdjunto = true;
+    const respuesta = 'Comprobante recibido en el chat. ' + _chatPedidoSiguientePregunta(_chatPedidoDraft);
+    try { await _chatEnviarMensajeNegocio(respuesta); } catch(err) { console.warn('comprobante chat:', err); }
+  };
+  reader.readAsDataURL(file);
+}
+
 async function _chatResponderAutomatico(texto) {
   if (!_chatId || !window.FB) return;
   try {
-    const { doc:d, collection:col, addDoc:ad, setDoc, serverTimestamp:ts } = window.FB;
-    const respuesta = _chatRespuestaAutomatica(texto);
-    await ad(col(db, 'chats', _chatId, 'mensajes'), {
-      de:'negocio',
-      autor:'asistente_basico',
-      nombre:'Asistente ASWA',
-      texto:respuesta,
-      fecha:ts(),
-      leido_cliente:false,
-      leido_negocio:true
-    });
-    await setDoc(d(db, 'chats', _chatId), {
-      ultimo_msg:respuesta,
-      ultimo_de:'negocio',
-      ultimo_autor:'asistente_basico',
-      actualizado_en:ts(),
-      no_leidos_cliente:1
-    }, { merge:true });
+    const respuesta = await _chatRespuestaConversacional(texto);
+    await _chatEnviarMensajeNegocio(respuesta);
   } catch(err) {
     console.warn('respuesta automatica chat:', err);
   }
@@ -12260,7 +12600,7 @@ function _renderMensajesChat(mensajes) {
     const autor = ['ia', 'asistente_basico'].includes(m.autor)
       ? '<strong style="display:block;color:#86efac;margin-bottom:4px">Asistente ASWA</strong>'
       : '';
-    return `<div class="chat-msg ${cls}">${autor}${esc(m.texto || '')}<span class="chat-time">${_chatFecha(m.fecha)}</span></div>`;
+    return `<div class="chat-msg ${cls}">${autor}${esc(m.texto || '')}${_chatMensajeExtraHtml(m.texto || '')}<span class="chat-time">${_chatFecha(m.fecha)}</span></div>`;
   }).join('');
   _scrollChatAbajo();
 }
