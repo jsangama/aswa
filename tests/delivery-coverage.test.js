@@ -53,7 +53,18 @@ describe('home delivery coverage section', () => {
     expect(zone.value).toBe('4');
     expect(zone.options[zone.selectedIndex].textContent).toContain('Tarapoto');
     expect(summary.textContent).toContain('Tarapoto');
-    expect(activeZones.length).toBeGreaterThanOrEqual(2);
+    expect(activeZones.length).toBeGreaterThanOrEqual(1);
+  });
+
+  test('uses a real embedded map for the delivery coverage area', () => {
+    const window = setupCoverageDom();
+    const iframe = window.document.querySelector('.home-map iframe');
+    const openMap = window.document.querySelector('.home-map-open');
+
+    expect(iframe).toBeTruthy();
+    expect(iframe.getAttribute('src')).toContain('openstreetmap.org/export/embed.html');
+    expect(iframe.getAttribute('title')).toContain('Mapa real');
+    expect(openMap.getAttribute('href')).toContain('google.com/maps');
   });
 
   test('does not duplicate the delivery zone cards in the order form', () => {

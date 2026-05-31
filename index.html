@@ -1150,16 +1150,63 @@
     }
     .home-map {
       position:relative;
-      height:178px;
+      height:218px;
       border:1px solid rgba(255,255,255,.12);
       border-radius:14px;
       overflow:hidden;
-      background:
-        linear-gradient(90deg,rgba(255,255,255,.05) 1px,transparent 1px),
-        linear-gradient(0deg,rgba(255,255,255,.05) 1px,transparent 1px),
-        #07070a;
-      background-size:80px 80px;
+      background:#07070a;
       margin-bottom:10px;
+    }
+    .home-map iframe {
+      width:100%;
+      height:100%;
+      border:0;
+      display:block;
+      filter:saturate(.92) contrast(1.04) brightness(.86);
+    }
+    .home-map::after {
+      content:'';
+      position:absolute;
+      inset:0;
+      pointer-events:none;
+      background:linear-gradient(180deg,rgba(0,0,0,.08),rgba(0,0,0,.30));
+    }
+    .home-map-open {
+      position:absolute;
+      right:10px;
+      bottom:10px;
+      z-index:2;
+      background:rgba(9,9,11,.90);
+      color:#facc15;
+      border:1px solid rgba(250,204,21,.45);
+      border-radius:999px;
+      padding:8px 11px;
+      font-size:10px;
+      font-weight:900;
+      text-decoration:none;
+      box-shadow:0 10px 24px rgba(0,0,0,.35);
+    }
+    .home-map-badge {
+      position:absolute;
+      left:10px;
+      top:10px;
+      z-index:2;
+      display:grid;
+      gap:5px;
+      max-width:170px;
+      pointer-events:none;
+    }
+    .home-map-badge span {
+      width:max-content;
+      max-width:100%;
+      background:rgba(9,9,11,.88);
+      border:1px solid rgba(255,255,255,.14);
+      border-radius:999px;
+      color:#fff;
+      padding:5px 8px;
+      font-size:9px;
+      font-weight:900;
+      box-shadow:0 8px 20px rgba(0,0,0,.28);
     }
     .home-map-zone {
       position:absolute;
@@ -1252,7 +1299,7 @@
     @media (max-width:390px) {
       .home-zone-grid { grid-template-columns:1fr 1fr; }
       .home-zone-wide { grid-column:span 1; }
-      .home-map { height:165px; }
+      .home-map { height:205px; }
     }
     .home-tutorial {
       max-width:430px;
@@ -3418,23 +3465,18 @@
     </div>
     <div class="home-coverage-chip">Costos claros</div>
   </div>
-  <div class="home-map" aria-label="Mapa de zonas ASWA">
-    <div class="home-map-road"></div>
-    <div class="home-map-zone home-map-morales" data-zona-nombre="Morales" data-zona-precio="3" onclick="seleccionarZonaInicio('Morales',3)" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();seleccionarZonaInicio('Morales',3)}">
-      <span class="hm-name">Morales</span>
-      <span class="hm-price">S/ 3.00</span>
-      <span class="hm-time">~25 min</span>
+  <div class="home-map" aria-label="Mapa real de cobertura ASWA">
+    <iframe
+      title="Mapa real de cobertura ASWA en Morales, Tarapoto y La Banda de Shilcayo"
+      loading="lazy"
+      referrerpolicy="no-referrer-when-downgrade"
+      src="https://www.openstreetmap.org/export/embed.html?bbox=-76.4300%2C-6.5400%2C-76.3000%2C-6.4300&amp;layer=mapnik&amp;marker=-6.4860%2C-76.3660"></iframe>
+    <div class="home-map-badge" aria-hidden="true">
+      <span>Morales S/ 3</span>
+      <span>Tarapoto S/ 4</span>
+      <span>La Banda S/ 5</span>
     </div>
-    <div class="home-map-zone home-map-tarapoto" data-zona-nombre="Tarapoto" data-zona-precio="4" onclick="seleccionarZonaInicio('Tarapoto',4)" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();seleccionarZonaInicio('Tarapoto',4)}">
-      <span class="hm-name">Tarapoto</span>
-      <span class="hm-price">S/ 4.00</span>
-      <span class="hm-time">~35 min</span>
-    </div>
-    <div class="home-map-zone home-map-banda" data-zona-nombre="Banda" data-zona-precio="5" onclick="seleccionarZonaInicio('Banda',5)" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();seleccionarZonaInicio('Banda',5)}">
-      <span class="hm-name">La Banda de Shilcayo</span>
-      <span class="hm-price">S/ 5.00</span>
-      <span class="hm-time">~45 min</span>
-    </div>
+    <a class="home-map-open" href="https://www.google.com/maps/search/?api=1&query=Morales%20Tarapoto%20La%20Banda%20de%20Shilcayo%20San%20Martin%20Peru" target="_blank" rel="noopener">Abrir mapa</a>
   </div>
   <div class="home-zone-grid">
     <div class="home-zone-card" data-zona-nombre="Morales" data-zona-precio="3" onclick="seleccionarZonaInicio('Morales',3)" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();seleccionarZonaInicio('Morales',3)}">
