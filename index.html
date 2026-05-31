@@ -3235,6 +3235,73 @@
 <div id="notificationContainer" style="display:none"></div>
 
 <!-- Chat de soporte dentro de la app -->
+<script>
+(function instalarRescateInputChat() {
+  if (window._chatEarlyInputRescue) return;
+  window._chatEarlyInputRescue = true;
+
+  function chatAbierto() {
+    return document.getElementById('chatModal')?.classList.contains('open');
+  }
+
+  window._chatDesbloquearEntrada = function(focus) {
+    const input = document.getElementById('chatInput');
+    const btn = document.getElementById('chatSendBtn');
+    const bar = document.querySelector('.chat-input-bar');
+    if (input) {
+      input.disabled = false;
+      input.readOnly = false;
+      input.removeAttribute('disabled');
+      input.removeAttribute('readonly');
+      input.style.pointerEvents = 'auto';
+      input.style.userSelect = 'text';
+      input.style.webkitUserSelect = 'text';
+      if (focus && chatAbierto()) setTimeout(() => input.focus(), 10);
+    }
+    if (btn) btn.disabled = false;
+    if (bar) {
+      bar.style.pointerEvents = 'auto';
+      bar.style.zIndex = '9999';
+    }
+  };
+
+  document.addEventListener('pointerdown', ev => {
+    if (chatAbierto() && (ev.target?.closest?.('.chat-input-bar') || ev.target?.id === 'chatInput')) {
+      window._chatDesbloquearEntrada(true);
+    }
+  }, true);
+
+  document.addEventListener('keydown', ev => {
+    if (!chatAbierto()) return;
+    const input = document.getElementById('chatInput');
+    if (!input || document.activeElement === input || ev.ctrlKey || ev.metaKey || ev.altKey) return;
+    if (ev.key === 'Enter') {
+      ev.preventDefault();
+      window._chatDesbloquearEntrada(true);
+      if (typeof window.enviarMensajeChat === 'function') window.enviarMensajeChat();
+      return;
+    }
+    if (ev.key === 'Backspace') {
+      ev.preventDefault();
+      input.value = input.value.slice(0, -1);
+      input.dispatchEvent(new Event('input', { bubbles:true }));
+      window._chatDesbloquearEntrada(true);
+      return;
+    }
+    if (ev.key && ev.key.length === 1) {
+      ev.preventDefault();
+      input.value += ev.key;
+      input.dispatchEvent(new Event('input', { bubbles:true }));
+      window._chatDesbloquearEntrada(true);
+    }
+  }, true);
+
+  setInterval(() => {
+    if (chatAbierto()) window._chatDesbloquearEntrada(false);
+  }, 500);
+})();
+</script>
+
 <button class="chat-fab" id="chatFab" onclick="abrirChat()" type="button">
   <span>💬 Soporte ASWA</span>
   <span class="chat-fab-badge" id="chatFabBadge"></span>
@@ -3252,9 +3319,9 @@
     <div class="chat-msgs" id="chatMsgs">
       <div class="chat-msg sistema">Escríbenos si necesitas ayuda con tu pedido.</div>
     </div>
-    <div class="chat-input-bar" onclick="_chatDesbloquearEntrada(true)">
-      <textarea class="chat-input" id="chatInput" rows="1" placeholder="Escribe tu mensaje..." autocomplete="off" autocorrect="on" spellcheck="true"
-        onclick="_chatDesbloquearEntrada(true)" onfocus="_chatDesbloquearEntrada(false)"
+    <div class="chat-input-bar" onclick="window._chatDesbloquearEntrada && window._chatDesbloquearEntrada(true)">
+      <textarea class="chat-input" id="chatInput" rows="1" placeholder="Escribe tu mensaje..." autocomplete="off" autocorrect="on" spellcheck="true" inputmode="text" tabindex="0"
+        onclick="window._chatDesbloquearEntrada && window._chatDesbloquearEntrada(true)" onfocus="window._chatDesbloquearEntrada && window._chatDesbloquearEntrada(false)"
         onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();enviarMensajeChat()}"
         oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px'"></textarea>
       <input type="file" id="chatComprobanteInput" accept="image/*" style="display:none" onchange="seleccionarComprobanteChat(this)">
