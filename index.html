@@ -1167,6 +1167,209 @@
       .home-zone-wide { grid-column:span 1; }
       .home-map { height:165px; }
     }
+    .home-tutorial {
+      max-width:430px;
+      margin:14px auto 18px;
+      background:#15161a;
+      border:1px solid var(--brd);
+      border-radius:18px;
+      overflow:hidden;
+      box-shadow:0 16px 36px rgba(0,0,0,.24);
+    }
+    .home-tutorial-head {
+      padding:16px 16px 10px;
+      text-align:center;
+      border-bottom:1px solid rgba(255,255,255,.06);
+    }
+    .home-tutorial-title {
+      color:var(--y);
+      font-size:17px;
+      font-weight:950;
+      line-height:1.2;
+    }
+    .home-tutorial-sub {
+      color:#cbd5e1;
+      font-size:11px;
+      line-height:1.4;
+      margin-top:5px;
+    }
+    .home-tutorial-tabs {
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      border-bottom:1px solid rgba(255,255,255,.07);
+    }
+    .home-tutorial-tab {
+      border:0;
+      border-bottom:2px solid transparent;
+      background:transparent;
+      color:#a1a1aa;
+      cursor:pointer;
+      font-family:'Poppins',sans-serif;
+      font-size:11px;
+      font-weight:900;
+      padding:12px 8px 10px;
+    }
+    .home-tutorial-tab.active {
+      color:var(--y);
+      border-bottom-color:var(--y);
+    }
+    .home-tutorial-body {
+      min-height:260px;
+      display:flex;
+      flex-direction:column;
+      justify-content:space-between;
+      background:#07080a;
+    }
+    .home-tutorial-step {
+      position:relative;
+      min-height:214px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:24px 54px 16px;
+      text-align:center;
+    }
+    .home-tutorial-num {
+      position:absolute;
+      left:12px;
+      top:10px;
+      width:22px;
+      height:22px;
+      border-radius:999px;
+      background:var(--y);
+      color:#111;
+      font-size:12px;
+      font-weight:950;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+    }
+    .home-tutorial-visual {
+      width:78px;
+      height:78px;
+      margin:0 auto 22px;
+      border-radius:22px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-size:38px;
+      color:#111;
+      background:linear-gradient(135deg,#facc15,#22c55e);
+      box-shadow:0 14px 36px rgba(250,204,21,.12);
+    }
+    .home-tutorial-step-title {
+      color:#fff;
+      font-size:13px;
+      font-weight:950;
+      line-height:1.25;
+    }
+    .home-tutorial-step-text {
+      color:#9ca3af;
+      font-size:10px;
+      line-height:1.45;
+      margin-top:6px;
+    }
+    .home-tutorial-action {
+      margin-top:14px;
+      border:1px solid rgba(250,204,21,.42);
+      background:rgba(250,204,21,.12);
+      color:#fde68a;
+      border-radius:999px;
+      padding:8px 12px;
+      cursor:pointer;
+      font-family:'Poppins',sans-serif;
+      font-size:10px;
+      font-weight:900;
+    }
+    .home-tutorial-arrow {
+      position:absolute;
+      top:50%;
+      transform:translateY(-50%);
+      width:30px;
+      height:30px;
+      border-radius:999px;
+      border:1px solid rgba(255,255,255,.14);
+      background:#030304;
+      color:#fff;
+      cursor:pointer;
+      font-size:18px;
+      line-height:1;
+    }
+    .home-tutorial-prev { left:14px; }
+    .home-tutorial-next { right:14px; }
+    .home-tutorial-dots {
+      display:flex;
+      justify-content:center;
+      gap:5px;
+      padding:0 0 10px;
+    }
+    .home-tutorial-dot {
+      width:6px;
+      height:6px;
+      border-radius:999px;
+      background:rgba(255,255,255,.25);
+    }
+    .home-tutorial-dot.active {
+      width:18px;
+      background:var(--y);
+    }
+    .home-tutorial-foot {
+      background:#17181c;
+      padding:12px 14px 14px;
+      text-align:center;
+    }
+    .home-tutorial-foot-title {
+      color:#fff;
+      font-size:12px;
+      font-weight:950;
+      line-height:1.25;
+    }
+    .home-tutorial-foot-text {
+      color:#9ca3af;
+      font-size:10px;
+      line-height:1.45;
+      margin-top:5px;
+    }
+    .home-tutorial-prep {
+      display:none;
+      padding:18px 14px;
+    }
+    .home-tutorial-prep.show { display:block; }
+    .home-prep-list {
+      display:grid;
+      gap:9px;
+      margin-top:12px;
+    }
+    .home-prep-item {
+      display:grid;
+      grid-template-columns:auto 1fr;
+      gap:10px;
+      align-items:flex-start;
+      border:1px solid rgba(255,255,255,.09);
+      background:rgba(255,255,255,.03);
+      border-radius:12px;
+      padding:10px 11px;
+      text-align:left;
+    }
+    .home-prep-num {
+      width:24px;
+      height:24px;
+      border-radius:999px;
+      background:rgba(250,204,21,.14);
+      color:var(--y);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-size:11px;
+      font-weight:950;
+    }
+    .home-prep-title { color:#fff; font-size:11px; font-weight:950; }
+    .home-prep-text { color:#9ca3af; font-size:10px; line-height:1.45; margin-top:3px; }
+    @media (max-width:390px) {
+      .home-tutorial-step { padding-left:46px; padding-right:46px; }
+      .home-tutorial-title { font-size:16px; }
+      .home-tutorial-visual { width:70px; height:70px; font-size:34px; }
+    }
 
     .cupon-wrap {
       background:rgba(250,204,21,.05);
@@ -2974,6 +3177,55 @@
 </script>
 
 <!-- ══════════════ MAIN ══════════════ -->
+<section class="home-tutorial" aria-label="Guia para hacer tu pedido ASWA">
+  <div class="home-tutorial-head">
+    <div class="home-tutorial-title">Como hago mi pedido?</div>
+    <div class="home-tutorial-sub">Pide desde tu celular y recibelo en casa.</div>
+  </div>
+  <div class="home-tutorial-tabs" role="tablist" aria-label="Tutorial ASWA">
+    <button type="button" class="home-tutorial-tab active" id="homeTutTabPedir" onclick="tutHomeSetTab('pedido')" role="tab" aria-selected="true">Como pedir</button>
+    <button type="button" class="home-tutorial-tab" id="homeTutTabPrep" onclick="tutHomeSetTab('preparacion')" role="tab" aria-selected="false">Como lo preparamos</button>
+  </div>
+  <div class="home-tutorial-body">
+    <div id="homeTutPedidoPanel">
+      <div class="home-tutorial-step">
+        <div class="home-tutorial-num" id="homeTutStepNum">1</div>
+        <button type="button" class="home-tutorial-arrow home-tutorial-prev" onclick="tutHomePrev()" aria-label="Paso anterior">&lsaquo;</button>
+        <div>
+          <div class="home-tutorial-visual" id="homeTutIcon">APP</div>
+          <div class="home-tutorial-step-title" id="homeTutTitle">Abre la app</div>
+          <div class="home-tutorial-step-text" id="homeTutText">Ingresa al link de ASWA desde tu celular.</div>
+          <button type="button" class="home-tutorial-action" id="homeTutAction" onclick="tutHomeAction()">Ir al paso</button>
+        </div>
+        <button type="button" class="home-tutorial-arrow home-tutorial-next" onclick="tutHomeNext()" aria-label="Siguiente paso">&rsaquo;</button>
+      </div>
+      <div class="home-tutorial-dots" id="homeTutDots" aria-hidden="true"></div>
+      <div class="home-tutorial-foot">
+        <div class="home-tutorial-foot-title" id="homeTutFootTitle">Abre la app</div>
+        <div class="home-tutorial-foot-text" id="homeTutFootText">Luego sigue los pasos sin salir de ASWA.</div>
+      </div>
+    </div>
+    <div class="home-tutorial-prep" id="homeTutPrepPanel">
+      <div class="home-tutorial-foot-title">Preparacion y entrega de tu chicha</div>
+      <div class="home-tutorial-foot-text">Asi cuidamos tu pedido desde la seleccion hasta tu puerta.</div>
+      <div class="home-prep-list">
+        <div class="home-prep-item">
+          <span class="home-prep-num">1</span>
+          <div><div class="home-prep-title">Receta tradicional ASWA</div><div class="home-prep-text">Se prepara con maiz y el sabor familiar de San Martin.</div></div>
+        </div>
+        <div class="home-prep-item">
+          <span class="home-prep-num">2</span>
+          <div><div class="home-prep-title">Pedido confirmado</div><div class="home-prep-text">Revisamos presentacion, pago, zona y referencia de entrega.</div></div>
+        </div>
+        <div class="home-prep-item">
+          <span class="home-prep-num">3</span>
+          <div><div class="home-prep-title">Entrega coordinada</div><div class="home-prep-text">Delivery en Morales, Tarapoto y Banda; recojo local o envio a agencia.</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
 <section class="home-coverage" aria-label="Cobertura y costos de entrega">
   <div class="home-coverage-head">
     <div>
@@ -3039,7 +3291,7 @@
   <div class="horario-mini" id="horarioMini"></div>
 
   <!-- PRODUCTOS -->
-  <section>
+  <section id="productosSection">
     <div class="stitle">Elige tu presentación</div>
 
     <!-- 2 Litros -->
@@ -3267,7 +3519,7 @@
   </section>
 
   <!-- DATOS -->
-  <section>
+  <section id="datosPedidoSection">
     <div class="stitle">Tus datos</div>
     <button id="btnTutorialPedido" type="button" onclick="tutToggleTutorialPedido()"
             style="width:100%;margin:0 0 14px;border:0;background:linear-gradient(135deg,#facc15,#f59e0b);color:#111;border-radius:12px;padding:12px 14px;font-size:13px;font-weight:900;cursor:pointer;text-align:center;box-shadow:0 10px 24px rgba(250,204,21,.18)">
@@ -3500,7 +3752,7 @@
   </section>
 
   <!-- PAGO v2 — 10 métodos -->
-  <section>
+  <section id="pagoPedidoSection">
     <div class="stitle">Método de pago</div>
 
     <!-- Fila 1A: Yape · Plin BBVA · Plin Interbank -->
@@ -6947,6 +7199,136 @@ document.addEventListener('click', e => {
   if (e.target.closest('#dirSugerencias') || e.target.id === 'direccion') return;
   dirOcultarSug();
 });
+
+const ASWA_HOME_TUTORIAL_STEPS = [
+  {
+    icon: 'APP',
+    title: 'Abre la app',
+    text: 'Ingresa al link de ASWA desde tu celular y mira las opciones disponibles.',
+    foot: 'Empieza aqui mismo',
+    footText: 'La guia te lleva paso a paso por el pedido.',
+    target: '#productosSection',
+    action: 'Ver productos'
+  },
+  {
+    icon: '2L',
+    title: 'Elige tu chicha',
+    text: 'Selecciona 2L, 3L, 4L o bidon San Juanero segun tu ocasion.',
+    foot: 'Elige tu presentacion',
+    footText: 'Puedes combinar presentaciones en el mismo pedido.',
+    target: '#productosSection',
+    action: 'Elegir chicha'
+  },
+  {
+    icon: '+',
+    title: 'Agrega al carrito',
+    text: 'Pulsa el boton + en cada producto y revisa las cantidades antes de continuar.',
+    foot: 'Agrega y revisa',
+    footText: 'El total se calcula automaticamente con productos, delivery y descuentos.',
+    target: '#c-p2l',
+    action: 'Agregar producto'
+  },
+  {
+    icon: 'DIR',
+    title: 'Tu direccion',
+    text: 'Escribe tu telefono, nombre, direccion y una referencia para ubicarte mejor.',
+    foot: 'Datos para entrega',
+    footText: 'Mientras mas clara sea la referencia, mas facil llega tu pedido.',
+    target: '#datosPedidoSection',
+    action: 'Completar datos'
+  },
+  {
+    icon: 'S/',
+    title: 'Elige como pagar',
+    text: 'Puedes usar Yape, Plin, Agora, BIM, transferencia o efectivo cuando aplique.',
+    foot: 'Metodo de pago',
+    footText: 'Las reservas, regalos y promo escolar usan pago anticipado.',
+    target: '#pagoPedidoSection',
+    action: 'Ver pagos'
+  },
+  {
+    icon: 'OK',
+    title: 'Confirma y espera',
+    text: 'Revisa el resumen, confirma tu pedido y ASWA coordinara la entrega.',
+    foot: 'Pedido en camino',
+    footText: 'Cuando corresponda, la nota de venta se genera despues de la entrega confirmada.',
+    target: '#btnEnviarPedido,#btnEnviar,#resumenPedido,#totalBox',
+    action: 'Confirmar'
+  }
+];
+let aswaHomeTutorialStep = 0;
+
+function tutHomeScrollToTarget(selectorList) {
+  const selectors = String(selectorList || '').split(',').map(s => s.trim()).filter(Boolean);
+  let target = null;
+  for (const selector of selectors) {
+    target = document.querySelector(selector);
+    if (target) break;
+  }
+  if (!target) return false;
+  target.scrollIntoView({ behavior:'smooth', block:'center' });
+  if (typeof target.focus === 'function' && /^(INPUT|TEXTAREA|SELECT|BUTTON)$/.test(target.tagName)) {
+    setTimeout(() => target.focus({ preventScroll:true }), 350);
+  }
+  return true;
+}
+
+function tutHomeRender() {
+  const step = ASWA_HOME_TUTORIAL_STEPS[aswaHomeTutorialStep] || ASWA_HOME_TUTORIAL_STEPS[0];
+  const setText = (id, text) => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = text;
+  };
+  setText('homeTutStepNum', String(aswaHomeTutorialStep + 1));
+  setText('homeTutIcon', step.icon);
+  setText('homeTutTitle', step.title);
+  setText('homeTutText', step.text);
+  setText('homeTutFootTitle', step.foot);
+  setText('homeTutFootText', step.footText);
+  setText('homeTutAction', step.action || 'Ir al paso');
+
+  const dots = document.getElementById('homeTutDots');
+  if (dots) {
+    dots.innerHTML = ASWA_HOME_TUTORIAL_STEPS
+      .map((_, i) => `<span class="home-tutorial-dot${i === aswaHomeTutorialStep ? ' active' : ''}"></span>`)
+      .join('');
+  }
+}
+
+function tutHomeSetStep(index) {
+  const total = ASWA_HOME_TUTORIAL_STEPS.length;
+  aswaHomeTutorialStep = ((index % total) + total) % total;
+  tutHomeRender();
+}
+
+function tutHomeNext() { tutHomeSetStep(aswaHomeTutorialStep + 1); }
+function tutHomePrev() { tutHomeSetStep(aswaHomeTutorialStep - 1); }
+
+function tutHomeAction() {
+  const step = ASWA_HOME_TUTORIAL_STEPS[aswaHomeTutorialStep] || ASWA_HOME_TUTORIAL_STEPS[0];
+  const ok = tutHomeScrollToTarget(step.target);
+  if (ok && typeof tst === 'function') tst(step.title + ': sigue este paso aqui.', 2200);
+}
+
+function tutHomeSetTab(tab) {
+  const isPrep = tab === 'preparacion';
+  const pedido = document.getElementById('homeTutPedidoPanel');
+  const prep = document.getElementById('homeTutPrepPanel');
+  const tabPedido = document.getElementById('homeTutTabPedir');
+  const tabPrep = document.getElementById('homeTutTabPrep');
+  if (pedido) pedido.style.display = isPrep ? 'none' : '';
+  if (prep) prep.classList.toggle('show', isPrep);
+  if (tabPedido) {
+    tabPedido.classList.toggle('active', !isPrep);
+    tabPedido.setAttribute('aria-selected', String(!isPrep));
+  }
+  if (tabPrep) {
+    tabPrep.classList.toggle('active', isPrep);
+    tabPrep.setAttribute('aria-selected', String(isPrep));
+  }
+}
+
+document.addEventListener('DOMContentLoaded', tutHomeRender);
 
 function _zonaNorm(txt) {
   return String(txt || '').toLowerCase()
