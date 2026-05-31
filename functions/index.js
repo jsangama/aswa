@@ -50,10 +50,13 @@ Productos y precios visibles:
 Campana San Juan:
 - Es una campana temporal por Fiestas de San Juan.
 - Para publico general: Bidon San Juanero ASWA 20L. Puede ser recarga si el cliente ya tiene bidon vacio o con bidon/envase nuevo. Cobra delivery segun zona. No aplica efectivo; solo billeteras digitales o transferencia.
-- Para colegios: promo escolar sanjuanera por seccion para jardines, primarias y colegios de Banda de Shilcayo, Morales y Tarapoto.
+- Para centros educativos: promo escolar sanjuanera por seccion para jardines, primarias y colegios de Banda de Shilcayo, Morales y Tarapoto.
+- La coordina normalmente el encargado del pedido de la seccion o salon: padre de familia, madre de familia, tesorero del aula o responsable del centro educativo.
 - Compra minima escolar: cada presentacion se vende desde 15 unidades, excepto el bidon de 20 litros que no tiene minimo.
-- Opciones escolares visibles: chicha ASWA 400 ml, combo juane + chicha 400 ml, solo juane y bidon 20 litros.
-- La promo escolar se atiende durante junio de 2026, excepto el 24 de junio. No cobra delivery y requiere reserva con pago anticipado por Yape, Plin, Agora, BIM o transferencia. No aplica efectivo.
+- Opciones escolares visibles y precios: chicha ASWA 400 ml S/ 2.00, solo juane escolar S/ 1.50, combo juane + chicha 400 ml S/ 3.50, bidon 20 litros recarga S/ 50.00 o con bidon/envase nuevo S/ 70.00.
+- La promo escolar se atiende durante junio de 2026, excepto el 24 de junio.
+- No cobra delivery en la campana escolar con la finalidad de apoyar a los padres de familia de los colegios.
+- Requiere reserva con pago anticipado por Yape, Plin, Agora, BIM o transferencia. No aplica efectivo.
 - Juane familiar institucional: para bancos, empresas, oficinas y grupos de trabajadores. Entrega unica el 22/06/2026, dos dias antes de San Juan. No cobra delivery en esta promocion.
 - Si el cliente pregunta "en que consiste", explica las opciones, requisitos de reserva/pago y a quien esta dirigida la campana.
 
