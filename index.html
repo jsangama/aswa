@@ -12847,6 +12847,17 @@ function _chatProgramarRespuestaFallback(texto, clienteMsgId) {
   }, espera);
 }
 
+function _chatRepararMensajeClientePendiente(mensajes) {
+  if (!Array.isArray(mensajes) || !mensajes.length) return;
+  const ultimoIdx = mensajes.length - 1;
+  const ultimo = mensajes[ultimoIdx];
+  if (!ultimo?.id || ultimo.de !== 'cliente' || !ultimo.texto) return;
+  if (mensajes.slice(ultimoIdx + 1).some(m => m?.de === 'negocio')) return;
+  if (window._chatRepairMsgId === ultimo.id) return;
+  window._chatRepairMsgId = ultimo.id;
+  _chatProgramarRespuestaFallback(ultimo.texto, ultimo.id);
+}
+
 async function enviarMensajeChat() {
   const input = document.getElementById('chatInput');
   const texto = input?.value.trim();
@@ -12892,6 +12903,7 @@ function _renderMensajesChat(mensajes) {
     return `<div class="chat-msg ${cls}">${autor}${esc(m.texto || '')}${_chatMensajeExtraHtml(m.texto || '')}<span class="chat-time">${_chatFecha(m.fecha)}</span></div>`;
   }).join('');
   _chatDesbloquearEntrada(false);
+  _chatRepararMensajeClientePendiente(_chatMensajesCache);
   _scrollChatAbajo();
 }
 
