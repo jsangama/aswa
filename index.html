@@ -420,6 +420,34 @@
       .bsub { font-size:8px; letter-spacing:.16em; }
     }
     .sp { height:86px; }
+    .promo-slide-img {
+      width:100%;
+      height:260px;
+      object-fit:contain;
+      display:block;
+      background:#000;
+    }
+    .promo-caption {
+      position:absolute;
+      left:0;
+      right:0;
+      bottom:0;
+      padding:34px 14px 12px;
+      color:#fff;
+      font-size:13px;
+      font-weight:950;
+      line-height:1.25;
+      text-shadow:0 2px 10px rgba(0,0,0,.7);
+      background:linear-gradient(180deg,transparent,rgba(0,0,0,.74));
+      pointer-events:none;
+    }
+    .promo-caption small {
+      display:block;
+      color:#e5e7eb;
+      font-size:10px;
+      font-weight:700;
+      margin-top:2px;
+    }
 
     /* ══ LAYOUT ══ */
     main { max-width:430px; margin:0 auto; padding:20px 16px 0; }
@@ -3138,65 +3166,60 @@
     </div>
   </section>
 
-<!-- ══════════════ BANNER PROMO ROTATIVO ══════════════ -->
-<div style="position:relative;overflow:hidden;max-width:430px;margin:0 auto">
+<!-- BANNER PROMO ROTATIVO -->
+<div style="position:relative;overflow:hidden;max-width:430px;margin:0 auto;border-radius:14px">
   <div id="promoSlider" style="display:flex;transition:transform .5s cubic-bezier(.4,0,.2,1);will-change:transform">
     <div style="flex-shrink:0;width:100%;position:relative">
-      <img src="assets/images/embedded/embedded-58515c524410.jpg" alt="ASWA Sara Aswa Mishky - Botella con maíz"
-           style="width:100%;height:260px;object-fit:contain;display:block;background:#000">
+      <img src="assets/images/embedded/embedded-58515c524410.jpg" alt="ASWA Sara Aswa Mishky - Botella con maiz" class="promo-slide-img" loading="lazy">
+      <div class="promo-caption">ASWA Sara Aswa Mishky<small>Botella con maiz y sabor de San Martin</small></div>
     </div>
     <div style="flex-shrink:0;width:100%;position:relative">
-      <img src="assets/images/embedded/embedded-1ae50fe384f0.jpg" alt="Canasta de botellas ASWA"
-           style="width:100%;height:260px;object-fit:contain;display:block;background:#000">
+      <img src="assets/images/embedded/embedded-1ae50fe384f0.jpg" alt="Canasta de botellas ASWA" class="promo-slide-img" loading="lazy">
+      <div class="promo-caption">Chicha artesanal - La Rica Chicha<small>Para compartir en familia y reuniones</small></div>
     </div>
     <div style="flex-shrink:0;width:100%;position:relative">
-      <img src="assets/images/embedded/embedded-b3c4659776a8.jpg" alt="Sara Aswa Mishky 500ml"
-           style="width:100%;height:260px;object-fit:contain;display:block;background:#000">
+      <img src="assets/images/embedded/embedded-b3c4659776a8.jpg" alt="Sara Aswa Mishky 500ml" class="promo-slide-img" loading="lazy">
+      <div class="promo-caption">Sara Aswa Mishky 500ml<small>Presentacion practica y refrescante</small></div>
     </div>
     <div style="flex-shrink:0;width:100%;position:relative">
-      <img src="assets/images/embedded/embedded-8798674c1c32.jpg" alt="Ingredientes naturales"
-           style="width:100%;height:260px;object-fit:contain;display:block;background:#000">
+      <img src="assets/images/embedded/embedded-8798674c1c32.jpg" alt="Ingredientes naturales" class="promo-slide-img" loading="lazy">
+      <div class="promo-caption">Ingredientes naturales<small>Maiz, tradicion y preparacion familiar</small></div>
     </div>
     <div style="flex-shrink:0;width:100%;position:relative">
-      <img src="assets/images/embedded/embedded-7bfe92b6231a.jpg" alt="Botellas 100% Nuevas"
-           style="width:100%;height:260px;object-fit:contain;display:block;background:#000">
+      <img src="assets/images/embedded/embedded-7bfe92b6231a.jpg" alt="Botellas 100% nuevas" class="promo-slide-img" loading="lazy">
+      <div class="promo-caption">Botellas nuevas y selladas<small>Presentacion limpia para tu pedido</small></div>
     </div>
     <div style="flex-shrink:0;width:100%;position:relative">
-      <img src="assets/images/embedded/embedded-ca1d907a1019.jpg" alt="La receta artesanal"
-           style="width:100%;height:260px;object-fit:contain;display:block;background:#000">
+      <img src="assets/images/embedded/embedded-ca1d907a1019.jpg" alt="La receta artesanal" class="promo-slide-img" loading="lazy">
+      <div class="promo-caption">Receta artesanal familiar<small>El sabor que recuerda a San Martin</small></div>
     </div>
     <div style="flex-shrink:0;width:100%;position:relative">
-      <img src="assets/images/embedded/embedded-112e6e7808a1.jpg" alt="La chicha también sabe a Perú"
-           style="width:100%;height:260px;object-fit:contain;display:block;background:#000">
+      <img src="assets/images/embedded/embedded-112e6e7808a1.jpg" alt="La chicha tambien sabe a Peru" class="promo-slide-img" loading="lazy">
+      <div class="promo-caption">La chicha tambien sabe a Peru<small>Orgullo amazonico en cada botella</small></div>
     </div>
     <div style="flex-shrink:0;width:100%;position:relative">
-      <img src="assets/images/embedded/embedded-438f7530dcc5.jpg" alt="ASWA Zonas de Delivery"
-           style="width:100%;height:260px;object-fit:contain;display:block;background:#000">
+      <img src="assets/images/embedded/embedded-438f7530dcc5.jpg" alt="ASWA zonas de delivery" class="promo-slide-img" loading="lazy">
+      <div class="promo-caption">Pedidos con delivery<small>Morales S/3, Tarapoto S/4, Banda S/5</small></div>
     </div>
     <div style="flex-shrink:0;width:100%;position:relative">
-      <img src="assets/images/embedded/embedded-3ba311adab8b.jpg" alt="ASWA Botella 2L cocina peruana"
-           style="width:100%;height:260px;object-fit:contain;display:block;background:#000">
+      <img src="assets/images/embedded/embedded-3ba311adab8b.jpg" alt="ASWA botella 2L cocina peruana" class="promo-slide-img" loading="lazy">
+      <div class="promo-caption">Chicha ASWA 2L<small>Ideal para acompanar tus comidas</small></div>
     </div>
     <div style="flex-shrink:0;width:100%;position:relative">
-      <img src="assets/images/embedded/embedded-7b1dc49e9921.jpg" alt="ASWA 3 presentaciones"
-           style="width:100%;height:260px;object-fit:contain;display:block;background:#000">
+      <img src="assets/images/embedded/embedded-7b1dc49e9921.jpg" alt="ASWA tres presentaciones" class="promo-slide-img" loading="lazy">
+      <div class="promo-caption">Precios ASWA 2025<small>2L, 3L y 4L disponibles</small></div>
     </div>
   </div>
-  <div style="position:absolute;bottom:8px;left:50%;transform:translateX(-50%);display:flex;gap:5px;align-items:center" id="promoDots">
-    <span style="width:22px;height:8px;border-radius:4px;background:#facc15;transition:all .3s"></span>
-    <span style="width:8px;height:8px;border-radius:4px;background:rgba(255,255,255,.4);transition:all .3s"></span>
-    <span style="width:8px;height:8px;border-radius:4px;background:rgba(255,255,255,.4);transition:all .3s"></span>
-    <span style="width:8px;height:8px;border-radius:4px;background:rgba(255,255,255,.4);transition:all .3s"></span>
-    <span style="width:8px;height:8px;border-radius:4px;background:rgba(255,255,255,.4);transition:all .3s"></span>
-    <span style="width:8px;height:8px;border-radius:4px;background:rgba(255,255,255,.4);transition:all .3s"></span>
-  </div>
+  <div style="position:absolute;bottom:8px;left:50%;transform:translateX(-50%);display:flex;gap:5px;align-items:center;z-index:3" id="promoDots"></div>
 </div>
 <script>
 (function(){
-  let idx=0, total=10, timer=null;
+  let idx=0, timer=null;
   const slider=document.getElementById('promoSlider');
   const dots=document.getElementById('promoDots');
   if (!slider || !dots) return;
+  const total=slider.children.length;
+  dots.innerHTML=Array.from({length:total},()=>'<span style="width:8px;height:8px;border-radius:4px;background:rgba(255,255,255,.4);transition:all .3s;cursor:pointer"></span>').join('');
   function goTo(n){
     idx=((n%total)+total)%total;
     slider.style.transform='translateX(-'+(idx*100)+'%)';
@@ -3211,7 +3234,9 @@
   function stop(){
     if (timer) { clearInterval(timer); timer=null; }
   }
+  Array.from(dots.children).forEach((d,i)=>{ d.onclick=()=>goTo(i); });
   document.addEventListener('visibilitychange',()=>document.hidden?stop():start());
+  goTo(0);
   start();
   let sx=0;
   slider.addEventListener('touchstart',e=>sx=e.touches[0].clientX,{passive:true});
