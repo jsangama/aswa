@@ -260,6 +260,14 @@
     // Para agregar otro negocio, solo cambia este valor
     // Futuro: obtener desde URL (?b=aswa001), subdominio (aswa.laricachicha.com) o login
     const BUSINESS_ID = window.ASWA_CONFIG?.BUSINESS_ID || "aswa001";
+    const ASWA_TEST_MODE = (() => {
+      try {
+        const params = new URLSearchParams(window.location.search);
+        return params.get('aswa_test') === '1' || params.get('modo') === 'prueba';
+      } catch(e) {
+        return false;
+      }
+    })();
 
     // 🔐 CREDENCIALES — login modal rápido (complementa el sistema Firestore)
     // ⚠️ CAMBIAR antes de producción
@@ -5321,8 +5329,26 @@ function lsGet(key)      { return localStorage.getItem(BUSINESS_ID + '_' + key);
 function lsSet(key, val) { localStorage.setItem(BUSINESS_ID + '_' + key, val); }
 function lsDel(key)      { localStorage.removeItem(BUSINESS_ID + '_' + key); }
 function lsDelAll()      {
-  ['pedido_id','succ_active','cart','total','delivery','raw','pago','nombre','tel','nivel','cod','nota_entrega']
+  ['pedido_id','pedido_prueba','succ_active','cart','total','delivery','raw','pago','nombre','tel','nivel','cod','nota_entrega']
     .forEach(k => lsDel(k));
+}
+
+function aswaModoPruebaActivo() {
+  return ASWA_TEST_MODE || lsGet('pedido_prueba') === '1' || String(ST?.pedidoFbId || '').startsWith('TEST-');
+}
+
+function aswaPedidoPruebaId() {
+  return 'TEST-' + Date.now().toString(36).toUpperCase();
+}
+
+function guardarPedidoPruebaLocal(pedido) {
+  try {
+    const pedidos = JSON.parse(lsGet('pedidos_prueba') || '[]');
+    pedidos.unshift({ ...pedido, guardado_local_at: new Date().toISOString() });
+    lsSet('pedidos_prueba', JSON.stringify(pedidos.slice(0, 12)));
+  } catch(e) {
+    console.warn('No se pudo guardar pedido de prueba local:', e);
+  }
 }
 
 function limpiarEstadoLocalObsoleto() {
@@ -7567,6 +7593,34 @@ async function enviarPedido() {
     +'_🌿 ASWA · La Rica Chicha · Morales, San Martín_\n'
     +'_📞 955 273 229 / 986 445 531_';
 
+  if (aswaModoPruebaActivo()) {
+    ST.pedidoFbId = aswaPedidoPruebaId();
+    ST.cli.nom = nombre;
+    ST.cli.tel = telefono;
+    if (!ST.cli.cod) ST.cli.cod = 'PRUEBA';
+    lsSet('pedido_prueba', '1');
+    lsSet('pedido_id', ST.pedidoFbId);
+    guardarPedidoPruebaLocal({
+      id: ST.pedidoFbId,
+      businessId: BUSINESS_ID,
+      nombre, telefono, direccion,
+      nota_entrega: notaEntrega || null,
+      distrito: zonaTexto,
+      items: { ...ST.cart },
+      items_detalle: itemsLista,
+      subtotal: ST.raw,
+      delivery: ST.delivery,
+      descuento_amt: descTotal,
+      total: ST.final,
+      pago: ST.pago,
+      pago_con: pagoCon,
+      vuelto: Math.max(0, pagoCon-ST.final),
+      nivel_cliente: ST.cli.nivel || 'BRONCE',
+      estado: 'prueba_local',
+      es_prueba: true
+    });
+    tst('MODO PRUEBA: pedido local, sin Firebase ni WhatsApp real.', 4200);
+  } else {
   /* Enviar a ambos WhatsApp */
   window.open('https://wa.me/'+getWA1()+'?text='+encodeURIComponent(msg), '_blank');
   setTimeout(() => window.open('https://wa.me/'+getWA2()+'?text='+encodeURIComponent(msg), '_blank'), 900);
@@ -7728,6 +7782,8 @@ async function enviarPedido() {
     tst('⚠️ Pedido enviado por WhatsApp. Error al guardar datos: ' + (err.message||''), 4000);
   }
 
+  }
+
   _enviandoPedido = false;
 
   /* Restaurar botón */
@@ -7773,6 +7829,14 @@ async function enviarPedido() {
         if (document.getElementById('succScreen').classList.contains('on')) {
           document.getElementById('succScreen').classList.remove('on');
           document.getElementById('mConfirmar').classList.add('on');
+          if (aswaModoPruebaActivo()) {
+            const btnConf = document.getElementById('btnConf');
+            if (btnConf) {
+              btnConf.classList.remove('bloqueado');
+              btnConf.disabled = false;
+              btnConf.innerHTML = 'CONFIRMAR PRUEBA Y VER NOTA';
+            }
+          }
         }
       }, 6000);
     } else {
@@ -7785,6 +7849,19 @@ async function enviarPedido() {
 /* ── CONFIRMAR ENTREGA ── */
 async function confirmarEntrega() {
   const btn = document.getElementById('btnConf');
+
+  if (!ST.pedidoFbId) {
+    const saved = lsGet('pedido_id');
+    if (saved) ST.pedidoFbId = saved;
+  }
+
+  if (aswaModoPruebaActivo()) {
+    cerrar('mConfirmar');
+    tst('MODO PRUEBA: entrega simulada. Generando nota sin Firebase.', 3200);
+    setTimeout(() => mostrarNotaVenta(), 800);
+    setTimeout(() => { if (typeof abrirRating === 'function') abrirRating(); }, 4000);
+    return;
+  }
 
   // Bloquear si el botón está en estado "bloqueado"
   if (btn.classList.contains('bloqueado')) {
@@ -7892,7 +7969,9 @@ function mostrarNotaVenta() {
   for (let i=0; i<10; i++) nv += chars[Math.floor(Math.random()*chars.length)];
 
   // ── Cabecera ──
-  document.getElementById('nvNumero').textContent = 'N° Nota: ' + nv;
+  document.getElementById('nvNumero').textContent = aswaModoPruebaActivo()
+    ? 'MODO PRUEBA - Nota: ' + nv
+    : 'N° Nota: ' + nv;
   document.getElementById('nvFecha').textContent  = 'Fecha: ' + fechaStr + ', ' + horaStr;
 
   // ── Datos cliente ──
@@ -7999,6 +8078,7 @@ function mostrarNotaVenta() {
 
 function cerrarNota() {
   document.getElementById('notaVentaModal').classList.remove('open');
+  if (aswaModoPruebaActivo()) lsDelAll();
   // Después de cerrar la nota → reload para nuevo pedido
   setTimeout(() => location.reload(), 300);
 }
