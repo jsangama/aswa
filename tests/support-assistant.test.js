@@ -141,6 +141,21 @@ describe('support assistant replies', () => {
     expect(ready).toContain('vuelto S/ 1.00');
   });
 
+  test('accepts confirmado as final chat order confirmation', () => {
+    const api = loadAssistantApi();
+    api.reset();
+
+    api.process('quiero 1 galon de 2 litros');
+    api.process('JR. JIMENES PIMENTEL 521 TARAPOTO');
+    api.process('950845067');
+    api.process('JOSUE SANGAMA PEZO');
+    api.process('efectivo');
+    api.process('20');
+
+    const confirmation = api.process('CONFIRMADO');
+    expect(confirmation).toEqual({ registrar:true, texto:'Estoy registrando tu pedido en ASWA...' });
+  });
+
   test('rejects unsupported banks and lists available payment options', () => {
     const api = loadAssistantApi();
     api.reset();

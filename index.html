@@ -12354,7 +12354,7 @@ function _chatPedidoProcesarTexto(texto) {
     return 'Listo, cancele el pedido por chat. Puedes empezar otro cuando quieras.';
   }
 
-  if (/confirmar pedido|registrar pedido|enviar pedido|ok registra|ok registrar|confirmo/.test(t) && draft.listoParaConfirmar) {
+  if (draft.listoParaConfirmar && /confirmar pedido|confirmado|confirmada|confirmo|si confirmo|sí confirmo|ok confirmo|ok confirmado|listo|de acuerdo|registrar pedido|enviar pedido|ok registra|ok registrar/.test(t)) {
     return { registrar:true, texto:'Estoy registrando tu pedido en ASWA...' };
   }
 
