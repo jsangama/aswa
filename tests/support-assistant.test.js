@@ -247,6 +247,12 @@ describe('support assistant replies', () => {
     expect(api.sourceContains('const espera = 350')).toBe(true);
   });
 
+  test('repairs an unanswered latest customer message on render', () => {
+    const api = loadAssistantApi();
+    expect(api.sourceContains('function _chatRepararMensajeClientePendiente')).toBe(true);
+    expect(api.sourceContains('_chatRepararMensajeClientePendiente(_chatMensajesCache)')).toBe(true);
+  });
+
   test('continues a saved chat order after local memory was lost', () => {
     const api = loadAssistantApi();
     api.reset();
