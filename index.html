@@ -1022,6 +1022,151 @@
     }
     .zona-eta-info.show { display:block; }
     .zona-eta-info strong { color:var(--y); }
+    .home-coverage {
+      max-width:430px;
+      margin:14px auto 18px;
+      background:linear-gradient(180deg,rgba(255,255,255,.035),rgba(255,255,255,.015));
+      border:1px solid var(--brd);
+      border-radius:18px;
+      padding:14px;
+      box-shadow:0 16px 36px rgba(0,0,0,.24);
+    }
+    .home-coverage-head {
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:12px;
+      margin-bottom:12px;
+    }
+    .home-coverage-title {
+      color:var(--txt);
+      font-size:14px;
+      font-weight:950;
+      line-height:1.25;
+    }
+    .home-coverage-sub {
+      color:var(--mut);
+      font-size:11px;
+      line-height:1.45;
+      margin-top:3px;
+    }
+    .home-coverage-chip {
+      flex-shrink:0;
+      border:1px solid rgba(34,197,94,.34);
+      color:#86efac;
+      background:rgba(34,197,94,.08);
+      border-radius:999px;
+      padding:6px 9px;
+      font-size:10px;
+      font-weight:900;
+      white-space:nowrap;
+    }
+    .home-map {
+      position:relative;
+      height:178px;
+      border:1px solid rgba(255,255,255,.12);
+      border-radius:14px;
+      overflow:hidden;
+      background:
+        linear-gradient(90deg,rgba(255,255,255,.05) 1px,transparent 1px),
+        linear-gradient(0deg,rgba(255,255,255,.05) 1px,transparent 1px),
+        #07070a;
+      background-size:80px 80px;
+      margin-bottom:10px;
+    }
+    .home-map-zone {
+      position:absolute;
+      border:1px solid rgba(255,255,255,.18);
+      color:#fff;
+      cursor:pointer;
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      justify-content:center;
+      text-align:center;
+      font-weight:950;
+      transition:filter .16s, transform .16s, border-color .16s;
+    }
+    .home-map-zone:active { transform:scale(.99); }
+    .home-map-zone.active { border-color:#facc15; filter:brightness(1.22); }
+    .home-map-zone .hm-name { font-size:14px; line-height:1.1; }
+    .home-map-zone .hm-price { color:#facc15; font-size:12px; margin-top:4px; }
+    .home-map-zone .hm-time { color:#e5e7eb; font-size:10px; margin-top:2px; }
+    .home-map-morales {
+      left:5%; top:8%; width:42%; height:58%;
+      clip-path:polygon(0 0,100% 0,100% 78%,56% 100%,0 78%);
+      background:rgba(22,101,52,.72);
+    }
+    .home-map-tarapoto {
+      left:47%; top:8%; width:48%; height:58%;
+      clip-path:polygon(0 0,100% 0,100% 78%,0 100%);
+      background:rgba(30,64,175,.58);
+    }
+    .home-map-banda {
+      left:5%; right:5%; bottom:0; height:42%;
+      clip-path:polygon(0 0,28% 34%,50% 0,100% 14%,100% 100%,0 100%);
+      background:rgba(88,28,135,.70);
+    }
+    .home-map-road {
+      position:absolute;
+      width:8px;
+      height:220px;
+      right:22%;
+      top:-26px;
+      background:rgba(37,99,235,.58);
+      transform:rotate(12deg);
+      box-shadow:0 0 24px rgba(59,130,246,.25);
+    }
+    .home-zone-grid {
+      display:grid;
+      grid-template-columns:repeat(3,minmax(0,1fr));
+      gap:8px;
+    }
+    .home-zone-card {
+      border:1px solid var(--brd);
+      background:var(--s1);
+      border-radius:13px;
+      padding:11px 8px;
+      min-height:92px;
+      text-align:center;
+      cursor:pointer;
+      display:flex;
+      flex-direction:column;
+      justify-content:center;
+      align-items:center;
+      transition:border-color .16s, background .16s, transform .1s;
+    }
+    .home-zone-card:active { transform:scale(.98); }
+    .home-zone-card.active {
+      border-color:#facc15;
+      background:rgba(250,204,21,.08);
+    }
+    .home-zone-dot {
+      width:20px;
+      height:20px;
+      border-radius:999px;
+      margin-bottom:8px;
+      box-shadow:0 0 18px rgba(255,255,255,.22);
+    }
+    .home-zone-name { color:#fff; font-size:11px; font-weight:950; line-height:1.15; }
+    .home-zone-price { color:#facc15; font-size:14px; font-weight:950; margin-top:3px; }
+    .home-zone-time { color:var(--mut); font-size:9px; margin-top:2px; }
+    .home-zone-wide { grid-column:span 1; }
+    .home-zone-note {
+      margin-top:10px;
+      padding:10px 11px;
+      border:1px solid rgba(250,204,21,.26);
+      background:rgba(250,204,21,.06);
+      border-radius:12px;
+      color:#fde68a;
+      font-size:10px;
+      line-height:1.45;
+    }
+    @media (max-width:390px) {
+      .home-zone-grid { grid-template-columns:1fr 1fr; }
+      .home-zone-wide { grid-column:span 1; }
+      .home-map { height:165px; }
+    }
 
     .cupon-wrap {
       background:rgba(250,204,21,.05);
@@ -2829,6 +2974,67 @@
 </script>
 
 <!-- ══════════════ MAIN ══════════════ -->
+<section class="home-coverage" aria-label="Cobertura y costos de entrega">
+  <div class="home-coverage-head">
+    <div>
+      <div class="home-coverage-title">Cobertura de entrega ASWA</div>
+      <div class="home-coverage-sub">Elige tu zona aqui y se aplicara automaticamente al resumen del pedido.</div>
+    </div>
+    <div class="home-coverage-chip">Costos claros</div>
+  </div>
+  <div class="home-map" aria-label="Mapa de zonas ASWA">
+    <div class="home-map-road"></div>
+    <div class="home-map-zone home-map-morales" data-zona-nombre="Morales" data-zona-precio="3" onclick="seleccionarZonaInicio('Morales',3)" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();seleccionarZonaInicio('Morales',3)}">
+      <span class="hm-name">Morales</span>
+      <span class="hm-price">S/ 3.00</span>
+      <span class="hm-time">~25 min</span>
+    </div>
+    <div class="home-map-zone home-map-tarapoto" data-zona-nombre="Tarapoto" data-zona-precio="4" onclick="seleccionarZonaInicio('Tarapoto',4)" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();seleccionarZonaInicio('Tarapoto',4)}">
+      <span class="hm-name">Tarapoto</span>
+      <span class="hm-price">S/ 4.00</span>
+      <span class="hm-time">~35 min</span>
+    </div>
+    <div class="home-map-zone home-map-banda" data-zona-nombre="Banda" data-zona-precio="5" onclick="seleccionarZonaInicio('Banda',5)" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();seleccionarZonaInicio('Banda',5)}">
+      <span class="hm-name">La Banda de Shilcayo</span>
+      <span class="hm-price">S/ 5.00</span>
+      <span class="hm-time">~45 min</span>
+    </div>
+  </div>
+  <div class="home-zone-grid">
+    <div class="home-zone-card" data-zona-nombre="Morales" data-zona-precio="3" onclick="seleccionarZonaInicio('Morales',3)" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();seleccionarZonaInicio('Morales',3)}">
+      <span class="home-zone-dot" style="background:linear-gradient(135deg,#86efac,#22c55e)"></span>
+      <span class="home-zone-name">Morales</span>
+      <span class="home-zone-price">S/ 3.00</span>
+      <span class="home-zone-time">~25 min</span>
+    </div>
+    <div class="home-zone-card" data-zona-nombre="Tarapoto" data-zona-precio="4" onclick="seleccionarZonaInicio('Tarapoto',4)" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();seleccionarZonaInicio('Tarapoto',4)}">
+      <span class="home-zone-dot" style="background:linear-gradient(135deg,#93c5fd,#2563eb)"></span>
+      <span class="home-zone-name">Tarapoto</span>
+      <span class="home-zone-price">S/ 4.00</span>
+      <span class="home-zone-time">~35 min</span>
+    </div>
+    <div class="home-zone-card" data-zona-nombre="Banda" data-zona-precio="5" onclick="seleccionarZonaInicio('Banda',5)" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();seleccionarZonaInicio('Banda',5)}">
+      <span class="home-zone-dot" style="background:linear-gradient(135deg,#c4b5fd,#7c3aed)"></span>
+      <span class="home-zone-name">La Banda</span>
+      <span class="home-zone-price">S/ 5.00</span>
+      <span class="home-zone-time">~45 min</span>
+    </div>
+    <div class="home-zone-card home-zone-wide" data-zona-nombre="Recojo" data-zona-precio="0" onclick="seleccionarZonaInicio('Recojo',0)" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();seleccionarZonaInicio('Recojo',0)}">
+      <span class="home-zone-dot" style="background:linear-gradient(135deg,#fef3c7,#f59e0b)"></span>
+      <span class="home-zone-name">Recojo en local</span>
+      <span class="home-zone-price">Gratis</span>
+      <span class="home-zone-time">sin delivery</span>
+    </div>
+    <div class="home-zone-card home-zone-wide" data-zona-nombre="Nacional" data-zona-precio="10" onclick="seleccionarZonaInicio('Nacional',10)" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();seleccionarZonaInicio('Nacional',10)}">
+      <span class="home-zone-dot" style="background:linear-gradient(135deg,#fed7aa,#f97316)"></span>
+      <span class="home-zone-name">Envio nacional</span>
+      <span class="home-zone-price">S/ 10.00</span>
+      <span class="home-zone-time">hasta agencia</span>
+    </div>
+  </div>
+  <div class="home-zone-note">El envio nacional cubre el traslado hasta la agencia. El flete desde la agencia hasta tu ciudad se paga al recoger.</div>
+</section>
+
 <main>
   <div class="horario-mini" id="horarioMini"></div>
 
@@ -3253,7 +3459,7 @@
         <button class="gps-stop-btn" onclick="detenerGPS()">✕ Detener</button>
       </div>
     </div>
-    <div class="fld">
+    <div class="fld" id="zonaPedidoSection">
       <label>Zona</label>
       <div class="zona-quick-grid" id="zonaQuickGrid">
         <button type="button" class="zona-quick-btn" data-zona-nombre="Morales" data-zona-precio="3" onclick="seleccionarZonaVisual('Morales',3)">
@@ -6773,6 +6979,16 @@ function seleccionarZonaVisual(nombre, precio) {
   }
 }
 
+function seleccionarZonaInicio(nombre, precio) {
+  seleccionarZonaVisual(nombre, precio);
+  const section = document.getElementById('zonaPedidoSection');
+  if (section) section.scrollIntoView({ behavior:'smooth', block:'center' });
+  if (typeof tst === 'function') {
+    const label = precio === 0 ? 'Recojo en local' : (precio === 10 ? 'Envio nacional hasta agencia' : `${nombre}: delivery S/ ${Number(precio).toFixed(2)}`);
+    tst(`Zona seleccionada: ${label}`, 2200);
+  }
+}
+
 function actualizarZonaVisual() {
   const sel = document.getElementById('zona');
   const grid = document.getElementById('zonaQuickGrid');
@@ -6782,7 +6998,7 @@ function actualizarZonaVisual() {
   const texto = _zonaNorm(opt?.dataset?.nombre || opt?.textContent || '');
   const precio = String(Number(sel.value || 0));
 
-  grid.querySelectorAll('.zona-quick-btn').forEach(btn => {
+  document.querySelectorAll('.zona-quick-btn,.home-zone-card,.home-map-zone').forEach(btn => {
     const nombreBtn = _zonaNorm(btn.dataset.zonaNombre);
     const precioBtn = String(Number(btn.dataset.zonaPrecio || 0));
     const activo = !!sel.value && (
