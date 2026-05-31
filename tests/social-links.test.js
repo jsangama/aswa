@@ -18,7 +18,7 @@ function setupSocialDom() {
 }
 
 describe('official social links', () => {
-  test('adds new official channels to the social grid and floating menu', () => {
+  test('keeps secondary channels in the floating menu only', () => {
     const window = setupSocialDom();
 
     window.aswaEnsureOfficialSocialLinks();
@@ -31,7 +31,7 @@ describe('official social links', () => {
     ];
 
     urls.forEach(url => {
-      expect(window.document.querySelector(`#socialGrid a[href="${url}"]`)).toBeTruthy();
+      expect(window.document.querySelector(`#socialGrid a[href="${url}"]`)).toBeFalsy();
       expect(window.document.querySelector(`#aswaSocialShareMenu a[href="${url}"]`)).toBeTruthy();
     });
   });
@@ -61,15 +61,14 @@ describe('official social links', () => {
     });
   });
 
-  test('uses SVG logos for the added social cards', () => {
+  test('keeps the home social grid focused on the most relevant channels', () => {
     const window = setupSocialDom();
 
     window.aswaEnsureOfficialSocialLinks();
 
+    expect(window.document.querySelectorAll('#socialGrid a.social-btn')).toHaveLength(7);
     ['linkedin', 'pinterest', 'bluesky', 'reddit'].forEach(key => {
-      const card = window.document.querySelector(`#socialGrid a[data-aswa-social="${key}"]`);
-      expect(card).toBeTruthy();
-      expect(card.querySelector('.sico svg')).toBeTruthy();
+      expect(window.document.querySelector(`#socialGrid a[data-aswa-social="${key}"]`)).toBeFalsy();
     });
   });
 });
