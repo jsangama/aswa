@@ -264,6 +264,14 @@ describe('support assistant replies', () => {
     expect(api.sourceContains('Chat reiniciado. Ya puedes escribir de nuevo.')).toBe(true);
   });
 
+  test('shows sent chat messages locally before the Firebase snapshot returns', () => {
+    const api = loadAssistantApi();
+    expect(api.sourceContains('function _chatMostrarMensajeLocal')).toBe(true);
+    expect(api.sourceContains('_chatMostrarMensajeLocal(localMsg)')).toBe(true);
+    expect(api.sourceContains('local_cliente_')).toBe(true);
+    expect(api.sourceContains('local_negocio_')).toBe(true);
+  });
+
   test('continues a saved chat order after local memory was lost', () => {
     const api = loadAssistantApi();
     api.reset();

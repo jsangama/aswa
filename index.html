@@ -11932,13 +11932,30 @@ function _chatResetKey() {
 function _chatFiltrarMensajesVisibles(mensajes) {
   const lista = Array.isArray(mensajes) ? mensajes : [];
   if (!_chatResetAtMs) return lista;
-  return lista.filter(m => !m.fecha || _chatFechaMs(m.fecha) >= _chatResetAtMs);
+  return lista.filter(m => !m.fecha || _chatFechaMs(m.fecha) >= (_chatResetAtMs - 60000));
 }
 
 function _chatMensajeExtraHtml(texto) {
   const qr = String(texto || '').match(/QR disponible en la app:\s*([^\s.]+\.(?:jpg|jpeg|png|webp))/i);
   if (!qr) return '';
   return '<img src="' + escAttr(qr[1]) + '" alt="QR de pago" style="display:block;margin-top:8px;width:148px;max-width:100%;border-radius:12px;background:#fff;padding:6px">';
+}
+
+function _chatMensajeHtml(m) {
+  const cls = m.de === 'negocio' ? 'negocio' : 'cliente';
+  const autor = ['ia', 'asistente_basico'].includes(m.autor)
+    ? '<strong style="display:block;color:#86efac;margin-bottom:4px">Asistente ASWA</strong>'
+    : '';
+  return `<div class="chat-msg ${cls}" data-local-id="${escAttr(m.id || '')}">${autor}${esc(m.texto || '')}${_chatMensajeExtraHtml(m.texto || '')}<span class="chat-time">${_chatFecha(m.fecha)}</span></div>`;
+}
+
+function _chatMostrarMensajeLocal(m) {
+  const cont = document.getElementById('chatMsgs');
+  if (!cont || !m?.texto) return;
+  if (m.id && cont.querySelector(`[data-local-id="${CSS.escape(m.id)}"]`)) return;
+  _chatMensajesCache = [...(_chatMensajesCache || []), m];
+  cont.insertAdjacentHTML('beforeend', _chatMensajeHtml(m));
+  _scrollChatAbajo();
 }
 
 async function iniciarChat(telefono, nombre) {
@@ -12940,6 +12957,14 @@ async function _chatRespuestaConversacional(texto) {
 
 async function _chatEnviarMensajeNegocio(texto) {
   if (!_chatId || !window.FB || !texto) return;
+  _chatMostrarMensajeLocal({
+    id:'local_negocio_' + Date.now(),
+    de:'negocio',
+    autor:'asistente_basico',
+    nombre:'Asistente ASWA',
+    texto,
+    fecha:Date.now()
+  });
   const { doc:d, collection:col, addDoc:ad, setDoc, serverTimestamp:ts } = window.FB;
   await ad(col(db, 'chats', _chatId, 'mensajes'), {
     de:'negocio',
@@ -13018,12 +13043,36 @@ function _chatRepararMensajeClientePendiente(mensajes) {
 async function enviarMensajeChat() {
   const input = document.getElementById('chatInput');
   const texto = input?.value.trim();
-  if (!texto || !_chatId) {
+  if (!texto) {
+    _chatDesbloquearEntrada(true);
+    return;
+  }
+  if (!_chatId) {
+    const tel = (_chatTelefono || document.getElementById('telefono')?.value || '').replace(/\D/g, '');
+    if (tel.length === 9 && tel.startsWith('9')) {
+      await iniciarChat(tel, document.getElementById('nombre')?.value.trim() || _chatNombre || 'Cliente');
+    }
+  }
+  if (!_chatId) {
+    tst('Ingresa tu telefono para activar el chat', 2500);
     _chatDesbloquearEntrada(true);
     return;
   }
   input.value = '';
   input.style.height = 'auto';
+  const localMsg = {
+    id:'local_cliente_' + Date.now(),
+    cliente_uid: window.currentUser?.uid || null,
+    de:'cliente',
+    texto,
+    nombre:_chatNombre,
+    telefono:_chatTelefono,
+    fecha:Date.now(),
+    leido_cliente:true,
+    leido_negocio:false,
+    ai_omit:true
+  };
+  _chatMostrarMensajeLocal(localMsg);
   const btn = document.getElementById('chatSendBtn');
   if (btn) btn.disabled = true;
   try {
@@ -13038,6 +13087,7 @@ async function enviarMensajeChat() {
       businessId:BUSINESS_ID, cliente_uid: window.currentUser?.uid || null, telefono:_chatTelefono, nombre:_chatNombre,
       ultimo_msg:texto, ultimo_de:'cliente', actualizado_en:ts(), no_leidos_negocio:1
     }, { merge:true });
+    localMsg.id = msgRef.id;
     _chatProgramarRespuestaFallback(texto, msgRef.id);
   } catch(err) {
     console.error('enviar chat:', err);
@@ -13053,11 +13103,7 @@ function _renderMensajesChat(mensajes) {
   _chatMensajesCache = _chatFiltrarMensajesVisibles(mensajes);
   const base = '<div class="chat-msg sistema">Escribenos si necesitas ayuda con tu pedido.</div>';
   cont.innerHTML = base + _chatMensajesCache.map(m => {
-    const cls = m.de === 'negocio' ? 'negocio' : 'cliente';
-    const autor = ['ia', 'asistente_basico'].includes(m.autor)
-      ? '<strong style="display:block;color:#86efac;margin-bottom:4px">Asistente ASWA</strong>'
-      : '';
-    return `<div class="chat-msg ${cls}">${autor}${esc(m.texto || '')}${_chatMensajeExtraHtml(m.texto || '')}<span class="chat-time">${_chatFecha(m.fecha)}</span></div>`;
+    return _chatMensajeHtml(m);
   }).join('');
   _chatDesbloquearEntrada(false);
   _chatRepararMensajeClientePendiente(_chatMensajesCache);
