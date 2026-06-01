@@ -12475,6 +12475,10 @@ function _chatEsConfirmacionPedido(t) {
   return /confirmar pedido|confirmado|confirmada|confirmo|si confirmo|sí confirmo|ok confirmo|ok confirmado|listo|de acuerdo|registrar pedido|enviar pedido|ok registra|ok registrar/.test(t);
 }
 
+function _chatEsConfirmacionCortaPedido(t) {
+  return /^(ok|okay|si|sí|dale|ya|confirmar|confirmo|confirmado|confirmada|envialo|envíalo|mandalo|mándalo|registralo|regístralo)$/.test(t);
+}
+
 function _chatEsSeguimientoPedidoChat(t) {
   return /ya (?:te )?(?:dije|mande|mande|pase|pase|confirme|confirme|lo confirme|lo confirme)|ya (?:lo )?(?:registraste|registraron|registraste mi pedido)|mi pedido|mi compra|se quedo|se quedo|continuar pedido|seguir pedido|retomar pedido/.test(t);
 }
@@ -12663,9 +12667,10 @@ function _chatPedidoSiguientePregunta(draft = _chatPedidoDraft) {
 function _chatPedidoProcesarTexto(texto) {
   const t = _chatNormalizar(texto);
   const esConfirmacion = _chatEsConfirmacionPedido(t);
+  const esConfirmacionCorta = _chatEsConfirmacionCortaPedido(t);
   const esSeguimiento = _chatEsSeguimientoPedidoChat(t);
   const producto = _chatDetectarProductoPedido(texto);
-  if (!_chatPedidoDraft) _chatPedidoDraft = _chatCargarPedidoDraft() || ((esConfirmacion || esSeguimiento) ? _chatReconstruirPedidoDesdeResumen() : null);
+  if (!_chatPedidoDraft) _chatPedidoDraft = _chatCargarPedidoDraft() || ((esConfirmacion || esConfirmacionCorta || esSeguimiento) ? _chatReconstruirPedidoDesdeResumen() : null);
   if (!_chatPedidoDraft && !producto) return _chatRespuestaSinPedidoPendiente(t);
   if (!_chatPedidoDraft) _chatPedidoDraft = _chatPedidoNuevoDraft();
   const draft = _chatPedidoDraft;
@@ -12675,7 +12680,7 @@ function _chatPedidoProcesarTexto(texto) {
     return 'Listo, cancele el pedido por chat. Puedes empezar otro cuando quieras.';
   }
 
-  if (draft.listoParaConfirmar && (esConfirmacion || esSeguimiento)) {
+  if (draft.listoParaConfirmar && (esConfirmacion || esConfirmacionCorta || esSeguimiento)) {
     _chatGuardarPedidoDraft();
     return { registrar:true, texto:'Estoy registrando tu pedido en ASWA...' };
   }

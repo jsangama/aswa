@@ -179,6 +179,21 @@ describe('support assistant replies', () => {
     expect(confirmation).toEqual({ registrar:true, texto:'Estoy registrando tu pedido en ASWA...' });
   });
 
+  test('accepts short ok after the order summary is ready', () => {
+    const api = loadAssistantApi();
+    api.reset();
+
+    api.process('quiero 2 galones de 2 litros');
+    api.process('Jr. San Martin 524 Banda de Shilcayo');
+    api.process('950845067');
+    api.process('JOSUE SANGAMA PEZO');
+    api.process('efectivo');
+    api.process('50');
+
+    const confirmation = api.process('ok');
+    expect(confirmation).toEqual({ registrar:true, texto:'Estoy registrando tu pedido en ASWA...' });
+  });
+
   test('recovers the ready order from the last chat summary when memory was lost', () => {
     const api = loadAssistantApi();
     api.reset();
