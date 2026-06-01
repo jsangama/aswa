@@ -3118,7 +3118,9 @@
     .chat-header { display:flex; align-items:center; gap:10px; padding:14px 16px; background:linear-gradient(135deg,#facc15,#f59e0b); color:#111; }
     .chat-title { flex:1; font-size:14px; font-weight:900; }
     .chat-sub { font-size:10px; font-weight:700; opacity:.75; margin-top:2px; }
-    .chat-close { border:0; background:rgba(0,0,0,.12); color:#111; border-radius:10px; width:32px; height:32px; font-size:18px; font-weight:900; cursor:pointer; }
+    .chat-reset, .chat-close { border:0; background:rgba(0,0,0,.12); color:#111; border-radius:10px; height:32px; font-weight:900; cursor:pointer; }
+    .chat-reset { width:auto; min-width:56px; padding:0 10px; font-size:11px; font-family:'Poppins',sans-serif; }
+    .chat-close { width:32px; font-size:18px; }
     .chat-msgs { padding:14px; min-height:220px; max-height:48vh; overflow-y:auto; display:flex; flex-direction:column; gap:8px; }
     .chat-msg { max-width:82%; padding:10px 12px; border-radius:14px; font-size:12px; line-height:1.45; border:1px solid rgba(255,255,255,.08); }
     .chat-msg.cliente { align-self:flex-end; background:rgba(250,204,21,.16); color:#fff; border-color:rgba(250,204,21,.28); }
@@ -3314,6 +3316,7 @@
         ASWA La Rica Chicha
         <div class="chat-sub" id="chatHeaderSub">Te respondemos en la app</div>
       </div>
+      <button class="chat-reset" onclick="reiniciarChatCliente()" type="button" title="Empezar chat nuevo">Nuevo</button>
       <button class="chat-close" onclick="cerrarChat()" type="button">×</button>
     </div>
     <div class="chat-msgs" id="chatMsgs">
@@ -11901,6 +11904,7 @@ let _chatNombre = '';
 let _chatId = '';
 let _chatAbierto = false;
 let _chatMensajesCache = [];
+let _chatResetAtMs = 0;
 let _admChatActivo = null;
 let _admChatUnsub = null;
 
@@ -11911,6 +11915,24 @@ function _chatIdPorTelefono(tel) {
 function _chatFecha(fecha) {
   const d = fecha?.seconds ? new Date(fecha.seconds * 1000) : fecha ? new Date(fecha) : new Date();
   return d.toLocaleTimeString('es-PE', { hour:'2-digit', minute:'2-digit' });
+}
+
+function _chatFechaMs(fecha) {
+  if (!fecha) return 0;
+  if (typeof fecha === 'number') return fecha;
+  if (fecha.seconds) return fecha.seconds * 1000;
+  const ms = new Date(fecha).getTime();
+  return Number.isFinite(ms) ? ms : 0;
+}
+
+function _chatResetKey() {
+  return 'aswa_chat_reset_' + (_chatId || _chatTelefono || 'anonimo');
+}
+
+function _chatFiltrarMensajesVisibles(mensajes) {
+  const lista = Array.isArray(mensajes) ? mensajes : [];
+  if (!_chatResetAtMs) return lista;
+  return lista.filter(m => !m.fecha || _chatFechaMs(m.fecha) >= _chatResetAtMs);
 }
 
 function _chatMensajeExtraHtml(texto) {
@@ -11928,7 +11950,7 @@ async function iniciarChat(telefono, nombre) {
   _chatId = _chatIdPorTelefono(tel);
   document.getElementById('chatFab')?.classList.add('show');
 
-  const { doc:d, setDoc, collection:col, query:q, orderBy:ob, limit:lm, onSnapshot:os, serverTimestamp:ts } = window.FB;
+  const { doc:d, setDoc, getDoc:gDoc, collection:col, query:q, orderBy:ob, limit:lm, onSnapshot:os, serverTimestamp:ts } = window.FB;
   await setDoc(d(db, 'chats', _chatId), {
     businessId: BUSINESS_ID,
     cliente_uid: window.currentUser?.uid || null,
@@ -11936,6 +11958,11 @@ async function iniciarChat(telefono, nombre) {
     nombre: _chatNombre,
     actualizado_en: ts()
   }, { merge:true }).catch(err => console.warn('chat meta:', err.message));
+
+  const resetLocal = Number(localStorage.getItem(_chatResetKey()) || '0');
+  const chatSnap = await gDoc(d(db, 'chats', _chatId)).catch(() => null);
+  const chatData = chatSnap?.exists?.() ? chatSnap.data() : {};
+  _chatResetAtMs = Math.max(resetLocal, _chatFechaMs(chatData.cliente_chat_reset_at || chatData.chat_reset_at_cliente));
 
   const draftRemoto = await _chatCargarPedidoDraftRemoto();
   if (draftRemoto) {
@@ -11949,7 +11976,7 @@ async function iniciarChat(telefono, nombre) {
   _chatUnsub = os(q(col(db, 'chats', _chatId, 'mensajes'), ob('fecha', 'asc'), lm(60)), snap => {
     const mensajes = snap.docs.map(x => ({ id:x.id, ...x.data() }));
     _renderMensajesChat(mensajes);
-    const noLeidos = mensajes.filter(m => m.de === 'negocio' && !m.leido_cliente).length;
+    const noLeidos = _chatFiltrarMensajesVisibles(mensajes).filter(m => m.de === 'negocio' && !m.leido_cliente).length;
     const badge = document.getElementById('chatFabBadge');
     if (badge) {
       badge.textContent = noLeidos || '';
@@ -11978,6 +12005,38 @@ function cerrarChat() {
   _chatAbierto = false;
   document.getElementById('chatModal')?.classList.remove('open');
 }
+
+async function reiniciarChatCliente() {
+  _chatResetAtMs = Date.now();
+  _chatMensajesCache = [];
+  _chatLimpiarPedidoDraft();
+  try {
+    localStorage.setItem(_chatResetKey(), String(_chatResetAtMs));
+  } catch {}
+  const input = document.getElementById('chatInput');
+  if (input) {
+    input.value = '';
+    input.style.height = 'auto';
+  }
+  try {
+    if (_chatId && window.FB && window.db) {
+      const { doc:d, setDoc, serverTimestamp:ts } = window.FB;
+      await setDoc(d(db, 'chats', _chatId), {
+        cliente_chat_reset_at: ts(),
+        pedido_chat_draft: null,
+        pedido_chat_draft_estado: 'cerrado',
+        no_leidos_cliente: 0,
+        actualizado_en: ts()
+      }, { merge:true });
+    }
+  } catch(err) {
+    console.warn('reiniciar chat cliente:', err.message || err);
+  }
+  _renderMensajesChat([]);
+  _chatDesbloquearEntrada(true);
+  tst('Chat reiniciado. Ya puedes escribir de nuevo.', 2600);
+}
+window.reiniciarChatCliente = reiniciarChatCliente;
 
 const ASWA_SUPPORT_KNOWLEDGE = [
   {
@@ -12991,9 +13050,9 @@ async function enviarMensajeChat() {
 function _renderMensajesChat(mensajes) {
   const cont = document.getElementById('chatMsgs');
   if (!cont) return;
-  _chatMensajesCache = Array.isArray(mensajes) ? mensajes : [];
+  _chatMensajesCache = _chatFiltrarMensajesVisibles(mensajes);
   const base = '<div class="chat-msg sistema">Escribenos si necesitas ayuda con tu pedido.</div>';
-  cont.innerHTML = base + mensajes.map(m => {
+  cont.innerHTML = base + _chatMensajesCache.map(m => {
     const cls = m.de === 'negocio' ? 'negocio' : 'cliente';
     const autor = ['ia', 'asistente_basico'].includes(m.autor)
       ? '<strong style="display:block;color:#86efac;margin-bottom:4px">Asistente ASWA</strong>'

@@ -256,6 +256,14 @@ describe('support assistant replies', () => {
     expect(api.sourceContains('_chatRepararMensajeClientePendiente(_chatMensajesCache)')).toBe(true);
   });
 
+  test('includes a customer chat reset for stuck histories', () => {
+    const api = loadAssistantApi();
+    expect(api.sourceContains('reiniciarChatCliente')).toBe(true);
+    expect(api.sourceContains('cliente_chat_reset_at')).toBe(true);
+    expect(api.sourceContains('_chatFiltrarMensajesVisibles')).toBe(true);
+    expect(api.sourceContains('Chat reiniciado. Ya puedes escribir de nuevo.')).toBe(true);
+  });
+
   test('continues a saved chat order after local memory was lost', () => {
     const api = loadAssistantApi();
     api.reset();
