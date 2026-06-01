@@ -19522,11 +19522,20 @@ function tutSetTab(btn, tab) {
   if (el) el.style.display = 'block';
 }
 
+function tutRepararIconosGuia() {
+  document.querySelectorAll("button[onclick^=\"tutAbrirVideo\"]").forEach(btn => {
+    const icon = btn.firstElementChild;
+    if (icon && !icon.querySelector('*')) icon.innerHTML = '&#9658;';
+  });
+  document.querySelectorAll('.tut-play').forEach(el => { el.innerHTML = '&#9658;'; });
+  document.querySelectorAll('.tut-video-label').forEach(el => {
+    if (/Ver video instructivo/i.test(el.textContent || '')) el.innerHTML = '&#9658; Ver video instructivo';
+  });
+}
+document.addEventListener('DOMContentLoaded', tutRepararIconosGuia);
+
 function tutAbrirVideo(seccion) {
-  if (seccion === 'inicio') {
-    tutToggleTutorialPedido(true);
-    return;
-  }
+  tutRepararIconosGuia();
   const modal = document.getElementById('tutVideoModal');
   const frame = document.getElementById('tutVideoFrame');
   const titulo = document.getElementById('tutVideoTitulo');

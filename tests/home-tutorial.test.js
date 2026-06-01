@@ -57,4 +57,17 @@ describe('home tutorial guide', () => {
     expect(window.document.getElementById('homeTutTabPrep').getAttribute('aria-selected')).toBe('true');
     expect(window.document.getElementById('homeTutPrepPanel').textContent).toContain('Preparacion y entrega');
   });
+
+  test('guide facebook tutorial opens through the video modal path', () => {
+    const html = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
+    const start = html.indexOf("function tutAbrirVideo(seccion)");
+    const end = html.indexOf("function tutCerrarVideo()", start);
+    const block = html.slice(start, end);
+
+    expect(html).toContain("onclick=\"tutAbrirVideo('inicio')\"");
+    expect(html).toContain("inicio   : 'fQbZiTTD88g'");
+    expect(block).toContain("const modal = document.getElementById('tutVideoModal')");
+    expect(block).not.toContain("tutToggleTutorialPedido(true)");
+    expect(html).toContain('function tutRepararIconosGuia');
+  });
 });
