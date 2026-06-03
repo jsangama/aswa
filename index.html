@@ -1164,6 +1164,51 @@
       display:block;
       filter:saturate(.92) contrast(1.04) brightness(.86);
     }
+    .home-map:not(.loaded) iframe {
+      opacity:0;
+    }
+    .home-map-placeholder {
+      position:absolute;
+      inset:0;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      text-align:center;
+      padding:18px;
+      background:
+        linear-gradient(135deg,rgba(34,197,94,.28),rgba(37,99,235,.22) 48%,rgba(124,58,237,.28)),
+        radial-gradient(circle at 24% 28%,rgba(250,204,21,.22),transparent 28%),
+        #101014;
+      z-index:1;
+    }
+    .home-map.loaded .home-map-placeholder {
+      display:none;
+    }
+    .home-map-placeholder strong {
+      display:block;
+      color:#fff;
+      font-size:14px;
+      margin-bottom:4px;
+    }
+    .home-map-placeholder span {
+      display:block;
+      color:#e5e7eb;
+      font-size:11px;
+      line-height:1.35;
+      margin-bottom:12px;
+    }
+    .home-map-load {
+      border:1px solid rgba(250,204,21,.58);
+      border-radius:999px;
+      background:#facc15;
+      color:#050505;
+      padding:9px 14px;
+      font-size:11px;
+      font-weight:950;
+      font-family:'Poppins',sans-serif;
+      cursor:pointer;
+      box-shadow:0 12px 24px rgba(0,0,0,.30);
+    }
     .home-map::after {
       content:'';
       position:absolute;
@@ -3544,7 +3589,15 @@
       title="Mapa real de cobertura ASWA en Morales, Tarapoto y La Banda de Shilcayo"
       loading="lazy"
       referrerpolicy="no-referrer-when-downgrade"
+      data-defer="manual"
       data-src="https://www.openstreetmap.org/export/embed.html?bbox=-76.4300%2C-6.5400%2C-76.3000%2C-6.4300&amp;layer=mapnik&amp;marker=-6.4860%2C-76.3660"></iframe>
+    <div class="home-map-placeholder">
+      <div>
+        <strong>Mapa real disponible</strong>
+        <span>Cargalo solo si deseas ver la zona interactiva.</span>
+        <button type="button" class="home-map-load" onclick="cargarMapaCobertura()">Cargar mapa</button>
+      </div>
+    </div>
     <div class="home-map-badge" aria-hidden="true">
       <span>Morales S/ 3</span>
       <span>Tarapoto S/ 4</span>
@@ -10075,14 +10128,15 @@ function optimizarCargaInicial() {
   prepararIframesDiferidos();
 }
 
-function activarIframesDiferidos(root = document) {
+function activarIframesDiferidos(root = document, incluirManuales = false) {
   root.querySelectorAll?.('iframe[data-src]').forEach(iframe => {
+    if (!incluirManuales && iframe.dataset.defer === 'manual') return;
     if (!iframe.getAttribute('src')) iframe.setAttribute('src', iframe.dataset.src);
   });
 }
 
 function prepararIframesDiferidos() {
-  const iframes = [...document.querySelectorAll('iframe[data-src]')];
+  const iframes = [...document.querySelectorAll('iframe[data-src]:not([data-defer="manual"])')];
   if (!iframes.length) return;
   if (!('IntersectionObserver' in window)) {
     const cargar = () => activarIframesDiferidos(document);
@@ -10098,6 +10152,13 @@ function prepararIframesDiferidos() {
     });
   }, { rootMargin: '240px 0px' });
   iframes.forEach(iframe => observer.observe(iframe));
+}
+
+function cargarMapaCobertura() {
+  const mapa = document.querySelector('.home-map');
+  if (!mapa) return;
+  activarIframesDiferidos(mapa, true);
+  mapa.classList.add('loaded');
 }
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -19661,7 +19722,7 @@ function tutToggleTutorialPedido(forzarMostrar = null) {
   if (!box) return;
   const mostrar = forzarMostrar === null ? box.style.display === 'none' : forzarMostrar;
   box.style.display = mostrar ? 'block' : 'none';
-  if (mostrar) activarIframesDiferidos(box);
+  if (mostrar) activarIframesDiferidos(box, true);
   const btn = document.getElementById('btnTutorialPedido');
   if (btn) btn.textContent = mostrar ? 'Ocultar tutorial' : 'Ver tutorial para hacer tu pedido';
   if (mostrar) box.scrollIntoView({ behavior: 'smooth', block: 'center' });
