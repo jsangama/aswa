@@ -1571,6 +1571,82 @@
       .home-tutorial-visual { width:70px; height:70px; font-size:34px; }
     }
 
+    .quick-order {
+      max-width:430px;
+      margin:12px auto 16px;
+      background:linear-gradient(135deg,rgba(250,204,21,.10),rgba(34,197,94,.06));
+      border:1px solid rgba(250,204,21,.28);
+      border-radius:14px;
+      padding:13px;
+    }
+    .quick-order-top {
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:10px;
+      margin-bottom:10px;
+    }
+    .quick-order-title { color:#fff; font-size:15px; font-weight:950; line-height:1.2; }
+    .quick-order-sub { color:#a1a1aa; font-size:11px; line-height:1.4; margin-top:3px; }
+    .quick-order-pill {
+      flex-shrink:0;
+      background:rgba(34,197,94,.14);
+      border:1px solid rgba(34,197,94,.34);
+      color:#86efac;
+      border-radius:999px;
+      padding:5px 8px;
+      font-size:9px;
+      font-weight:950;
+      text-transform:uppercase;
+      white-space:nowrap;
+    }
+    .quick-order-actions {
+      display:grid;
+      grid-template-columns:repeat(3,1fr);
+      gap:7px;
+    }
+    .quick-order-btn {
+      border:1px solid rgba(255,255,255,.12);
+      border-radius:12px;
+      background:rgba(255,255,255,.05);
+      color:#fff;
+      min-height:54px;
+      padding:8px 7px;
+      font-family:'Poppins',sans-serif;
+      cursor:pointer;
+      text-align:left;
+    }
+    .quick-order-btn strong {
+      display:block;
+      color:#facc15;
+      font-size:12px;
+      line-height:1.15;
+    }
+    .quick-order-btn span {
+      display:block;
+      color:#a1a1aa;
+      font-size:9px;
+      line-height:1.25;
+      margin-top:3px;
+    }
+    .quick-order-chat {
+      margin-top:8px;
+      width:100%;
+      border:0;
+      border-radius:12px;
+      background:linear-gradient(135deg,#facc15,#f59e0b);
+      color:#111;
+      padding:11px 12px;
+      font-family:'Poppins',sans-serif;
+      font-size:12px;
+      font-weight:950;
+      cursor:pointer;
+    }
+    @media (max-width:360px) {
+      .quick-order-actions { grid-template-columns:1fr; }
+      .quick-order-btn { min-height:auto; text-align:center; }
+    }
+
     .cupon-wrap {
       background:rgba(250,204,21,.05);
       border:1px dashed rgba(250,204,21,.35);
@@ -3448,48 +3524,72 @@
 <div style="position:relative;overflow:hidden;max-width:430px;margin:0 auto;border-radius:14px">
   <div id="promoSlider" style="display:flex;transition:transform .5s cubic-bezier(.4,0,.2,1);will-change:transform">
     <div style="flex-shrink:0;width:100%;position:relative">
-      <img src="assets/images/embedded/embedded-58515c524410.jpg" alt="ASWA Sara Aswa Mishky - Botella con maiz" class="promo-slide-img" loading="lazy">
+      <img src="assets/images/embedded/embedded-58515c524410.jpg" alt="ASWA Sara Aswa Mishky - Botella con maiz" class="promo-slide-img" loading="eager" fetchpriority="high" decoding="async">
       <div class="promo-caption">ASWA Sara Aswa Mishky<small>Botella con maiz y sabor de San Martin</small></div>
     </div>
     <div style="flex-shrink:0;width:100%;position:relative">
-      <img src="assets/images/embedded/embedded-1ae50fe384f0.jpg" alt="Canasta de botellas ASWA" class="promo-slide-img" loading="lazy">
+      <img data-src="assets/images/embedded/embedded-1ae50fe384f0.jpg" alt="Canasta de botellas ASWA" class="promo-slide-img" loading="lazy" decoding="async">
       <div class="promo-caption">Chicha artesanal - La Rica Chicha<small>Para compartir en familia y reuniones</small></div>
     </div>
     <div style="flex-shrink:0;width:100%;position:relative">
-      <img src="assets/images/embedded/embedded-b3c4659776a8.jpg" alt="Sara Aswa Mishky 500ml" class="promo-slide-img" loading="lazy">
+      <img data-src="assets/images/embedded/embedded-b3c4659776a8.jpg" alt="Sara Aswa Mishky 500ml" class="promo-slide-img" loading="lazy" decoding="async">
       <div class="promo-caption">Sara Aswa Mishky 500ml<small>Presentacion practica y refrescante</small></div>
     </div>
     <div style="flex-shrink:0;width:100%;position:relative">
-      <img src="assets/images/embedded/embedded-8798674c1c32.jpg" alt="Ingredientes naturales" class="promo-slide-img" loading="lazy">
+      <img data-src="assets/images/embedded/embedded-8798674c1c32.jpg" alt="Ingredientes naturales" class="promo-slide-img" loading="lazy" decoding="async">
       <div class="promo-caption">Ingredientes naturales<small>Maiz, tradicion y preparacion familiar</small></div>
     </div>
     <div style="flex-shrink:0;width:100%;position:relative">
-      <img src="assets/images/embedded/embedded-7bfe92b6231a.jpg" alt="Botellas 100% nuevas" class="promo-slide-img" loading="lazy">
+      <img data-src="assets/images/embedded/embedded-7bfe92b6231a.jpg" alt="Botellas 100% nuevas" class="promo-slide-img" loading="lazy" decoding="async">
       <div class="promo-caption">Botellas nuevas y selladas<small>Presentacion limpia para tu pedido</small></div>
     </div>
     <div style="flex-shrink:0;width:100%;position:relative">
-      <img src="assets/images/embedded/embedded-ca1d907a1019.jpg" alt="La receta artesanal" class="promo-slide-img" loading="lazy">
+      <img data-src="assets/images/embedded/embedded-ca1d907a1019.jpg" alt="La receta artesanal" class="promo-slide-img" loading="lazy" decoding="async">
       <div class="promo-caption">Receta artesanal familiar<small>El sabor que recuerda a San Martin</small></div>
     </div>
     <div style="flex-shrink:0;width:100%;position:relative">
-      <img src="assets/images/embedded/embedded-112e6e7808a1.jpg" alt="La chicha tambien sabe a Peru" class="promo-slide-img" loading="lazy">
+      <img data-src="assets/images/embedded/embedded-112e6e7808a1.jpg" alt="La chicha tambien sabe a Peru" class="promo-slide-img" loading="lazy" decoding="async">
       <div class="promo-caption">La chicha tambien sabe a Peru<small>Orgullo amazonico en cada botella</small></div>
     </div>
     <div style="flex-shrink:0;width:100%;position:relative">
-      <img src="assets/images/embedded/embedded-438f7530dcc5.jpg" alt="ASWA zonas de delivery" class="promo-slide-img" loading="lazy">
+      <img data-src="assets/images/embedded/embedded-438f7530dcc5.jpg" alt="ASWA zonas de delivery" class="promo-slide-img" loading="lazy" decoding="async">
       <div class="promo-caption">Pedidos con delivery<small>Morales S/3, Tarapoto S/4, Banda S/5</small></div>
     </div>
     <div style="flex-shrink:0;width:100%;position:relative">
-      <img src="assets/images/embedded/embedded-3ba311adab8b.jpg" alt="ASWA botella 2L cocina peruana" class="promo-slide-img" loading="lazy">
+      <img data-src="assets/images/embedded/embedded-3ba311adab8b.jpg" alt="ASWA botella 2L cocina peruana" class="promo-slide-img" loading="lazy" decoding="async">
       <div class="promo-caption">Chicha ASWA 2L<small>Ideal para acompanar tus comidas</small></div>
     </div>
     <div style="flex-shrink:0;width:100%;position:relative">
-      <img src="assets/images/embedded/embedded-7b1dc49e9921.jpg" alt="ASWA tres presentaciones" class="promo-slide-img" loading="lazy">
+      <img data-src="assets/images/embedded/embedded-7b1dc49e9921.jpg" alt="ASWA tres presentaciones" class="promo-slide-img" loading="lazy" decoding="async">
       <div class="promo-caption">Precios ASWA 2025<small>2L, 3L y 4L disponibles</small></div>
     </div>
   </div>
   <div style="position:absolute;bottom:8px;left:50%;transform:translateX(-50%);display:flex;gap:5px;align-items:center;z-index:3" id="promoDots"></div>
 </div>
+<section class="quick-order" aria-label="Pedido rapido ASWA">
+  <div class="quick-order-top">
+    <div>
+      <div class="quick-order-title">Pedido rapido</div>
+      <div class="quick-order-sub">Elige zona, agrega chicha y confirma sin perder tiempo.</div>
+    </div>
+    <div class="quick-order-pill">Facil</div>
+  </div>
+  <div class="quick-order-actions">
+    <button type="button" class="quick-order-btn" onclick="irPedidoRapido('zona')">
+      <strong>1. Zona</strong>
+      <span>Delivery o recojo</span>
+    </button>
+    <button type="button" class="quick-order-btn" onclick="irPedidoRapido('productos')">
+      <strong>2. Chicha</strong>
+      <span>2L, 3L, 4L o bidon</span>
+    </button>
+    <button type="button" class="quick-order-btn" onclick="irPedidoRapido('datos')">
+      <strong>3. Datos</strong>
+      <span>Direccion y pago</span>
+    </button>
+  </div>
+  <button type="button" class="quick-order-chat" onclick="irPedidoRapido('chat')">Pedir con asistente ASWA</button>
+</section>
 <script>
 (function(){
   let idx=0, timer=null;
@@ -3498,8 +3598,15 @@
   if (!slider || !dots) return;
   const total=slider.children.length;
   dots.innerHTML=Array.from({length:total},()=>'<span style="width:8px;height:8px;border-radius:4px;background:rgba(255,255,255,.4);transition:all .3s;cursor:pointer"></span>').join('');
+  function loadSlide(n){
+    const slide = slider.children[((n%total)+total)%total];
+    const img = slide?.querySelector('img[data-src]');
+    if (img && !img.getAttribute('src')) img.setAttribute('src', img.dataset.src);
+  }
   function goTo(n){
     idx=((n%total)+total)%total;
+    loadSlide(idx);
+    loadSlide(idx + 1);
     slider.style.transform='translateX(-'+(idx*100)+'%)';
     Array.from(dots.children).forEach((d,i)=>{
       d.style.background=i===idx?'#facc15':'rgba(255,255,255,.4)';
@@ -7647,6 +7754,26 @@ function tutHomeScrollToTarget(selectorList) {
     setTimeout(() => target.focus({ preventScroll:true }), 350);
   }
   return true;
+}
+
+function irPedidoRapido(paso) {
+  const mapa = {
+    zona: '#homeCoverageSection',
+    productos: '#productosSection',
+    datos: '#datosPedidoSection',
+    pago: '#pagoPedidoSection'
+  };
+  if (paso === 'chat') {
+    if (typeof abrirChat === 'function') abrirChat();
+    const input = document.getElementById('chatInput');
+    setTimeout(() => input?.focus({ preventScroll:true }), 250);
+    return;
+  }
+  const target = mapa[paso] || '#productosSection';
+  if (tutHomeScrollToTarget(target) && typeof tst === 'function') {
+    const label = paso === 'zona' ? 'Elige tu zona' : (paso === 'datos' ? 'Completa tus datos' : 'Agrega tu chicha');
+    tst(label, 1800);
+  }
 }
 
 function tutHomeRender() {

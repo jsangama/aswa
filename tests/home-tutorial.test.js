@@ -79,4 +79,16 @@ describe('home tutorial guide', () => {
     expect(html).toContain('data-src="https://www.youtube-nocookie.com/embed/fQbZiTTD88g');
     expect(html).not.toMatch(/<iframe[^>]+\ssrc="https:\/\/www\.youtube-nocookie\.com\/embed\/fQbZiTTD88g/);
   });
+
+  test('shows quick order shortcuts before the long guide', () => {
+    const html = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
+
+    expect(html).toContain('class="quick-order"');
+    expect(html).toContain('Pedido rapido');
+    expect(html).toContain("onclick=\"irPedidoRapido('zona')\"");
+    expect(html).toContain("onclick=\"irPedidoRapido('productos')\"");
+    expect(html).toContain("onclick=\"irPedidoRapido('datos')\"");
+    expect(html).toContain("onclick=\"irPedidoRapido('chat')\"");
+    expect(html).toContain('function irPedidoRapido');
+  });
 });
