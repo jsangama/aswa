@@ -93,4 +93,16 @@ describe('home tutorial guide', () => {
     expect(html).toContain("modal.classList.add('open')");
     expect(html).toContain('window.abrirChat = abrirChat');
   });
+
+  test('uses a smart continue button that guides missing order steps', () => {
+    const html = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
+
+    expect(html).toContain('id="btnContinuarInteligente"');
+    expect(html).toContain('onclick="continuarPedidoInteligente()"');
+    expect(html).toContain('function obtenerPasoPendientePedido');
+    expect(html).toContain('function actualizarBotonContinuar');
+    expect(html).toContain('function continuarPedidoInteligente');
+    expect(html).toContain('ELEGIR CHICHA');
+    expect(html).toContain('ELEGIR ZONA');
+  });
 });
