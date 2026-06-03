@@ -70,4 +70,13 @@ describe('home tutorial guide', () => {
     expect(block).not.toContain("tutToggleTutorialPedido(true)");
     expect(html).toContain('function tutRepararIconosGuia');
   });
+
+  test('heavy tutorial iframe is deferred until the user opens it', () => {
+    const html = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
+
+    expect(html).toContain('function activarIframesDiferidos');
+    expect(html).toContain('function prepararIframesDiferidos');
+    expect(html).toContain('data-src="https://www.youtube-nocookie.com/embed/fQbZiTTD88g');
+    expect(html).not.toMatch(/<iframe[^>]+\ssrc="https:\/\/www\.youtube-nocookie\.com\/embed\/fQbZiTTD88g/);
+  });
 });
