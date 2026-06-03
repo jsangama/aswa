@@ -5290,7 +5290,7 @@
       <div class="pold" id="pold"></div>
       <div class="pbig" id="pbig">S/ 0.00</div>
     </div>
-    <button class="bcont" onclick="abrirResumen()">CONTINUAR →</button>
+    <button class="bcont" id="btnContinuarInteligente" onclick="continuarPedidoInteligente()">ELEGIR CHICHA</button>
   </div>
 </div>
 
@@ -6672,6 +6672,7 @@ function calcTotal() {
       ? 'S/ '+f.toFixed(2)+' <span class="po">S/ '+b.toFixed(2)+'</span>'
       : 'S/ '+b.toFixed(2);
   });
+  actualizarBotonContinuar();
 }
 
 function toggleCuponPanel() {
@@ -8222,9 +8223,16 @@ function perfilInit() {
   }
 
   ['telefono','nombre','direccion','notaEntrega','zona'].forEach(id => {
-    document.getElementById(id)?.addEventListener('input', () => perfilGuardarCliente(true));
-    document.getElementById(id)?.addEventListener('change', () => perfilGuardarCliente(true));
+    document.getElementById(id)?.addEventListener('input', () => {
+      perfilGuardarCliente(true);
+      actualizarBotonContinuar();
+    });
+    document.getElementById(id)?.addEventListener('change', () => {
+      perfilGuardarCliente(true);
+      actualizarBotonContinuar();
+    });
   });
+  actualizarBotonContinuar();
 }
 
 /* ── GENERAR CÓDIGO REFERIDO ── */
@@ -8514,6 +8522,56 @@ function marcarZonaPedido(msg) {
   }
   tst(msg, 3200);
   return false;
+}
+
+function obtenerPasoPendientePedido() {
+  const items = pedidoItemsLista();
+  if (!items.length) return 'productos';
+
+  const zonaEl = document.getElementById('zona');
+  const zonaValor = zonaEl?.value || '';
+  if (!zonaValor) return 'zona';
+
+  const tel = document.getElementById('telefono')?.value.trim() || '';
+  const nom = document.getElementById('nombre')?.value.trim() || '';
+  const dir = document.getElementById('direccion')?.value.trim() || '';
+  const zonaTxt = zonaEl?.options[zonaEl.selectedIndex]?.text || '';
+  const requiereDireccion = !/recojo/i.test(zonaTxt);
+  if (!/^\d{9}$/.test(tel)) return 'telefono';
+  if (!nom) return 'nombre';
+  if (requiereDireccion && dir.length < 6) return 'direccion';
+  return 'resumen';
+}
+
+function actualizarBotonContinuar() {
+  const btn = document.getElementById('btnContinuarInteligente');
+  if (!btn) return;
+  const paso = obtenerPasoPendientePedido();
+  const labels = {
+    productos: 'ELEGIR CHICHA',
+    zona: 'ELEGIR ZONA',
+    telefono: 'DATOS',
+    nombre: 'DATOS',
+    direccion: 'DIRECCION',
+    resumen: 'CONTINUAR ->'
+  };
+  btn.textContent = labels[paso] || 'CONTINUAR ->';
+}
+
+function continuarPedidoInteligente() {
+  const paso = obtenerPasoPendientePedido();
+  if (paso === 'productos') {
+    irPedidoRapido('productos');
+    return tst('Elige una chicha y cantidad para continuar.', 2400);
+  }
+  if (paso === 'zona') {
+    irPedidoRapido('zona');
+    return tst('Elige tu zona de entrega para calcular el total.', 2400);
+  }
+  if (paso === 'telefono') return marcarCampoPedido('telefono', 'Ingresa un telefono valido de 9 digitos');
+  if (paso === 'nombre') return marcarCampoPedido('nombre', 'Ingresa tu nombre completo');
+  if (paso === 'direccion') return marcarCampoPedido('direccion', 'Ingresa tu direccion o una referencia de entrega');
+  return abrirResumen();
 }
 
 function abrirResumen() {
