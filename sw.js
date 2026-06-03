@@ -1,5 +1,5 @@
-// ASWA Service Worker v27 - https://jsangama.github.io/aswa/
-const CACHE_NAME = 'aswa-v27';
+// ASWA Service Worker v28 - https://jsangama.github.io/aswa/
+const CACHE_NAME = 'aswa-v28';
 const BASE = new URL('./', self.registration.scope).pathname;
 const ASSETS = [
   BASE,
@@ -32,6 +32,7 @@ self.addEventListener('fetch', e => {
 
   const accept = e.request.headers.get('accept') || '';
   const isHtml = e.request.mode === 'navigate' || accept.includes('text/html');
+  const isImage = e.request.destination === 'image';
   if (isHtml) {
     e.respondWith(
       fetch(e.request).then(resp => {
@@ -41,6 +42,22 @@ self.addEventListener('fetch', e => {
         }
         return resp;
       }).catch(() => caches.match(e.request).then(cached => cached || caches.match(BASE)))
+    );
+    return;
+  }
+
+  if (isImage) {
+    e.respondWith(
+      caches.match(e.request).then(cached => {
+        const refresh = fetch(e.request).then(resp => {
+          if (resp.status === 200) {
+            const clone = resp.clone();
+            caches.open(CACHE_NAME).then(c => c.put(e.request, clone));
+          }
+          return resp;
+        }).catch(() => cached);
+        return cached || refresh;
+      })
     );
     return;
   }

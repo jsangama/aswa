@@ -3544,7 +3544,7 @@
       title="Mapa real de cobertura ASWA en Morales, Tarapoto y La Banda de Shilcayo"
       loading="lazy"
       referrerpolicy="no-referrer-when-downgrade"
-      src="https://www.openstreetmap.org/export/embed.html?bbox=-76.4300%2C-6.5400%2C-76.3000%2C-6.4300&amp;layer=mapnik&amp;marker=-6.4860%2C-76.3660"></iframe>
+      data-src="https://www.openstreetmap.org/export/embed.html?bbox=-76.4300%2C-6.5400%2C-76.3000%2C-6.4300&amp;layer=mapnik&amp;marker=-6.4860%2C-76.3660"></iframe>
     <div class="home-map-badge" aria-hidden="true">
       <span>Morales S/ 3</span>
       <span>Tarapoto S/ 4</span>
@@ -3833,7 +3833,7 @@
       </div>
       <div style="width:100%;max-width:230px;margin:0 auto;background:#000;aspect-ratio:9/16">
         <iframe
-          src="https://www.youtube-nocookie.com/embed/fQbZiTTD88g?rel=0&playsinline=1&modestbranding=1"
+          data-src="https://www.youtube-nocookie.com/embed/fQbZiTTD88g?rel=0&playsinline=1&modestbranding=1"
           title="Tutorial para hacer tu pedido ASWA"
           loading="lazy"
           frameborder="0"
@@ -10072,6 +10072,32 @@ function optimizarCargaInicial() {
   document.querySelectorAll('iframe').forEach(iframe => {
     if (!iframe.hasAttribute('loading')) iframe.loading = 'lazy';
   });
+  prepararIframesDiferidos();
+}
+
+function activarIframesDiferidos(root = document) {
+  root.querySelectorAll?.('iframe[data-src]').forEach(iframe => {
+    if (!iframe.getAttribute('src')) iframe.setAttribute('src', iframe.dataset.src);
+  });
+}
+
+function prepararIframesDiferidos() {
+  const iframes = [...document.querySelectorAll('iframe[data-src]')];
+  if (!iframes.length) return;
+  if (!('IntersectionObserver' in window)) {
+    const cargar = () => activarIframesDiferidos(document);
+    if ('requestIdleCallback' in window) requestIdleCallback(cargar, { timeout: 4500 });
+    else setTimeout(cargar, 2500);
+    return;
+  }
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(entry => {
+      if (!entry.isIntersecting) return;
+      activarIframesDiferidos(entry.target.parentElement || document);
+      observer.unobserve(entry.target);
+    });
+  }, { rootMargin: '240px 0px' });
+  iframes.forEach(iframe => observer.observe(iframe));
 }
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -19635,6 +19661,7 @@ function tutToggleTutorialPedido(forzarMostrar = null) {
   if (!box) return;
   const mostrar = forzarMostrar === null ? box.style.display === 'none' : forzarMostrar;
   box.style.display = mostrar ? 'block' : 'none';
+  if (mostrar) activarIframesDiferidos(box);
   const btn = document.getElementById('btnTutorialPedido');
   if (btn) btn.textContent = mostrar ? 'Ocultar tutorial' : 'Ver tutorial para hacer tu pedido';
   if (mostrar) box.scrollIntoView({ behavior: 'smooth', block: 'center' });

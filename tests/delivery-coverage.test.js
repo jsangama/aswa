@@ -62,7 +62,8 @@ describe('home delivery coverage section', () => {
     const openMap = window.document.querySelector('.home-map-open');
 
     expect(iframe).toBeTruthy();
-    expect(iframe.getAttribute('src')).toContain('openstreetmap.org/export/embed.html');
+    expect(iframe.getAttribute('src')).toBeFalsy();
+    expect(iframe.getAttribute('data-src')).toContain('openstreetmap.org/export/embed.html');
     expect(iframe.getAttribute('title')).toContain('Mapa real');
     expect(openMap.getAttribute('href')).toContain('google.com/maps');
   });
