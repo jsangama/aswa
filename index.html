@@ -19841,6 +19841,28 @@ function tutAbrirVideo(seccion) {
   frame.style.maxWidth = esVertical ? '360px' : '';
   frame.style.margin = esVertical ? '0 auto' : '';
   if (videoId) {
+    const url = TUTORIAL_VIDEO_URLS[seccion] || `https://youtu.be/${videoId}`;
+    frame.innerHTML = `
+      <div style="width:100%;height:100%;display:flex;flex-direction:column;background:#111;border:1px solid rgba(250,204,21,.35);border-radius:14px;overflow:hidden">
+        <div style="flex:1;min-height:0;background:#000">
+          <iframe width="100%" height="100%"
+            src="https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1&mute=1&rel=0&playsinline=1&modestbranding=1"
+            title="${titulos[seccion] || 'Video ASWA'}"
+            frameborder="0"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+            referrerpolicy="strict-origin-when-cross-origin"
+            allowfullscreen
+            style="display:block;width:100%;height:100%;border:0;background:#000"></iframe>
+        </div>
+        <div style="padding:10px 12px;background:#111">
+          <a href="${url}" target="_blank" rel="noopener"
+             style="display:block;text-align:center;background:linear-gradient(135deg,#facc15,#f59e0b);color:#111;text-decoration:none;border-radius:10px;padding:10px 12px;font-size:12px;font-weight:900">
+            Abrir en YouTube si no reproduce
+          </a>
+        </div>
+      </div>`;
+    modal.style.display = 'flex';
+    return;
     if (seccion === 'inicio') {
       const url = TUTORIAL_VIDEO_URLS[seccion];
       frame.style.aspectRatio = '9 / 16';
@@ -19901,11 +19923,12 @@ function tutAbrirVideo(seccion) {
 function tutCerrarVideo() {
   const modal = document.getElementById('tutVideoModal');
   modal.style.display = 'none';
-  // Detener video
   const frame = document.getElementById('tutVideoFrame');
-  const iframe = frame.querySelector('iframe');
-  if (iframe) iframe.src = iframe.src;
+  if (frame) frame.innerHTML = '';
 }
+
+window.tutAbrirVideo = tutAbrirVideo;
+window.tutCerrarVideo = tutCerrarVideo;
 
 function tutMostrarBotonPedido(mostrar) {
   const btn = document.getElementById('cbanTutorialBtn');
