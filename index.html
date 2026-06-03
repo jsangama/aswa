@@ -7764,7 +7764,14 @@ function irPedidoRapido(paso) {
     pago: '#pagoPedidoSection'
   };
   if (paso === 'chat') {
-    if (typeof abrirChat === 'function') abrirChat();
+    const abrir = window.abrirChat || (typeof abrirChat === 'function' ? abrirChat : null);
+    if (abrir) abrir();
+    const modal = document.getElementById('chatModal');
+    if (modal && !modal.classList.contains('open')) {
+      modal.classList.add('open');
+      document.getElementById('chatFabBadge')?.classList.remove('show');
+      window._chatDesbloquearEntrada?.(true);
+    }
     const input = document.getElementById('chatInput');
     setTimeout(() => input?.focus({ preventScroll:true }), 250);
     return;
@@ -12236,6 +12243,9 @@ function cerrarChat() {
   _chatAbierto = false;
   document.getElementById('chatModal')?.classList.remove('open');
 }
+
+window.abrirChat = abrirChat;
+window.cerrarChat = cerrarChat;
 
 async function reiniciarChatCliente() {
   _chatResetAtMs = Date.now();

@@ -90,5 +90,7 @@ describe('home tutorial guide', () => {
     expect(html).toContain("onclick=\"irPedidoRapido('datos')\"");
     expect(html).toContain("onclick=\"irPedidoRapido('chat')\"");
     expect(html).toContain('function irPedidoRapido');
+    expect(html).toContain("modal.classList.add('open')");
+    expect(html).toContain('window.abrirChat = abrirChat');
   });
 });
