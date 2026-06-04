@@ -56,8 +56,8 @@ describe('orders module behavior', () => {
     expect(html).toContain('class="bidon-normal-options"');
     expect(html).toContain('Ya tengo bidon vacio');
     expect(html).toContain('Chicha + envase retornable');
-    expect(html).toContain('<div class="pp" id="pr-sjBidonPublic">S/ 70.00</div>');
-    expect(html).toContain('<b>S/ 90</b>');
+    expect(html).toContain('<div class="pp" id="pr-sjBidonPublic">S/ 60.00</div>');
+    expect(html).toContain('<b>S/ 80</b>');
     expect(html).toContain('20L equivale a 5 familiares de 4L');
     expect(html).toContain('Cinco familiares costarian S/ 75');
     expect(html).toContain('no se usan 5 envases de 4L');

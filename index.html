@@ -3947,7 +3947,7 @@
       <div style="flex:1">
         <div class="pn">Bidon ASWA 20L</div>
         <div class="pd" id="sjBidonPublicDesc">Recarga retornable: entrega tu bidon vacio al recibir.</div>
-        <div class="pp" id="pr-sjBidonPublic">S/ 70.00</div>
+        <div class="pp" id="pr-sjBidonPublic">S/ 60.00</div>
       </div>
       <div class="qw">
         <button class="qb qminus" onclick="qty('sjBidonPublic',-1)">-</button>
@@ -3959,15 +3959,15 @@
       <label class="bidon-normal-option is-active" id="bidonPublicOptRecarga">
         <input type="radio" name="publicBidonModo" id="publicBidonRecarga" value="recarga" checked onchange="actualizarBidonPublicoUI()">
         <span><strong>Recargar</strong><small>Ya tengo bidon vacio</small></span>
-        <b>S/ 70</b>
+        <b>S/ 60</b>
       </label>
       <label class="bidon-normal-option" id="bidonPublicOptIncluido">
         <input type="radio" name="publicBidonModo" id="publicBidonIncluido" value="incluido" onchange="actualizarBidonPublicoUI()">
         <span><strong>Bidon nuevo</strong><small>Chicha + envase retornable</small></span>
-        <b>S/ 90</b>
+        <b>S/ 80</b>
       </label>
     </div>
-    <div class="bidon-volume-note"><strong>Logica del bidon:</strong> 20L equivale a 5 familiares de 4L. Cinco familiares costarian S/ 75; en recarga queda S/ 70 porque usas bidon retornable y no se usan 5 envases de 4L.</div>
+    <div class="bidon-volume-note"><strong>Logica del bidon:</strong> 20L equivale a 5 familiares de 4L. Cinco familiares costarian S/ 75; en recarga queda S/ 60 porque usas bidon retornable y no se usan 5 envases de 4L.</div>
 
     <div class="san-juan-card" id="sanJuanEscolar">
       <span class="sj-badge">San Juan 2026 - colegios</span>
@@ -6651,7 +6651,7 @@ function esperarFB() {
 /* ── ESTADO GLOBAL ── */
 const ST = {
   cart: { p2l: 0, p3l: 0, p4l: 0, sjBidonPublic: 0, sjBidon: 0, sjChicha04: 0, sjCombo: 0, sjJuane: 0, sjJuaneFamiliar: 0 },
-  precio: { p2l: 9, p3l: 13, p4l: 15, sjBidonPublic: 70, sjBidon: 50, sjChicha04: 2, sjCombo: 3.5, sjJuane: 2, sjJuaneFamiliar: 25 },
+  precio: { p2l: 9, p3l: 13, p4l: 15, sjBidonPublic: 60, sjBidon: 50, sjChicha04: 2, sjCombo: 3.5, sjJuane: 2, sjJuaneFamiliar: 25 },
   pago: 'Efectivo',
   raw: 0,
   final: 0,
@@ -6794,7 +6794,7 @@ function actualizarNivelEscolarUI() {
 function actualizarBidonPublicoUI() {
   const modoBidon = document.querySelector('input[name="publicBidonModo"]:checked')?.value || 'recarga';
   const conBidon = modoBidon !== 'incluido';
-  ST.precio.sjBidonPublic = conBidon ? 70 : 90;
+  ST.precio.sjBidonPublic = conBidon ? 60 : 80;
   const desc = document.getElementById('sjBidonPublicDesc');
   if (desc) desc.textContent = conBidon
     ? 'Recarga retornable: entrega tu bidon vacio al recibir.'
@@ -12754,7 +12754,7 @@ const ASWA_SUPPORT_KNOWLEDGE = [
     tema: 'productos y precios',
     priority: 2,
     keywords: ['precio', 'cuanto cuesta', 'cuanto vale', 'costo', 'producto', '2l', '3l', '4l', 'bidon'],
-    respuesta: 'Productos principales: Chicha ASWA 2L S/ 9, Chicha ASWA 3L S/ 13 y Chicha ASWA Familiar 4L S/ 15. El bidon no se compara como un salto de 4L a 20L, sino como 5 familiares de 4L: 5 x S/ 15 = S/ 75. Por eso la recarga 20L queda en S/ 70 usando bidon retornable, y con bidon/envase nuevo retornable queda en S/ 90. En promo escolar San Juan queda en S/ 50 recarga o S/ 70 con bidon nuevo.'
+    respuesta: 'Productos principales: Chicha ASWA 2L S/ 9, Chicha ASWA 3L S/ 13 y Chicha ASWA Familiar 4L S/ 15. El bidon no se compara como un salto de 4L a 20L, sino como 5 familiares de 4L: 5 x S/ 15 = S/ 75. Por eso la recarga 20L queda en S/ 60 usando bidon retornable, y con bidon/envase nuevo retornable queda en S/ 80. En promo escolar San Juan queda en S/ 50 recarga o S/ 70 con bidon nuevo.'
   },
   {
     tema: 'campana san juan',
@@ -12857,7 +12857,7 @@ const ASWA_APP_KNOWLEDGE_CHUNKS = [
   {
     tema: 'bidon san juan',
     terms: ['bidon','20l','20 litros','recarga','envase','san juanero','obra','cuadrilla'],
-    respuesta: 'El bidon ASWA 20L se calcula comparandolo con 5 familiares de 4L, no como un aumento de solo 1 litro. Cinco familiares cuestan S/ 75. La recarga 20L queda en S/ 70 porque usas bidon retornable y no se usan 5 envases de 4L. Si necesitas bidon/envase nuevo retornable, el total es S/ 90. La promo escolar San Juan mantiene precio especial: S/ 50 recarga o S/ 70 con bidon nuevo. Cobra delivery segun zona y puedes pagar con efectivo, Yape, Plin o transferencia.'
+    respuesta: 'El bidon ASWA 20L se calcula comparandolo con 5 familiares de 4L, no como un aumento de solo 1 litro. Cinco familiares cuestan S/ 75. La recarga 20L queda en S/ 60 porque usas bidon retornable y no se usan 5 envases de 4L. Si necesitas bidon/envase nuevo retornable, el total es S/ 80. La promo escolar San Juan mantiene precio especial: S/ 50 recarga o S/ 70 con bidon nuevo. Cobra delivery segun zona y puedes pagar con efectivo, Yape, Plin o transferencia.'
   },
   {
     tema: 'promo escolar',
@@ -13000,7 +13000,7 @@ function _chatRespuestaProductoDirecta(texto) {
   const quiereComprar = /(quiero|deseo|necesito|deme|dame|pedir|comprar|llevar|manda|mandame)/.test(t);
 
   if (/\bbidon(?:es)?\b/.test(t)) {
-    return 'El bidon ASWA es de 20 litros. La logica correcta es compararlo con 5 familiares de 4L: 5 x S/ 15 = S/ 75. La recarga con bidon vacio cuesta S/ 70 porque usas bidon retornable y no se usan 5 envases de 4L; con bidon/envase nuevo retornable cuesta S/ 90. La promo escolar San Juan queda con precio especial: recarga S/ 50 o con bidon nuevo S/ 70. Puedes pagarlo con efectivo, Yape, Plin o transferencia. Si quieres pedirlo, escribe por ejemplo: "quiero 1 bidon recarga" o "quiero 1 bidon con envase nuevo".';
+    return 'El bidon ASWA es de 20 litros. La logica correcta es compararlo con 5 familiares de 4L: 5 x S/ 15 = S/ 75. La recarga con bidon vacio cuesta S/ 60 porque usas bidon retornable y no se usan 5 envases de 4L; con bidon/envase nuevo retornable cuesta S/ 80. La promo escolar San Juan queda con precio especial: recarga S/ 50 o con bidon nuevo S/ 70. Puedes pagarlo con efectivo, Yape, Plin o transferencia. Si quieres pedirlo, escribe por ejemplo: "quiero 1 bidon recarga" o "quiero 1 bidon con envase nuevo".';
   }
 
   if (/\bgalon(?:es)?\b/.test(t)) {
@@ -13029,8 +13029,8 @@ const CHAT_ORDER_PRODUCTS = {
   p2l: { id:'p2l', nombre:'Chicha ASWA 2L', litros:2, precio:9 },
   p3l: { id:'p3l', nombre:'Chicha ASWA 3L', litros:3, precio:13 },
   p4l: { id:'p4l', nombre:'Chicha ASWA Familiar 4L', litros:4, precio:15 },
-  sjBidonPublic: { id:'sjBidonPublic', nombre:'Bidon ASWA 20L', litros:20, precio:70 },
-  sjBidonPublicNuevo: { id:'sjBidonPublic', nombre:'Bidon ASWA 20L con envase nuevo', litros:20, precio:90 }
+  sjBidonPublic: { id:'sjBidonPublic', nombre:'Bidon ASWA 20L', litros:20, precio:60 },
+  sjBidonPublicNuevo: { id:'sjBidonPublic', nombre:'Bidon ASWA 20L con envase nuevo', litros:20, precio:80 }
 };
 const CHAT_ORDER_PAYMENT_NAMES = {
   Yape:'Yape', PlinBBVA:'Plin BBVA', PlinIBK:'Plin Interbank', BIM:'BIM', Agora:'Agora',
