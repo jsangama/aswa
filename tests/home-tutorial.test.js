@@ -37,20 +37,24 @@ describe('home tutorial guide', () => {
   test('is visible on the initial order page and renders the first step', () => {
     const window = setupTutorialDom();
     const section = window.document.querySelector('.home-tutorial');
+    const shot = window.document.querySelector('#homeTutIcon img');
 
     expect(section).toBeTruthy();
-    expect(window.document.getElementById('homeTutTitle').textContent).toBe('Entra a ASWA');
-    expect(window.document.querySelectorAll('.home-tutorial-dot').length).toBe(7);
+    expect(window.document.getElementById('homeTutTitle').textContent).toBe('Busca ASWA en Facebook');
+    expect(shot).toBeTruthy();
+    expect(shot.getAttribute('src')).toContain('assets/images/tutorial-pedido/paso-17.jpg');
+    expect(window.document.querySelectorAll('.home-tutorial-dot').length).toBe(9);
   });
 
   test('advances steps, jumps by dot, and shows preparation tab coherently', () => {
     const window = setupTutorialDom();
 
     window.tutHomeNext();
-    expect(window.document.getElementById('homeTutTitle').textContent).toBe('Abre la app');
+    expect(window.document.getElementById('homeTutTitle').textContent).toBe('Toca Iniciar pedido');
 
     window.tutHomeSetStep(2);
     expect(window.document.getElementById('homeTutTitle').textContent).toBe('Elige tu chicha');
+    expect(window.document.querySelector('#homeTutIcon img').getAttribute('src')).toContain('paso-14.jpg');
 
     window.tutHomeSetTab('preparacion');
     expect(window.document.getElementById('homeTutPrepPanel').classList.contains('show')).toBe(true);

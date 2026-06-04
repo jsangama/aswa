@@ -1393,7 +1393,7 @@
       border-bottom-color:var(--y);
     }
     .home-tutorial-body {
-      min-height:260px;
+      min-height:390px;
       display:flex;
       flex-direction:column;
       justify-content:space-between;
@@ -1401,11 +1401,11 @@
     }
     .home-tutorial-step {
       position:relative;
-      min-height:214px;
+      min-height:344px;
       display:flex;
       align-items:center;
       justify-content:center;
-      padding:24px 54px 16px;
+      padding:18px 54px 16px;
       text-align:center;
     }
     .home-tutorial-num {
@@ -1435,6 +1435,24 @@
       color:#111;
       background:linear-gradient(135deg,#facc15,#22c55e);
       box-shadow:0 14px 36px rgba(250,204,21,.12);
+    }
+    .home-tutorial-visual.has-shot {
+      width:min(230px, 60vw);
+      height:auto;
+      aspect-ratio:9/16;
+      margin-bottom:14px;
+      border-radius:15px;
+      overflow:hidden;
+      background:#050506;
+      border:1px solid rgba(250,204,21,.34);
+      box-shadow:0 18px 34px rgba(0,0,0,.34);
+      font-size:0;
+    }
+    .home-tutorial-visual.has-shot img {
+      width:100%;
+      height:100%;
+      display:block;
+      object-fit:cover;
     }
     .home-tutorial-step-title {
       color:#fff;
@@ -1569,6 +1587,7 @@
       .home-tutorial-step { padding-left:46px; padding-right:46px; }
       .home-tutorial-title { font-size:16px; }
       .home-tutorial-visual { width:70px; height:70px; font-size:34px; }
+      .home-tutorial-visual.has-shot { width:min(210px, 58vw); height:auto; }
     }
 
     .quick-order {
@@ -7677,43 +7696,42 @@ document.addEventListener('click', e => {
 
 const ASWA_HOME_TUTORIAL_STEPS = [
   {
-    icon: 'QR',
-    title: 'Entra a ASWA',
-    text: 'Abre el link o escanea el QR de ASWA para hacer tu pedido desde el celular.',
+    icon: 'FB',
+    shot: 'assets/images/tutorial-pedido/paso-17.jpg',
+    shotAlt: 'Busca ASWA La Rica Chicha en Facebook',
+    title: 'Busca ASWA en Facebook',
+    text: 'Escribe ASWA La Rica Chicha y entra a nuestra pagina oficial.',
     foot: 'Paso inicial',
-    footText: 'Comparte el link con familia y amigos para que tambien puedan pedir.',
+    footText: 'Tambien puedes entrar directo desde el link jsangama.github.io/aswa.',
     target: '#promoSlider',
     action: 'Ver inicio'
   },
   {
     icon: 'APP',
-    title: 'Abre la app',
-    text: 'Ingresa al link de ASWA desde tu celular y mira las opciones disponibles.',
-    foot: 'Empieza aqui mismo',
-    footText: 'La guia te lleva paso a paso por el pedido.',
+    shot: 'assets/images/tutorial-pedido/paso-15.jpg',
+    shotAlt: 'Pagina oficial de ASWA con boton iniciar pedido',
+    title: 'Toca Iniciar pedido',
+    text: 'Desde Facebook o desde el link, abre la app web de ASWA.',
+    foot: 'Entra a la app',
+    footText: 'La app muestra productos, zonas, pagos y beneficios en un solo lugar.',
     target: '#productosSection',
     action: 'Ver productos'
   },
   {
     icon: '2L',
+    shot: 'assets/images/tutorial-pedido/paso-14.jpg',
+    shotAlt: 'Seleccion de presentaciones ASWA 2L, 3L y 4L',
     title: 'Elige tu chicha',
-    text: 'Selecciona 2L, 3L, 4L o bidon San Juanero segun tu ocasion.',
+    text: 'Selecciona 2L, 3L, Familiar 4L o bidon 20L segun tu ocasion.',
     foot: 'Elige tu presentacion',
     footText: 'Puedes combinar presentaciones en el mismo pedido.',
     target: '#productosSection',
     action: 'Elegir chicha'
   },
   {
-    icon: '+',
-    title: 'Agrega al carrito',
-    text: 'Pulsa el boton + en cada producto y revisa las cantidades antes de continuar.',
-    foot: 'Agrega y revisa',
-    footText: 'El total se calcula automaticamente con productos, delivery y descuentos.',
-    target: '#c-p2l',
-    action: 'Agregar producto'
-  },
-  {
     icon: 'DIR',
+    shot: 'assets/images/tutorial-pedido/paso-13.jpg',
+    shotAlt: 'Formulario de datos del pedido ASWA',
     title: 'Tu direccion',
     text: 'Escribe tu telefono, nombre, direccion y una referencia para ubicarte mejor.',
     foot: 'Datos para entrega',
@@ -7723,6 +7741,8 @@ const ASWA_HOME_TUTORIAL_STEPS = [
   },
   {
     icon: 'S/',
+    shot: 'assets/images/tutorial-pedido/paso-12.jpg',
+    shotAlt: 'Metodos de pago disponibles en ASWA',
     title: 'Elige como pagar',
     text: 'Puedes usar Yape, Plin, Agora, BIM, transferencia o efectivo cuando aplique.',
     foot: 'Metodo de pago',
@@ -7732,12 +7752,47 @@ const ASWA_HOME_TUTORIAL_STEPS = [
   },
   {
     icon: 'OK',
-    title: 'Confirma y espera',
-    text: 'Revisa el resumen, confirma tu pedido y ASWA coordinara la entrega.',
-    foot: 'Pedido en camino',
-    footText: 'Cuando corresponda, la nota de venta se genera despues de la entrega confirmada.',
+    shot: 'assets/images/tutorial-pedido/paso-11.jpg',
+    shotAlt: 'Resumen del pedido antes de enviarlo por WhatsApp',
+    title: 'Revisa el resumen',
+    text: 'Confirma productos, delivery, total y metodo de pago antes de enviar.',
+    foot: 'Resumen final',
+    footText: 'Aqui puedes volver y editar si falta algun dato.',
     target: '#btnEnviarPedido,#btnEnviar,#resumenPedido,#totalBox',
-    action: 'Confirmar'
+    action: 'Ver resumen'
+  },
+  {
+    icon: 'WA',
+    shot: 'assets/images/tutorial-pedido/paso-07.jpg',
+    shotAlt: 'Envio del pedido ASWA por WhatsApp',
+    title: 'Envia por WhatsApp',
+    text: 'La app prepara el mensaje con tus datos para que lo envies a ASWA.',
+    foot: 'Pedido enviado',
+    footText: 'ASWA recibe tu pedido y coordina la preparacion y entrega.',
+    target: '#btnEnviarPedido,#btnEnviar,#resumenPedido,#totalBox',
+    action: 'Enviar pedido'
+  },
+  {
+    icon: 'BOX',
+    shot: 'assets/images/tutorial-pedido/paso-05.jpg',
+    shotAlt: 'Confirmacion de pedido recibido por el cliente',
+    title: 'Confirma la entrega',
+    text: 'Cuando recibas tu chicha, toca el boton verde de confirmacion.',
+    foot: 'Pedido recibido',
+    footText: 'Esto activa beneficios y evita mezclar pedidos pendientes con entregados.',
+    target: '#btnEnviarPedido,#btnEnviar,#resumenPedido,#totalBox',
+    action: 'Ver confirmacion'
+  },
+  {
+    icon: 'PDF',
+    shot: 'assets/images/tutorial-pedido/paso-04.jpg',
+    shotAlt: 'Nota de venta ASWA generada despues de confirmar entrega',
+    title: 'Descarga tu nota',
+    text: 'Despues de confirmar la entrega, se genera tu Nota de Venta.',
+    foot: 'Nota de venta',
+    footText: 'Puedes descargarla o guardarla como PDF cuando el pedido ya fue entregado.',
+    target: '#btnEnviarPedido,#btnEnviar,#resumenPedido,#totalBox',
+    action: 'Ver nota'
   }
 ];
 let aswaHomeTutorialStep = 0;
@@ -7791,7 +7846,16 @@ function tutHomeRender() {
     if (el) el.textContent = text;
   };
   setText('homeTutStepNum', String(aswaHomeTutorialStep + 1));
-  setText('homeTutIcon', step.icon);
+  const visual = document.getElementById('homeTutIcon');
+  if (visual) {
+    visual.classList.toggle('has-shot', Boolean(step.shot));
+    if (step.shot) {
+      const alt = String(step.shotAlt || step.title || 'Paso del pedido ASWA').replace(/"/g, '&quot;');
+      visual.innerHTML = `<img src="${step.shot}" alt="${alt}" loading="lazy" decoding="async">`;
+    } else {
+      visual.textContent = step.icon;
+    }
+  }
   setText('homeTutTitle', step.title);
   setText('homeTutText', step.text);
   setText('homeTutFootTitle', step.foot);
