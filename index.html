@@ -7764,13 +7764,35 @@ const ASWA_HOME_TUTORIAL_STEPS = [
   {
     icon: 'WA',
     shot: 'assets/images/tutorial-pedido/paso-09.jpg',
-    shotAlt: 'Envio del pedido ASWA por WhatsApp',
-    title: 'Envia por WhatsApp',
-    text: 'La app prepara el mensaje con tus datos para que lo envies a ASWA.',
-    foot: 'Pedido enviado',
-    footText: 'ASWA recibe tu pedido y coordina la preparacion y entrega.',
+    shotAlt: 'Pantalla para abrir WhatsApp con el pedido ASWA',
+    title: 'Abre WhatsApp',
+    text: 'Toca Abrir aplicacion para pasar tu pedido preparado a WhatsApp.',
+    foot: 'Abre el chat',
+    footText: 'La app arma el mensaje con tus datos, productos, zona, pago y total.',
     target: '#btnEnviarPedido,#btnEnviar,#resumenPedido,#totalBox',
-    action: 'Enviar pedido'
+    action: 'Abrir WhatsApp'
+  },
+  {
+    icon: 'OK',
+    shot: 'assets/images/tutorial-pedido/paso-10.jpg',
+    shotAlt: 'Confirmacion para salir de la app y abrir WhatsApp',
+    title: 'Toca Continuar',
+    text: 'Si Facebook pregunta si quieres salir de la app, toca Continuar.',
+    foot: 'Permiso de salida',
+    footText: 'Esto solo abre WhatsApp para enviar tu pedido a ASWA.',
+    target: '#btnEnviarPedido,#btnEnviar,#resumenPedido,#totalBox',
+    action: 'Ver envio'
+  },
+  {
+    icon: 'MSG',
+    shot: 'assets/images/tutorial-pedido/paso-11.jpg',
+    shotAlt: 'Mensaje de pedido ASWA listo en WhatsApp',
+    title: 'Envia el mensaje',
+    text: 'Revisa que el mensaje tenga tus datos y pulsa enviar en WhatsApp.',
+    foot: 'Pedido enviado',
+    footText: 'ASWA recibe el mensaje y coordina la preparacion y entrega.',
+    target: '#btnEnviarPedido,#btnEnviar,#resumenPedido,#totalBox',
+    action: 'Enviar'
   },
   {
     icon: 'BOX',
@@ -7785,7 +7807,7 @@ const ASWA_HOME_TUTORIAL_STEPS = [
   },
   {
     icon: 'PDF',
-    shot: 'assets/images/tutorial-pedido/paso-17.jpg',
+    shot: 'assets/images/tutorial-pedido/paso-16.jpg',
     shotAlt: 'Nota de venta ASWA generada despues de confirmar entrega',
     title: 'Descarga tu nota',
     text: 'Despues de confirmar la entrega, se genera tu Nota de Venta.',

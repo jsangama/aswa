@@ -43,7 +43,7 @@ describe('home tutorial guide', () => {
     expect(window.document.getElementById('homeTutTitle').textContent).toBe('Busca ASWA en Facebook');
     expect(shot).toBeTruthy();
     expect(shot.getAttribute('src')).toContain('assets/images/tutorial-pedido/paso-03.jpg');
-    expect(window.document.querySelectorAll('.home-tutorial-dot').length).toBe(9);
+    expect(window.document.querySelectorAll('.home-tutorial-dot').length).toBe(11);
   });
 
   test('advances steps, jumps by dot, and shows preparation tab coherently', () => {
