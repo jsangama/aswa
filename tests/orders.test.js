@@ -53,6 +53,7 @@ describe('orders module behavior', () => {
     const html = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
 
     expect(html).toContain('<div class="pn">Bidon ASWA 20L</div>');
+    expect(html.indexOf('class="bidon-normal-options"')).toBeLessThan(html.indexOf('id="c-sjBidonPublic"'));
     expect(html).toContain('class="bidon-normal-options"');
     expect(html).toContain('Ya tengo bidon vacio');
     expect(html).toContain('Chicha + envase retornable');

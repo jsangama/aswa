@@ -924,8 +924,10 @@
     .school-product .pimg { background:#050505; object-fit:contain; padding:3px; }
     #c-sjBidon .pimg { width:76px; height:76px; padding:2px; }
     #c-sjBidonPublic .pimg { width:76px; height:76px; padding:2px; object-fit:contain; }
+    .bidon-normal-wrap { margin-bottom:14px; }
+    .bidon-normal-wrap #c-sjBidonPublic { margin-bottom:8px; }
     .bidon-normal-options {
-      display:grid; grid-template-columns:1fr 1fr; gap:8px; margin:-4px 0 14px;
+      display:grid; grid-template-columns:1fr 1fr; gap:8px; margin:0 0 8px;
     }
     .bidon-normal-option {
       display:flex; align-items:center; gap:8px; min-height:58px; cursor:pointer;
@@ -942,7 +944,7 @@
     .bidon-normal-option small { display:block; color:var(--mut); font-size:9px; line-height:1.25; margin-top:2px; }
     .bidon-normal-option b { color:var(--y); font-size:12px; white-space:nowrap; }
     .bidon-volume-note {
-      margin:-8px 0 14px; padding:8px 10px;
+      margin:0; padding:8px 10px;
       border:1px dashed rgba(250,204,21,.38); border-radius:10px;
       background:rgba(250,204,21,.06); color:#fde68a;
       font-size:10px; line-height:1.35;
@@ -3942,32 +3944,34 @@
     </div>
 
     <!-- Bidon 20 Litros -->
-    <div class="pc" id="c-sjBidonPublic">
-      <img src="assets/images/products/optimized/san-juan-bidon-20l.png" alt="Bidon ASWA 20 litros" class="pimg">
-      <div style="flex:1">
-        <div class="pn">Bidon ASWA 20L</div>
-        <div class="pd" id="sjBidonPublicDesc">Recarga retornable: entrega tu bidon vacio al recibir.</div>
-        <div class="pp" id="pr-sjBidonPublic">S/ 60.00</div>
+    <div class="bidon-normal-wrap">
+      <div class="bidon-normal-options" aria-label="Opciones para bidon ASWA 20 litros">
+        <label class="bidon-normal-option is-active" id="bidonPublicOptRecarga">
+          <input type="radio" name="publicBidonModo" id="publicBidonRecarga" value="recarga" checked onchange="actualizarBidonPublicoUI()">
+          <span><strong>Recargar</strong><small>Ya tengo bidon vacio</small></span>
+          <b>S/ 60</b>
+        </label>
+        <label class="bidon-normal-option" id="bidonPublicOptIncluido">
+          <input type="radio" name="publicBidonModo" id="publicBidonIncluido" value="incluido" onchange="actualizarBidonPublicoUI()">
+          <span><strong>Bidon nuevo</strong><small>Chicha + envase retornable</small></span>
+          <b>S/ 80</b>
+        </label>
       </div>
-      <div class="qw">
-        <button class="qb qminus" onclick="qty('sjBidonPublic',-1)">-</button>
-        <span class="qn" id="q-sjBidonPublic">0</span>
-        <button class="qb qplus" onclick="qty('sjBidonPublic',+1)">+</button>
+      <div class="pc" id="c-sjBidonPublic">
+        <img src="assets/images/products/optimized/san-juan-bidon-20l.png" alt="Bidon ASWA 20 litros" class="pimg">
+        <div style="flex:1">
+          <div class="pn">Bidon ASWA 20L</div>
+          <div class="pd" id="sjBidonPublicDesc">Recarga retornable: entrega tu bidon vacio al recibir.</div>
+          <div class="pp" id="pr-sjBidonPublic">S/ 60.00</div>
+        </div>
+        <div class="qw">
+          <button class="qb qminus" onclick="qty('sjBidonPublic',-1)">-</button>
+          <span class="qn" id="q-sjBidonPublic">0</span>
+          <button class="qb qplus" onclick="qty('sjBidonPublic',+1)">+</button>
+        </div>
       </div>
+      <div class="bidon-volume-note"><strong>Ahorro por recarga:</strong> en recarga de bidon 20L pagas S/ 60 y ahorras S/ 15, equivalente a una presentacion familiar de 4L.</div>
     </div>
-    <div class="bidon-normal-options" aria-label="Opciones para bidon ASWA 20 litros">
-      <label class="bidon-normal-option is-active" id="bidonPublicOptRecarga">
-        <input type="radio" name="publicBidonModo" id="publicBidonRecarga" value="recarga" checked onchange="actualizarBidonPublicoUI()">
-        <span><strong>Recargar</strong><small>Ya tengo bidon vacio</small></span>
-        <b>S/ 60</b>
-      </label>
-      <label class="bidon-normal-option" id="bidonPublicOptIncluido">
-        <input type="radio" name="publicBidonModo" id="publicBidonIncluido" value="incluido" onchange="actualizarBidonPublicoUI()">
-        <span><strong>Bidon nuevo</strong><small>Chicha + envase retornable</small></span>
-        <b>S/ 80</b>
-      </label>
-    </div>
-    <div class="bidon-volume-note"><strong>Ahorro por recarga:</strong> en recarga de bidon 20L pagas S/ 60 y ahorras S/ 15, equivalente a una presentacion familiar de 4L.</div>
 
     <div class="san-juan-card" id="sanJuanEscolar">
       <span class="sj-badge">San Juan 2026 - colegios</span>
