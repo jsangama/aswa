@@ -47,6 +47,20 @@ describe('orders module behavior', () => {
     expect(html).toContain('function syncQtyUI');
   });
 
+  test('public 20L bidon appears as a normal product with returnable options', () => {
+    const fs = require('fs');
+    const path = require('path');
+    const html = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
+
+    expect(html).toContain('<div class="pn">Bidon ASWA 20L</div>');
+    expect(html).toContain('class="bidon-normal-options"');
+    expect(html).toContain('Ya tengo bidon vacio');
+    expect(html).toContain('Chicha + envase retornable');
+    expect(html).not.toContain('id="sanJuanPublico"');
+    expect(html).not.toContain('El bidon San Juanero para obra o publico general solo acepta');
+    expect(html).toContain('Puedes pagarlo con efectivo, Yape, Plin o transferencia');
+  });
+
   test('firebase function prepares automatic receipt emission without Clave SOL', () => {
     const fs = require('fs');
     const path = require('path');

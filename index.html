@@ -924,6 +924,23 @@
     .school-product .pimg { background:#050505; object-fit:contain; padding:3px; }
     #c-sjBidon .pimg { width:76px; height:76px; padding:2px; }
     #c-sjBidonPublic .pimg { width:76px; height:76px; padding:2px; object-fit:contain; }
+    .bidon-normal-options {
+      display:grid; grid-template-columns:1fr 1fr; gap:8px; margin:-4px 0 14px;
+    }
+    .bidon-normal-option {
+      display:flex; align-items:center; gap:8px; min-height:58px; cursor:pointer;
+      border:1px solid rgba(255,255,255,.12); background:rgba(255,255,255,.04);
+      border-radius:12px; padding:9px; color:#fff;
+    }
+    .bidon-normal-option.is-active {
+      border-color:rgba(250,204,21,.75); background:rgba(250,204,21,.1);
+      box-shadow:0 0 0 1px rgba(250,204,21,.1) inset;
+    }
+    .bidon-normal-option input { accent-color:#facc15; flex-shrink:0; }
+    .bidon-normal-option span { flex:1; min-width:0; }
+    .bidon-normal-option strong { display:block; font-size:11px; line-height:1.15; }
+    .bidon-normal-option small { display:block; color:var(--mut); font-size:9px; line-height:1.25; margin-top:2px; }
+    .bidon-normal-option b { color:var(--y); font-size:12px; white-space:nowrap; }
     .school-section-label {
       display:flex; align-items:center; justify-content:space-between; gap:8px;
       margin:12px 0 8px; color:#facc15; font-size:11px; font-weight:950;
@@ -3917,43 +3934,31 @@
       </div>
     </div>
 
-    <div class="san-juan-card" id="sanJuanPublico">
-      <span class="sj-badge">San Juan 2026 - publico general</span>
-      <div class="sj-title">Bidon San Juanero ASWA 20L</div>
-      <div class="sj-sub">Ideal para obras de construccion, cuadrillas, familias, reuniones y pedidos generales. Mismo precio de campana, con delivery normal segun tu zona. Pago solo con billeteras digitales o transferencia bancaria.</div>
-      <div class="bidon-price-options" aria-label="Opciones de precio para bidon publico">
-        <label class="bidon-price-option is-active" id="bidonPublicOptRecarga">
-          <input type="radio" name="publicBidonModo" id="publicBidonRecarga" value="recarga" checked onchange="actualizarBidonPublicoUI()">
-          <span>
-            <strong>Recarga: ya tengo bidon vacio</strong>
-            <small>Pagas solo la chicha ASWA 20 litros. Entregas tu bidon vacio al recibir.</small>
-            <span class="price-pill">S/ 50.00</span>
-          </span>
-        </label>
-        <label class="bidon-price-option" id="bidonPublicOptIncluido">
-          <input type="radio" name="publicBidonModo" id="publicBidonIncluido" value="incluido" onchange="actualizarBidonPublicoUI()">
-          <span>
-            <strong>Agregar bidon nuevo</strong>
-            <small>Chicha ASWA 20 litros S/ 50 + envase/bidon nuevo S/ 20.</small>
-            <span class="bidon-extra-label">Extra solo por el bidon</span>
-            <span class="price-pill">S/ 70.00</span>
-          </span>
-        </label>
+    <!-- Bidon 20 Litros -->
+    <div class="pc" id="c-sjBidonPublic">
+      <img src="assets/images/products/optimized/san-juan-bidon-20l.png" alt="Bidon ASWA 20 litros" class="pimg">
+      <div style="flex:1">
+        <div class="pn">Bidon ASWA 20L</div>
+        <div class="pd" id="sjBidonPublicDesc">Recarga retornable: entrega tu bidon vacio al recibir.</div>
+        <div class="pp" id="pr-sjBidonPublic">S/ 50.00</div>
       </div>
-      <div class="pc school-product" id="c-sjBidonPublic">
-        <img src="assets/images/products/optimized/san-juan-bidon-20l.png" alt="Bidon San Juanero 20 litros" class="pimg">
-        <div style="flex:1">
-          <div class="pn">Bidon San Juanero ASWA</div>
-          <div class="pd" id="sjBidonPublicDesc">Chicha ASWA 20 litros. Precio sin bidon/envase nuevo.</div>
-          <div class="pp" id="pr-sjBidonPublic">S/ 50.00</div>
-        </div>
-        <div class="qw">
-          <button class="qb qminus" onclick="qty('sjBidonPublic',-1)">-</button>
-          <span class="qn" id="q-sjBidonPublic">0</span>
-          <button class="qb qplus" onclick="qty('sjBidonPublic',+1)">+</button>
-        </div>
+      <div class="qw">
+        <button class="qb qminus" onclick="qty('sjBidonPublic',-1)">-</button>
+        <span class="qn" id="q-sjBidonPublic">0</span>
+        <button class="qb qplus" onclick="qty('sjBidonPublic',+1)">+</button>
       </div>
-      <div class="school-note">Venta al publico general por temporada San Juan. Este producto si cobra delivery segun la zona seleccionada. No aplica efectivo: paga con Yape, Plin, Agora, BIM o transferencia bancaria.</div>
+    </div>
+    <div class="bidon-normal-options" aria-label="Opciones para bidon ASWA 20 litros">
+      <label class="bidon-normal-option is-active" id="bidonPublicOptRecarga">
+        <input type="radio" name="publicBidonModo" id="publicBidonRecarga" value="recarga" checked onchange="actualizarBidonPublicoUI()">
+        <span><strong>Recargar</strong><small>Ya tengo bidon vacio</small></span>
+        <b>S/ 50</b>
+      </label>
+      <label class="bidon-normal-option" id="bidonPublicOptIncluido">
+        <input type="radio" name="publicBidonModo" id="publicBidonIncluido" value="incluido" onchange="actualizarBidonPublicoUI()">
+        <span><strong>Bidon nuevo</strong><small>Chicha + envase retornable</small></span>
+        <b>S/ 70</b>
+      </label>
     </div>
 
     <div class="san-juan-card" id="sanJuanEscolar">
@@ -6663,7 +6668,7 @@ const PRODUCT_META = {
   p2l: { nombre:'ASWA 2L', corto:'2L', regular:true },
   p3l: { nombre:'ASWA 3L', corto:'3L', regular:true },
   p4l: { nombre:'ASWA 4L Familiar', corto:'4L', regular:true },
-  sjBidonPublic: { nombre:'Bidon San Juanero ASWA 20L', corto:'Bidon San Juan 20L', sanJuanPublico:true },
+  sjBidonPublic: { nombre:'Bidon ASWA 20L', corto:'Bidon ASWA 20L', sanJuanPublico:true },
   sjBidon: { nombre:'Bidon escolar sanjuanero 20L', corto:'Bidon San Juan 20L', escolar:true },
   sjChicha04: { nombre:'ASWA escolar sanjuanera 0.4L', corto:'ASWA escolar 0.4L', escolar:true },
   sjCombo: { nombre:'Combo escolar sanjuanero', corto:'Combo San Juan', escolar:true },
@@ -6784,13 +6789,12 @@ function actualizarBidonPublicoUI() {
   ST.precio.sjBidonPublic = conBidon ? 50 : 70;
   const desc = document.getElementById('sjBidonPublicDesc');
   if (desc) desc.textContent = conBidon
-    ? 'Chicha ASWA 20 litros. Precio sin bidon/envase nuevo.'
-    : 'Chicha ASWA 20 litros + bidon/envase nuevo. Extra S/ 20. Precio final S/ 70.';
+    ? 'Recarga retornable: entrega tu bidon vacio al recibir.'
+    : 'Incluye chicha ASWA 20L + bidon/envase nuevo retornable.';
   const precioBidon = document.getElementById('pr-sjBidonPublic');
   if (precioBidon) precioBidon.textContent = 'S/ ' + ST.precio.sjBidonPublic.toFixed(2);
   document.getElementById('bidonPublicOptRecarga')?.classList.toggle('is-active', conBidon);
   document.getElementById('bidonPublicOptIncluido')?.classList.toggle('is-active', !conBidon);
-  if (Number(ST.cart.sjBidonPublic || 0) > 0 && ST.pago === 'Efectivo') setPago('Yape');
   calcTotal();
 }
 
@@ -7512,7 +7516,7 @@ function bidonPublicoActivo() {
 }
 
 function pedidoEspecialRequierePagoDigital() {
-  return pedidoRegaloActivo() || promoSanJuanActiva() || bidonPublicoActivo() || !!document.getElementById('reservaActiva')?.checked;
+  return pedidoRegaloActivo() || promoSanJuanActiva() || !!document.getElementById('reservaActiva')?.checked;
 }
 
 function coordsPlantaNegocio() {
@@ -9085,12 +9089,6 @@ async function enviarPedido() {
   if (!promoEscolar.ok) return;
   const promoInstitucional = obtenerPromoInstitucionalSanJuan(true);
   if (!promoInstitucional.ok) return;
-  if (bidonPublicoActivo() && ST.pago === 'Efectivo') {
-    setPago('Yape');
-    tst('El bidon San Juanero para obra o publico general solo acepta Yape, Plin, Agora, BIM o transferencia.', 4200);
-    return;
-  }
-
   _enviandoPedido = true;
   btn.disabled = true; btn.textContent = 'Enviando...';
 
@@ -12851,7 +12849,7 @@ const ASWA_APP_KNOWLEDGE_CHUNKS = [
   {
     tema: 'bidon san juan',
     terms: ['bidon','20l','20 litros','recarga','envase','san juanero','obra','cuadrilla'],
-    respuesta: 'El bidon San Juanero ASWA 20L es para publico general, obras, cuadrillas, familias y reuniones. Si ya tienes bidon vacio, pagas la recarga desde S/ 50 y entregas tu bidon al recibir. Si necesitas bidon/envase nuevo, el total es S/ 70. Cobra delivery segun zona y no acepta efectivo.'
+    respuesta: 'El bidon ASWA 20L esta en la venta normal junto a 2L, 3L y 4L. Si ya tienes bidon vacio, pagas la recarga S/ 50 y entregas tu bidon al recibir. Si necesitas bidon/envase nuevo retornable, el total es S/ 70. Cobra delivery segun zona y puedes pagar con efectivo, Yape, Plin o transferencia.'
   },
   {
     tema: 'promo escolar',
@@ -12994,7 +12992,7 @@ function _chatRespuestaProductoDirecta(texto) {
   const quiereComprar = /(quiero|deseo|necesito|deme|dame|pedir|comprar|llevar|manda|mandame)/.test(t);
 
   if (/\bbidon(?:es)?\b/.test(t)) {
-    return 'El bidon ASWA es de 20 litros. Precio: recarga con bidon vacio S/ 50; con bidon/envase nuevo S/ 70. No aplica efectivo: se paga con Yape, Plin, Agora, BIM o transferencia. Si quieres pedirlo, escribe por ejemplo: "quiero 1 bidon recarga" o "quiero 1 bidon con envase nuevo".';
+    return 'El bidon ASWA es de 20 litros. Precio: recarga con bidon vacio S/ 50; con bidon/envase nuevo retornable S/ 70. Puedes pagarlo con efectivo, Yape, Plin o transferencia. Si quieres pedirlo, escribe por ejemplo: "quiero 1 bidon recarga" o "quiero 1 bidon con envase nuevo".';
   }
 
   if (/\bgalon(?:es)?\b/.test(t)) {
@@ -13381,8 +13379,8 @@ function _chatPedidoProcesarTexto(texto) {
     draft.galonInfo = null;
     draft.listoParaConfirmar = false;
     if (producto.desdeBidon) {
-      draft.pagoRestringidoDigital = true;
-      const respuesta = `Te registro ${_chatPedidoItemsTexto(draft)} por S/ ${(_chatPedidoTotal(draft) - Number(draft.delivery || 0)).toFixed(2)}. El bidon es de 20 litros y no acepta efectivo. A que direccion seria el pedido?`;
+      draft.pagoRestringidoDigital = false;
+      const respuesta = `Te registro ${_chatPedidoItemsTexto(draft)} por S/ ${(_chatPedidoTotal(draft) - Number(draft.delivery || 0)).toFixed(2)}. El bidon es de 20 litros. A que direccion seria el pedido?`;
       _chatGuardarPedidoDraft();
       return respuesta;
     }
@@ -13414,10 +13412,6 @@ function _chatPedidoProcesarTexto(texto) {
     return _chatPagoInstrucciones(pagoDetectado, _chatPedidoTotal(draft));
   }
   if (pagoDetectado) {
-    if (draft.pagoRestringidoDigital && pagoDetectado === 'Efectivo') {
-      _chatGuardarPedidoDraft();
-      return 'El bidon ASWA 20L no acepta efectivo. Puedes pagar con Yape, Plin BBVA, Plin Interbank, Agora, BIM o transferencia Interbank/BBVA/Banbif.';
-    }
     draft.pago = pagoDetectado;
     draft.listoParaConfirmar = false;
   }

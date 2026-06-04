@@ -353,23 +353,24 @@ describe('support assistant replies', () => {
 
     expect(text).toContain('bidon ASWA es de 20 litros');
     expect(text).toContain('recarga con bidon vacio S/ 50');
-    expect(text).toContain('envase nuevo S/ 70');
+    expect(text).toContain('envase nuevo retornable S/ 70');
+    expect(text).toContain('Puedes pagarlo con efectivo');
   });
 
-  test('registers bidon recarga as 20 liter order and blocks cash', () => {
+  test('registers bidon recarga as 20 liter order and accepts cash', () => {
     const api = loadAssistantApi();
     api.reset();
 
     const first = api.process('quiero 1 bidon recarga');
     expect(first).toContain('1 x Bidon ASWA 20L');
     expect(first).toContain('S/ 50.00');
-    expect(first).toContain('no acepta efectivo');
+    expect(first).toContain('El bidon es de 20 litros');
 
     api.process('JR. JIMENES PIMENTEL 452 TARAPOTO');
     api.process('950845067');
     api.process('JOSUE SANGAMA PEZO');
     const cash = api.process('efectivo');
-    expect(cash).toContain('El bidon ASWA 20L no acepta efectivo');
+    expect(cash).toContain('Con cuanto vas a pagar');
   });
 
   test('registers bidon with new container at 70 soles', () => {
