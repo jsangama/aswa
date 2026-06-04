@@ -3307,6 +3307,21 @@
     .reserva-card { background:rgba(250,204,21,.06); border:1px solid rgba(250,204,21,.24); border-radius:14px; padding:12px; }
     .reserva-toggle { display:flex; align-items:flex-start; gap:10px; color:var(--txt); font-size:12px; font-weight:900; line-height:1.35; cursor:pointer; text-transform:none; letter-spacing:0; }
     .reserva-toggle input { width:18px; height:18px; accent-color:#facc15; margin-top:1px; flex-shrink:0; }
+    .tax-card { background:rgba(59,130,246,.07); border:1px solid rgba(59,130,246,.24); border-radius:14px; padding:12px; }
+    .tax-card.on { border-color:rgba(250,204,21,.38); background:rgba(250,204,21,.06); }
+    .tax-grid { display:none; grid-template-columns:1fr; gap:8px; margin-top:10px; }
+    .tax-grid.show { display:grid; }
+    .tax-hint { margin-top:8px; color:var(--mut); font-size:10px; line-height:1.45; }
+    .tax-company {
+      margin-top:10px;
+      background:rgba(255,255,255,.04);
+      border:1px solid rgba(255,255,255,.08);
+      border-radius:10px;
+      padding:9px 10px;
+      color:#cbd5e1;
+      font-size:10px;
+      line-height:1.55;
+    }
     .reserva-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:10px; }
     .reserva-info { font-size:10px; color:var(--mut); line-height:1.5; margin-top:8px; padding:0 2px; }
     .reserva-info.ok { color:#86efac; }
@@ -4131,6 +4146,34 @@
                 placeholder="Ej: llamar al llegar, dejar en porteria, referencia de casa"
                 style="resize:vertical;min-height:58px;line-height:1.5"></textarea>
       <div style="font-size:10px;color:var(--mut);margin-top:5px;padding:0 4px">Esta nota se enviara con tu pedido.</div>
+    </div>
+    <div class="fld">
+      <div class="tax-card" id="taxCard">
+        <label>Comprobante real SUNAT
+          <span style="color:var(--mut);font-weight:400;text-transform:none;font-size:10px"> (opcional)</span>
+        </label>
+        <select id="comprobanteTipo" class="inp" onchange="actualizarComprobanteRealUI()">
+          <option value="ninguno">No necesito comprobante real</option>
+          <option value="boleta">Solicitar Boleta electronica</option>
+          <option value="factura">Solicitar Factura electronica</option>
+        </select>
+        <div class="tax-grid" id="taxBoletaFields">
+          <input type="text" id="boletaDni" class="inp" maxlength="12" inputmode="numeric" placeholder="DNI del cliente (opcional)">
+          <input type="email" id="boletaEmail" class="inp" maxlength="80" placeholder="Correo para enviar boleta (opcional)">
+        </div>
+        <div class="tax-grid" id="taxFacturaFields">
+          <input type="text" id="facturaRuc" class="inp" maxlength="11" inputmode="numeric" placeholder="RUC del cliente">
+          <input type="text" id="facturaRazon" class="inp" maxlength="120" placeholder="Razon social del cliente">
+          <input type="text" id="facturaDireccion" class="inp" maxlength="180" placeholder="Direccion fiscal del cliente">
+          <input type="email" id="facturaEmail" class="inp" maxlength="80" placeholder="Correo para enviar factura (opcional)">
+        </div>
+        <div class="tax-hint" id="taxHint">Si solicitas boleta o factura real, ASWA emitira el comprobante electronico cuando corresponda y lo enviara por WhatsApp o correo.</div>
+        <div class="tax-company">
+          Emisor: <strong>SANGAMA INVERSIONES SAC</strong><br>
+          RUC: <strong>20600386531</strong><br>
+          Domicilio fiscal: Jr. Sargento Lores 425, Morales, San Martin, Peru.
+        </div>
+      </div>
     </div>
     <div class="fld">
       <div class="reserva-card">
@@ -6316,6 +6359,85 @@ function esc(s) {
     .replace(/'/g, '&#39;');
 }
 function escAttr(s) { return esc(s); }
+
+const ASWA_EMPRESA_TRIBUTARIA = {
+  ruc: '20600386531',
+  razon_social: 'SANGAMA INVERSIONES SAC',
+  nombre_comercial: 'ASWA La Rica Chicha',
+  direccion_fiscal: 'Jr. Sargento Lores 425, Morales, San Martin, Peru',
+  condicion: 'Activo',
+  estado_domicilio: 'Habido',
+  actividad: 'Elaboracion de bebidas no alcoholicas'
+};
+
+function actualizarComprobanteRealUI() {
+  const tipo = document.getElementById('comprobanteTipo')?.value || 'ninguno';
+  const card = document.getElementById('taxCard');
+  const boleta = document.getElementById('taxBoletaFields');
+  const factura = document.getElementById('taxFacturaFields');
+  const hint = document.getElementById('taxHint');
+  card?.classList.toggle('on', tipo !== 'ninguno');
+  boleta?.classList.toggle('show', tipo === 'boleta');
+  factura?.classList.toggle('show', tipo === 'factura');
+  if (hint) {
+    hint.textContent = tipo === 'factura'
+      ? 'Para factura, el RUC, razon social y direccion fiscal del cliente son obligatorios.'
+      : (tipo === 'boleta'
+        ? 'Para boleta, puedes dejar DNI y correo si deseas que ASWA envie el comprobante al cliente.'
+        : 'Si solicitas boleta o factura real, ASWA emitira el comprobante electronico cuando corresponda y lo enviara por WhatsApp o correo.');
+  }
+}
+
+function obtenerSolicitudComprobanteReal(validar = false) {
+  const tipo = sanitizeInput(document.getElementById('comprobanteTipo')?.value || 'ninguno', 20).toLowerCase();
+  if (tipo !== 'boleta' && tipo !== 'factura') {
+    return { ok:true, solicita:false, tipo:'ninguno' };
+  }
+  const base = {
+    ok: true,
+    solicita: true,
+    tipo,
+    estado: 'pendiente_emision',
+    emisor: { ...ASWA_EMPRESA_TRIBUTARIA }
+  };
+  if (tipo === 'boleta') {
+    base.datos = {
+      dni: sanitizeInput(document.getElementById('boletaDni')?.value || '', 12).replace(/\D/g, ''),
+      correo: sanitizeInput(document.getElementById('boletaEmail')?.value || '', 80),
+      nombre: sanitizeInput(document.getElementById('nombre')?.value || '', 80),
+      telefono: sanitizeInput(document.getElementById('telefono')?.value || '', 15)
+    };
+    return base;
+  }
+  base.datos = {
+    ruc: sanitizeInput(document.getElementById('facturaRuc')?.value || '', 11).replace(/\D/g, ''),
+    razon_social: sanitizeInput(document.getElementById('facturaRazon')?.value || '', 120),
+    direccion_fiscal: sanitizeInput(document.getElementById('facturaDireccion')?.value || '', 180),
+    correo: sanitizeInput(document.getElementById('facturaEmail')?.value || '', 80)
+  };
+  if (validar && (!/^\d{11}$/.test(base.datos.ruc) || !base.datos.razon_social || !base.datos.direccion_fiscal)) {
+    document.getElementById('taxCard')?.scrollIntoView({ behavior:'smooth', block:'center' });
+    tst('Completa RUC, razon social y direccion fiscal para emitir factura.', 4200);
+    return { ok:false };
+  }
+  return base;
+}
+
+function comprobanteRealWhatsapp(comp) {
+  if (!comp?.solicita) return '';
+  if (comp.tipo === 'factura') {
+    return '\n' + 'COMPROBANTE REAL SOLICITADO: FACTURA ELECTRONICA\n'
+      + 'RUC cliente: ' + comp.datos.ruc + '\n'
+      + 'Razon social: ' + comp.datos.razon_social + '\n'
+      + 'Direccion fiscal: ' + comp.datos.direccion_fiscal + '\n'
+      + (comp.datos.correo ? 'Correo: ' + comp.datos.correo + '\n' : '')
+      + 'Emisor: ' + comp.emisor.razon_social + ' - RUC ' + comp.emisor.ruc + '\n';
+  }
+  return '\n' + 'COMPROBANTE REAL SOLICITADO: BOLETA ELECTRONICA\n'
+    + (comp.datos.dni ? 'DNI cliente: ' + comp.datos.dni + '\n' : '')
+    + (comp.datos.correo ? 'Correo: ' + comp.datos.correo + '\n' : '')
+    + 'Emisor: ' + comp.emisor.razon_social + ' - RUC ' + comp.emisor.ruc + '\n';
+}
 
 function lazyLoadScript(src) {
   return new Promise((resolve, reject) => {
@@ -8681,6 +8803,8 @@ function abrirResumen() {
   if (!promoEscolar.ok) return false;
   const promoInstitucional = obtenerPromoInstitucionalSanJuan(true);
   if (!promoInstitucional.ok) return false;
+  const comprobanteReal = obtenerSolicitudComprobanteReal(true);
+  if (!comprobanteReal.ok) return false;
 
   // ── Pago digital requiere comprobante antes de continuar ──
   const esDigitalPago = ST.pago !== 'Efectivo';
@@ -8709,6 +8833,9 @@ function abrirResumen() {
   if (reservaPedido.activa) row('Reserva de entrega', reservaPedido.texto);
   if (promoEscolar.activo) row('Centro educativo / seccion', promoEscolar.texto);
   if (promoInstitucional.activo) row('Institucion / grupo', promoInstitucional.texto);
+  if (comprobanteReal.solicita) {
+    row('Comprobante real', comprobanteReal.tipo === 'factura' ? 'Factura electronica' : 'Boleta electronica');
+  }
 
   const disc = getDescuentoPct();
   const fixed = getDescuentoFijoAplicado(disc);
@@ -8773,6 +8900,8 @@ async function enviarPedido() {
   if (!promoEscolar.ok) return;
   const promoInstitucional = obtenerPromoInstitucionalSanJuan(true);
   if (!promoInstitucional.ok) return;
+  const comprobanteReal = obtenerSolicitudComprobanteReal(true);
+  if (!comprobanteReal.ok) return;
   if (bidonPublicoActivo() && ST.pago === 'Efectivo') {
     setPago('Yape');
     tst('El bidon San Juanero para obra o publico general solo acepta Yape, Plin, Agora, BIM o transferencia.', 4200);
@@ -8834,6 +8963,7 @@ async function enviarPedido() {
     +'📱 *Celular:* '+telefono+'\n'
     +nivelEmoji[nivelCliente]+' *Nivel:* '+nivelCliente+' '+(nivelStars[nivelCliente]||'')+'\n'
     +(codigoUsado ? '🎟 *Ref usado:* `'+codigoUsado+'`\n' : '')
+    +comprobanteRealWhatsapp(comprobanteReal)
     +'\n'+sep+'\n\n'
 
     +'🛒 *PRODUCTOS*\n'
@@ -8954,6 +9084,11 @@ async function enviarPedido() {
       confirmacion_cliente: false, // Cloud Function escucha este campo
       gps_url:        ST.gpsUrl || null,
       gps_coords:     ST.gpsCoords || null,
+      comprobante_real_solicitado: !!comprobanteReal.solicita,
+      comprobante_real_tipo: comprobanteReal.solicita ? comprobanteReal.tipo : null,
+      comprobante_real_estado: comprobanteReal.solicita ? comprobanteReal.estado : null,
+      comprobante_real_datos: comprobanteReal.solicita ? comprobanteReal.datos : null,
+      comprobante_real_emisor: comprobanteReal.solicita ? comprobanteReal.emisor : null,
       // Comprobante digital: Storage si esta habilitado; si no, verificacion manual por WhatsApp.
       ...comprobanteMeta,
       compartido:     false,   // se actualiza cuando cliente comparte en redes
@@ -14537,6 +14672,7 @@ function admRenderYapes(docs) {
         ${pedidoRegaloHtml(d)}
         ${pedidoRutaHtml(d)}
         ${pedidoCargaHtml(d)}
+        ${pedidoComprobanteRealHtml(d)}
         <div class="adm-ped-top">
           <div>
             <div class="adm-ped-nom">${d.nombre || '—'}</div>
@@ -14606,6 +14742,7 @@ function admRenderPedidos(docs) {
         ${pedidoRegaloHtml(d)}
         ${pedidoRutaHtml(d)}
         ${pedidoCargaHtml(d)}
+        ${pedidoComprobanteRealHtml(d)}
         ${alertaCierre}
         <div class="adm-ped-top">
           <div>
@@ -14649,6 +14786,7 @@ function admRenderReservas(docs) {
         ${pedidoRegaloHtml(d)}
         ${pedidoRutaHtml(d)}
         ${pedidoCargaHtml(d)}
+        ${pedidoComprobanteRealHtml(d)}
         <div style="background:rgba(250,204,21,.14);border:1px solid rgba(250,204,21,.35);border-radius:10px;padding:9px 12px;color:#fde68a;font-weight:900;font-size:12px;margin-bottom:10px">
           📅 Reserva: ${esc(reserva)}
         </div>
@@ -14696,6 +14834,17 @@ function pedidoCargaHtml(d) {
   const confirmado = !!d.delivery_carga_confirmada;
   const txt = _itemsTexto(d.delivery_carga || d.items);
   return `<div style="background:${confirmado ? 'rgba(34,197,94,.08)' : 'rgba(250,204,21,.08)'};border:1px solid ${confirmado ? 'rgba(34,197,94,.22)' : 'rgba(250,204,21,.24)'};border-radius:8px;padding:8px 12px;font-size:12px;color:${confirmado ? '#86efac' : '#fde68a'};font-weight:800;margin-bottom:8px">Carga delivery: ${esc(txt)}${confirmado ? '<br>Confirmada por deliverista' : '<br>Pendiente de confirmacion del deliverista'}</div>`;
+}
+
+function pedidoComprobanteRealHtml(d) {
+  if (!d?.comprobante_real_solicitado) return '';
+  const tipo = d.comprobante_real_tipo === 'factura' ? 'FACTURA ELECTRONICA' : 'BOLETA ELECTRONICA';
+  const datos = d.comprobante_real_datos || {};
+  const estado = d.comprobante_real_estado || 'pendiente_emision';
+  const detalle = d.comprobante_real_tipo === 'factura'
+    ? `RUC: ${esc(datos.ruc || '—')}<br>Razon social: ${esc(datos.razon_social || '—')}<br>Direccion fiscal: ${esc(datos.direccion_fiscal || '—')}${datos.correo ? '<br>Correo: ' + esc(datos.correo) : ''}`
+    : `${datos.dni ? 'DNI: ' + esc(datos.dni) + '<br>' : ''}${datos.correo ? 'Correo: ' + esc(datos.correo) + '<br>' : ''}Cliente: ${esc(datos.nombre || d.nombre || '—')}`;
+  return `<div style="background:rgba(59,130,246,.1);border:1px solid rgba(59,130,246,.3);border-radius:8px;padding:8px 12px;font-size:12px;color:#bfdbfe;font-weight:800;margin-bottom:8px">Comprobante real solicitado: ${tipo}<br><span style="color:#dbeafe;font-weight:600">${detalle}</span><br><span style="color:#fde68a">Estado: ${esc(estado)}</span></div>`;
 }
 
 function _itemsTexto(items) {
@@ -24332,3 +24481,4 @@ document.addEventListener('DOMContentLoaded', function() {
 
 </body>
 </html>
+
