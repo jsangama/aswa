@@ -1,13 +1,17 @@
 import { initializeApp } from 'firebase-admin/app';
 import { getFirestore, FieldValue } from 'firebase-admin/firestore';
 import { defineSecret } from 'firebase-functions/params';
-import { onDocumentCreated } from 'firebase-functions/v2/firestore';
+import { onDocumentCreated, onDocumentUpdated } from 'firebase-functions/v2/firestore';
 
 initializeApp();
 
 const db = getFirestore();
 const OPENAI_API_KEY = defineSecret('OPENAI_API_KEY');
 const OPENAI_MODEL = process.env.OPENAI_MODEL || 'gpt-4.1-mini';
+const FACTURACION_API_KEY = defineSecret('FACTURACION_API_KEY');
+const FACTURACION_API_URL = process.env.FACTURACION_API_URL || '';
+const FACTURACION_SERIE_BOLETA = process.env.FACTURACION_SERIE_BOLETA || 'B001';
+const FACTURACION_SERIE_FACTURA = process.env.FACTURACION_SERIE_FACTURA || 'F001';
 
 const ASWA_AGENT_INSTRUCTIONS = `
 Eres el asistente de soporte de ASWA La Rica Chicha en Morales, San Martin, Peru.
@@ -106,6 +110,89 @@ Soporte, admin y seguridad:
 
 function cleanText(value, max = 1200) {
   return String(value || '').replace(/\s+/g, ' ').trim().slice(0, max);
+}
+
+function isReceiptReady(order) {
+  const estado = cleanText(order?.estado, 40).toLowerCase();
+  const yapeEstado = cleanText(order?.yape_estado, 40).toLowerCase();
+  return Boolean(
+    order?.confirmacion_cliente === true ||
+    ['entregado', 'cerrado'].includes(estado) ||
+    yapeEstado === 'aprobado'
+  );
+}
+
+function shouldStartReceipt(before, after) {
+  if (!after?.comprobante_real_solicitado) return false;
+  if (after?.es_prueba) return false;
+  if (!['boleta', 'factura'].includes(after?.comprobante_real_tipo)) return false;
+  if (['emitido', 'enviando', 'pendiente_proveedor'].includes(after?.comprobante_real_estado)) return false;
+  if (!isReceiptReady(after)) return false;
+  return !isReceiptReady(before) || before?.comprobante_real_estado !== after?.comprobante_real_estado;
+}
+
+function buildReceiptPayload(order, pedidoId) {
+  const tipo = order.comprobante_real_tipo;
+  const serie = tipo === 'factura' ? FACTURACION_SERIE_FACTURA : FACTURACION_SERIE_BOLETA;
+  const items = Array.isArray(order.items_detalle) ? order.items_detalle : [];
+  return {
+    external_id: pedidoId,
+    tipo_comprobante: tipo,
+    serie,
+    moneda: 'PEN',
+    emisor: order.comprobante_real_emisor || {
+      ruc: '20600386531',
+      razon_social: 'SANGAMA INVERSIONES SAC',
+      nombre_comercial: 'ASWA La Rica Chicha'
+    },
+    cliente: order.comprobante_real_datos || {},
+    pedido: {
+      nombre: order.nombre || '',
+      telefono: order.telefono || '',
+      direccion: order.direccion || '',
+      zona: order.distrito || '',
+      pago: order.pago || '',
+      total: Number(order.total || 0),
+      subtotal: Number(order.subtotal || 0),
+      delivery: Number(order.delivery || 0),
+      descuento: Number(order.descuento_amt || 0)
+    },
+    items: items.map(item => ({
+      descripcion: item.nombre || item.descripcion || 'Chicha ASWA',
+      cantidad: Number(item.qty || item.cantidad || 1),
+      precio_unitario: Number(item.precio || item.price || 0),
+      total: Number(item.total || 0)
+    }))
+  };
+}
+
+async function emitReceiptWithProvider(payload) {
+  if (!FACTURACION_API_URL) {
+    return { configured: false };
+  }
+  const apiKey = FACTURACION_API_KEY.value();
+  if (!apiKey) {
+    return { configured: false };
+  }
+  const response = await fetch(FACTURACION_API_URL, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${apiKey}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(payload)
+  });
+  const text = await response.text();
+  let data = {};
+  try {
+    data = text ? JSON.parse(text) : {};
+  } catch {
+    data = { raw: text };
+  }
+  if (!response.ok) {
+    throw new Error(`Facturacion API ${response.status}: ${text.slice(0, 500)}`);
+  }
+  return { configured: true, data };
 }
 
 function shouldAnswer(message, chat) {
@@ -227,6 +314,71 @@ export const responderChatConIa = onDocumentCreated(
         ai_estado: 'error',
         ai_error: cleanText(error.message, 300),
         ai_finished_at: FieldValue.serverTimestamp()
+      }, { merge: true });
+    }
+  }
+);
+
+export const emitirComprobanteReal = onDocumentUpdated(
+  {
+    document: 'pedidos/{pedidoId}',
+    region: 'us-central1',
+    secrets: [FACTURACION_API_KEY],
+    timeoutSeconds: 60,
+    memory: '256MiB',
+    maxInstances: 3
+  },
+  async event => {
+    const before = event.data?.before?.data() || {};
+    const after = event.data?.after?.data() || {};
+    const { pedidoId } = event.params;
+    const pedidoRef = db.collection('pedidos').doc(pedidoId);
+
+    if (!shouldStartReceipt(before, after)) return;
+
+    const payload = buildReceiptPayload(after, pedidoId);
+    await pedidoRef.set({
+      comprobante_real_estado: 'enviando',
+      comprobante_real_intentos: FieldValue.increment(1),
+      comprobante_real_payload_resumen: {
+        tipo: payload.tipo_comprobante,
+        serie: payload.serie,
+        total: payload.pedido.total,
+        cliente: payload.cliente
+      },
+      comprobante_real_updated_at: FieldValue.serverTimestamp()
+    }, { merge: true });
+
+    try {
+      const result = await emitReceiptWithProvider(payload);
+      if (!result.configured) {
+        await pedidoRef.set({
+          comprobante_real_estado: 'pendiente_proveedor',
+          comprobante_real_mensaje: 'Configura FACTURACION_API_URL y FACTURACION_API_KEY para emitir automaticamente.',
+          comprobante_real_updated_at: FieldValue.serverTimestamp()
+        }, { merge: true });
+        return;
+      }
+
+      const data = result.data || {};
+      await pedidoRef.set({
+        comprobante_real_estado: data.estado || 'emitido',
+        comprobante_real_serie: data.serie || payload.serie || null,
+        comprobante_real_numero: data.numero || data.correlativo || null,
+        comprobante_real_pdf_url: data.pdf_url || data.pdf || null,
+        comprobante_real_xml_url: data.xml_url || data.xml || null,
+        comprobante_real_cdr_url: data.cdr_url || data.cdr || null,
+        comprobante_real_hash: data.hash || null,
+        comprobante_real_respuesta: data,
+        comprobante_real_emitido_at: FieldValue.serverTimestamp(),
+        comprobante_real_updated_at: FieldValue.serverTimestamp()
+      }, { merge: true });
+    } catch (error) {
+      console.error('emitirComprobanteReal:', error);
+      await pedidoRef.set({
+        comprobante_real_estado: 'error',
+        comprobante_real_error: cleanText(error.message, 500),
+        comprobante_real_updated_at: FieldValue.serverTimestamp()
       }, { merge: true });
     }
   }
