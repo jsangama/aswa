@@ -91,8 +91,14 @@ describe('home tutorial guide', () => {
   test('shows quick order shortcuts before the long guide', () => {
     const html = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
 
+    expect(html).toContain('class="easy-start"');
+    expect(html).toContain('Haz tu pedido rapido');
+    expect(html).toContain('Empezar pedido');
+    expect(html).toContain('Pedir con asistente');
+    expect(html).toContain('class="home-help-collapsible"');
+    expect(html).toContain('Necesitas ayuda? Ver guia paso a paso');
     expect(html).toContain('class="quick-order"');
-    expect(html).toContain('Pedido rapido');
+    expect(html).toContain('Accesos rapidos');
     expect(html).toContain("onclick=\"irPedidoRapido('zona')\"");
     expect(html).toContain("onclick=\"irPedidoRapido('productos')\"");
     expect(html).toContain("onclick=\"irPedidoRapido('datos')\"");
