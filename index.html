@@ -941,6 +941,13 @@
     .bidon-normal-option strong { display:block; font-size:11px; line-height:1.15; }
     .bidon-normal-option small { display:block; color:var(--mut); font-size:9px; line-height:1.25; margin-top:2px; }
     .bidon-normal-option b { color:var(--y); font-size:12px; white-space:nowrap; }
+    .bidon-volume-note {
+      margin:-8px 0 14px; padding:8px 10px;
+      border:1px dashed rgba(250,204,21,.38); border-radius:10px;
+      background:rgba(250,204,21,.06); color:#fde68a;
+      font-size:10px; line-height:1.35;
+    }
+    .bidon-volume-note strong { color:#fff; }
     .school-section-label {
       display:flex; align-items:center; justify-content:space-between; gap:8px;
       margin:12px 0 8px; color:#facc15; font-size:11px; font-weight:950;
@@ -3960,6 +3967,7 @@
         <b>S/ 95</b>
       </label>
     </div>
+    <div class="bidon-volume-note"><strong>A mas cantidad, menor precio por litro:</strong> el bidon 20L recarga baja a aprox. S/ 3.75 por litro. En promo escolar San Juan baja todavia mas: aprox. S/ 2.50 por litro.</div>
 
     <div class="san-juan-card" id="sanJuanEscolar">
       <span class="sj-badge">San Juan 2026 - colegios</span>
@@ -12746,7 +12754,7 @@ const ASWA_SUPPORT_KNOWLEDGE = [
     tema: 'productos y precios',
     priority: 2,
     keywords: ['precio', 'cuanto cuesta', 'cuanto vale', 'costo', 'producto', '2l', '3l', '4l', 'bidon'],
-    respuesta: 'Productos principales: Chicha ASWA 2L S/ 9, Chicha ASWA 3L S/ 13 y Chicha ASWA Familiar 4L S/ 15. En venta normal tambien puedes pedir bidon ASWA 20L: recarga S/ 75 o con bidon/envase nuevo retornable S/ 95. En promo escolar San Juan el bidon queda en S/ 50 recarga o S/ 70 con bidon nuevo.'
+    respuesta: 'Productos principales: Chicha ASWA 2L S/ 9, Chicha ASWA 3L S/ 13 y Chicha ASWA Familiar 4L S/ 15. A mas cantidad, menor precio por litro: en venta normal el bidon ASWA 20L cuesta recarga S/ 75 o con bidon/envase nuevo retornable S/ 95. En promo escolar San Juan queda en S/ 50 recarga o S/ 70 con bidon nuevo.'
   },
   {
     tema: 'campana san juan',
@@ -12849,7 +12857,7 @@ const ASWA_APP_KNOWLEDGE_CHUNKS = [
   {
     tema: 'bidon san juan',
     terms: ['bidon','20l','20 litros','recarga','envase','san juanero','obra','cuadrilla'],
-    respuesta: 'El bidon ASWA 20L esta en la venta normal junto a 2L, 3L y 4L. Si ya tienes bidon vacio, pagas la recarga S/ 75 y entregas tu bidon al recibir. Si necesitas bidon/envase nuevo retornable, el total es S/ 95. La promo escolar San Juan mantiene precio especial: S/ 50 recarga o S/ 70 con bidon nuevo. Cobra delivery segun zona y puedes pagar con efectivo, Yape, Plin o transferencia.'
+    respuesta: 'El bidon ASWA 20L esta en la venta normal junto a 2L, 3L y 4L. Como es mas cantidad, el precio por litro baja: recarga S/ 75, aprox. S/ 3.75 por litro. Si necesitas bidon/envase nuevo retornable, el total es S/ 95. La promo escolar San Juan mantiene precio especial: S/ 50 recarga, aprox. S/ 2.50 por litro, o S/ 70 con bidon nuevo. Cobra delivery segun zona y puedes pagar con efectivo, Yape, Plin o transferencia.'
   },
   {
     tema: 'promo escolar',
@@ -12992,7 +13000,7 @@ function _chatRespuestaProductoDirecta(texto) {
   const quiereComprar = /(quiero|deseo|necesito|deme|dame|pedir|comprar|llevar|manda|mandame)/.test(t);
 
   if (/\bbidon(?:es)?\b/.test(t)) {
-    return 'El bidon ASWA es de 20 litros. En venta normal: recarga con bidon vacio S/ 75; con bidon/envase nuevo retornable S/ 95. La promo escolar San Juan queda con precio especial: recarga S/ 50 o con bidon nuevo S/ 70. Puedes pagarlo con efectivo, Yape, Plin o transferencia. Si quieres pedirlo, escribe por ejemplo: "quiero 1 bidon recarga" o "quiero 1 bidon con envase nuevo".';
+    return 'El bidon ASWA es de 20 litros. A mas cantidad, menor precio por litro: en venta normal la recarga con bidon vacio cuesta S/ 75, aprox. S/ 3.75 por litro; con bidon/envase nuevo retornable cuesta S/ 95. La promo escolar San Juan queda con precio especial: recarga S/ 50, aprox. S/ 2.50 por litro, o con bidon nuevo S/ 70. Puedes pagarlo con efectivo, Yape, Plin o transferencia. Si quieres pedirlo, escribe por ejemplo: "quiero 1 bidon recarga" o "quiero 1 bidon con envase nuevo".';
   }
 
   if (/\bgalon(?:es)?\b/.test(t)) {
