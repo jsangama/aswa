@@ -42,7 +42,7 @@ describe('home tutorial guide', () => {
     expect(section).toBeTruthy();
     expect(window.document.getElementById('homeTutTitle').textContent).toBe('Busca ASWA en Facebook');
     expect(shot).toBeTruthy();
-    expect(shot.getAttribute('src')).toContain('assets/images/tutorial-pedido/paso-17.jpg');
+    expect(shot.getAttribute('src')).toContain('assets/images/tutorial-pedido/paso-03.jpg');
     expect(window.document.querySelectorAll('.home-tutorial-dot').length).toBe(9);
   });
 
@@ -54,7 +54,7 @@ describe('home tutorial guide', () => {
 
     window.tutHomeSetStep(2);
     expect(window.document.getElementById('homeTutTitle').textContent).toBe('Elige tu chicha');
-    expect(window.document.querySelector('#homeTutIcon img').getAttribute('src')).toContain('paso-14.jpg');
+    expect(window.document.querySelector('#homeTutIcon img').getAttribute('src')).toContain('paso-05.jpg');
 
     window.tutHomeSetTab('preparacion');
     expect(window.document.getElementById('homeTutPrepPanel').classList.contains('show')).toBe(true);
