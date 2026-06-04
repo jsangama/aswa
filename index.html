@@ -888,6 +888,15 @@
     .qplus  { background:var(--y); color:#000; }
     .qminus { background:var(--s2); color:var(--txt); }
     .qn { font-size:18px; font-weight:800; min-width:22px; text-align:center; }
+    .qinput {
+      width:58px; min-width:58px; height:40px; border:1px solid rgba(250,204,21,.35);
+      border-radius:10px; background:rgba(0,0,0,.26); color:var(--txt);
+      font:800 18px 'Poppins',sans-serif; text-align:center; outline:none;
+    }
+    .qinput:focus { border-color:var(--y); box-shadow:0 0 0 3px rgba(250,204,21,.14); }
+    .qinput::-webkit-outer-spin-button,
+    .qinput::-webkit-inner-spin-button { -webkit-appearance:none; margin:0; }
+    .qinput { -moz-appearance:textfield; }
     .san-juan-card {
       background:linear-gradient(160deg, rgba(250,204,21,.13), rgba(20,83,45,.18));
       border:1px solid rgba(250,204,21,.35);
@@ -3948,7 +3957,7 @@
         </div>
         <div class="qw">
           <button class="qb qminus" onclick="qty('sjChicha04',-1)">-</button>
-          <span class="qn" id="q-sjChicha04">0</span>
+          <input class="qn qinput" id="q-sjChicha04" type="number" min="0" max="999" inputmode="numeric" value="0" aria-label="Cantidad ASWA escolar sanjuanera" oninput="setQtyDirect('sjChicha04',this.value)" onfocus="this.select()">
           <button class="qb qplus" onclick="qty('sjChicha04',+1)">+</button>
         </div>
       </div>
@@ -3961,7 +3970,7 @@
         </div>
         <div class="qw">
           <button class="qb qminus" onclick="qty('sjCombo',-1)">-</button>
-          <span class="qn" id="q-sjCombo">0</span>
+          <input class="qn qinput" id="q-sjCombo" type="number" min="0" max="999" inputmode="numeric" value="0" aria-label="Cantidad combo escolar sanjuanero" oninput="setQtyDirect('sjCombo',this.value)" onfocus="this.select()">
           <button class="qb qplus" onclick="qty('sjCombo',+1)">+</button>
         </div>
       </div>
@@ -3974,7 +3983,7 @@
         </div>
         <div class="qw">
           <button class="qb qminus" onclick="qty('sjJuane',-1)">-</button>
-          <span class="qn" id="q-sjJuane">0</span>
+          <input class="qn qinput" id="q-sjJuane" type="number" min="0" max="999" inputmode="numeric" value="0" aria-label="Cantidad solo juane escolar" oninput="setQtyDirect('sjJuane',this.value)" onfocus="this.select()">
           <button class="qb qplus" onclick="qty('sjJuane',+1)">+</button>
         </div>
       </div>
@@ -6843,15 +6852,37 @@ window.PRODUCT_META = PRODUCT_META;
 window.actualizarNivelEscolarUI = actualizarNivelEscolarUI;
 
 /* ── CARRITO ── */
+function syncQtyUI(id) {
+  const qtyValue = Math.max(0, Number(ST.cart[id] || 0));
+  const qEl = document.getElementById('q-' + id);
+  if (qEl) {
+    if ('value' in qEl) qEl.value = qtyValue;
+    else qEl.textContent = qtyValue;
+  }
+  document.getElementById('c-' + id)?.classList.toggle('on', qtyValue > 0);
+}
+
 function qty(id, d) {
   normalizarCarrito();
-  ST.cart[id] = Math.max(0, ST.cart[id] + d);
-  document.getElementById('q-' + id).textContent = ST.cart[id];
-  document.getElementById('c-' + id).classList.toggle('on', ST.cart[id] > 0);
+  ST.cart[id] = Math.max(0, Number(ST.cart[id] || 0) + d);
+  syncQtyUI(id);
   if (PRODUCT_META[id]?.sanJuanPublico) actualizarBidonPublicoUI();
   if (PRODUCT_META[id]?.escolar || PRODUCT_META[id]?.sanJuanInstitucional) actualizarPromoEscolarUI();
   calcTotal();
 }
+
+function setQtyDirect(id, value) {
+  normalizarCarrito();
+  const raw = String(value ?? '').replace(/[^\d]/g, '');
+  ST.cart[id] = raw === '' ? 0 : Math.min(999, Math.max(0, parseInt(raw, 10) || 0));
+  syncQtyUI(id);
+  if (PRODUCT_META[id]?.sanJuanPublico) actualizarBidonPublicoUI();
+  if (PRODUCT_META[id]?.escolar || PRODUCT_META[id]?.sanJuanInstitucional) actualizarPromoEscolarUI();
+  calcTotal();
+}
+window.qty = qty;
+window.setQtyDirect = setQtyDirect;
+window.syncQtyUI = syncQtyUI;
 
 function getDescuentoPct() {
   return Math.min(30,
@@ -18290,10 +18321,7 @@ function histRepetirPedido(pedidoId) {
 
   // Actualizar UI del carrito
   Object.keys(ST.cart).forEach(k => {
-    const qEl = document.getElementById('q-' + k);
-    const cEl = document.getElementById('c-' + k);
-    if (qEl) qEl.textContent = ST.cart[k];
-    if (cEl) cEl.classList.toggle('on', ST.cart[k] > 0);
+    if (typeof syncQtyUI === 'function') syncQtyUI(k);
   });
 
   calcTotal();
@@ -18501,10 +18529,7 @@ function confirmarReorden() {
 
   // Actualizar UI del carrito
   Object.keys(ST.cart).forEach(k => {
-    const qEl = document.getElementById('q-' + k);
-    const cEl = document.getElementById('c-' + k);
-    if (qEl) qEl.textContent = ST.cart[k];
-    if (cEl) cEl.classList.toggle('on', ST.cart[k] > 0);
+    if (typeof syncQtyUI === 'function') syncQtyUI(k);
   });
 
   // Prellenar dirección si la tenemos

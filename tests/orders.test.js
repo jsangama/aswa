@@ -32,6 +32,21 @@ describe('orders module behavior', () => {
     expect(html).toContain('pedidoComprobanteRealHtml');
   });
 
+  test('school San Juan products allow direct quantity entry', () => {
+    const fs = require('fs');
+    const path = require('path');
+    const html = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
+
+    expect(html).toContain('id="q-sjChicha04" type="number"');
+    expect(html).toContain("setQtyDirect('sjChicha04',this.value)");
+    expect(html).toContain('id="q-sjCombo" type="number"');
+    expect(html).toContain("setQtyDirect('sjCombo',this.value)");
+    expect(html).toContain('id="q-sjJuane" type="number"');
+    expect(html).toContain("setQtyDirect('sjJuane',this.value)");
+    expect(html).toContain('function setQtyDirect');
+    expect(html).toContain('function syncQtyUI');
+  });
+
   test('firebase function prepares automatic receipt emission without Clave SOL', () => {
     const fs = require('fs');
     const path = require('path');
