@@ -69,6 +69,8 @@ describe('home tutorial guide', () => {
     expect(block).toContain("const modal = document.getElementById('tutVideoModal')");
     expect(block).toContain('www.youtube-nocookie.com/embed/${videoId}');
     expect(block).toContain('Abrir en YouTube si no reproduce');
+    expect(html).toContain('function tutInstalarClicksVideo');
+    expect(html).toContain('globalThis.tutAbrirVideo = tutAbrirVideo');
     expect(block).not.toContain("tutToggleTutorialPedido(true)");
     expect(html).toContain('function tutRepararIconosGuia');
   });
