@@ -4148,34 +4148,6 @@
       <div style="font-size:10px;color:var(--mut);margin-top:5px;padding:0 4px">Esta nota se enviara con tu pedido.</div>
     </div>
     <div class="fld">
-      <div class="tax-card" id="taxCard">
-        <label>Comprobante real SUNAT
-          <span style="color:var(--mut);font-weight:400;text-transform:none;font-size:10px"> (opcional)</span>
-        </label>
-        <select id="comprobanteTipo" class="inp" onchange="actualizarComprobanteRealUI()">
-          <option value="ninguno">No necesito comprobante real</option>
-          <option value="boleta">Solicitar Boleta electronica</option>
-          <option value="factura">Solicitar Factura electronica</option>
-        </select>
-        <div class="tax-grid" id="taxBoletaFields">
-          <input type="text" id="boletaDni" class="inp" maxlength="12" inputmode="numeric" placeholder="DNI del cliente (opcional)">
-          <input type="email" id="boletaEmail" class="inp" maxlength="80" placeholder="Correo para enviar boleta (opcional)">
-        </div>
-        <div class="tax-grid" id="taxFacturaFields">
-          <input type="text" id="facturaRuc" class="inp" maxlength="11" inputmode="numeric" placeholder="RUC del cliente">
-          <input type="text" id="facturaRazon" class="inp" maxlength="120" placeholder="Razon social del cliente">
-          <input type="text" id="facturaDireccion" class="inp" maxlength="180" placeholder="Direccion fiscal del cliente">
-          <input type="email" id="facturaEmail" class="inp" maxlength="80" placeholder="Correo para enviar factura (opcional)">
-        </div>
-        <div class="tax-hint" id="taxHint">Si solicitas boleta o factura real, ASWA emitira el comprobante electronico cuando corresponda y lo enviara por WhatsApp o correo.</div>
-        <div class="tax-company">
-          Emisor: <strong>SANGAMA INVERSIONES SAC</strong><br>
-          RUC: <strong>20600386531</strong><br>
-          Domicilio fiscal: Jr. Sargento Lores 425, Morales, San Martin, Peru.
-        </div>
-      </div>
-    </div>
-    <div class="fld">
       <div class="reserva-card">
         <label class="reserva-toggle">
           <input type="checkbox" id="regaloActiva" onchange="actualizarRegaloUI(); actualizarReservaUI();">
@@ -5605,6 +5577,47 @@
 </div>
 
 <!-- ══════════════ NOTA DE VENTA ══════════════ -->
+<!-- Decision final de comprobante: solo despues de pago y entrega conformes -->
+<div class="ov" id="comprobanteFinalModal" onclick="event.stopPropagation()">
+  <div class="sheet">
+    <div class="hnd"></div>
+    <div class="mttl">Comprobante de tu pedido</div>
+    <p style="font-size:12px;color:var(--mut);text-align:center;line-height:1.55;margin:0 0 14px">
+      Tu pago y entrega ya estan conformes. Ahora puedes pedir boleta, factura o continuar con la Nota de Venta ASWA.
+    </p>
+    <div class="tax-card on" id="taxCard">
+      <label>Elige que deseas recibir</label>
+      <select id="comprobanteTipo" class="inp" onchange="actualizarComprobanteRealUI()">
+        <option value="ninguno">Solo Nota de Venta ASWA</option>
+        <option value="boleta">Solicitar Boleta electronica</option>
+        <option value="factura">Solicitar Factura electronica</option>
+      </select>
+      <div class="tax-grid" id="taxBoletaFields">
+        <input type="text" id="boletaDni" class="inp" maxlength="12" inputmode="numeric" placeholder="DNI del cliente (opcional)">
+        <input type="email" id="boletaEmail" class="inp" maxlength="80" placeholder="Correo para enviar boleta (opcional)">
+      </div>
+      <div class="tax-grid" id="taxFacturaFields">
+        <input type="text" id="facturaRuc" class="inp" maxlength="11" inputmode="numeric" placeholder="RUC del cliente">
+        <input type="text" id="facturaRazon" class="inp" maxlength="120" placeholder="Razon social del cliente">
+        <input type="text" id="facturaDireccion" class="inp" maxlength="180" placeholder="Direccion fiscal del cliente">
+        <input type="email" id="facturaEmail" class="inp" maxlength="80" placeholder="Correo para enviar factura (opcional)">
+      </div>
+      <div class="tax-hint" id="taxHint">Si no necesitas comprobante SUNAT, te entregamos la Nota de Venta que ya maneja ASWA.</div>
+      <div class="tax-company">
+        Emisor: <strong>SANGAMA INVERSIONES SAC</strong><br>
+        RUC: <strong>20600386531</strong><br>
+        Domicilio fiscal: Jr. Sargento Lores 425, Morales, San Martin, Peru.
+      </div>
+    </div>
+    <button class="bshr" type="button" onclick="solicitarComprobanteRealFinal()" style="margin-top:12px">
+      Solicitar comprobante seleccionado
+    </button>
+    <button class="bcancel" type="button" onclick="continuarConNotaVentaFinal()">
+      Solo quiero Nota de Venta
+    </button>
+  </div>
+</div>
+
 <div class="nota-modal" id="notaVentaModal">
   <div class="nota-sheet" id="notaVentaSheet">
 
@@ -6384,7 +6397,7 @@ function actualizarComprobanteRealUI() {
       ? 'Para factura, el RUC, razon social y direccion fiscal del cliente son obligatorios.'
       : (tipo === 'boleta'
         ? 'Para boleta, puedes dejar DNI y correo si deseas que ASWA envie el comprobante al cliente.'
-        : 'Si solicitas boleta o factura real, ASWA emitira el comprobante electronico cuando corresponda y lo enviara por WhatsApp o correo.');
+        : 'Si no necesitas comprobante SUNAT, te entregamos la Nota de Venta que ya maneja ASWA.');
   }
 }
 
@@ -6404,8 +6417,8 @@ function obtenerSolicitudComprobanteReal(validar = false) {
     base.datos = {
       dni: sanitizeInput(document.getElementById('boletaDni')?.value || '', 12).replace(/\D/g, ''),
       correo: sanitizeInput(document.getElementById('boletaEmail')?.value || '', 80),
-      nombre: sanitizeInput(document.getElementById('nombre')?.value || '', 80),
-      telefono: sanitizeInput(document.getElementById('telefono')?.value || '', 15)
+      nombre: sanitizeInput(document.getElementById('nombre')?.value || ST.cli?.nom || lsGet('nombre') || '', 80),
+      telefono: sanitizeInput(document.getElementById('telefono')?.value || ST.cli?.tel || lsGet('tel') || '', 15)
     };
     return base;
   }
@@ -6437,6 +6450,77 @@ function comprobanteRealWhatsapp(comp) {
     + (comp.datos.dni ? 'DNI cliente: ' + comp.datos.dni + '\n' : '')
     + (comp.datos.correo ? 'Correo: ' + comp.datos.correo + '\n' : '')
     + 'Emisor: ' + comp.emisor.razon_social + ' - RUC ' + comp.emisor.ruc + '\n';
+}
+
+function abrirComprobanteFinalModal() {
+  cerrar('mConfirmar');
+  const sel = document.getElementById('comprobanteTipo');
+  if (sel) sel.value = 'ninguno';
+  actualizarComprobanteRealUI();
+  document.getElementById('comprobanteFinalModal')?.classList.add('on');
+}
+
+function cerrarComprobanteFinalModal() {
+  document.getElementById('comprobanteFinalModal')?.classList.remove('on');
+}
+
+async function actualizarPedidoDecisionComprobante(payload) {
+  if (!ST.pedidoFbId) {
+    const saved = lsGet('pedido_id');
+    if (saved) ST.pedidoFbId = saved;
+  }
+  if (!ST.pedidoFbId || !window.FB || !db) return false;
+  const { doc:d, updateDoc:ud, serverTimestamp:ts } = window.FB;
+  await ud(d(db,pedidosCollectionName(),ST.pedidoFbId), {
+    ...payload,
+    updated_at: ts()
+  });
+  return true;
+}
+
+async function solicitarComprobanteRealFinal() {
+  const comp = obtenerSolicitudComprobanteReal(true);
+  if (!comp.ok) return;
+  if (!comp.solicita) return continuarConNotaVentaFinal();
+
+  try {
+    await actualizarPedidoDecisionComprobante({
+      comprobante_real_solicitado: true,
+      comprobante_real_tipo: comp.tipo,
+      comprobante_real_estado: comp.estado,
+      comprobante_real_datos: comp.datos,
+      comprobante_real_emisor: comp.emisor,
+      comprobante_real_decision: comp.tipo,
+      comprobante_real_solicitado_at: window.FB?.serverTimestamp?.() || new Date()
+    });
+    cerrarComprobanteFinalModal();
+    tst((comp.tipo === 'factura' ? 'Factura' : 'Boleta') + ' solicitada. ASWA la emitira y la enviara cuando este lista.', 4200);
+    setTimeout(() => mostrarNotaVenta(), 600);
+    setTimeout(() => { if (typeof abrirRating === 'function') abrirRating(); }, 3600);
+  } catch(err) {
+    console.error('solicitarComprobanteRealFinal error:', err);
+    tst('No pude registrar la solicitud. Revisa tu conexion e intenta otra vez.', 3500);
+  }
+}
+
+async function continuarConNotaVentaFinal() {
+  try {
+    await actualizarPedidoDecisionComprobante({
+      comprobante_real_solicitado: false,
+      comprobante_real_tipo: null,
+      comprobante_real_estado: 'nota_venta_interna',
+      comprobante_real_datos: null,
+      comprobante_real_emisor: null,
+      comprobante_real_decision: 'nota_venta',
+      comprobante_real_decidido_at: window.FB?.serverTimestamp?.() || new Date()
+    });
+  } catch(err) {
+    console.warn('continuarConNotaVentaFinal sin actualizacion remota:', err);
+  }
+  cerrarComprobanteFinalModal();
+  tst('Generando tu Nota de Venta ASWA...', 2200);
+  setTimeout(() => mostrarNotaVenta(), 500);
+  setTimeout(() => { if (typeof abrirRating === 'function') abrirRating(); }, 3500);
 }
 
 function lazyLoadScript(src) {
@@ -8803,8 +8887,6 @@ function abrirResumen() {
   if (!promoEscolar.ok) return false;
   const promoInstitucional = obtenerPromoInstitucionalSanJuan(true);
   if (!promoInstitucional.ok) return false;
-  const comprobanteReal = obtenerSolicitudComprobanteReal(true);
-  if (!comprobanteReal.ok) return false;
 
   // ── Pago digital requiere comprobante antes de continuar ──
   const esDigitalPago = ST.pago !== 'Efectivo';
@@ -8833,9 +8915,6 @@ function abrirResumen() {
   if (reservaPedido.activa) row('Reserva de entrega', reservaPedido.texto);
   if (promoEscolar.activo) row('Centro educativo / seccion', promoEscolar.texto);
   if (promoInstitucional.activo) row('Institucion / grupo', promoInstitucional.texto);
-  if (comprobanteReal.solicita) {
-    row('Comprobante real', comprobanteReal.tipo === 'factura' ? 'Factura electronica' : 'Boleta electronica');
-  }
 
   const disc = getDescuentoPct();
   const fixed = getDescuentoFijoAplicado(disc);
@@ -8900,8 +8979,6 @@ async function enviarPedido() {
   if (!promoEscolar.ok) return;
   const promoInstitucional = obtenerPromoInstitucionalSanJuan(true);
   if (!promoInstitucional.ok) return;
-  const comprobanteReal = obtenerSolicitudComprobanteReal(true);
-  if (!comprobanteReal.ok) return;
   if (bidonPublicoActivo() && ST.pago === 'Efectivo') {
     setPago('Yape');
     tst('El bidon San Juanero para obra o publico general solo acepta Yape, Plin, Agora, BIM o transferencia.', 4200);
@@ -8963,7 +9040,6 @@ async function enviarPedido() {
     +'📱 *Celular:* '+telefono+'\n'
     +nivelEmoji[nivelCliente]+' *Nivel:* '+nivelCliente+' '+(nivelStars[nivelCliente]||'')+'\n'
     +(codigoUsado ? '🎟 *Ref usado:* `'+codigoUsado+'`\n' : '')
-    +comprobanteRealWhatsapp(comprobanteReal)
     +'\n'+sep+'\n\n'
 
     +'🛒 *PRODUCTOS*\n'
@@ -9084,11 +9160,12 @@ async function enviarPedido() {
       confirmacion_cliente: false, // Cloud Function escucha este campo
       gps_url:        ST.gpsUrl || null,
       gps_coords:     ST.gpsCoords || null,
-      comprobante_real_solicitado: !!comprobanteReal.solicita,
-      comprobante_real_tipo: comprobanteReal.solicita ? comprobanteReal.tipo : null,
-      comprobante_real_estado: comprobanteReal.solicita ? comprobanteReal.estado : null,
-      comprobante_real_datos: comprobanteReal.solicita ? comprobanteReal.datos : null,
-      comprobante_real_emisor: comprobanteReal.solicita ? comprobanteReal.emisor : null,
+      comprobante_real_solicitado: false,
+      comprobante_real_tipo: null,
+      comprobante_real_estado: null,
+      comprobante_real_datos: null,
+      comprobante_real_emisor: null,
+      comprobante_real_decision: null,
       // Comprobante digital: Storage si esta habilitado; si no, verificacion manual por WhatsApp.
       ...comprobanteMeta,
       compartido:     false,   // se actualiza cuando cliente comparte en redes
@@ -9280,8 +9357,8 @@ async function confirmarEntrega() {
   if (!ST.pedidoFbId) {
     // No hay pedido que confirmar — igual mostrar nota con datos actuales
     cerrar('mConfirmar');
-    tst('⚠️ No se encontró el pedido. Generando nota de todas formas...', 2000);
-    setTimeout(() => mostrarNotaVenta(), 800);
+    tst('No se encontro el pedido remoto. Puedes generar la Nota de Venta local.', 2600);
+    setTimeout(() => abrirComprobanteFinalModal(), 600);
     return;
   }
 
@@ -9295,9 +9372,9 @@ async function confirmarEntrega() {
     const pedSnap = await gDoc(d(db,pedidosCollectionName(),ST.pedidoFbId));
     if (pedSnap.exists() && pedSnap.data().confirmacion_cliente === true) {
       cerrar('mConfirmar');
-      tst('✅ Pedido ya confirmado. Mostrando Nota de Venta...', 2500);
+      tst('Pedido ya confirmado. Elige boleta, factura o Nota de Venta.', 2600);
       _confirmandoEntrega = false;
-      setTimeout(() => mostrarNotaVenta(), 800);
+      setTimeout(() => abrirComprobanteFinalModal(), 700);
       return;
     }
 
@@ -9309,14 +9386,10 @@ async function confirmarEntrega() {
     });
 
     cerrar('mConfirmar');
-    tst('🎉 ¡Recepción confirmada! Generando tu Nota de Venta...', 3000);
+    tst('Recepcion confirmada. Ahora elige boleta, factura o Nota de Venta.', 3200);
 
-    // Limpiar localStorage — ✅ BUG #2 CORREGIDO: usa lsDelAll() con prefijo dinámico
-    lsDelAll();
-
-    // Mostrar nota de venta y luego rating
-    setTimeout(() => mostrarNotaVenta(), 1000);
-    setTimeout(() => { if (typeof abrirRating === 'function') abrirRating(); }, 4000);
+    // Mantener localStorage hasta generar la nota para poder recuperar el pedido si la pagina se recarga.
+    setTimeout(() => abrirComprobanteFinalModal(), 900);
 
   } catch(err) {
     console.error('confirmarEntrega error:', err);
@@ -9326,8 +9399,8 @@ async function confirmarEntrega() {
     // Si el error es de permisos, mostrar la nota de todas formas
     if (err.code === 'permission-denied') {
       cerrar('mConfirmar');
-      tst('✅ ¡Pedido confirmado! Generando nota...', 2500);
-      setTimeout(() => mostrarNotaVenta(), 800);
+      tst('Pedido confirmado localmente. Elige tu comprobante final.', 2600);
+      setTimeout(() => abrirComprobanteFinalModal(), 700);
     } else {
       tst('❌ Error al confirmar. Verifica tu conexión.', 3000);
     }
@@ -24481,4 +24554,3 @@ document.addEventListener('DOMContentLoaded', function() {
 
 </body>
 </html>
-
