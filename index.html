@@ -3609,29 +3609,98 @@
   </div>
   <div style="position:absolute;bottom:8px;left:50%;transform:translateX(-50%);display:flex;gap:5px;align-items:center;z-index:3" id="promoDots"></div>
 </div>
-<section class="quick-order" aria-label="Pedido rapido ASWA">
+<style>
+  .easy-start {
+    background:linear-gradient(160deg, rgba(250,204,21,.16), rgba(34,197,94,.08));
+    border:1px solid rgba(250,204,21,.34);
+    border-radius:16px;
+    padding:14px;
+    margin:0 auto 14px;
+    max-width:430px;
+  }
+  .easy-start-title { font-size:18px; font-weight:900; color:var(--y); line-height:1.15; }
+  .easy-start-sub { color:#d1d5db; font-size:12px; line-height:1.45; margin-top:4px; }
+  .easy-start-steps { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin:12px 0; }
+  .easy-step { background:rgba(0,0,0,.24); border:1px solid rgba(255,255,255,.08); border-radius:12px; padding:9px 7px; text-align:center; }
+  .easy-step strong { display:block; color:#fff; font-size:11px; line-height:1.2; }
+  .easy-step span { display:block; color:var(--mut); font-size:10px; margin-top:2px; }
+  .easy-start-actions { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+  .easy-start-main,
+  .easy-start-alt {
+    border:none; border-radius:12px; padding:12px 10px; font-family:'Poppins',sans-serif;
+    font-size:12px; font-weight:900; cursor:pointer;
+  }
+  .easy-start-main { background:var(--y); color:#000; }
+  .easy-start-alt { background:rgba(255,255,255,.06); color:#fff; border:1px solid rgba(255,255,255,.1); }
+  .home-help-collapsible,
+  .school-more-details {
+    max-width:430px;
+    margin:0 auto 14px;
+    border:1px solid rgba(255,255,255,.1);
+    border-radius:14px;
+    background:rgba(255,255,255,.035);
+    overflow:hidden;
+  }
+  .home-help-collapsible > summary,
+  .school-more-details > summary {
+    list-style:none;
+    cursor:pointer;
+    padding:12px 14px;
+    color:#facc15;
+    font-size:12px;
+    font-weight:900;
+  }
+  .home-help-collapsible > summary::-webkit-details-marker,
+  .school-more-details > summary::-webkit-details-marker { display:none; }
+  .home-help-collapsible > summary::after,
+  .school-more-details > summary::after { content:'+'; float:right; color:#fff; }
+  .home-help-collapsible[open] > summary::after,
+  .school-more-details[open] > summary::after { content:'-'; }
+  .home-help-collapsible .home-tutorial { margin:0; border-radius:0; border-left:0; border-right:0; border-bottom:0; }
+  .school-more-details { margin-top:10px; }
+  .school-more-details .school-note { margin:0 12px 12px; }
+  @media (max-width:360px) {
+    .easy-start-steps { grid-template-columns:1fr; }
+    .easy-start-actions { grid-template-columns:1fr; }
+  }
+</style>
+
+<section class="easy-start" aria-label="Inicio simple ASWA">
+  <div class="easy-start-title">Haz tu pedido rapido</div>
+  <div class="easy-start-sub">Empieza por la chicha. Luego completa zona, datos y pago. Sin salir de esta app.</div>
+  <div class="easy-start-steps" aria-hidden="true">
+    <div class="easy-step"><strong>1. Chicha</strong><span>Elige cantidad</span></div>
+    <div class="easy-step"><strong>2. Datos</strong><span>Nombre y direccion</span></div>
+    <div class="easy-step"><strong>3. Pago</strong><span>Confirma pedido</span></div>
+  </div>
+  <div class="easy-start-actions">
+    <button type="button" class="easy-start-main" onclick="irPedidoRapido('productos')">Empezar pedido</button>
+    <button type="button" class="easy-start-alt" onclick="irPedidoRapido('chat')">Pedir con asistente</button>
+  </div>
+</section>
+
+<section class="quick-order" aria-label="Accesos rapidos ASWA">
   <div class="quick-order-top">
     <div>
-      <div class="quick-order-title">Pedido rapido</div>
-      <div class="quick-order-sub">Elige zona, agrega chicha y confirma sin perder tiempo.</div>
+      <div class="quick-order-title">Accesos rapidos</div>
+      <div class="quick-order-sub">Usa estos botones solo si quieres saltar directo a una parte.</div>
     </div>
-    <div class="quick-order-pill">Facil</div>
+    <div class="quick-order-pill">Simple</div>
   </div>
   <div class="quick-order-actions">
     <button type="button" class="quick-order-btn" onclick="irPedidoRapido('zona')">
-      <strong>1. Zona</strong>
-      <span>Delivery o recojo</span>
+      <strong>Zona</strong>
+      <span>Costos</span>
     </button>
     <button type="button" class="quick-order-btn" onclick="irPedidoRapido('productos')">
-      <strong>2. Chicha</strong>
-      <span>2L, 3L, 4L o bidon</span>
+      <strong>Chicha</strong>
+      <span>Productos</span>
     </button>
     <button type="button" class="quick-order-btn" onclick="irPedidoRapido('datos')">
-      <strong>3. Datos</strong>
-      <span>Direccion y pago</span>
+      <strong>Datos</strong>
+      <span>Finalizar</span>
     </button>
   </div>
-  <button type="button" class="quick-order-chat" onclick="irPedidoRapido('chat')">Pedir con asistente ASWA</button>
 </section>
 <script>
 (function(){
@@ -3676,6 +3745,8 @@
 </script>
 
 <!-- ══════════════ MAIN ══════════════ -->
+<details class="home-help-collapsible">
+  <summary>Necesitas ayuda? Ver guia paso a paso</summary>
 <section class="home-tutorial" aria-label="Guia para hacer tu pedido ASWA">
   <div class="home-tutorial-head">
     <div class="home-tutorial-title">Como hago mi pedido?</div>
@@ -3725,6 +3796,7 @@
     </div>
   </div>
 </section>
+</details>
 
 <section class="home-coverage" id="homeCoverageSection" aria-label="Cobertura y costos de entrega">
   <div class="home-coverage-head">
@@ -3987,12 +4059,15 @@
           <button class="qb qplus" onclick="qty('sjJuane',+1)">+</button>
         </div>
       </div>
-      <div class="school-note school-minimum-note"><strong>Compra minima escolar:</strong> cada presentacion se vende desde 15 unidades: solo juane, solo chicha ASWA 400 ml, o combo juane + chicha ASWA 400 ml. El bidon de 20 litros no tiene minimo.</div>
-      <div class="school-note">Pedido escolar temporal por Fiestas de San Juan. La compra minima es de 15 unidades por cada presentacion elegida: juane, chicha ASWA 400 ml, o juane + chicha ASWA juntas. El bidon de 20 litros no tiene minimo. Se atiende durante junio, excepto el 24 de junio. No se cobra delivery en esta promocion. Solo con reserva y pago anticipado: Yape, Plin, Agora, BIM o transferencia bancaria. No aplica efectivo.</div>
-      <div class="school-note" style="margin-top:12px">
-        <strong>Juane familiar institucional</strong><br>
-        Para bancos, empresas, oficinas y grupos de trabajadores. Entrega unica por reserva el 22 de junio, dos dias antes de San Juan. No se cobra delivery en esta promocion.
-      </div>
+      <div class="school-note school-minimum-note"><strong>Minimo escolar:</strong> 15 unidades por presentacion. Puedes elegir solo chicha ASWA 400 ml, solo juane o combo. El bidon 20L no tiene minimo.</div>
+      <details class="school-more-details">
+        <summary>Ver condiciones de la promo San Juan</summary>
+        <div class="school-note">Pedido escolar temporal por Fiestas de San Juan. Se atiende durante junio, excepto el 24 de junio. No se cobra delivery en esta promocion. Solo con reserva y pago anticipado: Yape, Plin, Agora, BIM o transferencia bancaria. No aplica efectivo.</div>
+        <div class="school-note">
+          <strong>Juane familiar institucional</strong><br>
+          Para bancos, empresas, oficinas y grupos de trabajadores. Entrega unica por reserva el 22 de junio, dos dias antes de San Juan. No se cobra delivery en esta promocion.
+        </div>
+      </details>
       <div class="school-grid" style="margin-top:10px">
         <input type="text" id="instNombre" class="inp" maxlength="90" placeholder="Institucion, empresa, banco u oficina">
         <select id="instTipo" class="inp">
