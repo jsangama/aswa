@@ -352,10 +352,11 @@ describe('support assistant replies', () => {
     const text = reply('cuanto cuesta el bidon');
 
     expect(text).toContain('bidon ASWA es de 20 litros');
+    expect(text).toContain('5 familiares de 4L');
+    expect(text).toContain('5 x S/ 15 = S/ 75');
     expect(text).toContain('recarga con bidon vacio cuesta S/ 70');
     expect(text).toContain('envase nuevo retornable cuesta S/ 90');
-    expect(text).toContain('menor precio por litro');
-    expect(text).toContain('S/ 3.50 por litro');
+    expect(text).toContain('no se usan 5 envases de 4L');
     expect(text).toContain('promo escolar San Juan queda con precio especial');
     expect(text).toContain('Puedes pagarlo con efectivo');
   });
