@@ -56,6 +56,8 @@ describe('orders module behavior', () => {
     expect(html).toContain('class="bidon-normal-options"');
     expect(html).toContain('Ya tengo bidon vacio');
     expect(html).toContain('Chicha + envase retornable');
+    expect(html).toContain('<div class="pp" id="pr-sjBidonPublic">S/ 75.00</div>');
+    expect(html).toContain('<b>S/ 95</b>');
     expect(html).not.toContain('id="sanJuanPublico"');
     expect(html).not.toContain('El bidon San Juanero para obra o publico general solo acepta');
     expect(html).toContain('Puedes pagarlo con efectivo, Yape, Plin o transferencia');

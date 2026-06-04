@@ -352,8 +352,9 @@ describe('support assistant replies', () => {
     const text = reply('cuanto cuesta el bidon');
 
     expect(text).toContain('bidon ASWA es de 20 litros');
-    expect(text).toContain('recarga con bidon vacio S/ 50');
-    expect(text).toContain('envase nuevo retornable S/ 70');
+    expect(text).toContain('recarga con bidon vacio S/ 75');
+    expect(text).toContain('envase nuevo retornable S/ 95');
+    expect(text).toContain('promo escolar San Juan queda con precio especial');
     expect(text).toContain('Puedes pagarlo con efectivo');
   });
 
@@ -363,7 +364,7 @@ describe('support assistant replies', () => {
 
     const first = api.process('quiero 1 bidon recarga');
     expect(first).toContain('1 x Bidon ASWA 20L');
-    expect(first).toContain('S/ 50.00');
+    expect(first).toContain('S/ 75.00');
     expect(first).toContain('El bidon es de 20 litros');
 
     api.process('JR. JIMENES PIMENTEL 452 TARAPOTO');
@@ -373,12 +374,12 @@ describe('support assistant replies', () => {
     expect(cash).toContain('Con cuanto vas a pagar');
   });
 
-  test('registers bidon with new container at 70 soles', () => {
+  test('registers bidon with new container at 95 soles', () => {
     const api = loadAssistantApi();
     api.reset();
 
     const text = api.process('quiero 1 bidon con envase nuevo');
     expect(text).toContain('1 x Bidon ASWA 20L con envase nuevo');
-    expect(text).toContain('S/ 70.00');
+    expect(text).toContain('S/ 95.00');
   });
 });
