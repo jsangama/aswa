@@ -19814,7 +19814,25 @@ function tutRepararIconosGuia() {
     if (/Ver video instructivo/i.test(el.textContent || '')) el.innerHTML = '&#9658; Ver video instructivo';
   });
 }
-document.addEventListener('DOMContentLoaded', tutRepararIconosGuia);
+
+function tutInstalarClicksVideo() {
+  document.querySelectorAll("button[onclick^=\"tutAbrirVideo\"],.tut-video-box[onclick^=\"tutAbrirVideo\"]").forEach(el => {
+    if (el.dataset.tutClickReady === '1') return;
+    el.dataset.tutClickReady = '1';
+    const raw = el.getAttribute('onclick') || '';
+    const match = raw.match(/tutAbrirVideo\('([^']+)'\)/);
+    if (!match) return;
+    el.addEventListener('click', ev => {
+      ev.preventDefault();
+      tutAbrirVideo(match[1]);
+    });
+  });
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  tutRepararIconosGuia();
+  tutInstalarClicksVideo();
+});
 
 function tutAbrirVideo(seccion) {
   tutRepararIconosGuia();
@@ -19929,6 +19947,8 @@ function tutCerrarVideo() {
 
 window.tutAbrirVideo = tutAbrirVideo;
 window.tutCerrarVideo = tutCerrarVideo;
+globalThis.tutAbrirVideo = tutAbrirVideo;
+globalThis.tutCerrarVideo = tutCerrarVideo;
 
 function tutMostrarBotonPedido(mostrar) {
   const btn = document.getElementById('cbanTutorialBtn');
