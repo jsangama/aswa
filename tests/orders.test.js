@@ -58,9 +58,9 @@ describe('orders module behavior', () => {
     expect(html).toContain('Chicha + envase retornable');
     expect(html).toContain('<div class="pp" id="pr-sjBidonPublic">S/ 60.00</div>');
     expect(html).toContain('<b>S/ 80</b>');
-    expect(html).toContain('20L equivale a 5 familiares de 4L');
-    expect(html).toContain('Cinco familiares costarian S/ 75');
-    expect(html).toContain('no se usan 5 envases de 4L');
+    expect(html).toContain('En recarga de bidon 20L pagas S/ 60');
+    expect(html).toContain('ahorras S/ 15');
+    expect(html).toContain('equivalente a una presentacion familiar de 4L');
     expect(html).not.toContain('id="sanJuanPublico"');
     expect(html).not.toContain('El bidon San Juanero para obra o publico general solo acepta');
     expect(html).toContain('Puedes pagarlo con efectivo, Yape, Plin o transferencia');
