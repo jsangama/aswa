@@ -315,6 +315,73 @@
     window.getWA2 = () => _WA2;
     window.getWAYape = () => window.NEGOCIO?.whatsapp_yape || _WAYAPE;
 
+    function formatearTelefonoPublico(valor) {
+      const digits = String(valor || '').replace(/\D+/g, '');
+      if (!digits) return '';
+      if (digits.startsWith('51') && digits.length > 2) {
+        return `+${digits.slice(0, 2)} ${digits.slice(2, 5)} ${digits.slice(5, 8)} ${digits.slice(8)}`.trim();
+      }
+      return digits;
+    }
+
+    function aplicarNegocioPublico(data = {}) {
+      const negocio = {
+        ...(window.NEGOCIO || {}),
+        ...data,
+      };
+      const catalogoBase = typeof crearCatalogoBase === 'function'
+        ? crearCatalogoBase({ ...(window.CATALOGO || {}), ...negocio })
+        : { ...(window.CATALOGO || {}), ...negocio };
+      const horario = {
+        ...(window.ASWA_CONFIG?.HORARIO || {}),
+        ...(catalogoBase.horario || data.horario || {}),
+      };
+      const whatsapp = {
+        ...(window.ASWA_CONFIG?.WHATSAPP || {}),
+        pedidos1: data.whatsapp1 || negocio.whatsapp1 || _WA1,
+        pedidos2: data.whatsapp2 || negocio.whatsapp2 || _WA2,
+        yape: data.whatsapp_yape || negocio.whatsapp_yape || _WAYAPE,
+      };
+
+      window.NEGOCIO = negocio;
+      window.CATALOGO = catalogoBase;
+      _WA1 = whatsapp.pedidos1 || _WA1;
+      _WA2 = whatsapp.pedidos2 || _WA2;
+      _WAYAPE = whatsapp.yape || _WAYAPE;
+
+      window.ASWA_CONFIG = {
+        ...(window.ASWA_CONFIG || {}),
+        BUSINESS_NAME: negocio.nombre || window.ASWA_CONFIG?.BUSINESS_NAME || 'La Rica Chicha',
+        WHATSAPP: whatsapp,
+        HORARIO: horario,
+        PLANTA_COORDS: negocio.planta_coords || window.ASWA_CONFIG?.PLANTA_COORDS || '',
+        PLANTA: negocio.planta || window.ASWA_CONFIG?.PLANTA || '',
+      };
+
+      const bname = document.querySelector('.bname');
+      if (bname) bname.textContent = negocio.nombre || 'La Rica Chicha';
+
+      const empresa = document.querySelector('.empresa');
+      if (empresa) empresa.textContent = negocio.nombre || 'LA RICA CHICHA - ASWA';
+
+      const sub = document.querySelector('.sub');
+      if (sub) {
+        const linea1 = negocio.eslogan || 'Tradición amazónica con tecnología moderna.';
+        const linea2 = [negocio.direccion, negocio.referencia].filter(Boolean).join(' · ') || 'Morales - San Martín';
+        const linea3 = `WhatsApp: ${[
+          formatearTelefonoPublico(_WA1),
+          formatearTelefonoPublico(_WA2),
+        ].filter(Boolean).join(' / ') || '---'}`;
+        sub.innerHTML = [linea1, linea2, linea3].map(esc).join('<br>');
+      }
+
+      document.title = `${negocio.nombre || 'ASWA'} | La Rica Chicha`;
+
+      if (typeof actualizarHorarioMini === 'function') actualizarHorarioMini();
+      if (typeof cargarRedes === 'function') cargarRedes().catch(() => {});
+      window.dispatchEvent(new CustomEvent('aswa-business-updated', { detail: catalogoBase }));
+    }
+
     // ── Cargar config del negocio desde Firestore ──
     async function cargarNegocio() {
       try {
@@ -322,17 +389,7 @@
           window.FB.doc(db, 'negocios', BUSINESS_ID)
         );
         if (snap.exists()) {
-          const data = snap.data();
-          // Actualizar UI con datos del negocio
-          if (data.nombre) {
-            const el = document.querySelector('.bname');
-            if (el) el.textContent = data.nombre;
-          }
-          if (data.whatsapp1) _WA1 = data.whatsapp1;
-          if (data.whatsapp2) _WA2 = data.whatsapp2;
-          if (data.whatsapp_yape) _WAYAPE = data.whatsapp_yape;
-          // Guardar config globalmente
-          window.NEGOCIO = data;
+          aplicarNegocioPublico(snap.data());
         }
       } catch(e) {
         console.warn('cargarNegocio:', e.message);
@@ -1947,31 +2004,35 @@
     .vlbl { font-size:11px; color:var(--mut); text-transform:uppercase; letter-spacing:.1em; font-weight:600; display:block; margin-bottom:8px; }
     .vmsg { font-size:14px; font-weight:700; color:var(--y); margin-top:10px; }
 
-    /* ══ BARRA DE PEDIDO FLOTANTE (solo visible en pantalla Pedir) ══ */
+    /* ══ BARRA DE PEDIDO FLOTANTE ══ */
     .fbar {
-      position:fixed; bottom:68px; left:0; right:0; z-index:90;
-      background:rgba(9,9,11,.97); border-top:1px solid var(--brd);
-      padding:10px 20px 12px;
-      display:none;
+      position:fixed; right:16px; bottom:86px; left:auto; z-index:120;
+      background:transparent; border:none; padding:0; display:none;
     }
     .fbar.show { display:block; }
-    .fin {
-      max-width:430px; margin:0 auto;
-      display:flex; align-items:center; justify-content:space-between; gap:16px;
-    }
-    .plbl { font-size:10px; color:var(--mut); text-transform:uppercase; letter-spacing:.1em; }
-    .pold { font-size:12px; color:var(--mut); text-decoration:line-through; display:none; }
-    .pbig { font-family:'Bebas Neue',cursive; font-size:38px; color:var(--y); line-height:1; }
-    .bcont {
-      background:var(--y); color:#000; border:none;
-      padding:14px 24px; border-radius:14px;
-      font-size:14px; font-weight:800; cursor:pointer;
-      white-space:nowrap; flex-shrink:0;
-      transition:background .15s, transform .1s;
+    .cart-fab {
+      display:inline-flex; align-items:center; gap:10px;
+      border:1px solid rgba(250,204,21,.35);
+      background:linear-gradient(135deg,#facc15,#f59e0b);
+      color:#111; border-radius:999px;
+      padding:12px 16px;
+      font-size:13px; font-weight:900;
+      box-shadow:0 12px 30px rgba(245,158,11,.28);
+      cursor:pointer;
       font-family:'Poppins',sans-serif;
+      min-height:52px;
+      transition:transform .15s ease, box-shadow .15s ease;
     }
-    .bcont:active { transform:scale(.96); }
-    .bcont:hover  { background:var(--y2); }
+    .cart-fab:active { transform:scale(.97); }
+    .cart-fab:hover  { box-shadow:0 14px 34px rgba(245,158,11,.34); }
+    .cart-fab-ico { font-size:18px; }
+    .cart-fab-label { letter-spacing:.02em; }
+    .cart-fab-count {
+      display:inline-flex; align-items:center; justify-content:center;
+      min-width:32px; height:24px; padding:0 8px;
+      border-radius:999px; background:rgba(17,17,17,.92);
+      color:#fff; font-size:12px; font-weight:900;
+    }
 
     /* ══ NAVEGACIÓN INFERIOR ══ */
     .bottomnav {
@@ -2013,6 +2074,135 @@
     /* ══ PANTALLAS (páginas) ══ */
     .page { display:none; }
     .page.active { display:block; }
+
+    body.aswa-home-step1 .btn-ref,
+    body.aswa-home-step1 .btn-tutorial-top,
+    body.aswa-home-step1 #pwaInstallCard,
+    body.aswa-home-step1 #promoSlider,
+    body.aswa-home-step1 #promoDots,
+    body.aswa-home-step1 .easy-start,
+    body.aswa-home-step1 .quick-order,
+    body.aswa-home-step1 .home-help-collapsible,
+    body.aswa-home-step1 #homeCoverageSection,
+    body.aswa-home-step1 #datosPedidoSection,
+    body.aswa-home-step1 #pagoPedidoSection,
+    body.aswa-home-step1 .social-section,
+    body.aswa-home-step1 footer,
+    body.aswa-home-step1 .bottomnav,
+    body.aswa-home-step1 .chat-fab,
+    body.aswa-home-step1 .quick-access-panel,
+    body.aswa-home-step1 #btnTutorialPedido,
+    body.aswa-home-step1 #tutorialPedidoInline,
+    body.aswa-home-step1 #btnContinuarInteligente {
+      display:none !important;
+    }
+    body.aswa-home-step1 main > .horario-mini { display:none !important; }
+    body.aswa-home-step1 #productosSection { margin-top:8px; }
+    body.aswa-home-step1 #mResumen .dban,
+    body.aswa-home-step1 #btnEnviar { display:none !important; }
+
+    .purchase-step-actions {
+      padding:14px 0 4px;
+      display:grid;
+      gap:8px;
+    }
+    .purchase-next-btn {
+      width:100%;
+      border:0;
+      border-radius:14px;
+      background:linear-gradient(135deg,#facc15,#f59e0b);
+      color:#111;
+      padding:15px 16px;
+      font-family:'Poppins',sans-serif;
+      font-size:14px;
+      font-weight:950;
+      cursor:pointer;
+      box-shadow:0 12px 30px rgba(250,204,21,.18);
+    }
+    .purchase-next-btn.secondary {
+      background:rgba(255,255,255,.07);
+      color:#fff;
+      border:1px solid rgba(255,255,255,.12);
+      box-shadow:none;
+    }
+    .purchase-step-note {
+      color:var(--mut);
+      font-size:11px;
+      line-height:1.5;
+      text-align:center;
+    }
+    body.purchase-step-products #homeCoverageSection,
+    body.purchase-step-products #datosPedidoSection,
+    body.purchase-step-products #pagoPedidoSection,
+    body.purchase-step-products .social-section,
+    body.purchase-step-products footer { display:none !important; }
+    body.purchase-step-delivery #pagoPedidoSection,
+    body.purchase-step-delivery .social-section,
+    body.purchase-step-delivery footer { display:none !important; }
+    body.purchase-step-payment .social-section,
+    body.purchase-step-payment footer { display:none !important; }
+
+    body.purchase-step-products #pwaInstallCard,
+    body.purchase-step-products #promoSlider,
+    body.purchase-step-products #promoDots,
+    body.purchase-step-products .easy-start,
+    body.purchase-step-products .quick-order,
+    body.purchase-step-products .home-help-collapsible,
+    body.purchase-step-products #homeCoverageSection,
+    body.purchase-step-products #datosPedidoSection,
+    body.purchase-step-products #pagoPedidoSection,
+    body.purchase-step-products .social-section,
+    body.purchase-step-products footer,
+    body.purchase-step-products .bottomnav,
+    body.purchase-step-products #fbarPedir,
+    body.purchase-step-products .chat-fab,
+    body.purchase-step-products .quick-access-panel,
+    body.purchase-step-products .btn-tutorial-top {
+      display:none !important;
+    }
+
+    body.purchase-step-delivery #pwaInstallCard,
+    body.purchase-step-delivery #promoSlider,
+    body.purchase-step-delivery #promoDots,
+    body.purchase-step-delivery .easy-start,
+    body.purchase-step-delivery .quick-order,
+    body.purchase-step-delivery .home-help-collapsible,
+    body.purchase-step-delivery #productosSection,
+    body.purchase-step-delivery #pagoPedidoSection,
+    body.purchase-step-delivery .social-section,
+    body.purchase-step-delivery footer,
+    body.purchase-step-delivery .bottomnav,
+    body.purchase-step-delivery #fbarPedir,
+    body.purchase-step-delivery .chat-fab,
+    body.purchase-step-delivery .quick-access-panel,
+    body.purchase-step-delivery .btn-tutorial-top {
+      display:none !important;
+    }
+
+    body.purchase-step-payment #pwaInstallCard,
+    body.purchase-step-payment #promoSlider,
+    body.purchase-step-payment #promoDots,
+    body.purchase-step-payment .easy-start,
+    body.purchase-step-payment .quick-order,
+    body.purchase-step-payment .home-help-collapsible,
+    body.purchase-step-payment #productosSection,
+    body.purchase-step-payment #homeCoverageSection,
+    body.purchase-step-payment #datosPedidoSection,
+    body.purchase-step-payment .social-section,
+    body.purchase-step-payment footer,
+    body.purchase-step-payment .bottomnav,
+    body.purchase-step-payment #fbarPedir,
+    body.purchase-step-payment .chat-fab,
+    body.purchase-step-payment .quick-access-panel,
+    body.purchase-step-payment .btn-tutorial-top {
+      display:none !important;
+    }
+
+    body.purchase-step-products main,
+    body.purchase-step-delivery main,
+    body.purchase-step-payment main {
+      padding-bottom: 26px;
+    }
 
     /* ══ GALERÍA ══ */
     .galeria-hero {
@@ -3384,7 +3574,11 @@
     @media (max-width:720px) { .reserva-grid,.tv-stats { grid-template-columns:1fr 1fr; } .tv-dashboard { padding:18px 12px; } }
   </style>
 </head>
-<body>
+<body class="purchase-step-products">
+<script>
+  document.body.classList.remove('aswa-home-step1', 'purchase-step-delivery', 'purchase-step-payment', 'purchase-complete');
+  document.body.classList.add('purchase-step-products');
+</script>
 
 <!-- ══ PWA INSTALL ══ -->
 <button id="installPWA" type="button" onclick="pwaInstalarApp()" style="
@@ -3893,15 +4087,15 @@
 
   <!-- PRODUCTOS -->
   <section id="productosSection">
-    <div class="stitle">Elige tu presentación</div>
+    <div class="stitle">Elige tus productos</div>
 
     <!-- 2 Litros -->
     <div class="pc" id="c-p2l">
-      <img src="assets/images/embedded/embedded-e015ca8b159a.jpg" alt="2L" class="pimg"
+      <img src="assets/images/products/optimized/aswa de 2 litros 1.jpg" alt="Chicha ASWA 2 litros" class="pimg"
            onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2270%22 height=%2270%22><rect width=%2270%22 height=%2270%22 fill=%22%231a1a1e%22 rx=%2212%22/><text x=%2235%22 y=%2244%22 text-anchor=%22middle%22 fill=%22%23facc15%22 font-size=%2228%22>🫙</text></svg>'">
       <div style="flex:1">
-        <div class="pn">Chicha ASWA</div>
-        <div class="pd">Presentación 2 Litros</div>
+        <div class="pn">Chicha ASWA 2 litros</div>
+        <div class="pd">Presentacion practica para casa.</div>
         <div class="pp" id="pr-p2l">S/ 9.00</div>
       </div>
       <div class="qw">
@@ -3913,11 +4107,11 @@
 
     <!-- 3 Litros -->
     <div class="pc" id="c-p3l">
-      <img src="assets/images/embedded/embedded-d0615923683c.jpg" alt="3L" class="pimg"
+      <img src="assets/images/products/optimized/aswa de 3 litros.jpg" alt="Chicha ASWA 3 litros" class="pimg"
            onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2270%22 height=%2270%22><rect width=%2270%22 height=%2270%22 fill=%22%231a1a1e%22 rx=%2212%22/><text x=%2235%22 y=%2244%22 text-anchor=%22middle%22 fill=%22%23facc15%22 font-size=%2228%22>🫙</text></svg>'">
       <div style="flex:1">
-        <div class="pn">Chicha ASWA</div>
-        <div class="pd">Presentación 3 Litros</div>
+        <div class="pn">Chicha ASWA 3 litros</div>
+        <div class="pd">Ideal para compartir en familia.</div>
         <div class="pp" id="pr-p3l">S/ 13.00</div>
       </div>
       <div class="qw">
@@ -3929,11 +4123,11 @@
 
     <!-- 4 Litros -->
     <div class="pc" id="c-p4l">
-      <img src="assets/images/embedded/embedded-9fa2c5d527dd.jpg" alt="4L" class="pimg"
+      <img src="assets/images/products/optimized/galon familiar de 4 litros.jpg" alt="Chicha ASWA 4 litros" class="pimg"
            onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2270%22 height=%2270%22><rect width=%2270%22 height=%2270%22 fill=%22%231a1a1e%22 rx=%2212%22/><text x=%2235%22 y=%2244%22 text-anchor=%22middle%22 fill=%22%23facc15%22 font-size=%2228%22>🫙</text></svg>'">
       <div style="flex:1">
-        <div class="pn">Chicha ASWA Familiar</div>
-        <div class="pd">Presentación 4 Litros</div>
+        <div class="pn">Chicha ASWA 4 litros</div>
+        <div class="pd">Galon familiar para almuerzo o reunion.</div>
         <div class="pp" id="pr-p4l">S/ 15.00</div>
       </div>
       <div class="qw">
@@ -3984,16 +4178,18 @@
       <div class="school-grid">
         <input type="text" id="colegioNombre" class="inp" maxlength="90" placeholder="Nombre de la institucion. Ej: Jardin de ninos 301 Tarapoto">
         <select id="colegioTipo" class="inp" onchange="actualizarNivelEscolarUI()">
-          <option value="">Tipo de institucion</option>
+          <option value="">Tipo de cliente</option>
           <option value="jardin">Jardin / inicial</option>
           <option value="primaria">Primaria</option>
           <option value="colegio">Colegio / secundaria</option>
+          <option value="cafetin">Cafetin escolar</option>
+          <option value="minimarket">Minimarket</option>
         </select>
         <select id="colegioGrado" class="inp">
           <option value="">Grado o edad</option>
         </select>
         <input type="text" id="colegioSeccion" class="inp" maxlength="40" placeholder="Seccion. Ej: A, B, C o Los Conejitos">
-        <input type="number" id="colegioAlumnos" class="inp" min="1" max="80" inputmode="numeric" placeholder="Cantidad aproximada de alumnos de la seccion">
+        <input type="number" id="colegioAlumnos" class="inp" min="1" max="999" inputmode="numeric" placeholder="Cantidad aproximada para orientar el pedido">
         <select id="colegioDistrito" class="inp">
           <option value="">Distrito del centro educativo</option>
           <option value="Banda de Shilcayo">Banda de Shilcayo</option>
@@ -4036,13 +4232,13 @@
         </div>
       </div>
       <div class="school-section-label">Presentaciones por seccion</div>
-      <div class="school-section-help">Estas presentaciones las solicita el encargado del pedido de la seccion o salon, normalmente un padre de familia, madre de familia o tesorero del aula. Cada presentacion tiene minimo 15 unidades.</div>
+      <div class="school-section-help">Promocion escolar tambien disponible para cafetines y minimarkets. Cada presentacion tiene minimo 15 unidades, excepto el bidon 20L.</div>
       <div class="pc school-product" id="c-sjChicha04">
         <img src="assets/images/products/optimized/san-juan-chicha-400ml.jpg" alt="Chicha escolar 400 ml" class="pimg">
         <div style="flex:1">
           <div class="pn">ASWA escolar sanjuanera</div>
           <div class="pd">Minimo 15 unidades por presentacion. Chicha 400 ml para la seccion</div>
-          <div class="pp" id="pr-sjChicha04">S/ 2.00</div>
+          <div class="pp" id="pr-sjChicha04">S/ 2.50</div>
         </div>
         <div class="qw">
           <button class="qb qminus" onclick="qty('sjChicha04',-1)">-</button>
@@ -4055,7 +4251,7 @@
         <div style="flex:1">
           <div class="pn">Combo escolar sanjuanero</div>
           <div class="pd">Minimo 15 unidades por presentacion. Juane + chicha 400 ml para la seccion</div>
-          <div class="pp" id="pr-sjCombo">S/ 3.50</div>
+          <div class="pp" id="pr-sjCombo">S/ 4.00</div>
         </div>
         <div class="qw">
           <button class="qb qminus" onclick="qty('sjCombo',-1)">-</button>
@@ -4068,7 +4264,7 @@
         <div style="flex:1">
           <div class="pn">Solo juane escolar</div>
           <div class="pd">Minimo 15 unidades por presentacion. Juane para la seccion</div>
-          <div class="pp" id="pr-sjJuane">S/ 2.00</div>
+          <div class="pp" id="pr-sjJuane">S/ 2.50</div>
         </div>
         <div class="qw">
           <button class="qb qminus" onclick="qty('sjJuane',-1)">-</button>
@@ -4079,7 +4275,7 @@
       <div class="school-note school-minimum-note"><strong>Minimo escolar:</strong> 15 unidades por presentacion. Puedes elegir solo chicha ASWA 400 ml, solo juane o combo. El bidon 20L no tiene minimo.</div>
       <details class="school-more-details">
         <summary>Ver condiciones de la promo San Juan</summary>
-        <div class="school-note">Pedido escolar temporal por Fiestas de San Juan. Se atiende durante junio, excepto el 24 de junio. No se cobra delivery en esta promocion. Solo con reserva y pago anticipado: Yape, Plin, Agora, BIM o transferencia bancaria. No aplica efectivo.</div>
+        <div class="school-note">Pedido escolar para centros educativos, cafetines y minimarkets. Se atiende durante junio, excepto el 24 de junio. No se cobra delivery en esta promocion. Solo con reserva y pago anticipado: Yape, Plin, Agora, BIM o transferencia bancaria. No aplica efectivo.</div>
         <div class="school-note">
           <strong>Juane familiar institucional</strong><br>
           Para bancos, empresas, oficinas y grupos de trabajadores. Entrega unica por reserva el 22 de junio, dos dias antes de San Juan. No se cobra delivery en esta promocion.
@@ -4100,8 +4296,8 @@
       <div class="pc school-product" id="c-sjJuaneFamiliar">
         <img src="assets/images/products/optimized/san-juan-juane-institucional.jpg" alt="Juane familiar institucional" class="pimg">
         <div style="flex:1">
-          <div class="pn">Juane familiar institucional</div>
-          <div class="pd">Frejol con cuerito y aji de cocona</div>
+          <div class="pn">Juane institucional</div>
+          <div class="pd">Juane institucional con frejol y aji.</div>
           <div class="pp" id="pr-sjJuaneFamiliar">S/ 25.00</div>
         </div>
         <div class="qw">
@@ -4110,6 +4306,10 @@
           <button class="qb qplus" onclick="qty('sjJuaneFamiliar',+1)">+</button>
         </div>
       </div>
+    </div>
+    <div class="purchase-step-actions">
+      <button type="button" class="purchase-next-btn" id="btnContinuarInteligente" onclick="continuarPedidoInteligente()">Continuar con entrega</button>
+      <div class="purchase-step-note">Primero elige tus productos. Despues te pediremos zona, celular y pago.</div>
     </div>
   </section>
 
@@ -4332,6 +4532,11 @@
         </div>
       </div>
     </div>
+    <div class="purchase-step-actions">
+      <button type="button" class="purchase-next-btn" onclick="continuarCompraPaso('payment')">Continuar con pago</button>
+      <button type="button" class="purchase-next-btn secondary" onclick="continuarCompraPaso('products')">Volver a productos</button>
+      <div class="purchase-step-note">La zona y el celular quedan registrados antes de mostrar el pago.</div>
+    </div>
   </section>
 
   <!-- PAGO v2 — 10 métodos -->
@@ -4462,6 +4667,11 @@
       <input type="number" id="pagoCon" class="inp"
              placeholder="S/ 0.00" inputmode="decimal" oninput="calcVuelto()">
       <div class="vmsg" id="vmsg">Vuelto: S/ 0.00</div>
+    </div>
+    <div class="purchase-step-actions">
+      <button type="button" class="purchase-next-btn" onclick="abrirResumen()">Ver resumen y enviar pedido</button>
+      <button type="button" class="purchase-next-btn secondary" onclick="continuarCompraPaso('delivery')">Volver a datos</button>
+      <div class="purchase-step-note">Si pagas por billetera o banco, debes subir tu comprobante para continuar.</div>
     </div>
   </section>
 
@@ -5419,14 +5629,11 @@
 
 <!-- ══════════════ BARRA FLOTANTE PEDIDO ══════════════ -->
 <div class="fbar" id="fbarPedir">
-  <div class="fin">
-    <div>
-      <div class="plbl">Total a pagar</div>
-      <div class="pold" id="pold"></div>
-      <div class="pbig" id="pbig">S/ 0.00</div>
-    </div>
-    <button class="bcont" id="btnContinuarInteligente" onclick="continuarPedidoInteligente()">ELEGIR CHICHA</button>
-  </div>
+  <button class="cart-fab" id="btnCarritoFlotante" type="button" onclick="abrirResumen(true)" aria-label="Abrir carrito">
+    <span class="cart-fab-ico">🛒</span>
+    <span class="cart-fab-label">Pedido</span>
+    <span class="cart-fab-count" id="cartCountText">(0)</span>
+  </button>
 </div>
 
 <!-- ══════════════ NAVEGACIÓN INFERIOR ══════════════ -->
@@ -5635,6 +5842,17 @@
   </div>
 
   <!-- ── Compartir en redes y ganar descuentos ── -->
+  <div id="postCompraBenefits" style="max-width:340px;width:100%;margin:10px auto;background:rgba(250,204,21,.06);border:1px solid rgba(250,204,21,.22);border-radius:16px;padding:14px">
+    <div style="font-size:11px;color:var(--y);font-weight:900;letter-spacing:.12em;text-transform:uppercase;margin-bottom:6px">Ahora si: beneficios de cliente</div>
+    <div style="font-size:13px;color:#fff;font-weight:800;line-height:1.35;margin-bottom:10px">Tu compra ya fue enviada. Desde aqui puedes instalar ASWA, ganar bonos y seguirnos.</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+      <button type="button" onclick="pwaAbrirModal()" style="background:linear-gradient(135deg,#facc15,#f59e0b);color:#000;border:0;border-radius:12px;padding:12px 10px;font-size:11px;font-weight:900;cursor:pointer;font-family:'Poppins',sans-serif">Instalar app</button>
+      <button type="button" onclick="irA('bono')" style="background:rgba(168,85,247,.16);color:#ddd6fe;border:1px solid rgba(168,85,247,.35);border-radius:12px;padding:12px 10px;font-size:11px;font-weight:900;cursor:pointer;font-family:'Poppins',sans-serif">Ver bonos</button>
+      <button type="button" onclick="abrirMision('video')" style="background:rgba(59,130,246,.14);color:#bfdbfe;border:1px solid rgba(59,130,246,.32);border-radius:12px;padding:12px 10px;font-size:11px;font-weight:900;cursor:pointer;font-family:'Poppins',sans-serif">Ganar con video</button>
+      <button type="button" onclick="irA('tutorial')" style="background:rgba(34,197,94,.12);color:#bbf7d0;border:1px solid rgba(34,197,94,.3);border-radius:12px;padding:12px 10px;font-size:11px;font-weight:900;cursor:pointer;font-family:'Poppins',sans-serif">Videos y guia</button>
+    </div>
+  </div>
+
   <div style="max-width:320px;margin:10px 0;background:rgba(250,204,21,.06);border:1px solid rgba(250,204,21,.15);border-radius:14px;padding:14px">
     <p style="font-size:11px;color:var(--mut);margin:0 0 10px;text-align:center;font-weight:700">🎉 ¡Comparte y gana descuentos!</p>
     <div style="display:flex;gap:10px;justify-content:center;margin-bottom:10px">
@@ -6655,7 +6873,7 @@ function esperarFB() {
 /* ── ESTADO GLOBAL ── */
 const ST = {
   cart: { p2l: 0, p3l: 0, p4l: 0, sjBidonPublic: 0, sjBidon: 0, sjChicha04: 0, sjCombo: 0, sjJuane: 0, sjJuaneFamiliar: 0 },
-  precio: { p2l: 9, p3l: 13, p4l: 15, sjBidonPublic: 60, sjBidon: 50, sjChicha04: 2, sjCombo: 3.5, sjJuane: 2, sjJuaneFamiliar: 25 },
+  precio: { p2l: 9, p3l: 13, p4l: 15, sjBidonPublic: 60, sjBidon: 50, sjChicha04: 2.5, sjCombo: 4, sjJuane: 2.5, sjJuaneFamiliar: 25 },
   pago: 'Efectivo',
   raw: 0,
   final: 0,
@@ -6677,24 +6895,27 @@ const ST = {
 };
 
 const PRODUCT_META = {
-  p2l: { nombre:'ASWA 2L', corto:'2L', regular:true },
-  p3l: { nombre:'ASWA 3L', corto:'3L', regular:true },
-  p4l: { nombre:'ASWA 4L Familiar', corto:'4L', regular:true },
+  p2l: { nombre:'Chicha ASWA 2 litros', corto:'2 litros', regular:true },
+  p3l: { nombre:'Chicha ASWA 3 litros', corto:'3 litros', regular:true },
+  p4l: { nombre:'Chicha ASWA 4 litros', corto:'4 litros', regular:true },
   sjBidonPublic: { nombre:'Bidon ASWA 20L', corto:'Bidon ASWA 20L', sanJuanPublico:true },
   sjBidon: { nombre:'Bidon escolar sanjuanero 20L', corto:'Bidon San Juan 20L', escolar:true },
   sjChicha04: { nombre:'ASWA escolar sanjuanera 0.4L', corto:'ASWA escolar 0.4L', escolar:true },
-  sjCombo: { nombre:'Combo escolar sanjuanero', corto:'Combo San Juan', escolar:true },
+  sjCombo: { nombre:'Combo chicha 400 ml + juane escolar', corto:'Combo escolar', escolar:true },
   sjJuane: { nombre:'Solo juane escolar', corto:'Juane escolar', escolar:true },
-  sjJuaneFamiliar: { nombre:'Juane familiar institucional', corto:'Juane familiar', sanJuanInstitucional:true }
+  sjJuaneFamiliar: { nombre:'Juane institucional', corto:'Juane institucional', sanJuanInstitucional:true }
 };
 const PRODUCT_IDS = Object.keys(PRODUCT_META);
 const PRODUCT_IMAGE_SRC = {
+  p2l: 'assets/images/products/optimized/aswa de 2 litros 1.jpg',
+  p3l: 'assets/images/products/optimized/aswa de 3 litros.jpg',
+  p4l: 'assets/images/products/optimized/galon familiar de 4 litros.jpg',
   sjBidonPublic: 'assets/images/products/optimized/san-juan-bidon-20l.png',
   sjBidon: 'assets/images/products/optimized/san-juan-bidon-20l.png',
   sjChicha04: 'assets/images/products/optimized/san-juan-chicha-400ml.jpg',
   sjCombo: 'assets/images/products/optimized/san-juan-combo-escolar.jpg',
   sjJuane: 'assets/images/products/optimized/san-juan-juane-escolar.jpg',
-  sjJuaneFamiliar: 'assets/images/products/optimized/san-juan-juane-institucional.jpg'
+  sjJuaneFamiliar: 'assets/images/embedded/embedded-7b1dc49e9921.jpg'
 };
 const SAN_JUAN_ESCOLAR_INICIO = '2026-06-01';
 const SAN_JUAN_ESCOLAR_FIN = '2026-06-30';
@@ -6788,6 +7009,9 @@ function actualizarNivelEscolarUI() {
   } else if (tipo === 'colegio') {
     for (let i = 1; i <= 5; i++) opts.push({ value:i + ' grado', text:i + ' grado' });
     if (seccion) seccion.placeholder = 'Seccion alfabetica. Ej: A hasta J';
+  } else if (tipo === 'cafetin' || tipo === 'minimarket') {
+    opts.push({ value:'no aplica', text:'No aplica' });
+    if (seccion) seccion.placeholder = 'Area o referencia. Ej: Cafetin principal';
   } else if (seccion) {
     seccion.placeholder = 'Seccion. Ej: A, B, C o Los Conejitos';
   }
@@ -6813,6 +7037,7 @@ function actualizarBidonPublicoUI() {
 function actualizarPromoEscolarUI() {
   const modoBidon = document.querySelector('input[name="colegioBidonModo"]:checked')?.value || 'recarga';
   const conBidon = modoBidon !== 'incluido';
+  const esCanalVenta = tipo === 'cafetin' || tipo === 'minimarket';
   ST.precio.sjBidon = conBidon ? 50 : 70;
   const desc = document.getElementById('sjBidonDesc');
   if (desc) desc.textContent = conBidon
@@ -6856,18 +7081,20 @@ function obtenerPromoEscolar(mostrarErrores = false) {
     return { ok:false, activo:true, error };
   };
   if (!colegio) return fail('Ingresa el nombre de la institucion educativa.', 'colegioNombre');
-  if (!tipo) return fail('Selecciona si es jardin, primaria o colegio.', 'colegioTipo');
-  if (!grado) return fail('Selecciona el grado o edad.', 'colegioGrado');
-  if (!seccion) return fail('Ingresa la seccion o nombre del aula.', 'colegioSeccion');
-  if (!Number.isFinite(alumnos) || alumnos < 1) return fail('Ingresa la cantidad aproximada de alumnos de la seccion para orientar al encargado del pedido.', 'colegioAlumnos');
+  if (!tipo) return fail('Selecciona si es colegio, cafetin o minimarket.', 'colegioTipo');
+  if (!esCanalVenta && !grado) return fail('Selecciona el grado o edad.', 'colegioGrado');
+  if (!esCanalVenta && !seccion) return fail('Ingresa la seccion o nombre del aula.', 'colegioSeccion');
+  if (!Number.isFinite(alumnos) || alumnos < 1) return fail('Ingresa la cantidad aproximada para orientar el pedido.', 'colegioAlumnos');
   if (!distrito) return fail('Selecciona el distrito del centro educativo.', 'colegioDistrito');
   if (productoMenorAlMinimo) {
     return fail('La compra minima de ' + productoMenorAlMinimo.nombre + ' es de 15 unidades por presentacion. Sube la cantidad a 15 o mas para continuar. El bidon de 20 litros no tiene minimo.', 'colegioAlumnos');
   }
   if (ST.pago === 'Efectivo') return fail('La promo escolar San Juan solo acepta pago anticipado. Cambia el metodo de pago.', 'colegioNombre');
   if (!document.getElementById('reservaActiva')?.checked) return fail('La promo escolar San Juan debe reservarse con fecha y hora.', 'reservaActiva');
-  const tipoLabel = { jardin:'Jardin / inicial', primaria:'Primaria', colegio:'Colegio / secundaria' }[tipo] || tipo;
-  const seccionTexto = tipoLabel + ' - ' + grado + ' - seccion ' + seccion + ' - ' + alumnos + ' alumnos aprox.';
+  const tipoLabel = { jardin:'Jardin / inicial', primaria:'Primaria', colegio:'Colegio / secundaria', cafetin:'Cafetin escolar', minimarket:'Minimarket' }[tipo] || tipo;
+  const seccionTexto = esCanalVenta
+    ? tipoLabel + ' - ' + alumnos + ' unidades aprox.'
+    : tipoLabel + ' - ' + grado + ' - seccion ' + seccion + ' - ' + alumnos + ' alumnos aprox.';
   return {
     ok:true,
     activo:true,
@@ -6941,8 +7168,91 @@ function pedidoItemsDesdePedido(pedido) {
 window.ST = ST;
 window.PRODUCT_META = PRODUCT_META;
 window.actualizarNivelEscolarUI = actualizarNivelEscolarUI;
+const CATALOGO_PUBLICO_IDS = PRODUCT_IDS;
 
 /* ── CARRITO ── */
+function limpiarCarritoPublico() {
+  let cambio = false;
+  PRODUCT_IDS.forEach(id => {
+    if (CATALOGO_PUBLICO_IDS.includes(id)) return;
+    if (Number(ST.cart[id] || 0) > 0) {
+      ST.cart[id] = 0;
+      cambio = true;
+    }
+  });
+  if (cambio) lsSet('cart', JSON.stringify(ST.cart));
+}
+
+function actualizarCarritoFlotante() {
+  const totalItems = CATALOGO_PUBLICO_IDS.reduce((sum, id) => sum + Math.max(0, Number(ST.cart[id] || 0)), 0);
+  const badge = document.getElementById('cartCountText');
+  if (badge) badge.textContent = `(${totalItems})`;
+  const btn = document.getElementById('btnCarritoFlotante');
+  if (btn) btn.classList.toggle('has-items', totalItems > 0);
+}
+
+function aplicarVistaPublicaInicio() {
+  const postCompra = document.getElementById('succScreen')?.classList.contains('on') || lsGet('succ_active') === '1';
+  if (postCompra) {
+    mostrarPostCompraUI();
+  } else {
+    mostrarPasoCompra('products', false);
+  }
+  actualizarCarritoFlotante();
+  calcTotal();
+}
+
+function mostrarPasoCompra(paso = 'products', scroll = true) {
+  document.body.classList.remove('aswa-home-step1', 'purchase-step-products', 'purchase-step-delivery', 'purchase-step-payment', 'purchase-complete');
+  const clases = {
+    products: 'purchase-step-products',
+    delivery: 'purchase-step-delivery',
+    payment: 'purchase-step-payment'
+  };
+  document.body.classList.add(clases[paso] || clases.products);
+  const targets = {
+    products: 'productosSection',
+    delivery: 'homeCoverageSection',
+    payment: 'pagoPedidoSection'
+  };
+  if (scroll) {
+    setTimeout(() => document.getElementById(targets[paso] || targets.products)?.scrollIntoView({ behavior:'smooth', block:'start' }), 80);
+  }
+}
+
+function mostrarPostCompraUI() {
+  document.body.classList.remove('aswa-home-step1', 'purchase-step-products', 'purchase-step-delivery', 'purchase-step-payment');
+  document.body.classList.add('purchase-complete');
+  pwaMostrarBotonDescarga();
+}
+
+function compraTieneProductos() {
+  return pedidoItemsLista().length > 0;
+}
+
+function continuarCompraPaso(paso) {
+  if (paso === 'products') return mostrarPasoCompra('products');
+  if (!compraTieneProductos()) {
+    mostrarPasoCompra('products');
+    return tst('Elige al menos un producto para continuar.', 2600);
+  }
+  if (paso === 'delivery') return mostrarPasoCompra('delivery');
+  if (paso === 'payment') {
+    const zonaEl = document.getElementById('zona');
+    const zonaValor = zonaEl?.value || '';
+    const tel = document.getElementById('telefono')?.value.trim() || '';
+    const nom = document.getElementById('nombre')?.value.trim() || '';
+    const dir = document.getElementById('direccion')?.value.trim() || '';
+    const zonaTxt = zonaEl?.options[zonaEl.selectedIndex]?.text || '';
+    const requiereDireccion = !/recojo/i.test(zonaTxt);
+    if (!zonaValor) return marcarZonaPedido('Selecciona tu zona de entrega');
+    if (!/^\d{9}$/.test(tel)) return marcarCampoPedido('telefono', 'Ingresa un telefono valido de 9 digitos');
+    if (!nom) return marcarCampoPedido('nombre', 'Ingresa tu nombre completo');
+    if (requiereDireccion && dir.length < 6) return marcarCampoPedido('direccion', 'Ingresa tu direccion o una referencia de entrega');
+    mostrarPasoCompra('payment');
+  }
+}
+
 function syncQtyUI(id) {
   const qtyValue = Math.max(0, Number(ST.cart[id] || 0));
   const qEl = document.getElementById('q-' + id);
@@ -6955,25 +7265,30 @@ function syncQtyUI(id) {
 
 function qty(id, d) {
   normalizarCarrito();
+  const teniaProductos = compraTieneProductos();
   ST.cart[id] = Math.max(0, Number(ST.cart[id] || 0) + d);
   syncQtyUI(id);
   if (PRODUCT_META[id]?.sanJuanPublico) actualizarBidonPublicoUI();
   if (PRODUCT_META[id]?.escolar || PRODUCT_META[id]?.sanJuanInstitucional) actualizarPromoEscolarUI();
   calcTotal();
+  if (!teniaProductos && compraTieneProductos()) mostrarPasoCompra('delivery');
 }
 
 function setQtyDirect(id, value) {
   normalizarCarrito();
+  const teniaProductos = compraTieneProductos();
   const raw = String(value ?? '').replace(/[^\d]/g, '');
   ST.cart[id] = raw === '' ? 0 : Math.min(999, Math.max(0, parseInt(raw, 10) || 0));
   syncQtyUI(id);
   if (PRODUCT_META[id]?.sanJuanPublico) actualizarBidonPublicoUI();
   if (PRODUCT_META[id]?.escolar || PRODUCT_META[id]?.sanJuanInstitucional) actualizarPromoEscolarUI();
   calcTotal();
+  if (!teniaProductos && compraTieneProductos()) mostrarPasoCompra('delivery');
 }
 window.qty = qty;
 window.setQtyDirect = setQtyDirect;
 window.syncQtyUI = syncQtyUI;
+window.continuarCompraPaso = continuarCompraPaso;
 
 function getDescuentoPct() {
   return Math.min(30,
@@ -7006,10 +7321,13 @@ function calcTotal() {
   const fixed = getDescuentoFijoAplicado(disc);
   ST.final    = Math.max(0, +(ST.raw * (1 - disc/100) - fixed).toFixed(2));
 
-  document.getElementById('pbig').textContent = 'S/ ' + ST.final.toFixed(2);
+  const pbig = document.getElementById('pbig');
+  if (pbig) pbig.textContent = 'S/ ' + ST.final.toFixed(2);
   const oel = document.getElementById('pold');
-  if ((disc > 0 || fixed > 0) && ST.raw > 0) { oel.textContent = 'S/ '+ST.raw.toFixed(2); oel.style.display='block'; }
-  else oel.style.display = 'none';
+  if (oel) {
+    if ((disc > 0 || fixed > 0) && ST.raw > 0) { oel.textContent = 'S/ '+ST.raw.toFixed(2); oel.style.display='block'; }
+    else oel.style.display = 'none';
+  }
 
   productoIds().forEach(id => {
     const priceEl = document.getElementById('pr-'+id);
@@ -7020,6 +7338,7 @@ function calcTotal() {
       : 'S/ '+b.toFixed(2);
   });
   actualizarBotonContinuar();
+  actualizarCarritoFlotante();
 }
 
 function toggleCuponPanel() {
@@ -7491,6 +7810,234 @@ const HORARIO_DEFAULT = {
     { nombre: 'Sábados', inicio: '07:00', fin: '14:00' }
   ]
 };
+
+const CATALOGO_BUSINESS_ID = String(BUSINESS_ID || 'aswa001').trim();
+const CATALOGO_BUSINESS_ID_CANONICAL = CATALOGO_BUSINESS_ID.toLowerCase();
+const CATALOGO_PUBLICO_FORZADO = {
+  p2l: {
+    nombre: 'Chicha ASWA 2 litros',
+    desc: 'Presentacion practica para casa.',
+    precio: 9,
+    foto: 'assets/images/products/optimized/aswa de 2 litros 1.jpg'
+  },
+  p3l: {
+    nombre: 'Chicha ASWA 3 litros',
+    desc: 'Ideal para compartir en familia.',
+    precio: 13,
+    foto: 'assets/images/products/optimized/aswa de 3 litros.jpg'
+  },
+  p4l: {
+    nombre: 'Chicha ASWA 4 litros',
+    desc: 'Galon familiar para almuerzo o reunion.',
+    precio: 15,
+    foto: 'assets/images/products/optimized/galon familiar de 4 litros.jpg'
+  },
+  sjCombo: {
+    nombre: 'Combo chicha 400 ml + juane escolar',
+    desc: 'Promo escolar para colegios, cafetines y minimarkets.',
+    precio: 4,
+    foto: 'assets/images/products/optimized/san-juan-combo-escolar.jpg'
+  },
+  sjJuaneFamiliar: {
+    nombre: 'Juane institucional',
+    desc: 'Juane institucional con frejol y aji.',
+    precio: 25,
+    foto: 'assets/images/products/optimized/san-juan-juane-institucional.jpg'
+  }
+};
+const CATALOGO_DEFAULT = [
+  {
+    id: 'p2l',
+    nombre: 'Chicha ASWA 2 litros',
+    desc: 'Presentacion practica para casa.',
+    precio: 9,
+    stock: 99,
+    activo: true,
+    foto: 'assets/images/products/optimized/aswa de 2 litros 1.jpg',
+    orden: 1,
+    businessId: CATALOGO_BUSINESS_ID,
+    business_id: CATALOGO_BUSINESS_ID_CANONICAL
+  },
+  {
+    id: 'p3l',
+    nombre: 'Chicha ASWA 3 litros',
+    desc: 'Ideal para compartir en familia.',
+    precio: 13,
+    stock: 99,
+    activo: true,
+    foto: 'assets/images/products/optimized/aswa de 3 litros.jpg',
+    orden: 2,
+    businessId: CATALOGO_BUSINESS_ID,
+    business_id: CATALOGO_BUSINESS_ID_CANONICAL
+  },
+  {
+    id: 'p4l',
+    nombre: 'Chicha ASWA 4 litros',
+    desc: 'Galon familiar para almuerzo o reunion.',
+    precio: 15,
+    stock: 99,
+    activo: true,
+    foto: 'assets/images/products/optimized/galon familiar de 4 litros.jpg',
+    orden: 3,
+    businessId: CATALOGO_BUSINESS_ID,
+    business_id: CATALOGO_BUSINESS_ID_CANONICAL
+  },
+  {
+    id: 'sjBidonPublic',
+    nombre: 'Bidon ASWA 20L',
+    desc: 'Recarga retornable: entrega tu bidon vacio al recibir.',
+    precio: 60,
+    stock: 99,
+    activo: true,
+    foto: 'assets/images/products/optimized/san-juan-bidon-20l.png',
+    orden: 4,
+    businessId: CATALOGO_BUSINESS_ID,
+    business_id: CATALOGO_BUSINESS_ID_CANONICAL
+  },
+  {
+    id: 'sjBidon',
+    nombre: 'Bidon escolar sanjuanero 20L',
+    desc: 'Promo escolar con pago anticipado.',
+    precio: 50,
+    stock: 99,
+    activo: true,
+    foto: 'assets/images/products/optimized/san-juan-bidon-20l.png',
+    orden: 5,
+    businessId: CATALOGO_BUSINESS_ID,
+    business_id: CATALOGO_BUSINESS_ID_CANONICAL
+  },
+  {
+    id: 'sjChicha04',
+    nombre: 'ASWA escolar sanjuanera 0.4L',
+    desc: 'Presentacion escolar de 400 ml por seccion.',
+    precio: 2.5,
+    stock: 99,
+    activo: true,
+    foto: 'assets/images/products/optimized/san-juan-chicha-400ml.jpg',
+    orden: 6,
+    businessId: CATALOGO_BUSINESS_ID,
+    business_id: CATALOGO_BUSINESS_ID_CANONICAL
+  },
+  {
+    id: 'sjCombo',
+    nombre: 'Combo chicha 400 ml + juane escolar',
+    desc: 'Promo escolar para colegios, cafetines y minimarkets.',
+    precio: 4,
+    stock: 99,
+    activo: true,
+    foto: 'assets/images/products/optimized/san-juan-combo-escolar.jpg',
+    orden: 7,
+    businessId: CATALOGO_BUSINESS_ID,
+    business_id: CATALOGO_BUSINESS_ID_CANONICAL
+  },
+  {
+    id: 'sjJuane',
+    nombre: 'Solo juane escolar',
+    desc: 'Juane para la seccion con entrega coordinada.',
+    precio: 2.5,
+    stock: 99,
+    activo: true,
+    foto: 'assets/images/products/optimized/san-juan-juane-escolar.jpg',
+    orden: 8,
+    businessId: CATALOGO_BUSINESS_ID,
+    business_id: CATALOGO_BUSINESS_ID_CANONICAL
+  },
+  {
+    id: 'sjJuaneFamiliar',
+    nombre: 'Juane institucional',
+    desc: 'Juane institucional con frejol y aji.',
+    precio: 25,
+    stock: 99,
+    activo: true,
+    foto: 'assets/images/products/optimized/san-juan-juane-institucional.jpg',
+    orden: 9,
+    businessId: CATALOGO_BUSINESS_ID,
+    business_id: CATALOGO_BUSINESS_ID_CANONICAL
+  }
+];
+const CATALOGO_ZONAS_DEFAULT = [
+  { nombre: 'Morales', precio: 3, activo: true },
+  { nombre: 'Tarapoto', precio: 4, activo: true },
+  { nombre: 'Banda de Shilcayo', precio: 5, activo: true },
+  { nombre: 'Recojo en local', precio: 0, activo: true },
+  { nombre: 'Nacional', precio: 10, activo: true, nacional: true }
+];
+const CATALOGO_DEFAULT_MAP = Object.fromEntries(CATALOGO_DEFAULT.map(prod => [prod.id, prod]));
+const CATALOGO_PRECIO_FORZADO = {
+  p2l: 9,
+  p3l: 13,
+  p4l: 15,
+  sjCombo: 4,
+  sjJuaneFamiliar: 25,
+  sjChicha04: 2.5,
+  sjJuane: 2.5,
+  sjBidonPublic: 60,
+  sjBidon: 50
+};
+
+function normalizarCatalogoProducto(prod = {}, fallbackOrden = 0) {
+  const base = CATALOGO_DEFAULT_MAP[prod.id] || {};
+  const override = CATALOGO_PUBLICO_FORZADO[prod.id] || {};
+  const id = String(prod.id || base.id || `prod_${fallbackOrden}`).trim();
+  const precioBase = Number.isFinite(Number(prod.precio))
+    ? Number(prod.precio)
+    : Number(base.precio || 0);
+  const precioOverride = Number.isFinite(Number(override.precio))
+    ? Number(override.precio)
+    : Number(CATALOGO_PRECIO_FORZADO[id]);
+  const precio = Number.isFinite(Number(precioOverride))
+    ? Number(precioOverride)
+    : precioBase;
+  const stock = Number.isFinite(Number(prod.stock))
+    ? Number(prod.stock)
+    : Number(base.stock || 99);
+  const orden = Number.isFinite(Number(prod.orden))
+    ? Number(prod.orden)
+    : Number(base.orden || fallbackOrden || 0);
+
+  return {
+    ...base,
+    ...prod,
+    ...override,
+    id,
+    nombre: String(override.nombre || prod.nombre || base.nombre || id).trim(),
+    desc: String(override.desc || prod.desc || base.desc || '').trim(),
+    precio,
+    stock,
+    activo: prod.activo !== false,
+    foto: String(override.foto || prod.foto || base.foto || ''),
+    orden,
+    businessId: String(prod.businessId || prod.business_id || base.businessId || CATALOGO_BUSINESS_ID).trim(),
+    business_id: String(prod.business_id || prod.businessId || base.business_id || CATALOGO_BUSINESS_ID_CANONICAL).trim().toLowerCase()
+  };
+}
+
+function normalizarCatalogoZona(zona = {}, fallbackOrden = 0) {
+  return {
+    nombre: String(zona.nombre || `Zona ${fallbackOrden}`).trim(),
+    precio: Number.isFinite(Number(zona.precio)) ? Number(zona.precio) : 0,
+    activo: zona.activo !== false,
+    nacional: zona.nacional === true
+  };
+}
+
+function crearCatalogoBase(data = {}) {
+  const productosBase = Array.isArray(data.productos) && data.productos.length
+    ? data.productos
+    : CATALOGO_DEFAULT;
+  const zonasBase = Array.isArray(data.zonas) && data.zonas.length
+    ? data.zonas
+    : CATALOGO_ZONAS_DEFAULT;
+
+  return {
+    ...data,
+    productos: productosBase.map((prod, index) => normalizarCatalogoProducto(prod, index + 1)),
+    zonas: zonasBase.map((zona, index) => normalizarCatalogoZona(zona, index + 1)),
+    horario: { ...HORARIO_DEFAULT, ...(data.horario || {}) }
+  };
+}
+
+window.CATALOGO = crearCatalogoBase(window.CATALOGO || {});
 
 function pedidoRegaloActivo() {
   return !!document.getElementById('regaloActiva')?.checked;
@@ -8163,6 +8710,9 @@ function tutHomeScrollToTarget(selectorList) {
 }
 
 function irPedidoRapido(paso) {
+  if (paso === 'zona' || paso === 'datos') mostrarPasoCompra('delivery', false);
+  else if (paso === 'pago') mostrarPasoCompra('payment', false);
+  else if (paso === 'productos') mostrarPasoCompra('products', false);
   const mapa = {
     zona: '#homeCoverageSection',
     productos: '#productosSection',
@@ -8295,8 +8845,9 @@ function seleccionarZonaVisual(nombre, precio) {
 
 function seleccionarZonaInicio(nombre, precio) {
   seleccionarZonaVisual(nombre, precio);
-  const section = document.getElementById('productosSection');
-  if (section) section.scrollIntoView({ behavior:'smooth', block:'center' });
+  if (typeof mostrarPasoCompra === 'function') mostrarPasoCompra('delivery', false);
+  const section = document.getElementById('datosPedidoSection');
+  if (section) section.scrollIntoView({ behavior:'smooth', block:'start' });
   if (typeof tst === 'function') {
     const label = precio === 0 ? 'Recojo en local' : (precio === 10 ? 'Envio nacional hasta agencia' : `${nombre}: delivery S/ ${Number(precio).toFixed(2)}`);
     tst(`Zona seleccionada: ${label}`, 2200);
@@ -8988,7 +9539,33 @@ function continuarPedidoInteligente() {
   return abrirResumen();
 }
 
-function abrirResumen() {
+function abrirResumen(soloCarrito = false) {
+  if (soloCarrito) {
+    const lista = document.getElementById('resLista');
+    const modal = document.getElementById('mResumen');
+    const titulo = modal?.querySelector('.mttl');
+    const btnEnviar = document.getElementById('btnEnviar');
+    const db2 = document.getElementById('dban');
+    if (!lista || !modal) return;
+    lista.innerHTML = '';
+    if (titulo) titulo.textContent = 'Carrito';
+    if (btnEnviar) btnEnviar.style.display = 'none';
+    if (db2) db2.style.display = 'none';
+    const row = (a, b, cls = '') => lista.insertAdjacentHTML('beforeend', '<div class="rrow ' + cls + '"><span>' + a + '</span><span>' + b + '</span></div>');
+    const items = pedidoItemsLista();
+    if (!items.length) {
+      row('Carrito vacío', 'Agrega productos para empezar', 'tot');
+    } else {
+      items.forEach(it => row(it.qty + '× ' + it.nombre, 'S/ ' + it.total.toFixed(2)));
+      row('<strong>TOTAL</strong>', '<strong>S/ ' + ST.final.toFixed(2) + '</strong>', 'tot');
+    }
+    modal.classList.add('on');
+    return;
+  }
+  const btnEnviar = document.getElementById('btnEnviar');
+  if (btnEnviar) btnEnviar.style.display = '';
+  const db2 = document.getElementById('dban');
+  if (db2) db2.style.display = '';
   if (ST.final <= 0)    return tst('Selecciona al menos un producto 🛒');
   const tel = document.getElementById('telefono').value.trim();
   const nom = document.getElementById('nombre').value.trim();
@@ -9040,7 +9617,6 @@ function abrirResumen() {
 
   const disc = getDescuentoPct();
   const fixed = getDescuentoFijoAplicado(disc);
-  const db2  = document.getElementById('dban');
   if (disc > 0 || fixed > 0) {
     const pts=[];
     if(ST.disc.fid) pts.push(ST.disc.fid+'% fidelidad');
@@ -9400,6 +9976,7 @@ async function enviarPedido() {
     el.style.display = 'block';
   }
   document.getElementById('succScreen').classList.add('on');
+  mostrarPostCompraUI();
   mostrarETA(ST.pedidoFbId || pid);
 
   /* ── Mostrar rating después de 8 seg (flujo efectivo) ── */
@@ -9437,7 +10014,7 @@ async function enviarPedido() {
             }
           }
         }
-      }, 6000);
+      }, 45000);
     } else {
       setTimeout(() => esperar(), 600);
     }
@@ -9899,6 +10476,74 @@ function _generarHtmlNota() {
 
 
 
+<style id="purchaseFlowFinalOverrides">
+  body.purchase-step-products #pwaInstallCard,
+  body.purchase-step-products #promoSlider,
+  body.purchase-step-products #promoDots,
+  body.purchase-step-products .easy-start,
+  body.purchase-step-products .quick-order,
+  body.purchase-step-products .home-help-collapsible,
+  body.purchase-step-products #homeCoverageSection,
+  body.purchase-step-products #datosPedidoSection,
+  body.purchase-step-products #pagoPedidoSection,
+  body.purchase-step-products .social-section,
+  body.purchase-step-products footer,
+  body.purchase-step-products .bottomnav,
+  body.purchase-step-products #fbarPedir,
+  body.purchase-step-products .chat-fab,
+  body.purchase-step-products .quick-access-panel,
+  body.purchase-step-products .btn-tutorial-top,
+  body.purchase-step-products #installPWA,
+  body.purchase-step-products #installPWA,
+  body.purchase-step-products #installPWA,
+  body.purchase-step-delivery #pwaInstallCard,
+  body.purchase-step-delivery #promoSlider,
+  body.purchase-step-delivery #promoDots,
+  body.purchase-step-delivery .easy-start,
+  body.purchase-step-delivery .quick-order,
+  body.purchase-step-delivery .home-help-collapsible,
+  body.purchase-step-delivery #productosSection,
+  body.purchase-step-delivery #pagoPedidoSection,
+  body.purchase-step-delivery .social-section,
+  body.purchase-step-delivery footer,
+  body.purchase-step-delivery .bottomnav,
+  body.purchase-step-delivery #fbarPedir,
+  body.purchase-step-delivery .chat-fab,
+  body.purchase-step-delivery .quick-access-panel,
+  body.purchase-step-delivery .btn-tutorial-top,
+  body.purchase-step-delivery #installPWA,
+  body.purchase-step-delivery #installPWA,
+  body.purchase-step-delivery #installPWA,
+  body.purchase-step-payment #pwaInstallCard,
+  body.purchase-step-payment #promoSlider,
+  body.purchase-step-payment #promoDots,
+  body.purchase-step-payment .easy-start,
+  body.purchase-step-payment .quick-order,
+  body.purchase-step-payment .home-help-collapsible,
+  body.purchase-step-payment #productosSection,
+  body.purchase-step-payment #homeCoverageSection,
+  body.purchase-step-payment #datosPedidoSection,
+  body.purchase-step-payment .social-section,
+  body.purchase-step-payment footer,
+  body.purchase-step-payment .bottomnav,
+  body.purchase-step-payment #fbarPedir,
+  body.purchase-step-payment .chat-fab,
+  body.purchase-step-payment .quick-access-panel,
+  body.purchase-step-payment .btn-tutorial-top,
+  body.purchase-step-payment #installPWA {
+    display: none !important;
+  }
+  body.purchase-step-products main,
+  body.purchase-step-delivery main,
+  body.purchase-step-payment main {
+    padding-bottom: 26px !important;
+  }
+  body.purchase-step-products #installPWA,
+  body.purchase-step-delivery #installPWA,
+  body.purchase-step-payment #installPWA {
+    display: none !important;
+  }
+</style>
 </body>
 </html>`;
   return '<!DOCTYPE html>' + htmlContent;
@@ -10251,7 +10896,32 @@ function detenerGPS() {
 }
 
 /* ── REDES SOCIALES DESDE FIRESTORE ── */
-async function cargarRedes(){const grid=document.getElementById('socialGrid');if(!grid)return;grid.innerHTML=`<a href="https://www.facebook.com/profile.php?id=100052222886761" target="_blank" class="social-btn sb-facebook"><div class="sico"><svg width="18" height="18" viewBox="0 0 24 24" fill="#1877f2"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg></div><div><div class="sname">Facebook</div><div class="ssub">ASWA</div></div></a><a href="https://www.instagram.com/aswa.laricachicha/" target="_blank" class="social-btn sb-instagram"><div class="sico"><svg width="18" height="18" viewBox="0 0 24 24" fill="#e4405f"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 1 0 0 12.324 6.162 6.162 0 0 0 0-12.324zM12 16a4 4 0 1 1 0-8 4 4 0 0 1 0 8zm6.406-11.845a1.44 1.44 0 1 0 0 2.881 1.44 1.44 0 0 0 0-2.881z"/></svg></div><div><div class="sname">Instagram</div><div class="ssub">@aswa.laricachicha</div></div></a><a href="https://wa.me/51955273229" target="_blank" class="social-btn sb-whatsapp"><div class="sico"><svg width="18" height="18" viewBox="0 0 24 24" fill="#25d366"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/></svg></div><div><div class="sname">WhatsApp</div><div class="ssub">+51 955 273 229</div></div></a><a href="https://www.tiktok.com/@aswalaricachicha" target="_blank" class="social-btn sb-tiktok"><div class="sico"><svg width="18" height="18" viewBox="0 0 24 24" fill="#ff0050"><path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-2.88 2.5 2.89 2.89 0 0 1-2.89-2.89 2.89 2.89 0 0 1 2.89-2.89c.28 0 .54.04.79.1V9.01a6.33 6.33 0 0 0-.79-.05 6.34 6.34 0 0 0-6.34 6.34 6.34 6.34 0 0 0 6.34 6.34 6.34 6.34 0 0 0 6.33-6.34V8.69a8.18 8.18 0 0 0 4.78 1.52V6.76a4.85 4.85 0 0 1-1.01-.07z"/></svg></div><div><div class="sname">TikTok</div><div class="ssub">@aswalaricachicha</div></div></a><a href="https://twitter.com/AswaRica_Chicha" target="_blank" class="social-btn sb-twitter"><div class="sico"><svg width="18" height="18" viewBox="0 0 24 24" fill="#000"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg></div><div><div class="sname">X</div><div class="ssub">@AswaRica_Chicha</div></div></a><a href="https://www.youtube.com/@AswaLaricachicha" target="_blank" class="social-btn sb-youtube"><div class="sico"><svg width="18" height="18" viewBox="0 0 24 24" fill="#f00"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg></div><div><div class="sname">YouTube</div><div class="ssub">@AswaLaricachicha</div></div></a><a href="https://www.google.com/maps/dir/?api=1&destination=-6.4760847,-76.387505" target="_blank" class="social-btn sb-maps" style="grid-column:1/-1"><div class="sico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#facc15" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg></div><div><div class="sname" style="color:#facc15">Ver en Google Maps</div><div class="ssub">Morales, San Martín</div></div></a>`}
+function negocioRedesPublicas() {
+  const negocio = window.NEGOCIO || {};
+  return {
+    facebook: negocio.facebook_url || negocio.facebook || 'https://www.facebook.com/profile.php?id=100052222886761',
+    instagram: negocio.instagram_url || negocio.instagram || 'https://www.instagram.com/aswa.laricachicha/',
+    whatsapp: negocio.whatsapp_link || `https://wa.me/${window.getWA1?.() || _WA1 || '51955273229'}`,
+    tiktok: negocio.tiktok_url || negocio.tiktok || 'https://www.tiktok.com/@aswalaricachicha',
+    x: negocio.twitter_url || negocio.x_url || 'https://twitter.com/AswaRica_Chicha',
+    youtube: negocio.youtube_url || 'https://www.youtube.com/@AswaLaricachicha',
+    maps: negocio.maps_url || negocio.google_maps_url || 'https://www.google.com/maps/dir/?api=1&destination=-6.4760847,-76.387505',
+  };
+}
+
+async function cargarRedes() {
+  const grid = document.getElementById('socialGrid');
+  if (!grid) return;
+  const redes = negocioRedesPublicas();
+  grid.innerHTML = `
+    <a href="${esc(redes.facebook)}" target="_blank" class="social-btn sb-facebook"><div class="sico"><svg width="18" height="18" viewBox="0 0 24 24" fill="#1877f2"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg></div><div><div class="sname">Facebook</div><div class="ssub">ASWA</div></div></a>
+    <a href="${esc(redes.instagram)}" target="_blank" class="social-btn sb-instagram"><div class="sico"><svg width="18" height="18" viewBox="0 0 24 24" fill="#e4405f"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 1 0 0 12.324 6.162 6.162 0 0 0 0-12.324zM12 16a4 4 0 1 1 0-8 4 4 0 0 1 0 8zm6.406-11.845a1.44 1.44 0 1 0 0 2.881 1.44 1.44 0 0 0 0-2.881z"/></svg></div><div><div class="sname">Instagram</div><div class="ssub">@aswa.laricachicha</div></div></a>
+    <a href="${esc(redes.whatsapp)}" target="_blank" class="social-btn sb-whatsapp"><div class="sico"><svg width="18" height="18" viewBox="0 0 24 24" fill="#25d366"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/></svg></div><div><div class="sname">WhatsApp</div><div class="ssub">${esc(formatearTelefonoPublico(window.getWA1?.() || _WA1))}</div></div></a>
+    <a href="${esc(redes.tiktok)}" target="_blank" class="social-btn sb-tiktok"><div class="sico"><svg width="18" height="18" viewBox="0 0 24 24" fill="#ff0050"><path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-2.88 2.5 2.89 2.89 0 0 1-2.89-2.89 2.89 2.89 0 0 1 2.89-2.89c.28 0 .54.04.79.1V9.01a6.33 6.33 0 0 0-.79-.05 6.34 6.34 0 0 0-6.34 6.34 6.34 6.34 0 0 0 6.34 6.34 6.34 6.34 0 0 0 6.33-6.34V8.69a8.18 8.18 0 0 0 4.78 1.52V6.76a4.85 4.85 0 0 1-1.01-.07z"/></svg></div><div><div class="sname">TikTok</div><div class="ssub">@aswalaricachicha</div></div></a>
+    <a href="${esc(redes.x)}" target="_blank" class="social-btn sb-twitter"><div class="sico"><svg width="18" height="18" viewBox="0 0 24 24" fill="#000"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg></div><div><div class="sname">X</div><div class="ssub">@AswaRica_Chicha</div></div></a>
+    <a href="${esc(redes.youtube)}" target="_blank" class="social-btn sb-youtube"><div class="sico"><svg width="18" height="18" viewBox="0 0 24 24" fill="#f00"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg></div><div><div class="sname">YouTube</div><div class="ssub">@AswaLaricachicha</div></div></a>
+    <a href="${esc(redes.maps)}" target="_blank" class="social-btn sb-maps" style="grid-column:1/-1"><div class="sico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#facc15" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg></div><div><div class="sname" style="color:#facc15">Ver en Google Maps</div><div class="ssub">Morales, San Martín</div></div></a>`;
+}
 function irA(pagina) {
   // Ocultar todas las páginas
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
@@ -10782,6 +11452,7 @@ document.addEventListener('DOMContentLoaded', () => {
     el.textContent = '⏰ Las misiones vencen el ' + new Date(hoy.getFullYear(), hoy.getMonth()+1, 0).getDate() + ' de ' + meses[hoy.getMonth()];
   })();
   document.getElementById('fbarPedir').classList.add('show');
+  aplicarVistaPublicaInicio();
   setTimeout(() => {
     document.getElementById('badge-bono').classList.add('show');
   }, 2000);
@@ -10839,6 +11510,49 @@ function admRenderStats(docs, { totalVentas, totalPedidos, pedHoy, ventasHoy, to
   const cont = document.getElementById('admContenidoStats');
   if (!cont) return;
 
+  const negocio = window.NEGOCIO || {};
+  const catalogo = window.CATALOGO || {};
+  const horarioBase = {
+    ...(window.ASWA_CONFIG?.HORARIO || {}),
+    ...(catalogo.horario || negocio.horario || {})
+  };
+  const horarioActivo = horarioBase.activo !== false;
+  const estadoHorario = horarioActivo ? horarioEstadoActual(horarioBase) : { abierto:false, ventana:null, ventanas:[] };
+  const nombreNegocio = negocio.nombre || window.ASWA_CONFIG?.BUSINESS_NAME || 'ASWA';
+  const esloganNegocio = negocio.eslogan || 'Panel ejecutivo para ventas, pedidos y operacion diaria.';
+  const direccionNegocio = negocio.direccion || 'Direccion no configurada';
+  const referenciaNegocio = negocio.referencia || '';
+  const completitud = ownerPuntajeNegocio(negocio, catalogo);
+  const productosActivos = Array.isArray(catalogo.productos) ? catalogo.productos.filter((prod) => prod && prod.activo !== false) : [];
+  const zonasActivas = Array.isArray(catalogo.zonas) ? catalogo.zonas.filter((zona) => zona && zona.activo !== false) : [];
+  const pedidosActivos = docs.filter((doc) => ['pendiente', 'preparando', 'en_camino'].includes(String(doc.data().estado || '').trim().toLowerCase())).length;
+  const coberturaResumen = zonasActivas.length
+    ? zonasActivas.slice(0, 4).map((zona) => `${zona.nombre || 'Zona'} - S/ ${Number(zona.precio || 0).toFixed(2)}`).join(' | ')
+    : 'Sin zonas configuradas';
+  const horarioResumen = horarioActivo
+    ? (estadoHorario.abierto
+      ? `Abierto ahora - ${estadoHorario.ventana?.nombre || 'Horario actual'}: ${estadoHorario.ventana?.inicio || ''} - ${estadoHorario.ventana?.fin || ''}`
+      : `Cerrado ahora - ${horarioBase.mensaje || 'Volvemos en el siguiente horario de entrega'}`)
+    : 'Horario desactivado';
+  const estadoLabel = horarioActivo
+    ? (estadoHorario.abierto ? 'Abierto ahora' : 'Fuera de horario')
+    : 'Cerrado por config';
+  const estadoColor = horarioActivo
+    ? (estadoHorario.abierto ? '#86efac' : '#fdba74')
+    : '#fca5a5';
+  const estadoBorder = horarioActivo
+    ? (estadoHorario.abierto ? 'rgba(34,197,94,.32)' : 'rgba(249,115,22,.32)')
+    : 'rgba(239,68,68,.32)';
+  const estadoBg = horarioActivo
+    ? (estadoHorario.abierto ? 'rgba(34,197,94,.16)' : 'rgba(249,115,22,.16)')
+    : 'rgba(239,68,68,.16)';
+  const estadoDot = horarioActivo
+    ? (estadoHorario.abierto ? '#22c55e' : '#f97316')
+    : '#f97316';
+  const estadoGlow = horarioActivo
+    ? (estadoHorario.abierto ? 'rgba(34,197,94,.16)' : 'rgba(249,115,22,.16)')
+    : 'rgba(239,68,68,.16)';
+
   // Ventas por día (últimos 7 días)
   const diasVentas = {};
   const hoy = new Date(); hoy.setHours(0,0,0,0);
@@ -10877,6 +11591,49 @@ function admRenderStats(docs, { totalVentas, totalPedidos, pedHoy, ventasHoy, to
   const maxVenta = Math.max(...Object.values(diasVentas).map(v=>v.total), 1);
 
   cont.innerHTML = `
+    <!-- Control center -->
+    <div style="background:linear-gradient(135deg,rgba(250,204,21,.14),rgba(16,185,129,.12) 48%,rgba(59,130,246,.12));border:1px solid rgba(250,204,21,.22);border-radius:20px;padding:18px;margin-bottom:16px;position:relative;overflow:hidden;box-shadow:0 22px 60px rgba(0,0,0,.24)">
+      <div style="position:absolute;right:-46px;top:-46px;width:180px;height:180px;border-radius:50%;background:radial-gradient(circle,rgba(255,255,255,.18),rgba(255,255,255,0) 70%);pointer-events:none"></div>
+      <div style="position:absolute;left:-50px;bottom:-60px;width:210px;height:210px;border-radius:50%;background:radial-gradient(circle,rgba(255,255,255,.1),rgba(255,255,255,0) 72%);pointer-events:none"></div>
+      <div style="display:flex;flex-wrap:wrap;justify-content:space-between;gap:14px;align-items:flex-start;position:relative;z-index:1">
+        <div style="min-width:min(100%,420px);flex:1">
+          <div style="font-size:11px;font-weight:900;letter-spacing:.16em;text-transform:uppercase;color:#fde68a">Control center</div>
+          <div style="margin-top:4px;font-family:'Bebas Neue',cursive;font-size:40px;line-height:1;color:#fff;letter-spacing:.06em">${esc(nombreNegocio)}</div>
+          <div style="margin-top:8px;font-size:13px;color:rgba(255,255,255,.92);line-height:1.65;max-width:680px">${esc(esloganNegocio)}</div>
+          <div style="margin-top:10px;font-size:12px;color:#e9d5ff;line-height:1.6">${esc(direccionNegocio)}${referenciaNegocio ? ` - ${esc(referenciaNegocio)}` : ''}</div>
+        </div>
+        <div style="min-width:240px;max-width:320px;flex:0 0 280px;background:rgba(7,10,25,.42);border:1px solid rgba(255,255,255,.12);border-radius:18px;padding:14px;backdrop-filter:blur(12px)">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px">
+            <div style="font-size:10px;color:rgba(255,255,255,.7);text-transform:uppercase;letter-spacing:.12em;font-weight:900">Estado operativo</div>
+            <div style="display:inline-flex;align-items:center;gap:8px;padding:8px 10px;border-radius:999px;background:${estadoBg};border:1px solid ${estadoBorder};color:${estadoColor};font-size:11px;font-weight:900">
+              <span style="width:8px;height:8px;border-radius:50%;background:${estadoDot};box-shadow:0 0 0 4px ${estadoGlow}"></span>
+              ${estadoLabel}
+            </div>
+          </div>
+          <div style="font-size:12px;color:#fff;line-height:1.5">${esc(horarioResumen)}</div>
+          <div style="margin-top:12px;font-size:12px;color:#bfdbfe;font-weight:900">Perfil ${completitud}% completado</div>
+          <div style="margin-top:8px;height:8px;background:rgba(255,255,255,.08);border-radius:999px;overflow:hidden">
+            <div style="height:100%;width:${completitud}%;background:linear-gradient(90deg,#facc15,#22c55e)"></div>
+          </div>
+          <div style="margin-top:10px;font-size:11px;color:rgba(255,255,255,.72);line-height:1.5">${esc(horarioActivo ? (estadoHorario.abierto ? 'Atendiendo pedidos en vivo' : 'Listo para abrir en el siguiente turno') : 'Horario desactivado en configuracion')}</div>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-top:16px">
+        ${ownerCard('Perfil completado', `${completitud}%`, '#facc15', 'Ficha publica, horario y contacto')}
+        ${ownerCard('Productos activos', productosActivos.length, '#86efac', `${catalogo.productos?.length || 0} configurados`)}
+        ${ownerCard('Zonas activas', zonasActivas.length, '#93c5fd', esc(coberturaResumen))}
+        ${ownerCard('Pedidos activos', pedidosActivos, '#f97316', 'Pendiente, preparando o en camino')}
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:14px">
+        <button onclick="admTab('pedidos')" style="background:rgba(96,165,250,.14);color:#bfdbfe;border:1px solid rgba(96,165,250,.28);border-radius:12px;padding:10px 12px;font-size:12px;font-weight:900;cursor:pointer">Pedidos</button>
+        <button onclick="admTab('yape')" style="background:rgba(34,197,94,.14);color:#86efac;border:1px solid rgba(34,197,94,.28);border-radius:12px;padding:10px 12px;font-size:12px;font-weight:900;cursor:pointer">Yape</button>
+        <button onclick="admTab('clientes')" style="background:rgba(52,211,153,.14);color:#86efac;border:1px solid rgba(52,211,153,.28);border-radius:12px;padding:10px 12px;font-size:12px;font-weight:900;cursor:pointer">Clientes</button>
+        <button onclick="admTab('cupones')" style="background:rgba(168,85,247,.14);color:#e9d5ff;border:1px solid rgba(168,85,247,.3);border-radius:12px;padding:10px 12px;font-size:12px;font-weight:900;cursor:pointer">Cupones</button>
+        <button onclick="admTab('chat')" style="background:rgba(20,184,166,.14);color:#99f6e4;border:1px solid rgba(20,184,166,.28);border-radius:12px;padding:10px 12px;font-size:12px;font-weight:900;cursor:pointer">Chat</button>
+        <button onclick="ownerGestionNegocio()" style="background:rgba(250,204,21,.14);color:#fde68a;border:1px solid rgba(250,204,21,.28);border-radius:12px;padding:10px 12px;font-size:12px;font-weight:900;cursor:pointer">Editar negocio</button>
+      </div>
+    </div>
+
     <!-- KPIs principales -->
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px">
       <div style="background:linear-gradient(135deg,rgba(250,204,21,.15),rgba(250,204,21,.05));border:1px solid rgba(250,204,21,.3);border-radius:14px;padding:16px;text-align:center">
@@ -11010,6 +11767,8 @@ async function admCargarClientes() {
   if (window._admTodosClientes) {
     admRenderClientes(window._admTodosClientes);
   } else {
+    document.getElementById('admped-' + pedidoId)?.remove();
+    document.getElementById('admped2-' + pedidoId)?.remove();
     await admCargar();
   }
 }
@@ -11018,6 +11777,24 @@ function admEventoFecha(fecha) {
   if (!fecha) return '—';
   const d = fecha.seconds ? new Date(fecha.seconds * 1000) : new Date(fecha);
   return Number.isFinite(d.getTime()) ? d.toLocaleString('es-PE') : '—';
+}
+
+function admNormalizarEstadoPedido(estado = '') {
+  const base = String(estado || 'Pendiente').trim().toLowerCase().replace(/[\s-]+/g, '_');
+  return base || 'pendiente';
+}
+
+function admEtiquetaEstadoPedido(estado = '') {
+  const mapa = {
+    pendiente: 'PENDIENTE',
+    preparando: 'PREPARANDO',
+    en_camino: 'EN CAMINO',
+    entregado: 'ENTREGADO',
+    cerrado: 'CERRADO',
+    rechazado: 'RECHAZADO',
+    cancelado: 'CANCELADO',
+  };
+  return mapa[admNormalizarEstadoPedido(estado)] || 'PENDIENTE';
 }
 
 function admRenderReferidos(docs) {
@@ -12764,7 +13541,7 @@ const ASWA_SUPPORT_KNOWLEDGE = [
     tema: 'campana san juan',
     priority: 8,
     keywords: ['campana san juan', 'campana san juanera', 'campana sanjuanera', 'sanjuanera', 'san juanera', 'san juan', 'fiestas de san juan', 'promo escolar', 'centros educativos', 'colegios', 'juane', 'bidon san juan', 'en que consiste'],
-    respuesta: 'La campana sanjuanera ASWA esta pensada para centros educativos: jardines, primarias y colegios de Banda de Shilcayo, Morales y Tarapoto. La pide normalmente el encargado de aula, padre, madre o tesorero de la seccion. Pedido minimo: 15 unidades por presentacion, excepto el bidon 20L que no tiene minimo. Ofrece chicha ASWA 400 ml S/ 2, solo juane S/ 2.00, combo juane + chicha 400 ml S/ 3.50 y bidon 20L S/ 50 recarga o S/ 70 con bidon nuevo. No cobramos delivery en la promo escolar para apoyar a los padres de familia. Se reserva con pago anticipado por Yape, Plin, Agora, BIM o transferencia; no aplica efectivo.'
+    respuesta: 'La campana sanjuanera ASWA esta pensada para centros educativos: jardines, primarias y colegios de Banda de Shilcayo, Morales y Tarapoto. La pide normalmente el encargado de aula, padre, madre o tesorero de la seccion. Pedido minimo: 15 unidades por presentacion, excepto el bidon 20L que no tiene minimo. Ofrece chicha ASWA 400 ml S/ 2.50, solo juane S/ 2.50, combo juane + chicha 400 ml S/ 4.00 y bidon 20L S/ 50 recarga o S/ 70 con bidon nuevo. No cobramos delivery en la promo escolar para apoyar a los padres de familia. Se reserva con pago anticipado por Yape, Plin, Agora, BIM o transferencia; no aplica efectivo.'
   },
   {
     tema: 'historia aswa',
@@ -12856,7 +13633,7 @@ const ASWA_APP_KNOWLEDGE_CHUNKS = [
   {
     tema: 'campana san juan completa',
     terms: ['san juan','san juanera','sanjuanera','campana','fiestas','colegio','colegios','centro educativo','centros educativos','escolar','juane','bidon','institucional','seccion','salon'],
-    respuesta: 'La campana sanjuanera ASWA es para Fiestas de San Juan y esta dirigida a centros educativos: jardines, primarias y colegios de Banda de Shilcayo, Morales y Tarapoto. Normalmente la coordina el encargado del aula, padre, madre o tesorero de la seccion. Pedido minimo: 15 unidades por presentacion; el bidon 20L no tiene minimo. Ofrece chicha ASWA 400 ml S/ 2, solo juane S/ 2.00, combo juane + chicha 400 ml S/ 3.50 y bidon 20L S/ 50 recarga o S/ 70 con bidon nuevo. No cobramos delivery en promo escolar para apoyar a los padres de familia. Requiere reserva y pago anticipado por Yape, Plin, Agora, BIM o transferencia; no aplica efectivo.'
+    respuesta: 'La campana sanjuanera ASWA es para Fiestas de San Juan y esta dirigida a centros educativos: jardines, primarias y colegios de Banda de Shilcayo, Morales y Tarapoto. Normalmente la coordina el encargado del aula, padre, madre o tesorero de la seccion. Pedido minimo: 15 unidades por presentacion; el bidon 20L no tiene minimo. Ofrece chicha ASWA 400 ml S/ 2.50, solo juane S/ 2.50, combo juane + chicha 400 ml S/ 4.00 y bidon 20L S/ 50 recarga o S/ 70 con bidon nuevo. No cobramos delivery en promo escolar para apoyar a los padres de familia. Requiere reserva y pago anticipado por Yape, Plin, Agora, BIM o transferencia; no aplica efectivo.'
   },
   {
     tema: 'bidon san juan',
@@ -12866,7 +13643,7 @@ const ASWA_APP_KNOWLEDGE_CHUNKS = [
   {
     tema: 'promo escolar',
     terms: ['promo escolar','colegio','colegios','centro educativo','centros educativos','jardin','primaria','secundaria','seccion','salon','estudiantes','aula','padres de familia','tesorero'],
-    respuesta: 'La promo escolar San Juan es para centros educativos: jardines, primarias y colegios de Banda de Shilcayo, Morales y Tarapoto. La coordina un encargado del aula, padre, madre o tesorero de la seccion. Minimo 15 unidades por presentacion: chicha ASWA 400 ml S/ 2, solo juane S/ 2.00 o combo juane + chicha S/ 3.50. El bidon 20L no tiene minimo: recarga S/ 50 o con bidon nuevo S/ 70. No cobramos delivery en esta campana para apoyar a los padres de familia. Requiere reserva y pago anticipado.'
+    respuesta: 'La promo escolar San Juan es para centros educativos: jardines, primarias y colegios de Banda de Shilcayo, Morales y Tarapoto. La coordina un encargado del aula, padre, madre o tesorero de la seccion. Minimo 15 unidades por presentacion: chicha ASWA 400 ml S/ 2.50, solo juane S/ 2.50 o combo juane + chicha S/ 4.00. El bidon 20L no tiene minimo: recarga S/ 50 o con bidon nuevo S/ 70. No cobramos delivery en esta campana para apoyar a los padres de familia. Requiere reserva y pago anticipado.'
   },
   {
     tema: 'juane familiar institucional',
@@ -13956,12 +14733,13 @@ function abrirPanelDueno() {
             </div>
           </div>
           <div id="ownerDashStep" style="display:none;padding:18px">
-            <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px">
-              <button onclick="ownerCargar()" style="background:var(--y);color:#000;border:none;border-radius:10px;padding:10px 14px;font-size:12px;font-weight:900;cursor:pointer">Actualizar</button>
-              <button onclick="ownerAbrirAdmin()" style="background:rgba(250,204,21,.12);color:#fde68a;border:1px solid rgba(250,204,21,.28);border-radius:10px;padding:10px 14px;font-size:12px;font-weight:900;cursor:pointer">Abrir Admin</button>
-              <button onclick="abrirDashboardTVSeguro()" style="background:rgba(59,130,246,.14);color:#bfdbfe;border:1px solid rgba(59,130,246,.3);border-radius:10px;padding:10px 14px;font-size:12px;font-weight:900;cursor:pointer">TV real</button>
-              <button onclick="ownerGestionUsuarios()" style="background:rgba(168,85,247,.14);color:#e9d5ff;border:1px solid rgba(168,85,247,.34);border-radius:10px;padding:10px 14px;font-size:12px;font-weight:900;cursor:pointer">Usuarios</button>
-            </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px">
+        <button onclick="ownerCargar()" style="background:var(--y);color:#000;border:none;border-radius:10px;padding:10px 14px;font-size:12px;font-weight:900;cursor:pointer">Actualizar</button>
+        <button onclick="ownerGestionNegocio()" style="background:rgba(34,197,94,.14);color:#86efac;border:1px solid rgba(34,197,94,.32);border-radius:10px;padding:10px 14px;font-size:12px;font-weight:900;cursor:pointer">Datos negocio</button>
+        <button onclick="ownerAbrirAdmin()" style="background:rgba(250,204,21,.12);color:#fde68a;border:1px solid rgba(250,204,21,.28);border-radius:10px;padding:10px 14px;font-size:12px;font-weight:900;cursor:pointer">Abrir Admin</button>
+        <button onclick="abrirDashboardTVSeguro()" style="background:rgba(59,130,246,.14);color:#bfdbfe;border:1px solid rgba(59,130,246,.3);border-radius:10px;padding:10px 14px;font-size:12px;font-weight:900;cursor:pointer">TV real</button>
+        <button onclick="ownerGestionUsuarios()" style="background:rgba(168,85,247,.14);color:#e9d5ff;border:1px solid rgba(168,85,247,.34);border-radius:10px;padding:10px 14px;font-size:12px;font-weight:900;cursor:pointer">Usuarios</button>
+      </div>
             <div id="ownerResumen"></div>
             <div id="ownerDetalle" style="margin-top:14px"></div>
           </div>
@@ -14265,8 +15043,64 @@ async function ownerCargar() {
     const productosTotal = ownerProductosTotales(pedidos);
     const deliveristas = ownerDeliveristasResumen(pedidos, usuarios);
     const clientesTop = ownerClienteResumen(clientes, pedidos);
+    const negocio = window.NEGOCIO || {};
+    const catalogo = window.CATALOGO || {};
+    const horarioBase = {
+      ...(window.ASWA_CONFIG?.HORARIO || {}),
+      ...(catalogo.horario || negocio.horario || {})
+    };
+    const horarioActivo = horarioBase.activo !== false;
+    const horarioEstado = horarioActivo ? horarioEstadoActual(horarioBase) : { abierto:false, ventana:null, ventanas:[] };
+    const productosActivos = Array.isArray(catalogo.productos) ? catalogo.productos.filter(p => p.activo !== false) : [];
+    const zonasActivas = Array.isArray(catalogo.zonas) ? catalogo.zonas.filter(z => z.activo !== false) : [];
+    const completitud = ownerPuntajeNegocio(negocio, catalogo);
+    const coberturaResumen = zonasActivas.length
+      ? zonasActivas.slice(0, 4).map(z => `${esc(z.nombre)} · S/ ${Number(z.precio || 0).toFixed(2)}`).join(' | ')
+      : 'Sin zonas configuradas';
+    const horarioResumen = horarioActivo
+      ? (horarioEstado.abierto
+        ? `Abierto ahora · ${esc(horarioEstado.ventana?.nombre || 'Horario actual')}: ${esc(horarioEstado.ventana?.inicio || '')} - ${esc(horarioEstado.ventana?.fin || '')}`
+        : `Cerrado ahora · ${esc(horarioBase.mensaje || 'Volvemos en el siguiente horario de entrega')}`)
+      : 'Horario desactivado';
 
-    resumen.innerHTML = `<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px">
+    resumen.innerHTML = `
+      <div style="background:linear-gradient(135deg,rgba(250,204,21,.12),rgba(168,85,247,.12));border:1px solid rgba(250,204,21,.18);border-radius:18px;padding:18px;margin-bottom:14px;box-shadow:0 20px 50px rgba(0,0,0,.22)">
+        <div style="display:flex;justify-content:space-between;gap:14px;align-items:flex-start;flex-wrap:wrap">
+          <div style="min-width:min(100%,420px);flex:1">
+            <div style="font-size:11px;font-weight:900;letter-spacing:.12em;text-transform:uppercase;color:#fde68a">Cockpit del negocio</div>
+            <div style="margin-top:6px;font-family:'Bebas Neue',cursive;font-size:40px;line-height:1;color:#fff;letter-spacing:.06em">${esc(negocio.nombre || window.ASWA_CONFIG?.BUSINESS_NAME || 'ASWA')}</div>
+            <div style="margin-top:8px;font-size:13px;color:var(--mut);line-height:1.6">${esc(negocio.eslogan || 'Gestion operativa premium en tiempo real.')}</div>
+            <div style="margin-top:10px;font-size:12px;color:#e9d5ff;line-height:1.6">${esc(negocio.direccion || 'Direccion no configurada')} ${negocio.referencia ? `· ${esc(negocio.referencia)}` : ''}</div>
+          </div>
+          <div style="min-width:220px;text-align:right">
+            <div style="display:inline-flex;align-items:center;gap:8px;padding:9px 12px;border-radius:999px;background:${horarioEstado.abierto ? 'rgba(34,197,94,.16)' : 'rgba(249,115,22,.16)'};border:1px solid ${horarioEstado.abierto ? 'rgba(34,197,94,.32)' : 'rgba(249,115,22,.32)'};color:${horarioEstado.abierto ? '#86efac' : '#fdba74'};font-size:12px;font-weight:900">
+              <span style="width:8px;height:8px;border-radius:50%;background:${horarioEstado.abierto ? '#22c55e' : '#f97316'};box-shadow:0 0 0 4px ${horarioEstado.abierto ? 'rgba(34,197,94,.16)' : 'rgba(249,115,22,.16)'}"></span>
+              ${horarioEstado.abierto ? 'Abierto ahora' : 'Cerrado ahora'}
+            </div>
+            <div style="margin-top:10px;font-size:12px;color:var(--mut);line-height:1.5">${horarioResumen}</div>
+            <div style="margin-top:10px;font-size:12px;color:#bfdbfe;font-weight:900">Perfil ${completitud}% completado</div>
+            <div style="margin-top:8px;height:8px;background:rgba(255,255,255,.08);border-radius:999px;overflow:hidden">
+              <div style="height:100%;width:${completitud}%;background:linear-gradient(90deg,#facc15,#22c55e)"></div>
+            </div>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-top:16px">
+          ${ownerCard('Productos activos', productosActivos.length, '#facc15', `${catalogo.productos?.length || 0} configurados`)}
+          ${ownerCard('Zonas activas', zonasActivas.length, '#86efac', zonasActivas.length ? coberturaResumen : 'Configura cobertura y delivery') }
+          ${ownerCard('Cobertura lista', completitud + '%', '#93c5fd', 'Ficha, horario, contactos y zonas')}
+          ${ownerCard('Ventas hoy', 'S/ ' + ventasHoy.toFixed(2), '#facc15', pedidosHoy.length + ' pedido(s) hoy')}
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:14px">
+          <button onclick="ownerAbrirAdminTab('stats')" style="background:rgba(250,204,21,.14);color:#fde68a;border:1px solid rgba(250,204,21,.28);border-radius:12px;padding:10px 12px;font-size:12px;font-weight:900;cursor:pointer">Ver estadisticas</button>
+          <button onclick="ownerAbrirAdminTab('pedidos')" style="background:rgba(96,165,250,.14);color:#bfdbfe;border:1px solid rgba(96,165,250,.28);border-radius:12px;padding:10px 12px;font-size:12px;font-weight:900;cursor:pointer">Pedidos</button>
+          <button onclick="ownerAbrirAdminTab('clientes')" style="background:rgba(52,211,153,.14);color:#86efac;border:1px solid rgba(52,211,153,.28);border-radius:12px;padding:10px 12px;font-size:12px;font-weight:900;cursor:pointer">Clientes</button>
+          <button onclick="ownerAbrirAdminTab('chat')" style="background:rgba(168,85,247,.14);color:#e9d5ff;border:1px solid rgba(168,85,247,.3);border-radius:12px;padding:10px 12px;font-size:12px;font-weight:900;cursor:pointer">Chat</button>
+          <button onclick="ownerAbrirCatalogo()" style="background:rgba(255,255,255,.06);color:var(--txt);border:1px solid var(--brd);border-radius:12px;padding:10px 12px;font-size:12px;font-weight:900;cursor:pointer">Catalogo</button>
+          <button onclick="ownerGestionNegocio()" style="background:rgba(34,197,94,.14);color:#86efac;border:1px solid rgba(34,197,94,.28);border-radius:12px;padding:10px 12px;font-size:12px;font-weight:900;cursor:pointer">Editar negocio</button>
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px">
       ${ownerCard('Ventas hoy', 'S/ ' + ventasHoy.toFixed(2), '#facc15', pedidosHoy.length + ' pedido(s) hoy')}
       ${ownerCard('Pedidos activos', pendientes, '#60a5fa', 'Pendiente, preparando o en camino')}
       ${ownerCard('Pagos por aprobar', pagosPend, '#f97316', 'Comprobantes digitales')}
@@ -14278,7 +15112,7 @@ async function ownerCargar() {
       ${ownerCard('2 litros hoy', productosHoy.p2l, '#fde68a', productosTotal.p2l + ' historico')}
       ${ownerCard('3 litros hoy', productosHoy.p3l, '#fde68a', productosTotal.p3l + ' historico')}
       ${ownerCard('4 litros hoy', productosHoy.p4l, '#fde68a', productosTotal.p4l + ' historico')}
-    </div>`;
+      </div>`;
 
     const proximas = pedidos
       .filter(p => p.es_reserva && p.reserva_fecha)
@@ -14393,6 +15227,367 @@ function ownerGestionUsuarios() {
       console.warn('ownerGestionUsuarios:', err);
     }
   }, 500);
+}
+
+function ownerCerrarGestionNegocio() {
+  const modal = document.getElementById('negocioModal');
+  if (modal) modal.style.display = 'none';
+}
+
+function ownerMostrarNegocioError(msg) {
+  const el = document.getElementById('negocioError');
+  if (!el) return;
+  el.textContent = msg;
+  el.style.display = 'block';
+}
+
+function ownerLimpiarNegocioError() {
+  const el = document.getElementById('negocioError');
+  if (!el) return;
+  el.textContent = '';
+  el.style.display = 'none';
+}
+
+function ownerFormatearNegocioInput(value) {
+  return String(value || '').trim();
+}
+
+function ownerNormalizarZonaGestion(zona = {}, fallbackOrden = 0) {
+  return {
+    nombre: ownerFormatearNegocioInput(zona.nombre) || `Zona ${fallbackOrden || 1}`,
+    precio: Number.isFinite(Number(zona.precio)) ? Number(zona.precio) : 0,
+    activo: zona.activo !== false,
+    nacional: zona.nacional === true
+  };
+}
+
+function ownerZonasBaseGestion() {
+  const zonas = Array.isArray(window.CATALOGO?.zonas) && window.CATALOGO.zonas.length
+    ? window.CATALOGO.zonas
+    : Array.isArray(window.NEGOCIO?.zonas) && window.NEGOCIO.zonas.length
+      ? window.NEGOCIO.zonas
+      : CATALOGO_ZONAS_DEFAULT;
+  return zonas.map((zona, index) => ownerNormalizarZonaGestion(zona, index + 1));
+}
+
+function ownerLeerZonasFormulario() {
+  const filas = Array.from(document.querySelectorAll('#negocioZonasLista [data-zona-row]'));
+  return filas.map((fila) => ({
+    nombre: ownerFormatearNegocioInput(fila.querySelector('[data-zone-field="nombre"]')?.value),
+    precio: fila.querySelector('[data-zone-field="precio"]')?.value,
+    activo: fila.querySelector('[data-zone-field="activo"]')?.checked ?? true,
+    nacional: fila.querySelector('[data-zone-field="nacional"]')?.checked ?? false
+  }));
+}
+
+function ownerZonaFilaHTML(zona = {}, index = 0) {
+  const data = ownerNormalizarZonaGestion(zona, index + 1);
+  return `
+    <div data-zona-row style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;align-items:end;background:rgba(255,255,255,.03);border:1px solid var(--brd);border-radius:14px;padding:12px">
+      <label style="display:flex;flex-direction:column;gap:6px;font-size:10px;font-weight:800;color:var(--mut);text-transform:uppercase;letter-spacing:.08em">
+        Zona
+        <input class="inp" data-zone-field="nombre" value="${escAttr(data.nombre)}" placeholder="Morales" style="font-size:14px">
+      </label>
+      <label style="display:flex;flex-direction:column;gap:6px;font-size:10px;font-weight:800;color:var(--mut);text-transform:uppercase;letter-spacing:.08em">
+        Precio S/
+        <input class="inp" data-zone-field="precio" type="number" min="0" step="0.5" value="${escAttr(data.precio)}" placeholder="0" style="font-size:14px">
+      </label>
+      <label style="display:flex;align-items:center;gap:8px;min-height:42px;font-size:12px;font-weight:800;color:var(--txt)">
+        <input type="checkbox" data-zone-field="activo" ${data.activo ? 'checked' : ''}>
+        Activa
+      </label>
+      <label style="display:flex;align-items:center;gap:8px;min-height:42px;font-size:12px;font-weight:800;color:var(--txt)">
+        <input type="checkbox" data-zone-field="nacional" ${data.nacional ? 'checked' : ''}>
+        Nacional
+      </label>
+      <button type="button" onclick="ownerEliminarZonaFila(this)" style="min-height:42px;background:rgba(239,68,68,.12);color:#fecaca;border:1px solid rgba(239,68,68,.28);border-radius:12px;padding:10px 12px;font-size:12px;font-weight:900;cursor:pointer">Eliminar</button>
+    </div>
+  `;
+}
+
+function ownerRenderZonasFormulario(zonas = []) {
+  const cont = document.getElementById('negocioZonasLista');
+  if (!cont) return;
+  const data = (Array.isArray(zonas) && zonas.length ? zonas : ownerZonasBaseGestion())
+    .map((zona, index) => ownerNormalizarZonaGestion(zona, index + 1));
+  cont.innerHTML = data.map((zona, index) => ownerZonaFilaHTML(zona, index)).join('');
+}
+
+function ownerAgregarZonaFormulario() {
+  const zonas = ownerLeerZonasFormulario();
+  zonas.push({ nombre: 'Nueva zona', precio: 5, activo: true, nacional: false });
+  ownerRenderZonasFormulario(zonas);
+  document.querySelector('#negocioZonasLista [data-zona-row]:last-child [data-zone-field="nombre"]')?.focus();
+}
+
+function ownerEliminarZonaFila(btn) {
+  const fila = btn?.closest?.('[data-zona-row]');
+  if (fila) fila.remove();
+  const cont = document.getElementById('negocioZonasLista');
+  if (cont && !cont.querySelector('[data-zona-row]')) {
+    ownerRenderZonasFormulario([{ nombre: 'Nueva zona', precio: 5, activo: true, nacional: false }]);
+  }
+}
+
+function ownerRestaurarZonasFormulario() {
+  if (!confirm('Restaurar las zonas base del negocio? Se perderan los cambios sin guardar.')) return;
+  ownerRenderZonasFormulario(CATALOGO_ZONAS_DEFAULT);
+}
+
+function ownerPuntajeNegocio(negocio = {}, catalogo = {}) {
+  const horario = negocio.horario || catalogo.horario || {};
+  const checks = [
+    negocio.nombre,
+    negocio.eslogan,
+    negocio.direccion,
+    negocio.referencia,
+    negocio.whatsapp1 || negocio.whatsapp2 || negocio.whatsapp_yape,
+    negocio.planta_coords || negocio.planta,
+    negocio.facebook_url || negocio.instagram_url || negocio.tiktok_url || negocio.maps_url,
+    horario.inicio && horario.fin,
+    Array.isArray(catalogo.productos) && catalogo.productos.some((prod) => prod.activo !== false),
+    Array.isArray(catalogo.zonas) && catalogo.zonas.length
+  ];
+  return Math.round((checks.filter(Boolean).length / checks.length) * 100);
+}
+
+function ownerAbrirAdminTab(tab = 'stats') {
+  cerrarPanelDueno();
+  abrirAdmin();
+  setTimeout(() => {
+    try {
+      admTab(tab);
+    } catch (err) {
+      console.warn('ownerAbrirAdminTab:', err);
+    }
+  }, 250);
+}
+
+function ownerAbrirCatalogo() {
+  cerrarPanelDueno();
+  abrirCatalogo();
+}
+
+function ownerCargarNegocioFormulario() {
+  const negocio = window.NEGOCIO || {};
+  const cfg = window.ASWA_CONFIG || {};
+  const horario = {
+    ...(cfg.HORARIO || {}),
+    ...(negocio.horario || {}),
+  };
+
+  const setVal = (id, value) => {
+    const el = document.getElementById(id);
+    if (el) el.value = value ?? '';
+  };
+  const setChecked = (id, value) => {
+    const el = document.getElementById(id);
+    if (el) el.checked = Boolean(value);
+  };
+
+  setVal('negocioNombre', negocio.nombre || cfg.BUSINESS_NAME || '');
+  setVal('negocioEslogan', negocio.eslogan || '');
+  setVal('negocioDireccion', negocio.direccion || '');
+  setVal('negocioReferencia', negocio.referencia || '');
+  setVal('negocioWhatsapp1', negocio.whatsapp1 || cfg.WHATSAPP?.pedidos1 || '');
+  setVal('negocioWhatsapp2', negocio.whatsapp2 || cfg.WHATSAPP?.pedidos2 || '');
+  setVal('negocioWhatsappYape', negocio.whatsapp_yape || cfg.WHATSAPP?.yape || '');
+  setVal('negocioPlantaCoords', negocio.planta_coords || cfg.PLANTA_COORDS || '');
+  setVal('negocioFacebook', negocio.facebook_url || negocio.facebook || '');
+  setVal('negocioInstagram', negocio.instagram_url || negocio.instagram || '');
+  setVal('negocioTikTok', negocio.tiktok_url || negocio.tiktok || '');
+  setVal('negocioMaps', negocio.maps_url || negocio.google_maps_url || '');
+  setChecked('negocioHorarioActivo', horario.activo !== false);
+  setVal('negocioHorarioInicio', horario.inicio || '07:00');
+  setVal('negocioHorarioFin', horario.fin || '17:30');
+  setVal('negocioHorarioMensaje', horario.mensaje || 'Volvemos en el siguiente horario de entrega');
+  setVal('negocioHorarioTexto', horario.texto || '');
+  ownerRenderZonasFormulario(negocio.zonas || window.CATALOGO?.zonas || []);
+}
+
+function ownerGestionNegocio() {
+  if (!_ownerSesion) return;
+
+  let modal = document.getElementById('negocioModal');
+  if (!modal) {
+    document.body.insertAdjacentHTML('beforeend', `
+      <div id="negocioModal" style="display:none;position:fixed;inset:0;z-index:1850;background:rgba(0,0,0,.94);backdrop-filter:blur(12px);align-items:center;justify-content:center;padding:18px">
+        <div style="width:min(980px,100%);max-height:92vh;overflow:auto;background:var(--s1);border:1px solid rgba(34,197,94,.28);border-radius:22px;box-shadow:0 28px 90px rgba(0,0,0,.7)">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:18px 20px;border-bottom:1px solid var(--brd)">
+            <div>
+              <div style="font-family:'Bebas Neue',cursive;font-size:28px;color:#86efac;letter-spacing:.08em">DATOS DEL NEGOCIO</div>
+              <div style="font-size:11px;color:var(--mut)">Controla la ficha pública, horarios y contactos visibles de ASWA.</div>
+            </div>
+            <button onclick="ownerCerrarGestionNegocio()" style="background:#ef4444;color:#fff;border:none;border-radius:12px;padding:10px 14px;font-weight:900;cursor:pointer">Cerrar</button>
+          </div>
+          <div style="padding:20px">
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px">
+              <label style="display:flex;flex-direction:column;gap:6px;font-size:11px;font-weight:800;color:var(--mut);text-transform:uppercase;letter-spacing:.08em">
+                Nombre comercial
+                <input id="negocioNombre" class="inp" placeholder="La Rica Chicha" style="font-size:15px">
+              </label>
+              <label style="display:flex;flex-direction:column;gap:6px;font-size:11px;font-weight:800;color:var(--mut);text-transform:uppercase;letter-spacing:.08em">
+                Eslogan
+                <input id="negocioEslogan" class="inp" placeholder="Tradición amazónica con tecnología moderna." style="font-size:15px">
+              </label>
+              <label style="display:flex;flex-direction:column;gap:6px;font-size:11px;font-weight:800;color:var(--mut);text-transform:uppercase;letter-spacing:.08em">
+                Dirección
+                <input id="negocioDireccion" class="inp" placeholder="Morales, San Martín" style="font-size:15px">
+              </label>
+              <label style="display:flex;flex-direction:column;gap:6px;font-size:11px;font-weight:800;color:var(--mut);text-transform:uppercase;letter-spacing:.08em">
+                Referencia
+                <input id="negocioReferencia" class="inp" placeholder="Cerca al parque central" style="font-size:15px">
+              </label>
+            </div>
+
+            <div style="margin-top:14px;padding:14px;border:1px solid var(--brd);border-radius:16px;background:rgba(250,204,21,.04)">
+              <div style="font-size:12px;font-weight:900;color:var(--y);margin-bottom:10px">Contactos visibles</div>
+              <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px">
+                <label style="display:flex;flex-direction:column;gap:6px;font-size:11px;font-weight:800;color:var(--mut);text-transform:uppercase;letter-spacing:.08em">
+                  WhatsApp pedidos 1
+                  <input id="negocioWhatsapp1" class="inp" placeholder="51955273229" style="font-size:15px">
+                </label>
+                <label style="display:flex;flex-direction:column;gap:6px;font-size:11px;font-weight:800;color:var(--mut);text-transform:uppercase;letter-spacing:.08em">
+                  WhatsApp pedidos 2
+                  <input id="negocioWhatsapp2" class="inp" placeholder="51986445531" style="font-size:15px">
+                </label>
+                <label style="display:flex;flex-direction:column;gap:6px;font-size:11px;font-weight:800;color:var(--mut);text-transform:uppercase;letter-spacing:.08em">
+                  WhatsApp Yape
+                  <input id="negocioWhatsappYape" class="inp" placeholder="51947999736" style="font-size:15px">
+                </label>
+                <label style="display:flex;flex-direction:column;gap:6px;font-size:11px;font-weight:800;color:var(--mut);text-transform:uppercase;letter-spacing:.08em">
+                  Planta / GPS
+                  <input id="negocioPlantaCoords" class="inp" placeholder="-6.47,-76.38" style="font-size:15px">
+                </label>
+              </div>
+            </div>
+
+            <div style="margin-top:14px;padding:14px;border:1px solid var(--brd);border-radius:16px;background:rgba(59,130,246,.04)">
+              <div style="font-size:12px;font-weight:900;color:#93c5fd;margin-bottom:10px">Redes y mapas</div>
+              <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px">
+                <label style="display:flex;flex-direction:column;gap:6px;font-size:11px;font-weight:800;color:var(--mut);text-transform:uppercase;letter-spacing:.08em">
+                  Facebook URL
+                  <input id="negocioFacebook" class="inp" placeholder="https://facebook.com/..." style="font-size:15px">
+                </label>
+                <label style="display:flex;flex-direction:column;gap:6px;font-size:11px;font-weight:800;color:var(--mut);text-transform:uppercase;letter-spacing:.08em">
+                  Instagram URL
+                  <input id="negocioInstagram" class="inp" placeholder="https://instagram.com/..." style="font-size:15px">
+                </label>
+                <label style="display:flex;flex-direction:column;gap:6px;font-size:11px;font-weight:800;color:var(--mut);text-transform:uppercase;letter-spacing:.08em">
+                  TikTok URL
+                  <input id="negocioTikTok" class="inp" placeholder="https://tiktok.com/@..." style="font-size:15px">
+                </label>
+                <label style="display:flex;flex-direction:column;gap:6px;font-size:11px;font-weight:800;color:var(--mut);text-transform:uppercase;letter-spacing:.08em">
+                  Google Maps URL
+                  <input id="negocioMaps" class="inp" placeholder="https://maps.google.com/..." style="font-size:15px">
+                </label>
+              </div>
+            </div>
+
+            <div style="margin-top:14px;padding:14px;border:1px solid var(--brd);border-radius:16px;background:rgba(168,85,247,.04)">
+              <div style="display:flex;justify-content:space-between;gap:10px;align-items:center;margin-bottom:10px">
+                <div style="font-size:12px;font-weight:900;color:#e9d5ff">Horario visible</div>
+                <label style="display:flex;align-items:center;gap:8px;font-size:12px;font-weight:800;color:var(--mut)">
+                  <input type="checkbox" id="negocioHorarioActivo">
+                  Activo
+                </label>
+              </div>
+              <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px">
+                <label style="display:flex;flex-direction:column;gap:6px;font-size:11px;font-weight:800;color:var(--mut);text-transform:uppercase;letter-spacing:.08em">
+                  Inicio
+                  <input id="negocioHorarioInicio" type="time" class="inp" style="font-size:15px">
+                </label>
+                <label style="display:flex;flex-direction:column;gap:6px;font-size:11px;font-weight:800;color:var(--mut);text-transform:uppercase;letter-spacing:.08em">
+                  Fin
+                  <input id="negocioHorarioFin" type="time" class="inp" style="font-size:15px">
+                </label>
+              </div>
+              <label style="display:flex;flex-direction:column;gap:6px;font-size:11px;font-weight:800;color:var(--mut);text-transform:uppercase;letter-spacing:.08em;margin-top:12px">
+                Mensaje de cierre
+                <input id="negocioHorarioMensaje" class="inp" placeholder="Volvemos en el siguiente horario de entrega" style="font-size:15px">
+              </label>
+              <label style="display:flex;flex-direction:column;gap:6px;font-size:11px;font-weight:800;color:var(--mut);text-transform:uppercase;letter-spacing:.08em;margin-top:12px">
+                Texto horario visible
+                <textarea id="negocioHorarioTexto" class="inp" placeholder="Horario completo visible en la home" style="min-height:110px;resize:vertical;font-size:14px;line-height:1.6"></textarea>
+              </label>
+            </div>
+
+            <div style="margin-top:14px;padding:14px;border:1px solid var(--brd);border-radius:16px;background:rgba(34,197,94,.04)">
+              <div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-start;margin-bottom:10px">
+                <div>
+                  <div style="font-size:12px;font-weight:900;color:#86efac">Zonas de delivery</div>
+                  <div style="font-size:11px;color:var(--mut);line-height:1.5">Edita nombres, precios y disponibilidad. Esto alimenta el selector de zona y el costo real del pedido.</div>
+                </div>
+                <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end">
+                  <button type="button" onclick="ownerAgregarZonaFormulario()" style="background:rgba(34,197,94,.14);color:#86efac;border:1px solid rgba(34,197,94,.3);border-radius:12px;padding:10px 12px;font-size:12px;font-weight:900;cursor:pointer">Agregar zona</button>
+                  <button type="button" onclick="ownerRestaurarZonasFormulario()" style="background:rgba(255,255,255,.05);color:var(--txt);border:1px solid var(--brd);border-radius:12px;padding:10px 12px;font-size:12px;font-weight:900;cursor:pointer">Restaurar base</button>
+                </div>
+              </div>
+              <div id="negocioZonasLista" style="display:grid;gap:10px"></div>
+            </div>
+
+            <div id="negocioError" style="display:none;margin-top:14px;background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.3);border-radius:12px;padding:10px 12px;color:#fca5a5;font-size:12px"></div>
+
+            <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:16px">
+              <button onclick="ownerGuardarNegocio()" style="flex:1;min-width:160px;background:var(--y);color:#000;border:none;border-radius:12px;padding:14px 16px;font-size:14px;font-weight:900;cursor:pointer">Guardar cambios</button>
+              <button onclick="ownerCerrarGestionNegocio()" style="flex:1;min-width:160px;background:rgba(255,255,255,.06);color:var(--txt);border:1px solid var(--brd);border-radius:12px;padding:14px 16px;font-size:14px;font-weight:900;cursor:pointer">Cancelar</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    `);
+    modal = document.getElementById('negocioModal');
+  }
+
+  ownerLimpiarNegocioError();
+  ownerCargarNegocioFormulario();
+  modal.style.display = 'flex';
+}
+
+async function ownerGuardarNegocio() {
+  try {
+    await esperarFB();
+    const { doc:d, setDoc, serverTimestamp:ts } = window.FB;
+    const horario = {
+      activo: document.getElementById('negocioHorarioActivo')?.checked ?? true,
+      inicio: document.getElementById('negocioHorarioInicio')?.value || '07:00',
+      fin: document.getElementById('negocioHorarioFin')?.value || '17:30',
+      mensaje: ownerFormatearNegocioInput(document.getElementById('negocioHorarioMensaje')?.value) || 'Volvemos en el siguiente horario de entrega',
+      texto: ownerFormatearNegocioInput(document.getElementById('negocioHorarioTexto')?.value) || ''
+    };
+    const zonas = ownerLeerZonasFormulario()
+      .map((zona, index) => ownerNormalizarZonaGestion(zona, index + 1));
+    const data = {
+      businessId: BUSINESS_ID,
+      business_id: BUSINESS_ID.toLowerCase(),
+      nombre: ownerFormatearNegocioInput(document.getElementById('negocioNombre')?.value) || 'La Rica Chicha',
+      eslogan: ownerFormatearNegocioInput(document.getElementById('negocioEslogan')?.value),
+      direccion: ownerFormatearNegocioInput(document.getElementById('negocioDireccion')?.value),
+      referencia: ownerFormatearNegocioInput(document.getElementById('negocioReferencia')?.value),
+      whatsapp1: ownerFormatearNegocioInput(document.getElementById('negocioWhatsapp1')?.value).replace(/\D+/g, ''),
+      whatsapp2: ownerFormatearNegocioInput(document.getElementById('negocioWhatsapp2')?.value).replace(/\D+/g, ''),
+      whatsapp_yape: ownerFormatearNegocioInput(document.getElementById('negocioWhatsappYape')?.value).replace(/\D+/g, ''),
+      planta_coords: ownerFormatearNegocioInput(document.getElementById('negocioPlantaCoords')?.value),
+      facebook_url: ownerFormatearNegocioInput(document.getElementById('negocioFacebook')?.value),
+      instagram_url: ownerFormatearNegocioInput(document.getElementById('negocioInstagram')?.value),
+      tiktok_url: ownerFormatearNegocioInput(document.getElementById('negocioTikTok')?.value),
+      maps_url: ownerFormatearNegocioInput(document.getElementById('negocioMaps')?.value),
+      horario,
+      zonas,
+      updated_at: ts(),
+      updated_by: _ownerSesion?.username || _sesionAdmin?.username || 'owner'
+    };
+
+    const negocioRef = d(db, 'negocios', BUSINESS_ID);
+    await setDoc(negocioRef, data, { merge: true });
+    aplicarNegocioPublico(data);
+    ownerCerrarGestionNegocio();
+    tst('✅ Datos del negocio guardados', 2800);
+    await ownerCargar().catch(() => {});
+  } catch (err) {
+    console.error('ownerGuardarNegocio:', err);
+    ownerMostrarNegocioError(err.message || 'No se pudo guardar la configuración del negocio.');
+  }
 }
 
 function asegurarBotonTVRapido() {
@@ -14774,7 +15969,7 @@ async function admCargar() {
     // Yapes pendientes
     const snapYape = await gd(q(col(db,pedidosCollectionName()), wh('businessId','==',BUSINESS_ID), wh('yape_estado','==','pendiente'), lm(50)));
     // Pedidos activos
-    const snapPed  = await gd(q(col(db,pedidosCollectionName()), wh('businessId','==',BUSINESS_ID), wh('estado','in',['Pendiente','en_camino']), lm(100)));
+    const snapPed  = await gd(q(col(db,pedidosCollectionName()), wh('businessId','==',BUSINESS_ID), wh('estado','in',['Pendiente','preparando','en_camino']), lm(100)));
     // Ãšltimos pedidos para stats del dashboard
     const snapTodos = await gd(q(col(db,pedidosCollectionName()), wh('businessId','==',BUSINESS_ID), ob('fecha','desc'), lm(200)));
     // Clientes
@@ -14893,65 +16088,268 @@ function admRenderPedidos(docs) {
     return;
   }
 
-  docs.sort((a, b) => (b.data().fecha?.seconds||0) - (a.data().fecha?.seconds||0));
+  const estadoCfg = {
+    pendiente: {
+      label: 'PENDIENTE',
+      badge: 'badge-pendiente',
+      chipStyle: 'background:rgba(168,85,247,.18);color:#c4b5fd;border:1px solid rgba(168,85,247,.3);',
+      border: 'rgba(168,85,247,.26)',
+      background: 'linear-gradient(180deg, rgba(168,85,247,.06), rgba(17,17,17,.96))',
+      title: 'Pendientes',
+      subtitle: 'Esperan revision y cocina',
+      actionLabel: 'Marcar preparando',
+      actionState: 'preparando',
+      actionStyle: 'background:rgba(168,85,247,.16);color:#f5d0fe;border:1px solid rgba(168,85,247,.3);'
+    },
+    preparando: {
+      label: 'PREPARANDO',
+      badge: 'badge-pendiente',
+      chipStyle: 'background:rgba(250,204,21,.18);color:#fde68a;border:1px solid rgba(250,204,21,.28);',
+      border: 'rgba(250,204,21,.26)',
+      background: 'linear-gradient(180deg, rgba(250,204,21,.05), rgba(17,17,17,.96))',
+      title: 'Preparando',
+      subtitle: 'Listos para salir',
+      actionLabel: 'Enviar a ruta',
+      actionState: 'en_camino',
+      actionStyle: 'background:rgba(250,204,21,.16);color:#fde68a;border:1px solid rgba(250,204,21,.32);'
+    },
+    en_camino: {
+      label: 'EN CAMINO',
+      badge: 'badge-en-camino',
+      chipStyle: 'background:rgba(59,130,246,.18);color:#bfdbfe;border:1px solid rgba(59,130,246,.3);',
+      border: 'rgba(59,130,246,.28)',
+      background: 'linear-gradient(180deg, rgba(59,130,246,.05), rgba(17,17,17,.96))',
+      title: 'En camino',
+      subtitle: 'Pedido en ruta',
+      actionLabel: 'Marcar entregado',
+      actionState: 'entregado',
+      actionStyle: 'background:rgba(34,197,94,.16);color:#86efac;border:1px solid rgba(34,197,94,.32);'
+    },
+    entregado: {
+      label: 'ENTREGADO',
+      badge: 'badge-entregado',
+      chipStyle: 'background:rgba(34,197,94,.18);color:#86efac;border:1px solid rgba(34,197,94,.3);',
+      border: 'rgba(34,197,94,.26)',
+      background: 'linear-gradient(180deg, rgba(34,197,94,.05), rgba(17,17,17,.96))',
+      title: 'Entregados',
+      subtitle: 'Esperan cierre administrativo',
+      actionLabel: 'Cerrar pedido',
+      actionState: 'cerrado',
+      actionStyle: 'background:rgba(34,197,94,.16);color:#86efac;border:1px solid rgba(34,197,94,.32);'
+    },
+    cerrado: {
+      label: 'CERRADO',
+      badge: 'badge-entregado',
+      chipStyle: 'background:rgba(34,197,94,.12);color:#86efac;border:1px solid rgba(34,197,94,.24);',
+      border: 'rgba(34,197,94,.18)',
+      background: 'linear-gradient(180deg, rgba(255,255,255,.03), rgba(17,17,17,.96))',
+      title: 'Cerrados',
+      subtitle: 'Archivados y listos',
+      actionLabel: 'Reabrir',
+      actionState: 'entregado',
+      actionStyle: 'background:rgba(148,163,184,.14);color:#e2e8f0;border:1px solid rgba(148,163,184,.28);'
+    },
+    rechazado: {
+      label: 'RECHAZADO',
+      badge: 'badge-pendiente',
+      chipStyle: 'background:rgba(239,68,68,.16);color:#fecaca;border:1px solid rgba(239,68,68,.28);',
+      border: 'rgba(239,68,68,.22)',
+      background: 'linear-gradient(180deg, rgba(239,68,68,.05), rgba(17,17,17,.96))',
+      title: 'Rechazados',
+      subtitle: 'Revisar motivo',
+      actionLabel: 'Reabrir',
+      actionState: 'pendiente',
+      actionStyle: 'background:rgba(239,68,68,.12);color:#fecaca;border:1px solid rgba(239,68,68,.28);'
+    },
+    cancelado: {
+      label: 'CANCELADO',
+      badge: 'badge-pendiente',
+      chipStyle: 'background:rgba(100,116,139,.16);color:#cbd5e1;border:1px solid rgba(100,116,139,.28);',
+      border: 'rgba(100,116,139,.22)',
+      background: 'linear-gradient(180deg, rgba(100,116,139,.05), rgba(17,17,17,.96))',
+      title: 'Cancelados',
+      subtitle: 'Control administrativo',
+      actionLabel: 'Reabrir',
+      actionState: 'pendiente',
+      actionStyle: 'background:rgba(100,116,139,.12);color:#e2e8f0;border:1px solid rgba(100,116,139,.28);'
+    }
+  };
+  const ordenEstados = ['pendiente','preparando','en_camino','entregado','cerrado','rechazado','cancelado'];
+  const estadoPeso = {
+    pendiente: 1,
+    preparando: 2,
+    en_camino: 3,
+    entregado: 4,
+    cerrado: 5,
+    rechazado: 6,
+    cancelado: 7
+  };
+  const pedidos = docs.map(doc => {
+    const d = doc.data();
+    const estado = estadoCfg[admNormalizarEstadoPedido(d.estado)] ? admNormalizarEstadoPedido(d.estado) : 'pendiente';
+    return {
+      doc,
+      d,
+      estado,
+      fechaMs: d.fecha?.seconds ? d.fecha.seconds * 1000 : 0
+    };
+  }).sort((a, b) => (b.fechaMs || 0) - (a.fechaMs || 0) || (estadoPeso[a.estado] || 99) - (estadoPeso[b.estado] || 99));
 
-  const badges = {
-    'Pendiente': '<span class="adm-ped-badge badge-pendiente">🟣 PENDIENTE</span>',
-    'en_camino': '<span class="adm-ped-badge badge-en-camino">🔵 EN CAMINO</span>',
-    'entregado': '<span class="adm-ped-badge badge-entregado">🟢 ENTREGADO</span>',
-    'cerrado':   '<span class="adm-ped-badge badge-entregado">✅ CERRADO</span>',
+  const grupos = Object.fromEntries(ordenEstados.map(key => [key, { key, items: [], total: 0 }]));
+  const resumen = {
+    total: pedidos.length,
+    pendientes: 0,
+    preparando: 0,
+    enCamino: 0,
+    cerrados: 0,
+    activos: 0,
+    montoActivo: 0,
+    montoCerrado: 0
   };
 
-  cont.innerHTML = docs.map(doc => {
-    const d = doc.data();
-    const fecha = d.fecha?.seconds ? new Date(d.fecha.seconds*1000).toLocaleString('es-PE') : '—';
-    const esperaCierre = d.estado === 'en_camino' && d.confirmacion_cliente;
-    const bordeExtra = esperaCierre ? 'border-color:rgba(34,197,94,.6);' : '';
-    const reservaAlerta = d.es_reserva
-      ? '<div style="background:rgba(250,204,21,.12);border:1px solid rgba(250,204,21,.35);border-radius:8px;padding:8px 12px;font-size:12px;color:#fde68a;font-weight:800;margin-bottom:8px">Reserva programada: ' + esc(d.reserva_texto || ((d.reserva_fecha || '') + ' ' + (d.reserva_hora || ''))) + '</div>'
-      : '';
-    const alertaCierre = esperaCierre
-      ? '<div style="background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.3);border-radius:8px;padding:8px 12px;font-size:12px;color:#86efac;font-weight:700;margin-bottom:8px">✅ Cliente confirmó recepción — pendiente de cierre</div>'
-      : '';
-    // Botones de acción según estado
-    let botonesEstado = '';
-    if (d.estado === 'Pendiente') {
-      botonesEstado = `<button onclick="admCambiarEstado('${doc.id}','en_camino','${d.telefono||''}','${d.nombre||''}')" style="background:rgba(59,130,246,.2);color:#93c5fd;border:1px solid rgba(59,130,246,.3);border-radius:8px;padding:6px 10px;font-size:10px;font-weight:800;cursor:pointer;font-family:'Poppins',sans-serif">🔵 Marcar en camino</button>`;
-    } else if (d.estado === 'en_camino') {
-      botonesEstado = `<button onclick="admCambiarEstado('${doc.id}','entregado','${d.telefono||''}','${d.nombre||''}')" style="background:rgba(34,197,94,.2);color:#86efac;border:1px solid rgba(34,197,94,.3);border-radius:8px;padding:6px 10px;font-size:10px;font-weight:800;cursor:pointer;font-family:'Poppins',sans-serif">✅ Marcar entregado</button>`;
+  pedidos.forEach(item => {
+    const estado = estadoCfg[item.estado] ? item.estado : 'pendiente';
+    const bucket = grupos[estado] || grupos.pendiente;
+    const total = Number(item.d.total) || 0;
+    bucket.items.push(item);
+    bucket.total += total;
+    if (estado === 'pendiente') resumen.pendientes++;
+    if (estado === 'preparando') resumen.preparando++;
+    if (estado === 'en_camino') resumen.enCamino++;
+    if (estado === 'entregado' || estado === 'cerrado') {
+      resumen.cerrados++;
+      resumen.montoCerrado += total;
     }
+    if (['pendiente','preparando','en_camino'].includes(estado)) {
+      resumen.activos++;
+      resumen.montoActivo += total;
+    }
+  });
+
+  const metric = (label, value, hint, style = '') => `
+    <div style="background:${style || 'rgba(255,255,255,.03)'};border:1px solid rgba(255,255,255,.08);border-radius:16px;padding:14px 14px 13px;min-height:84px">
+      <div style="font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--mut);font-weight:900">${esc(label)}</div>
+      <div style="font-size:25px;line-height:1;margin-top:8px;font-weight:900;color:var(--txt)">${esc(value)}</div>
+      <div style="margin-top:6px;font-size:11px;color:var(--mut);font-weight:700">${esc(hint)}</div>
+    </div>`;
+
+  const badgeEstado = estado => {
+    const cfg = estadoCfg[estado] || estadoCfg.pendiente;
+    return `<span class="adm-ped-badge ${cfg.badge}" style="${cfg.chipStyle}">${cfg.label}</span>`;
+  };
+
+  const renderCard = item => {
+    const d = item.d;
+    const cfg = estadoCfg[item.estado] || estadoCfg.pendiente;
+    const fecha = admEventoFecha(d.fecha);
+    const telefono = String(d.telefono || '').replace(/[^\d]/g, '');
+    const reservaHtml = d.es_reserva
+      ? `<div style="background:rgba(250,204,21,.12);border:1px solid rgba(250,204,21,.3);border-radius:10px;padding:8px 12px;font-size:12px;color:#fde68a;font-weight:900;margin-bottom:10px">📅 Reserva programada: ${esc(d.reserva_texto || ((d.reserva_fecha || '') + ' ' + (d.reserva_hora || '')))}</div>`
+      : '';
+    const alertaCierre = item.estado === 'en_camino' && d.confirmacion_cliente
+      ? '<div style="background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.28);border-radius:10px;padding:8px 12px;font-size:12px;color:#86efac;font-weight:800;margin-bottom:10px">Cliente confirmo recepcion, listo para cerrar</div>'
+      : '';
+    const chips = [
+      d.gps_url ? '<span style="background:rgba(34,197,94,.12);color:var(--grn);border:1px solid rgba(34,197,94,.24);border-radius:999px;padding:5px 9px;font-size:10px;font-weight:900">GPS</span>' : '',
+      d.delivery_gps_url ? '<span style="background:rgba(59,130,246,.12);color:#93c5fd;border:1px solid rgba(59,130,246,.24);border-radius:999px;padding:5px 9px;font-size:10px;font-weight:900">Ruta delivery</span>' : '',
+      d.confirmacion_deliverista ? '<span style="background:rgba(34,197,94,.12);color:#86efac;border:1px solid rgba(34,197,94,.24);border-radius:999px;padding:5px 9px;font-size:10px;font-weight:900">Carga confirmada</span>' : '',
+      d.comprobante_real_solicitado ? '<span style="background:rgba(96,165,250,.12);color:#bfdbfe;border:1px solid rgba(96,165,250,.24);border-radius:999px;padding:5px 9px;font-size:10px;font-weight:900">Comprobante real</span>' : '',
+      d.pago ? `<span style="background:rgba(20,184,166,.12);color:#99f6e4;border:1px solid rgba(20,184,166,.24);border-radius:999px;padding:5px 9px;font-size:10px;font-weight:900">${esc(d.pago)}</span>` : ''
+    ].filter(Boolean).join('');
+    const accionPrincipal = cfg.actionLabel
+      ? `<button onclick='admCambiarEstado(${JSON.stringify(item.doc.id)}, ${JSON.stringify(cfg.actionState)}, ${JSON.stringify(telefono)}, ${JSON.stringify(d.nombre || '')})' style="${cfg.actionStyle};border-radius:10px;padding:8px 12px;font-size:11px;font-weight:900;cursor:pointer;font-family:'Poppins',sans-serif">${esc(cfg.actionLabel)}</button>`
+      : '';
+    const estadoActual = item.estado === 'en_camino' && d.confirmacion_cliente
+      ? '<span style="background:rgba(34,197,94,.12);color:#86efac;border:1px solid rgba(34,197,94,.24);border-radius:999px;padding:5px 9px;font-size:10px;font-weight:900">Cliente confirmado</span>'
+      : '';
+    const borde = cfg.border ? `border-color:${cfg.border};` : '';
+    const fondo = cfg.background ? `background:${cfg.background};` : '';
 
     return `
-      <div class="adm-pedido" style="${bordeExtra}" id="admped2-${doc.id}">
-        ${reservaAlerta}
+      <div class="adm-pedido" id="admped2-${item.doc.id}" style="${borde}${fondo}">
+        ${reservaHtml}
         ${pedidoRegaloHtml(d)}
         ${pedidoRutaHtml(d)}
         ${pedidoCargaHtml(d)}
         ${pedidoComprobanteRealHtml(d)}
         ${alertaCierre}
-        <div class="adm-ped-top">
-          <div>
-            <div class="adm-ped-nom">${d.nombre || '—'}</div>
-            <div class="adm-ped-tel">📱 ${d.telefono || '—'}</div>
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:10px">
+          <div style="min-width:0">
+            <div class="adm-ped-nom" style="font-size:18px;line-height:1.1">${esc(d.nombre || '—')}</div>
+            <div class="adm-ped-tel" style="margin-top:4px">📱 ${esc(d.telefono || '—')} · 🕐 ${esc(fecha)}</div>
           </div>
-          ${badges[d.estado] || badges['Pendiente']}
+          <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;flex-shrink:0">
+            ${badgeEstado(item.estado)}
+            ${estadoActual}
+          </div>
         </div>
-        <div class="adm-ped-info">
-          <strong>Pedido:</strong> ${_itemsTexto(d.items)}<br>
-          <strong>Total:</strong> <span class="adm-ped-total">S/ ${(d.total||0).toFixed(2)}</span><br>
-          <strong>Pago:</strong> ${d.pago || '—'}<br>
-          <strong>Dirección:</strong> ${d.direccion || '—'}<br>
-          ${d.nota_entrega ? `<strong>Nota:</strong> ${esc(d.nota_entrega)}<br>` : ''}
-          <strong>Fecha:</strong> ${fecha}
+        <div class="adm-ped-info" style="display:grid;gap:6px">
+          <div><strong>Pedido:</strong> ${_itemsTexto(d.items)}</div>
+          <div><strong>Total:</strong> <span class="adm-ped-total">S/ ${(d.total||0).toFixed(2)}</span> <span style="color:var(--mut)">· Pago:</span> ${esc(d.pago || '—')}</div>
+          <div><strong>Direccion:</strong> ${esc(d.direccion || '—')}</div>
+          ${d.nota_entrega ? `<div><strong>Nota:</strong> ${esc(d.nota_entrega)}</div>` : ''}
         </div>
-        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">
-          ${d.gps_url ? `<a href="${d.gps_url}" target="_blank" style="background:rgba(34,197,94,.15);color:var(--grn);border:1px solid rgba(34,197,94,.3);border-radius:8px;padding:6px 10px;font-size:10px;font-weight:800;text-decoration:none">📍 Ver GPS</a>` : ''}
-          <a href="https://wa.me/51${d.telefono}" target="_blank" style="background:rgba(37,211,102,.15);color:#25D366;border:1px solid rgba(37,211,102,.3);border-radius:8px;padding:6px 10px;font-size:10px;font-weight:800;text-decoration:none">💬 WA</a>
-          ${botonesEstado}
-          <button onclick="admEliminarPedido('${doc.id}')" style="background:rgba(239,68,68,.1);color:var(--red);border:1px solid rgba(239,68,68,.2);border-radius:8px;padding:6px 10px;font-size:10px;font-weight:800;cursor:pointer;font-family:'Poppins',sans-serif;margin-left:auto">🗑️</button>
+        ${chips ? `<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:10px">${chips}</div>` : ''}
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;align-items:center">
+          ${telefono ? `<a href="https://wa.me/51${telefono}" target="_blank" style="background:rgba(37,211,102,.14);color:#25D366;border:1px solid rgba(37,211,102,.28);border-radius:10px;padding:8px 12px;font-size:11px;font-weight:900;text-decoration:none">WhatsApp</a>` : ''}
+          ${d.gps_url ? `<a href="${esc(d.gps_url)}" target="_blank" style="background:rgba(34,197,94,.12);color:var(--grn);border:1px solid rgba(34,197,94,.24);border-radius:10px;padding:8px 12px;font-size:11px;font-weight:900;text-decoration:none">Ver GPS</a>` : ''}
+          ${d.delivery_gps_url ? `<a href="${esc(d.delivery_gps_url)}" target="_blank" style="background:rgba(59,130,246,.12);color:#93c5fd;border:1px solid rgba(59,130,246,.24);border-radius:10px;padding:8px 12px;font-size:11px;font-weight:900;text-decoration:none">Ruta delivery</a>` : ''}
+          ${accionPrincipal}
+          <button onclick='admEliminarPedido(${JSON.stringify(item.doc.id)})' style="margin-left:auto;background:rgba(239,68,68,.1);color:var(--red);border:1px solid rgba(239,68,68,.22);border-radius:10px;padding:8px 12px;font-size:11px;font-weight:900;cursor:pointer;font-family:'Poppins',sans-serif">Eliminar</button>
         </div>
       </div>`;
-  }).join('');
+  };
+
+  const headerHtml = `
+    <div style="background:linear-gradient(135deg, rgba(168,85,247,.18), rgba(96,165,250,.1) 52%, rgba(34,197,94,.08));border:1px solid rgba(255,255,255,.09);border-radius:20px;padding:16px 16px 14px;margin-bottom:14px;box-shadow:0 16px 40px rgba(0,0,0,.28)">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap">
+        <div>
+          <div style="font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:rgba(255,255,255,.56);font-weight:900">Control operativo</div>
+          <div style="font-size:24px;line-height:1.05;font-weight:900;margin-top:6px;color:var(--txt)">Pedidos en vivo</div>
+          <div style="font-size:12px;color:var(--mut);margin-top:6px;font-weight:700">Revisa cocina, ruta y cierre administrativo desde una sola vista.</div>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button onclick="admCargar()" style="background:rgba(255,255,255,.08);color:#fff;border:1px solid rgba(255,255,255,.12);border-radius:12px;padding:10px 12px;font-size:12px;font-weight:900;cursor:pointer">Actualizar</button>
+          <button onclick="admTab('stats')" style="background:rgba(96,165,250,.14);color:#bfdbfe;border:1px solid rgba(96,165,250,.28);border-radius:12px;padding:10px 12px;font-size:12px;font-weight:900;cursor:pointer">Ver stats</button>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(128px,1fr));gap:10px;margin-top:14px">
+        ${metric('Total pedidos', String(resumen.total), 'Registros cargados', 'rgba(255,255,255,.03)')}
+        ${metric('Activos', String(resumen.activos), 'Pendiente, preparando y en camino', 'rgba(168,85,247,.08)')}
+        ${metric('Pendientes', String(resumen.pendientes), 'A la espera de cocina', 'rgba(168,85,247,.08)')}
+        ${metric('Preparando', String(resumen.preparando), 'Listos para salir', 'rgba(250,204,21,.08)')}
+        ${metric('En camino', String(resumen.enCamino), 'Van rumbo al cliente', 'rgba(59,130,246,.08)')}
+        ${metric('Cerrados', String(resumen.cerrados), 'Entregados y archivados', 'rgba(34,197,94,.08)')}
+        ${metric('Monto en cola', 'S/ ' + resumen.montoActivo.toFixed(2), 'Ventas activas sin cerrar', 'rgba(20,184,166,.08)')}
+      </div>
+    </div>`;
+
+  const seccionesHtml = ordenEstados
+    .map(estado => {
+      const grupo = grupos[estado];
+      if (!grupo || !grupo.items.length) return '';
+      const cfg = estadoCfg[estado] || estadoCfg.pendiente;
+      const prioridad = ['pendiente', 'preparando', 'en_camino'].includes(estado);
+      return `
+        <section style="margin-top:14px">
+          <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:10px">
+            <div>
+              <div style="font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--mut);font-weight:900">${esc(cfg.title)}</div>
+              <div style="font-size:18px;line-height:1.1;font-weight:900;color:var(--txt);margin-top:5px">${grupo.items.length} pedido${grupo.items.length !== 1 ? 's' : ''}</div>
+              <div style="font-size:12px;color:var(--mut);font-weight:700;margin-top:4px">${esc(cfg.subtitle)}</div>
+            </div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end">
+              <span style="background:${prioridad ? 'rgba(96,165,250,.12)' : 'rgba(255,255,255,.05)'};color:${prioridad ? '#bfdbfe' : '#cbd5e1'};border:1px solid ${prioridad ? 'rgba(96,165,250,.24)' : 'rgba(255,255,255,.08)'};border-radius:999px;padding:6px 10px;font-size:11px;font-weight:900">${esc(cfg.label)}</span>
+              <span style="background:rgba(255,255,255,.05);color:#fde68a;border:1px solid rgba(255,255,255,.08);border-radius:999px;padding:6px 10px;font-size:11px;font-weight:900">S/ ${grupo.total.toFixed(2)}</span>
+            </div>
+          </div>
+          <div style="display:grid;gap:10px">${grupo.items.map(renderCard).join('')}</div>
+        </section>`;
+    })
+    .filter(Boolean)
+    .join('');
+
+  cont.innerHTML = headerHtml + seccionesHtml;
 }
 
 function admRenderReservas(docs) {
@@ -15104,6 +16502,7 @@ async function admRechazarYape(pedidoId, telefono, nombre) {
    PWA — INSTALAR COMO APP
 ══════════════════════════════════════ */
 let _pwaPrompt = null;
+const ASWA_PWA_CACHE_NAME = 'aswa-v35';
 const ASWA_PLAY_STORE_URL = '';
 
 function pwaEsStandalone() {
@@ -15118,18 +16517,33 @@ function pwaEsAndroid() {
   return /android/i.test(navigator.userAgent);
 }
 
+function pwaEsMac() {
+  return /macintosh|mac os x/i.test(navigator.userAgent) && !pwaEsIOS();
+}
+
+function pwaEsWindows() {
+  return /windows/i.test(navigator.userAgent);
+}
+
 function pwaEsNavegadorInterno() {
   return /FBAN|FBAV|Instagram|Line|TikTok|wv|WebView/i.test(navigator.userAgent);
+}
+
+function pwaCompraEnCurso() {
+  return document.body.classList.contains('purchase-step-products')
+    || document.body.classList.contains('purchase-step-delivery')
+    || document.body.classList.contains('purchase-step-payment');
 }
 
 function pwaMostrarBotonDescarga() {
   const btn = document.getElementById('installPWA');
   if (!btn) return;
-  btn.style.display = pwaEsStandalone() ? 'none' : 'block';
+  const postCompra = document.getElementById('succScreen')?.classList.contains('on') || lsGet('succ_active') === '1';
+  btn.style.display = (!postCompra || pwaCompraEnCurso() || pwaEsStandalone()) ? 'none' : 'block';
 }
 
 function pwaUrlActual() {
-  return 'https://jsangama.github.io/aswa/';
+  return location.href.split('#')[0];
 }
 
 async function pwaCopiarEnlace() {
@@ -15161,7 +16575,7 @@ async function pwaLimpiarSWLegacy() {
     const regs = await navigator.serviceWorker.getRegistrations();
     const legacyRegs = regs.filter(reg => {
       const script = reg.active?.scriptURL || reg.installing?.scriptURL || reg.waiting?.scriptURL || '';
-      return script && !script.endsWith('/sw.js');
+      return script && !/\/sw\.js(?:\?|$)/.test(script);
     });
     if (!legacyRegs.length) return false;
     await Promise.all(legacyRegs.map(reg => reg.unregister()));
@@ -15170,6 +16584,29 @@ async function pwaLimpiarSWLegacy() {
   } catch (err) {
     console.warn('pwaLimpiarSWLegacy:', err);
     return false;
+  }
+}
+
+async function pwaForzarVersionNueva() {
+  if (!('serviceWorker' in navigator)) return;
+  const reloadKey = 'aswa_sw_reload_' + ASWA_PWA_CACHE_NAME;
+  try {
+    const regs = await navigator.serviceWorker.getRegistrations();
+    await Promise.all(regs.map(async reg => {
+      try {
+        await reg.update();
+        if (reg.waiting) reg.waiting.postMessage('skipWaiting');
+      } catch (_) {}
+    }));
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+      if (sessionStorage.getItem(reloadKey) === '1') return;
+      sessionStorage.setItem(reloadKey, '1');
+      const url = new URL(location.href);
+      url.searchParams.set('aswa_sw', ASWA_PWA_CACHE_NAME);
+      location.replace(url.href);
+    });
+  } catch (err) {
+    console.warn('pwaForzarVersionNueva:', err);
   }
 }
 
@@ -15191,10 +16628,16 @@ function pwaTextoInstrucciones() {
     return '<strong style="color:#facc15">Abre ASWA en Chrome o Safari.</strong><br>Este navegador interno no permite instalar apps directamente. Abre este mismo enlace en Chrome o Safari y luego toca el boton de instalacion.' + playStore;
   }
   if (pwaEsIOS()) {
-    return '<strong style="color:#facc15">Instalar en iPhone.</strong><br>1. Abre esta pagina en Safari.<br>2. Toca Compartir.<br>3. Elige "Agregar a pantalla de inicio".<br>4. Toca "Agregar".' + playStore;
+    return '<strong style="color:#facc15">Instalar en iPhone o iPad.</strong><br>1. Abre esta pagina en Safari.<br>2. Toca Compartir.<br>3. Elige "Agregar a pantalla de inicio".<br>4. Toca "Agregar".' + playStore;
   }
   if (pwaEsAndroid()) {
     return '<strong style="color:#facc15">Instalar en Android.</strong><br>1. Usa Chrome o Edge.<br>2. Toca "Instalar ahora" si aparece.<br>3. Si no aparece, abre el menu de tres puntos.<br>4. Toca "Instalar app" o "Agregar a pantalla principal".' + playStore;
+  }
+  if (pwaEsMac()) {
+    return '<strong style="color:#facc15">Instalar en Mac.</strong><br>En Chrome o Edge usa el icono de instalar en la barra de direcciones o el menu. En Safari reciente puedes usar Archivo > Agregar al Dock si esta disponible.' + playStore;
+  }
+  if (pwaEsWindows()) {
+    return '<strong style="color:#facc15">Instalar en PC Windows.</strong><br>Abre ASWA en Chrome o Edge, toca el icono de instalar en la barra de direcciones o abre el menu y elige "Instalar ASWA".' + playStore;
   }
   return '<strong style="color:#facc15">Instalacion desde Chrome o Edge.</strong><br>Busca el icono de instalar en la barra de direcciones, o abre el menu y elige "Instalar ASWA". Si acabas de entrar por primera vez, toca el boton de abajo para preparar el instalador y recargar una vez.' + playStore;
 }
@@ -15221,7 +16664,8 @@ function pwaCerrarModal() {
 function pwaMostrarSugerencia() {
   const card = document.getElementById('pwaInstallCard');
   pwaMostrarBotonDescarga();
-  if (!card || pwaEsStandalone() || lsGet('pwa_install_dismissed') === '1') return;
+  const postCompra = document.getElementById('succScreen')?.classList.contains('on') || lsGet('succ_active') === '1';
+  if (!postCompra || pwaCompraEnCurso() || !card || pwaEsStandalone() || lsGet('pwa_install_dismissed') === '1') return;
   card.style.display = 'block';
   const btn = document.getElementById('pwaInstallMainBtn');
   const help = document.getElementById('pwaInstallHelp');
@@ -15308,6 +16752,7 @@ window.addEventListener('beforeinstallprompt', e => {
 });
 
 document.addEventListener('DOMContentLoaded', () => {
+  pwaForzarVersionNueva();
   registrarSW();
   pwaMostrarBotonDescarga();
   setTimeout(pwaMostrarSugerencia, 1600);
@@ -17917,7 +19362,11 @@ async function _catGuardar(datos, exito) {
   try {
     await esperarFB();
     const { doc:d, updateDoc:ud, setDoc } = window.FB;
-    await setDoc(d(db, 'negocios', BUSINESS_ID), datos, { merge: true });
+    await setDoc(d(db, 'negocios', BUSINESS_ID), {
+      ...datos,
+      businessId: CATALOGO_BUSINESS_ID,
+      business_id: CATALOGO_BUSINESS_ID_CANONICAL
+    }, { merge: true });
     tst(exito, 3000);
     await cargarCatalogo(); // refrescar
   } catch(e) {
@@ -18494,7 +19943,8 @@ function registrarSW() {
   if (!('serviceWorker' in navigator)) return;
 
   const SW_CODE = `
-const CACHE_NAME = 'aswa-v18';
+const CACHE_NAME = 'aswa-v35';
+const VERSION_PARAM = 'aswa_sw';
 const SHELL = [
   './',
   './index.html'
@@ -18515,12 +19965,25 @@ self.addEventListener('activate', e => {
     caches.keys().then(keys =>
       Promise.all(keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k)))
     ).then(() => self.clients.claim())
+    .then(() => self.clients.matchAll({ type: 'window', includeUncontrolled: true }))
+    .then(list => Promise.all(list.map(client => {
+      try {
+        const url = new URL(client.url);
+        if (url.origin !== self.location.origin) return Promise.resolve();
+        if (url.searchParams.get(VERSION_PARAM) === CACHE_NAME) return Promise.resolve();
+        url.searchParams.set(VERSION_PARAM, CACHE_NAME);
+        return client.navigate(url.href);
+      } catch (_) {
+        return Promise.resolve();
+      }
+    })))
   );
 });
 
 // Fetch: network-first para Firebase y HTML, cache-first para assets
 self.addEventListener('fetch', e => {
   const url = e.request.url;
+  if (e.request.method !== 'GET') return;
 
   // Firebase siempre desde la red
   if (url.includes('firestore.googleapis.com') ||
@@ -18534,10 +19997,13 @@ self.addEventListener('fetch', e => {
   const isHtml = e.request.mode === 'navigate' || accept.includes('text/html');
   if (isHtml) {
     e.respondWith(
-      fetch(e.request).then(response => {
+      fetch(new Request(e.request, { cache: 'no-store' })).then(response => {
         if (response && response.status === 200 && response.type === 'basic') {
           const toCache = response.clone();
-          caches.open(CACHE_NAME).then(cache => cache.put(e.request, toCache));
+          caches.open(CACHE_NAME).then(cache => {
+            cache.put(e.request, toCache.clone());
+            cache.put('./', toCache).catch(() => {});
+          });
         }
         return response;
       }).catch(() => caches.match(e.request).then(cached => cached || caches.match('./')))
@@ -18567,7 +20033,7 @@ self.addEventListener('message', e => {
 });
 `;
 
-  return pwaLimpiarSWLegacy().then(() => navigator.serviceWorker.register('./sw.js', { scope: './' }))
+  return pwaLimpiarSWLegacy().then(() => navigator.serviceWorker.register('./sw.js?v=35', { scope: './' }))
     .then(reg => {
       console.log('[SW] Registrado:', reg.scope);
 
@@ -18684,7 +20150,7 @@ function cerrarGuionModal() {
 // ── cargarCatalogo [from index__3_]
 async function cargarCatalogo() {
   // Renderizar inmediatamente con datos por defecto (sin esperar Firebase)
-  _catalogoCache = [...CATALOGO_DEFAULT];
+  _catalogoCache = CATALOGO_DEFAULT.map((p, index) => normalizarCatalogoProducto(p, index + 1));
   renderizarCatalogo();
   sincronizarPreciosGlobales();
 
@@ -18697,14 +20163,33 @@ async function cargarCatalogo() {
       .orderBy('orden', 'asc').get();
 
     if (!snap.empty) {
-      _catalogoCache = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      _catalogoCache = snap.docs.map((d, index) => normalizarCatalogoProducto({ id: d.id, ...d.data() }, index + 1));
+      const role = String(sessionStorage.getItem('aswaRole') || window.aswaAuthClaims?.role || '').toLowerCase();
+      const puedeSincronizar = ['owner', 'admin'].includes(role);
+      if (puedeSincronizar) {
+        await Promise.all(snap.docs.map(async (docSnap) => {
+          const precioForzado = CATALOGO_PRECIO_FORZADO[docSnap.id];
+          if (!Number.isFinite(Number(precioForzado))) return;
+          const precioActual = Number(docSnap.data()?.precio);
+          if (precioActual === Number(precioForzado)) return;
+          try {
+            await window.db.collection('catalogo').doc(docSnap.id).update({ precio: Number(precioForzado) });
+          } catch (err) {
+            console.warn('catalogo precio sync:', docSnap.id, err?.message || err);
+          }
+        }));
+      }
     } else {
       // Primera vez: subir los productos por defecto
-      for (const p of CATALOGO_DEFAULT) {
-        const { id, ...data } = p;
-        await window.db.collection('catalogo').doc(id).set(data);
+      const role = String(sessionStorage.getItem('aswaRole') || window.aswaAuthClaims?.role || '').toLowerCase();
+      const puedeSembrar = ['owner', 'admin'].includes(role);
+      if (puedeSembrar) {
+        for (const p of CATALOGO_DEFAULT) {
+          const { id, ...data } = normalizarCatalogoProducto(p);
+          await window.db.collection('catalogo').doc(id).set(data);
+        }
+        _catalogoCache = CATALOGO_DEFAULT.map((p, index) => normalizarCatalogoProducto(p, index + 1));
       }
-      _catalogoCache = [...CATALOGO_DEFAULT];
     }
   } catch (e) {
     // Firebase falló — los datos por defecto ya están renderizados
@@ -18849,12 +20334,19 @@ async function catGuardarProducto() {
   btn.textContent = 'Guardando...'; btn.disabled = true;
 
   try {
-    const data = { nombre, desc, precio, stock, activo: _catActivoOn, foto };
+    const orden = id
+      ? (_catalogoCache.find(x => x.id === id)?.orden || (_catalogoCache.findIndex(x => x.id === id) + 1))
+      : (_catalogoCache.length + 1);
+    const data = {
+      businessId: CATALOGO_BUSINESS_ID,
+      business_id: CATALOGO_BUSINESS_ID_CANONICAL,
+      nombre, desc, precio, stock, activo: _catActivoOn, foto, orden
+    };
 
     if (id) {
       // Actualizar
       const idx = _catalogoCache.findIndex(x => x.id === id);
-      if (idx >= 0) _catalogoCache[idx] = { ..._catalogoCache[idx], ...data };
+      if (idx >= 0) _catalogoCache[idx] = normalizarCatalogoProducto({ id, ..._catalogoCache[idx], ...data }, idx + 1);
       if (!window._fbOffline && window.db) {
         await window.db.collection('catalogo').doc(id).update(data);
       }
@@ -18862,12 +20354,11 @@ async function catGuardarProducto() {
     } else {
       // Crear nuevo
       const nuevoId = 'prod_' + Date.now();
-      const orden   = _catalogoCache.length + 1;
-      const nuevo   = { id: nuevoId, ...data, orden };
+      const nuevo   = normalizarCatalogoProducto({ id: nuevoId, ...data }, orden);
       _catalogoCache.push(nuevo);
       if (!window._fbOffline && window.db) {
         const { id: _id, ...fbData } = nuevo;
-        await window.db.collection('catalogo').doc(nuevoId).set({ ...fbData, orden });
+        await window.db.collection('catalogo').doc(nuevoId).set(fbData);
       }
       tst('✅ Producto agregado', 2000);
     }
@@ -24658,5 +26149,88 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 
+<style id="purchaseFlowRealFinalOverrides">
+  body.purchase-step-products #pwaInstallCard,
+  body.purchase-step-products #installPWA,
+  body.purchase-step-products #btnRef,
+  body.purchase-step-products #promoSlider,
+  body.purchase-step-products #promoDots,
+  body.purchase-step-products .easy-start,
+  body.purchase-step-products .quick-order,
+  body.purchase-step-products .home-help-collapsible,
+  body.purchase-step-products main > .horario-mini,
+  body.purchase-step-products #productosSection .school-grid,
+  body.purchase-step-products #productosSection .school-more-details,
+  body.purchase-step-products #homeCoverageSection,
+  body.purchase-step-products #datosPedidoSection,
+  body.purchase-step-products #pagoPedidoSection,
+  body.purchase-step-products .social-section,
+  body.purchase-step-products #aswaSocialShareMenu,
+  body.purchase-step-products footer,
+  body.purchase-step-products .bottomnav,
+  body.purchase-step-products #fbarPedir,
+  body.purchase-step-products #badge-bono,
+  body.purchase-step-products #btnAccesoRapido,
+  body.purchase-step-products .chat-fab,
+  body.purchase-step-products .quick-access-panel,
+  body.purchase-step-products .btn-tutorial-top,
+  body.purchase-step-delivery #pwaInstallCard,
+  body.purchase-step-delivery #installPWA,
+  body.purchase-step-delivery #btnRef,
+  body.purchase-step-delivery #promoSlider,
+  body.purchase-step-delivery #promoDots,
+  body.purchase-step-delivery .easy-start,
+  body.purchase-step-delivery .quick-order,
+  body.purchase-step-delivery .home-help-collapsible,
+  body.purchase-step-delivery main > .horario-mini,
+  body.purchase-step-delivery #productosSection,
+  body.purchase-step-delivery #pagoPedidoSection,
+  body.purchase-step-delivery .social-section,
+  body.purchase-step-delivery #aswaSocialShareMenu,
+  body.purchase-step-delivery footer,
+  body.purchase-step-delivery .bottomnav,
+  body.purchase-step-delivery #fbarPedir,
+  body.purchase-step-delivery #badge-bono,
+  body.purchase-step-delivery #btnAccesoRapido,
+  body.purchase-step-delivery .chat-fab,
+  body.purchase-step-delivery .quick-access-panel,
+  body.purchase-step-delivery .btn-tutorial-top,
+  body.purchase-step-payment #pwaInstallCard,
+  body.purchase-step-payment #installPWA,
+  body.purchase-step-payment #btnRef,
+  body.purchase-step-payment #promoSlider,
+  body.purchase-step-payment #promoDots,
+  body.purchase-step-payment .easy-start,
+  body.purchase-step-payment .quick-order,
+  body.purchase-step-payment .home-help-collapsible,
+  body.purchase-step-payment main > .horario-mini,
+  body.purchase-step-payment #productosSection,
+  body.purchase-step-payment #homeCoverageSection,
+  body.purchase-step-payment #datosPedidoSection,
+  body.purchase-step-payment .social-section,
+  body.purchase-step-payment #aswaSocialShareMenu,
+  body.purchase-step-payment footer,
+  body.purchase-step-payment .bottomnav,
+  body.purchase-step-payment #fbarPedir,
+  body.purchase-step-payment #badge-bono,
+  body.purchase-step-payment #btnAccesoRapido,
+  body.purchase-step-payment .chat-fab,
+  body.purchase-step-payment .quick-access-panel,
+  body.purchase-step-payment .btn-tutorial-top {
+    display: none !important;
+  }
+  body.purchase-step-products main,
+  body.purchase-step-delivery main,
+  body.purchase-step-payment main {
+    padding-bottom: 26px !important;
+  }
+  body.purchase-step-products #installPWA,
+  body.purchase-step-delivery #installPWA,
+  body.purchase-step-payment #installPWA {
+    display: none !important;
+  }
+</style>
+
 </body>
 </html>
+

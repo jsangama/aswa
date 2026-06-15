@@ -1,5 +1,6 @@
-// ASWA Service Worker v28 - https://jsangama.github.io/aswa/
-const CACHE_NAME = 'aswa-v28';
+// ASWA Service Worker v35 - https://jsangama.github.io/aswa/
+const CACHE_NAME = 'aswa-v35';
+const VERSION_PARAM = 'aswa_sw';
 const BASE = new URL('./', self.registration.scope).pathname;
 const ASSETS = [
   BASE,
@@ -23,22 +24,38 @@ self.addEventListener('activate', e => {
     caches.keys().then(keys =>
       Promise.all(keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k)))
     )
+      .then(() => self.clients.claim())
+      .then(() => self.clients.matchAll({ type: 'window', includeUncontrolled: true }))
+      .then(list => Promise.all(list.map(client => {
+        try {
+          const url = new URL(client.url);
+          if (url.origin !== self.location.origin) return Promise.resolve();
+          if (url.searchParams.get(VERSION_PARAM) === CACHE_NAME) return Promise.resolve();
+          url.searchParams.set(VERSION_PARAM, CACHE_NAME);
+          return client.navigate(url.href);
+        } catch (_) {
+          return Promise.resolve();
+        }
+      })))
   );
-  self.clients.claim();
 });
 
 self.addEventListener('fetch', e => {
   if (!e.request.url.startsWith(self.location.origin)) return;
+  if (e.request.method !== 'GET') return;
 
   const accept = e.request.headers.get('accept') || '';
   const isHtml = e.request.mode === 'navigate' || accept.includes('text/html');
   const isImage = e.request.destination === 'image';
   if (isHtml) {
     e.respondWith(
-      fetch(e.request).then(resp => {
+      fetch(new Request(e.request, { cache: 'no-store' })).then(resp => {
         if (resp.status === 200) {
           const clone = resp.clone();
-          caches.open(CACHE_NAME).then(c => c.put(e.request, clone));
+          caches.open(CACHE_NAME).then(c => {
+            c.put(e.request, clone.clone());
+            c.put(BASE, clone).catch(() => {});
+          });
         }
         return resp;
       }).catch(() => caches.match(e.request).then(cached => cached || caches.match(BASE)))
