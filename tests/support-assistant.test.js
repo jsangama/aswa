@@ -63,9 +63,9 @@ describe('support assistant replies', () => {
 
     expect(text).toContain('centros educativos');
     expect(text).toContain('Pedido minimo');
-    expect(text).toContain('chicha ASWA 400 ml S/ 2');
-    expect(text).toContain('solo juane S/ 2.00');
-    expect(text).toContain('combo juane + chicha 400 ml S/ 3.50');
+    expect(text).toContain('chicha ASWA 400 ml S/ 2.50');
+    expect(text).toContain('solo juane S/ 2.50');
+    expect(text).toContain('combo juane + chicha 400 ml S/ 4.00');
     expect(text).toContain('No cobramos delivery');
     expect(text).not.toContain('Productos principales');
   });

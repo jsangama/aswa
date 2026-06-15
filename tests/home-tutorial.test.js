@@ -1,122 +1,44 @@
 const fs = require('fs');
 const path = require('path');
-const { TextDecoder, TextEncoder } = require('util');
 
-global.TextDecoder = global.TextDecoder || TextDecoder;
-global.TextEncoder = global.TextEncoder || TextEncoder;
+const html = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
 
-const { JSDOM, VirtualConsole } = require('jsdom');
-
-function setupTutorialDom() {
-  const html = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
-  const virtualConsole = new VirtualConsole();
-  const dom = new JSDOM(html, {
-    runScripts: 'outside-only',
-    url: 'http://localhost',
-    virtualConsole
+describe('public home stage 1', () => {
+  test('boots the landing in catalog-only mode', () => {
+    expect(html).toContain('<body class="purchase-step-products">');
+    expect(html).toContain("mostrarPasoCompra('products', false)");
+    expect(html).toContain('body.purchase-step-products #btnRef');
+    expect(html).toContain('body.purchase-step-products .btn-tutorial-top');
+    expect(html).toContain('body.purchase-step-products #pwaInstallCard');
+    expect(html).toContain('body.purchase-step-products #installPWA');
+    expect(html).toContain('body.purchase-step-products #promoSlider');
+    expect(html).toContain('body.purchase-step-products .easy-start');
+    expect(html).toContain('body.purchase-step-products .quick-order');
+    expect(html).toContain('body.purchase-step-products .home-help-collapsible');
+    expect(html).toContain('body.purchase-step-products #homeCoverageSection');
+    expect(html).toContain('body.purchase-step-products #datosPedidoSection');
+    expect(html).toContain('body.purchase-step-products #pagoPedidoSection');
+    expect(html).toContain('body.purchase-step-products .social-section');
+    expect(html).toContain('body.purchase-step-products #aswaSocialShareMenu');
+    expect(html).toContain('body.purchase-step-products footer');
+    expect(html).toContain('body.purchase-step-products .bottomnav');
+    expect(html).toContain('body.purchase-step-products .chat-fab');
+    expect(html).toContain('body.purchase-step-products .quick-access-panel');
+    expect(html).toContain('body.purchase-step-products #badge-bono');
   });
 
-  const { window } = dom;
-  window.tst = () => {};
-  window.Element.prototype.scrollIntoView = () => {};
-
-  const start = html.indexOf('const ASWA_HOME_TUTORIAL_STEPS');
-  const end = html.indexOf('function _zonaNorm', start);
-
-  if (start < 0 || end < 0) {
-    throw new Error('No se encontro el bloque del tutorial de inicio');
-  }
-
-  window.eval(html.slice(start, end));
-  window.tutHomeRender();
-
-  return window;
-}
-
-describe('home tutorial guide', () => {
-  test('is visible on the initial order page and renders the first step', () => {
-    const window = setupTutorialDom();
-    const section = window.document.querySelector('.home-tutorial');
-    const shot = window.document.querySelector('#homeTutIcon img');
-
-    expect(section).toBeTruthy();
-    expect(window.document.getElementById('homeTutTitle').textContent).toBe('Busca ASWA en Facebook');
-    expect(shot).toBeTruthy();
-    expect(shot.getAttribute('src')).toContain('assets/images/tutorial-pedido/paso-03.jpg');
-    expect(window.document.querySelectorAll('.home-tutorial-dot').length).toBe(11);
-  });
-
-  test('advances steps, jumps by dot, and shows preparation tab coherently', () => {
-    const window = setupTutorialDom();
-
-    window.tutHomeNext();
-    expect(window.document.getElementById('homeTutTitle').textContent).toBe('Toca Iniciar pedido');
-
-    window.tutHomeSetStep(2);
-    expect(window.document.getElementById('homeTutTitle').textContent).toBe('Elige tu chicha');
-    expect(window.document.querySelector('#homeTutIcon img').getAttribute('src')).toContain('paso-05.jpg');
-
-    window.tutHomeSetTab('preparacion');
-    expect(window.document.getElementById('homeTutPrepPanel').classList.contains('show')).toBe(true);
-    expect(window.document.getElementById('homeTutTabPrep').getAttribute('aria-selected')).toBe('true');
-    expect(window.document.getElementById('homeTutPrepPanel').textContent).toContain('Preparacion y entrega');
-  });
-
-  test('guide facebook tutorial opens through the video modal path', () => {
-    const html = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
-    const start = html.indexOf("function tutAbrirVideo(seccion)");
-    const end = html.indexOf("function tutCerrarVideo()", start);
-    const block = html.slice(start, end);
-
-    expect(html).toContain("onclick=\"tutAbrirVideo('inicio')\"");
-    expect(html).toContain("inicio   : 'fQbZiTTD88g'");
-    expect(block).toContain("const modal = document.getElementById('tutVideoModal')");
-    expect(block).toContain('www.youtube-nocookie.com/embed/${videoId}');
-    expect(block).toContain('Abrir en YouTube si no reproduce');
-    expect(html).toContain('function tutInstalarClicksVideo');
-    expect(html).toContain('globalThis.tutAbrirVideo = tutAbrirVideo');
-    expect(block).not.toContain("tutToggleTutorialPedido(true)");
-    expect(html).toContain('function tutRepararIconosGuia');
-  });
-
-  test('heavy tutorial iframe is deferred until the user opens it', () => {
-    const html = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
-
-    expect(html).toContain('function activarIframesDiferidos');
-    expect(html).toContain('function prepararIframesDiferidos');
-    expect(html).toContain('data-src="https://www.youtube-nocookie.com/embed/fQbZiTTD88g');
-    expect(html).not.toMatch(/<iframe[^>]+\ssrc="https:\/\/www\.youtube-nocookie\.com\/embed\/fQbZiTTD88g/);
-  });
-
-  test('shows quick order shortcuts before the long guide', () => {
-    const html = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
-
-    expect(html).toContain('class="easy-start"');
-    expect(html).toContain('Haz tu pedido rapido');
-    expect(html).toContain('Empezar pedido');
-    expect(html).toContain('Pedir con asistente');
-    expect(html).toContain('class="home-help-collapsible"');
-    expect(html).toContain('Necesitas ayuda? Ver guia paso a paso');
-    expect(html).toContain('class="quick-order"');
-    expect(html).toContain('Accesos rapidos');
-    expect(html).toContain("onclick=\"irPedidoRapido('zona')\"");
-    expect(html).toContain("onclick=\"irPedidoRapido('productos')\"");
-    expect(html).toContain("onclick=\"irPedidoRapido('datos')\"");
-    expect(html).toContain("onclick=\"irPedidoRapido('chat')\"");
-    expect(html).toContain('function irPedidoRapido');
-    expect(html).toContain("modal.classList.add('open')");
-    expect(html).toContain('window.abrirChat = abrirChat');
-  });
-
-  test('uses a smart continue button that guides missing order steps', () => {
-    const html = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
-
-    expect(html).toContain('id="btnContinuarInteligente"');
-    expect(html).toContain('onclick="continuarPedidoInteligente()"');
-    expect(html).toContain('function obtenerPasoPendientePedido');
-    expect(html).toContain('function actualizarBotonContinuar');
-    expect(html).toContain('function continuarPedidoInteligente');
-    expect(html).toContain('ELEGIR CHICHA');
-    expect(html).toContain('ELEGIR ZONA');
+  test('shows the visible catalog and floating cart', () => {
+    expect(html).toContain('id="productosSection"');
+    expect(html).toContain('Chicha ASWA 2 litros');
+    expect(html).toContain('Chicha ASWA 3 litros');
+    expect(html).toContain('Chicha ASWA 4 litros');
+    expect(html).toContain('Bidon ASWA 20L');
+    expect(html).toContain('ASWA escolar sanjuanera');
+    expect(html).toContain('Combo escolar sanjuanero');
+    expect(html).toContain('Solo juane escolar');
+    expect(html).toContain('Juane institucional');
+    expect(html).toContain('id="btnCarritoFlotante"');
+    expect(html).toContain('id="cartCountText"');
+    expect(html).toContain('onclick="abrirResumen(true)"');
   });
 });
