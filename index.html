@@ -16635,6 +16635,14 @@ async function pwaForzarVersionNueva() {
   if (!('serviceWorker' in navigator)) return;
   const reloadKey = 'aswa_sw_reload_' + ASWA_PWA_CACHE_NAME;
   try {
+    const urlActual = new URL(location.href);
+    if (urlActual.searchParams.get('aswa_sw') !== ASWA_PWA_CACHE_NAME &&
+        sessionStorage.getItem(reloadKey) !== '1') {
+      sessionStorage.setItem(reloadKey, '1');
+      urlActual.searchParams.set('aswa_sw', ASWA_PWA_CACHE_NAME);
+      location.replace(urlActual.href);
+      return;
+    }
     const regs = await navigator.serviceWorker.getRegistrations();
     await Promise.all(regs.map(async reg => {
       try {

@@ -48,6 +48,8 @@ describe('guided purchase flow', () => {
     expect(html).toContain('function pwaCompraEnCurso');
     expect(html).toContain("const ASWA_PWA_CACHE_NAME = 'aswa-v38'");
     expect(html).toContain('async function pwaForzarVersionNueva');
+    expect(html).toContain("urlActual.searchParams.get('aswa_sw') !== ASWA_PWA_CACHE_NAME");
+    expect(html).toContain("urlActual.searchParams.set('aswa_sw', ASWA_PWA_CACHE_NAME)");
     expect(html).toContain("navigator.serviceWorker.addEventListener('controllerchange'");
     expect(html).toContain('pwaForzarVersionNueva();');
     expect(html).toContain('function mostrarPostCompraUI');
