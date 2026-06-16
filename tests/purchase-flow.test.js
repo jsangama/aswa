@@ -41,6 +41,17 @@ describe('guided purchase flow', () => {
     expect(html).toContain("irA('tutorial')");
   });
 
+  test('lets customers add multiple presentations before going to delivery data', () => {
+    const html = readHtml();
+    const qtyBlock = html.match(/function qty\(id, d\) \{[\s\S]*?\n\}/)?.[0] || '';
+    const directQtyBlock = html.match(/function setQtyDirect\(id, value\) \{[\s\S]*?\n\}/)?.[0] || '';
+
+    expect(qtyBlock).not.toContain("mostrarPasoCompra('delivery')");
+    expect(directQtyBlock).not.toContain("mostrarPasoCompra('delivery')");
+    expect(html).toContain("if (paso === 'delivery') return mostrarPasoCompra('delivery')");
+    expect(html).toContain('Primero elige tus productos. Despues te pediremos zona, celular y pago.');
+  });
+
   test('only shows the floating app installer after purchase and keeps sw v38 installable', () => {
     const html = readHtml();
     const sw = fs.readFileSync(path.join(__dirname, '..', 'sw.js'), 'utf8');

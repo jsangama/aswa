@@ -7293,25 +7293,21 @@ function syncQtyUI(id) {
 
 function qty(id, d) {
   normalizarCarrito();
-  const teniaProductos = compraTieneProductos();
   ST.cart[id] = Math.max(0, Number(ST.cart[id] || 0) + d);
   syncQtyUI(id);
   if (PRODUCT_META[id]?.sanJuanPublico) actualizarBidonPublicoUI();
   if (PRODUCT_META[id]?.escolar || PRODUCT_META[id]?.sanJuanInstitucional) actualizarPromoEscolarUI();
   calcTotal();
-  if (!teniaProductos && compraTieneProductos()) mostrarPasoCompra('delivery');
 }
 
 function setQtyDirect(id, value) {
   normalizarCarrito();
-  const teniaProductos = compraTieneProductos();
   const raw = String(value ?? '').replace(/[^\d]/g, '');
   ST.cart[id] = raw === '' ? 0 : Math.min(999, Math.max(0, parseInt(raw, 10) || 0));
   syncQtyUI(id);
   if (PRODUCT_META[id]?.sanJuanPublico) actualizarBidonPublicoUI();
   if (PRODUCT_META[id]?.escolar || PRODUCT_META[id]?.sanJuanInstitucional) actualizarPromoEscolarUI();
   calcTotal();
-  if (!teniaProductos && compraTieneProductos()) mostrarPasoCompra('delivery');
 }
 window.qty = qty;
 window.setQtyDirect = setQtyDirect;
