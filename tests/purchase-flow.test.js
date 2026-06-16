@@ -41,12 +41,12 @@ describe('guided purchase flow', () => {
     expect(html).toContain("irA('tutorial')");
   });
 
-  test('only shows the floating app installer after purchase and keeps sw v35 installable', () => {
+  test('only shows the floating app installer after purchase and keeps sw v37 installable', () => {
     const html = readHtml();
     const sw = fs.readFileSync(path.join(__dirname, '..', 'sw.js'), 'utf8');
 
     expect(html).toContain('function pwaCompraEnCurso');
-    expect(html).toContain("const ASWA_PWA_CACHE_NAME = 'aswa-v35'");
+    expect(html).toContain("const ASWA_PWA_CACHE_NAME = 'aswa-v37'");
     expect(html).toContain('async function pwaForzarVersionNueva');
     expect(html).toContain("navigator.serviceWorker.addEventListener('controllerchange'");
     expect(html).toContain('pwaForzarVersionNueva();');
@@ -57,11 +57,11 @@ describe('guided purchase flow', () => {
     expect(html).toContain("lsGet('succ_active') === '1'");
     expect(html).toContain('!postCompra || pwaCompraEnCurso() || pwaEsStandalone()');
     expect(html).toContain('/\\/sw\\.js(?:\\?|$)/.test(script)');
-    expect(html).toContain("navigator.serviceWorker.register('./sw.js?v=35'");
-    expect(html).toContain("const CACHE_NAME = 'aswa-v35'");
+    expect(html).toContain("navigator.serviceWorker.register('./sw.js?v=37'");
+    expect(html).toContain("const CACHE_NAME = 'aswa-v37'");
     expect(html).toContain("fetch(new Request(e.request, { cache: 'no-store' }))");
     expect(html).toContain("url.searchParams.set(VERSION_PARAM, CACHE_NAME)");
-    expect(sw).toContain("const CACHE_NAME = 'aswa-v35'");
+    expect(sw).toContain("const CACHE_NAME = 'aswa-v37'");
     expect(sw).toContain("fetch(new Request(e.request, { cache: 'no-store' }))");
     expect(sw).toContain("url.searchParams.set(VERSION_PARAM, CACHE_NAME)");
   });

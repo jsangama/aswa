@@ -39,7 +39,9 @@ window.ASWA_CONFIG = {
 };
 ```
 
-`js/local-config.js` esta en `.gitignore` para que no se publique. La app no lo solicita automaticamente, asi se evitan errores 404 en GitHub Pages. Si no cargas una configuracion privada antes de `js/app-config.js`, los accesos privados que dependan de PIN/password no estaran habilitados. En produccion, Admin/Delivery/TV deben usar Firebase Auth y roles operativos.
+`js/local-config.js` esta en `.gitignore` para que no se publique. La app no lo solicita automaticamente, asi se evitan errores 404 en Firebase Hosting. Si no cargas una configuracion privada antes de `js/app-config.js`, los accesos privados que dependan de PIN/password no estaran habilitados. En produccion, Admin/Delivery/TV deben usar Firebase Auth y roles operativos.
+
+El build de hosting genera `dist/`; Firebase Hosting publica solo ese directorio.
 
 4. Ejecuta localmente:
 

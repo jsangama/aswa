@@ -4,7 +4,7 @@ Este modo sirve para revisar el proceso completo de pedido, admin, delivery, con
 
 ## Donde va cada cosa
 
-- GitHub: el modo prueba esta en `index.html`. Al publicar GitHub Pages, puedes usarlo desde el navegador.
+- GitHub: el modo prueba esta en `index.html`. Al publicar en Firebase Hosting, puedes usarlo desde el navegador.
 - Firebase: usa colecciones separadas: `pedidos_prueba` y `clientes_prueba`.
 - Firebase rules/indexes: `firestore.rules` y `firestore.indexes.json` incluyen esas colecciones separadas.
 

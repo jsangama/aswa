@@ -30,6 +30,20 @@ service cloud.firestore {
       return data.businessId is string || data.business_id is string;
     }
 
+    function canManageBusinessDoc(resourceData) {
+      return isAdmin(request.resource.data) && (
+        (hasBusinessId(resourceData) && sameBusiness(resourceData) && sameBusiness(request.resource.data)) ||
+        (!hasBusinessId(resourceData) && sameBusiness(request.resource.data))
+      );
+    }
+
+    function canDeleteBusinessDoc(resourceData) {
+      return (
+        (hasBusinessId(resourceData) && sameBusiness(resourceData)) ||
+        (!hasBusinessId(resourceData) && claimRole() in ['owner', 'admin'])
+      );
+    }
+
     function isClientOwner(data) {
       return signedIn() &&
         data.cliente_uid is string &&
@@ -197,17 +211,23 @@ service cloud.firestore {
 
     match /productos/{productoId} {
       allow read: if true;
-      allow write: if isAdmin(request.resource.data) || isAdmin(resource.data);
+      allow create: if isAdmin(request.resource.data);
+      allow update: if canManageBusinessDoc(resource.data);
+      allow delete: if canDeleteBusinessDoc(resource.data);
     }
 
     match /cupones/{cuponId} {
       allow read: if true;
-      allow write: if isAdmin(request.resource.data) || isAdmin(resource.data);
+      allow create: if isAdmin(request.resource.data);
+      allow update: if canManageBusinessDoc(resource.data);
+      allow delete: if canDeleteBusinessDoc(resource.data);
     }
 
     match /catalogo/{productoId} {
       allow read: if true;
-      allow write: if isAdmin(request.resource.data) || isAdmin(resource.data);
+      allow create: if isAdmin(request.resource.data);
+      allow update: if canManageBusinessDoc(resource.data);
+      allow delete: if canDeleteBusinessDoc(resource.data);
     }
 
     match /fcm_tokens/{tokenId} {
