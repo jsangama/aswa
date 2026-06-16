@@ -49,7 +49,13 @@ Ese comando deja en `S/ 2.50` el `solo juane escolar`, en `S/ 2.50` la `chicha A
 ## Deploy manual
 
 ```bash
-firebase deploy --only hosting,firestore:rules,firestore:indexes,storage --project pedidos-aswa-peru
+firebase deploy --only hosting,firestore:rules,firestore:indexes --project pedidos-aswa-peru
 ```
 
 Para staging cambia el `--project` por el proyecto correspondiente.
+
+Firebase Storage se despliega aparte cuando el bucket del proyecto ya este inicializado en Firebase Console:
+
+```bash
+firebase deploy --only storage --project pedidos-aswa-peru
+```

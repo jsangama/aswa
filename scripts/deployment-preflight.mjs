@@ -66,9 +66,12 @@ async function main() {
   check(workflow.includes('FIREBASE_SERVICE_ACCOUNT'), 'Workflow usa secret de service account');
   check(workflow.includes('FIREBASE_PROJECT_STAGING'), 'Workflow usa variable del proyecto staging');
   check(workflow.includes('FIREBASE_PROJECT_PRODUCTION'), 'Workflow usa variable del proyecto production');
+  check(workflow.includes('deploy --only hosting,firestore:rules,firestore:indexes'), 'Workflow despliega hosting y Firestore');
+  check(!workflow.includes('firestore:indexes,storage'), 'Workflow no despliega Storage antes de inicializar bucket');
 
   check(deployDoc.includes('FIREBASE_SERVICE_ACCOUNT'), 'Doc de despliegue documenta el secret requerido');
   check(deployDoc.includes('staging') && deployDoc.includes('production'), 'Doc de despliegue documenta staging y production');
+  check(deployDoc.includes('Firebase Storage se despliega aparte'), 'Doc de despliegue separa Storage hasta inicializar bucket');
   check(githubDoc.includes('FIREBASE_SERVICE_ACCOUNT'), 'Guia de GitHub documenta el secret requerido');
   check(githubDoc.includes('FIREBASE_PROJECT_STAGING') && githubDoc.includes('FIREBASE_PROJECT_PRODUCTION'), 'Guia de GitHub documenta las variables del proyecto');
 
