@@ -7055,7 +7055,6 @@ function actualizarBidonPublicoUI() {
 function actualizarPromoEscolarUI() {
   const modoBidon = document.querySelector('input[name="colegioBidonModo"]:checked')?.value || 'recarga';
   const conBidon = modoBidon !== 'incluido';
-  const esCanalVenta = tipo === 'cafetin' || tipo === 'minimarket';
   ST.precio.sjBidon = conBidon ? 50 : 70;
   const desc = document.getElementById('sjBidonDesc');
   if (desc) desc.textContent = conBidon
@@ -7079,6 +7078,7 @@ function obtenerPromoEscolar(mostrarErrores = false) {
   if (!promoEscolarActiva()) return { ok:true, activo:false };
   const colegio = sanitizeInput(document.getElementById('colegioNombre')?.value || '', 90);
   const tipo = sanitizeInput(document.getElementById('colegioTipo')?.value || '', 30);
+  const esCanalVenta = tipo === 'cafetin' || tipo === 'minimarket';
   const grado = sanitizeInput(document.getElementById('colegioGrado')?.value || '', 30);
   const seccion = sanitizeInput(document.getElementById('colegioSeccion')?.value || '', 40);
   const alumnos = Number(document.getElementById('colegioAlumnos')?.value || 0);
@@ -16544,7 +16544,7 @@ async function admRechazarYape(pedidoId, telefono, nombre) {
    PWA — INSTALAR COMO APP
 ══════════════════════════════════════ */
 let _pwaPrompt = null;
-const ASWA_PWA_CACHE_NAME = 'aswa-v37';
+const ASWA_PWA_CACHE_NAME = 'aswa-v38';
 const ASWA_PLAY_STORE_URL = '';
 
 function pwaEsStandalone() {
@@ -19328,6 +19328,8 @@ function _renderProductos() {
     if (card) card.style.display = prod.activo ? '' : 'none';
     ST.precio[prod.id] = prod.precio;
   });
+  actualizarBidonPublicoUI();
+  actualizarPromoEscolarUI();
   calcTotal();
 }
 
@@ -19987,7 +19989,7 @@ function registrarSW() {
   if (!('serviceWorker' in navigator)) return;
 
   const SW_CODE = `
-const CACHE_NAME = 'aswa-v37';
+const CACHE_NAME = 'aswa-v38';
 const VERSION_PARAM = 'aswa_sw';
 const SHELL = [
   './',
@@ -20084,7 +20086,7 @@ self.addEventListener('message', e => {
 });
 `;
 
-  return pwaLimpiarSWLegacy().then(() => navigator.serviceWorker.register('./sw.js?v=37', { scope: './' }))
+  return pwaLimpiarSWLegacy().then(() => navigator.serviceWorker.register('./sw.js?v=38', { scope: './' }))
     .then(reg => {
       console.log('[SW] Registrado:', reg.scope);
 
