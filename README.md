@@ -115,7 +115,7 @@ Google Maps Embed API
 
 Deploy:
 
-GitHub Pages
+Firebase Hosting + GitHub Actions
 
 🏗 Arquitectura del Proyecto
 /index.html
@@ -126,6 +126,11 @@ GitHub Pages
 /images
 
 Base de datos estructurada en Firestore con soporte para futura expansión multi-negocio.
+
+Ver tambien:
+
+- [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)
+- [docs/GITHUB_SETUP.md](docs/GITHUB_SETUP.md)
 
 🌎 Visión del Proyecto
 

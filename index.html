@@ -56,6 +56,7 @@
   <!-- jsPDF y Chart.js se cargan bajo demanda -->
 
   <script src="js/app-config.js"></script>
+  <script type="module" src="src/main.js"></script>
 
   <script type="module">
     import { initializeApp }
@@ -6906,6 +6907,12 @@ const PRODUCT_META = {
   sjJuaneFamiliar: { nombre:'Juane institucional', corto:'Juane institucional', sanJuanInstitucional:true }
 };
 const PRODUCT_IDS = Object.keys(PRODUCT_META);
+function aswaCartModule() {
+  return window.ASWA?.modules?.cart || null;
+}
+function aswaPurchaseFlowModule() {
+  return window.ASWA?.modules?.purchaseFlow || null;
+}
 const PRODUCT_IMAGE_SRC = {
   p2l: 'assets/images/products/optimized/aswa de 2 litros 1.jpg',
   p3l: 'assets/images/products/optimized/aswa de 3 litros.jpg',
@@ -6923,6 +6930,13 @@ const SAN_JUAN_FECHA_BLOQUEADA = '2026-06-24';
 const SAN_JUAN_INSTITUCIONAL_FECHA = '2026-06-22';
 
 function normalizarCarrito() {
+  const cartModule = aswaCartModule();
+  if (cartModule?.normalizeCart) {
+    const normalized = cartModule.normalizeCart({ cart: ST.cart, prices: ST.precio, productIds: PRODUCT_IDS });
+    Object.assign(ST.cart, normalized.cart);
+    Object.assign(ST.precio, normalized.prices);
+    return;
+  }
   PRODUCT_IDS.forEach(id => {
     if (!Number.isFinite(Number(ST.cart[id]))) ST.cart[id] = 0;
     if (!Number.isFinite(Number(ST.precio[id]))) ST.precio[id] = 0;
@@ -6935,6 +6949,10 @@ function productoIds() {
 }
 
 function pedidoItemsLista(cart = ST.cart, precios = ST.precio) {
+  const cartModule = aswaCartModule();
+  if (cartModule?.itemsFromCart) {
+    return cartModule.itemsFromCart({ cart, prices: precios, productMeta: PRODUCT_META, productIds: PRODUCT_IDS });
+  }
   normalizarCarrito();
   return PRODUCT_IDS
     .filter(id => Number(cart?.[id] || 0) > 0)
@@ -7203,13 +7221,18 @@ function aplicarVistaPublicaInicio() {
 }
 
 function mostrarPasoCompra(paso = 'products', scroll = true) {
-  document.body.classList.remove('aswa-home-step1', 'purchase-step-products', 'purchase-step-delivery', 'purchase-step-payment', 'purchase-complete');
-  const clases = {
-    products: 'purchase-step-products',
-    delivery: 'purchase-step-delivery',
-    payment: 'purchase-step-payment'
-  };
-  document.body.classList.add(clases[paso] || clases.products);
+  const flowModule = aswaPurchaseFlowModule();
+  if (flowModule?.show) {
+    flowModule.show(paso);
+  } else {
+    document.body.classList.remove('aswa-home-step1', 'purchase-step-products', 'purchase-step-delivery', 'purchase-step-payment', 'purchase-complete');
+    const clases = {
+      products: 'purchase-step-products',
+      delivery: 'purchase-step-delivery',
+      payment: 'purchase-step-payment'
+    };
+    document.body.classList.add(clases[paso] || clases.products);
+  }
   const targets = {
     products: 'productosSection',
     delivery: 'homeCoverageSection',
@@ -7221,8 +7244,13 @@ function mostrarPasoCompra(paso = 'products', scroll = true) {
 }
 
 function mostrarPostCompraUI() {
-  document.body.classList.remove('aswa-home-step1', 'purchase-step-products', 'purchase-step-delivery', 'purchase-step-payment');
-  document.body.classList.add('purchase-complete');
+  const flowModule = aswaPurchaseFlowModule();
+  if (flowModule?.show) {
+    flowModule.show('complete');
+  } else {
+    document.body.classList.remove('aswa-home-step1', 'purchase-step-products', 'purchase-step-delivery', 'purchase-step-payment');
+    document.body.classList.add('purchase-complete');
+  }
   pwaMostrarBotonDescarga();
 }
 
@@ -7312,14 +7340,28 @@ function getDescuentoTotal() {
 function calcTotal() {
   // ✅ BUG #3 CORREGIDO: usa ST.precio (cargado desde Firestore, no hardcodeado)
   normalizarCarrito();
-  const base = PRODUCT_IDS.reduce((sum, id) => {
-    return sum + (Number(ST.cart[id] || 0) * Number(ST.precio[id] || 0));
-  }, 0);
   ST.delivery = promoSinDeliveryActiva() ? 0 : (Number(document.getElementById('zona').value) || 0);
-  ST.raw      = base + ST.delivery;
   const disc  = getDescuentoPct();
   const fixed = getDescuentoFijoAplicado(disc);
-  ST.final    = Math.max(0, +(ST.raw * (1 - disc/100) - fixed).toFixed(2));
+  const cartModule = aswaCartModule();
+  if (cartModule?.calculateTotals) {
+    const totals = cartModule.calculateTotals({
+      cart: ST.cart,
+      prices: ST.precio,
+      productIds: PRODUCT_IDS,
+      delivery: ST.delivery,
+      discountPercent: disc,
+      fixedDiscount: fixed
+    });
+    ST.raw = totals.raw;
+    ST.final = totals.final;
+  } else {
+    const base = PRODUCT_IDS.reduce((sum, id) => {
+      return sum + (Number(ST.cart[id] || 0) * Number(ST.precio[id] || 0));
+    }, 0);
+    ST.raw = base + ST.delivery;
+    ST.final = Math.max(0, +(ST.raw * (1 - disc/100) - fixed).toFixed(2));
+  }
 
   const pbig = document.getElementById('pbig');
   if (pbig) pbig.textContent = 'S/ ' + ST.final.toFixed(2);
@@ -16502,7 +16544,7 @@ async function admRechazarYape(pedidoId, telefono, nombre) {
    PWA — INSTALAR COMO APP
 ══════════════════════════════════════ */
 let _pwaPrompt = null;
-const ASWA_PWA_CACHE_NAME = 'aswa-v35';
+const ASWA_PWA_CACHE_NAME = 'aswa-v37';
 const ASWA_PLAY_STORE_URL = '';
 
 function pwaEsStandalone() {
@@ -16530,6 +16572,8 @@ function pwaEsNavegadorInterno() {
 }
 
 function pwaCompraEnCurso() {
+  const flowModule = aswaPurchaseFlowModule();
+  if (flowModule?.isBuying) return flowModule.isBuying();
   return document.body.classList.contains('purchase-step-products')
     || document.body.classList.contains('purchase-step-delivery')
     || document.body.classList.contains('purchase-step-payment');
@@ -19943,11 +19987,18 @@ function registrarSW() {
   if (!('serviceWorker' in navigator)) return;
 
   const SW_CODE = `
-const CACHE_NAME = 'aswa-v35';
+const CACHE_NAME = 'aswa-v37';
 const VERSION_PARAM = 'aswa_sw';
 const SHELL = [
   './',
-  './index.html'
+  './index.html',
+  './src/main.js',
+  './src/modules/app-shell.js',
+  './src/modules/cart.js',
+  './src/modules/catalog.js',
+  './src/modules/purchase-flow.js',
+  './src/modules/pwa-cache.js',
+  './src/modules/storage.js'
 ];
 
 // Instalar: cachear el shell
@@ -20033,7 +20084,7 @@ self.addEventListener('message', e => {
 });
 `;
 
-  return pwaLimpiarSWLegacy().then(() => navigator.serviceWorker.register('./sw.js?v=35', { scope: './' }))
+  return pwaLimpiarSWLegacy().then(() => navigator.serviceWorker.register('./sw.js?v=37', { scope: './' }))
     .then(reg => {
       console.log('[SW] Registrado:', reg.scope);
 

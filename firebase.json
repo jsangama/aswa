@@ -1,4 +1,10 @@
 {
+  "hosting": {
+    "public": "dist",
+    "predeploy": [
+      "npm run build:hosting"
+    ]
+  },
   "firestore": {
     "rules": "firestore.rules",
     "indexes": "firestore.indexes.json"

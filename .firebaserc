@@ -1,0 +1,7 @@
+{
+  "projects": {
+    "default": "pedidos-aswa-peru",
+    "production": "pedidos-aswa-peru",
+    "staging": "pedidos-aswa-peru-staging"
+  }
+}

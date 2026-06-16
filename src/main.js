@@ -1,28 +1,35 @@
-/**
- * ASWA Platform - main entry point.
- */
+import { createAppShell } from './modules/app-shell.js';
+import { createStorageAdapter } from './modules/storage.js';
+import { PRODUCT_CATALOG, createCatalogService } from './modules/catalog.js';
+import { createCartService } from './modules/cart.js';
+import { createPurchaseFlow } from './modules/purchase-flow.js';
+import { createPwaCacheController } from './modules/pwa-cache.js';
 
-window.ASWA_STATE = window.ASWA_STATE || {
-  user: null,
-  cart: [],
-  negocio: null,
-  fbReady: false,
-  authenticated: false,
+const existing = window.ASWA || {};
+
+const modules = {
+  storage: createStorageAdapter({
+    getBusinessId: () => window.ASWA_CONFIG?.BUSINESS_ID || window.BUSINESS_ID || 'aswa001',
+  }),
+  catalog: createCatalogService({ products: PRODUCT_CATALOG }),
+  cart: createCartService(),
+  purchaseFlow: createPurchaseFlow({ document }),
+  pwaCache: createPwaCacheController({
+    cacheName: 'aswa-v37',
+    serviceWorker: navigator.serviceWorker,
+    location,
+    sessionStorage,
+  }),
+};
+
+window.ASWA = {
+  ...existing,
+  shell: createAppShell({ modules }),
+  modules,
 };
 
 document.addEventListener('firebase-ready', () => {
-  window.ASWA_STATE.fbReady = true;
+  window.ASWA.shell.setReady('firebase', true);
 });
 
-window.esperarFB = () => {
-  return new Promise((resolve) => {
-    if (window.ASWA_STATE.fbReady) {
-      resolve();
-      return;
-    }
-
-    document.addEventListener('firebase-ready', resolve, { once: true });
-  });
-};
-
-console.log('ASWA Platform initialized');
+window.ASWA.shell.setReady('modules', true);

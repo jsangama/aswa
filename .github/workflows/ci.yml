@@ -4,9 +4,11 @@ on:
   pull_request:
     branches:
       - main
+      - staging
   push:
     branches:
       - main
+      - staging
       - refactor/organize-and-secure
 
 jobs:
@@ -29,3 +31,9 @@ jobs:
 
       - name: Run tests
         run: npm test -- --runInBand
+
+      - name: Build hosting bundle
+        run: npm run build:hosting
+
+      - name: Deployment preflight
+        run: npm run deployment:preflight

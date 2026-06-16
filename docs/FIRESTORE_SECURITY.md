@@ -43,7 +43,7 @@ El Modo TV debe ser una vista operativa, no publica:
 
 Los accesos antiguos por PIN o `window.CREDENTIALS` solo pueden usarse para pruebas locales si `ALLOW_LEGACY_LOCAL_ACCESS` esta activado y la app corre en `localhost`, `127.0.0.1` o `::1`.
 
-En GitHub Pages y produccion el acceso operativo debe pasar por Firebase Auth/custom claims o por el flujo operativo autorizado. Esto evita que Admin, Delivery, Owner o Modo TV se abran con credenciales estaticas publicadas en el frontend.
+En Firebase Hosting y produccion el acceso operativo debe pasar por Firebase Auth/custom claims o por el flujo operativo autorizado. Esto evita que Admin, Delivery, Owner o Modo TV se abran con credenciales estaticas publicadas en el frontend.
 
 La funcion historica `crearUsuariosDefault()` ya no crea usuarios con contrasenas demo desde el navegador. Para crear o actualizar usuarios operativos usa scripts privados con Firebase Admin:
 
@@ -68,7 +68,8 @@ Las reservas y regalos son pedidos especiales y deben mantenerse con estas regla
 
 Ademas de pedidos/clientes, la app usa estas colecciones con reglas explicitas:
 
-- `catalogo`: lectura publica para mostrar productos; escritura solo owner/admin.
+- `catalogo`: lectura publica para mostrar productos; escritura solo owner/admin del mismo negocio; cada doc debe llevar `businessId` o `business_id`.
+- `negocios`: ficha publica del negocio. Guarda nombre, contacto, horario, ubicacion y enlaces visibles; escritura solo owner/admin del mismo negocio. No guardar secretos aqui.
 - `fcm_tokens`: escritura solo del cliente autenticado que registra su token; lectura solo owner/admin.
 - `push_queue`: escritura de clientes para alertas propias o de owner/admin para campañas operativas.
 - `sugerencias`: lectura publica, creacion ligada al cliente autenticado y moderacion por owner/admin.
