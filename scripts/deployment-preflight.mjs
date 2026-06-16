@@ -64,6 +64,8 @@ async function main() {
   check(workflow.includes('deploy-staging'), 'Workflow incluye despliegue staging');
   check(workflow.includes('deploy-production'), 'Workflow incluye despliegue production');
   check(workflow.includes('FIREBASE_SERVICE_ACCOUNT'), 'Workflow usa secret de service account');
+  check(workflow.includes('Check Firebase credentials'), 'Workflow valida credenciales Firebase antes de desplegar');
+  check(workflow.includes('skipping Firebase deploy'), 'Workflow omite deploy si falta secret Firebase');
   check(workflow.includes('FIREBASE_PROJECT_STAGING'), 'Workflow usa variable del proyecto staging');
   check(workflow.includes('FIREBASE_PROJECT_PRODUCTION'), 'Workflow usa variable del proyecto production');
   check(workflow.includes('deploy --only hosting,firestore:rules,firestore:indexes'), 'Workflow despliega hosting y Firestore');
