@@ -60,13 +60,27 @@ jobs:
       - name: Run tests
         run: npm test -- --runInBand
 
+      - name: Check Firebase credentials
+        id: firebase-credentials
+        env:
+          FIREBASE_SERVICE_ACCOUNT_JSON: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+        run: |
+          if [ -z "$FIREBASE_SERVICE_ACCOUNT_JSON" ]; then
+            echo "configured=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::FIREBASE_SERVICE_ACCOUNT is not configured; skipping Firebase deploy."
+          else
+            echo "configured=true" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Authenticate Firebase
+        if: steps.firebase-credentials.outputs.configured == 'true'
         uses: google-github-actions/auth@v2
         with:
           credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
 
       - name: Deploy to staging
-        run: npx -y firebase-tools@13.15.1 deploy --only hosting,firestore:rules,firestore:indexes,storage --project "$FIREBASE_PROJECT_STAGING"
+        if: steps.firebase-credentials.outputs.configured == 'true'
+        run: npx -y firebase-tools@13.15.1 deploy --only hosting,firestore:rules,firestore:indexes --project "$FIREBASE_PROJECT_STAGING"
 
   deploy-production:
     name: Deploy production
@@ -100,10 +114,24 @@ jobs:
       - name: Run tests
         run: npm test -- --runInBand
 
+      - name: Check Firebase credentials
+        id: firebase-credentials
+        env:
+          FIREBASE_SERVICE_ACCOUNT_JSON: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+        run: |
+          if [ -z "$FIREBASE_SERVICE_ACCOUNT_JSON" ]; then
+            echo "configured=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::FIREBASE_SERVICE_ACCOUNT is not configured; skipping Firebase deploy."
+          else
+            echo "configured=true" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Authenticate Firebase
+        if: steps.firebase-credentials.outputs.configured == 'true'
         uses: google-github-actions/auth@v2
         with:
           credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
 
       - name: Deploy to production
-        run: npx -y firebase-tools@13.15.1 deploy --only hosting,firestore:rules,firestore:indexes,storage --project "$FIREBASE_PROJECT_PRODUCTION"
+        if: steps.firebase-credentials.outputs.configured == 'true'
+        run: npx -y firebase-tools@13.15.1 deploy --only hosting,firestore:rules,firestore:indexes --project "$FIREBASE_PROJECT_PRODUCTION"

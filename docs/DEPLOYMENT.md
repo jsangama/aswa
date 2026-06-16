@@ -17,6 +17,8 @@ ASWA se publica ahora en Firebase Hosting con dos entornos separados:
 - Variable opcional `FIREBASE_PROJECT_STAGING`: por defecto `pedidos-aswa-peru-staging`.
 - Variable opcional `FIREBASE_PROJECT_PRODUCTION`: por defecto `pedidos-aswa-peru`.
 
+Si `FIREBASE_SERVICE_ACCOUNT` no existe, el workflow valida tests/build y omite el deploy con un aviso. Esto evita dejar `main` en rojo mientras se configura la credencial.
+
 Ver la guia detallada en [docs/GITHUB_SETUP.md](GITHUB_SETUP.md).
 
 ## Build local del hosting
@@ -49,7 +51,13 @@ Ese comando deja en `S/ 2.50` el `solo juane escolar`, en `S/ 2.50` la `chicha A
 ## Deploy manual
 
 ```bash
-firebase deploy --only hosting,firestore:rules,firestore:indexes,storage --project pedidos-aswa-peru
+firebase deploy --only hosting,firestore:rules,firestore:indexes --project pedidos-aswa-peru
 ```
 
 Para staging cambia el `--project` por el proyecto correspondiente.
+
+Firebase Storage se despliega aparte cuando el bucket del proyecto ya este inicializado en Firebase Console:
+
+```bash
+firebase deploy --only storage --project pedidos-aswa-peru
+```
