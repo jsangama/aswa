@@ -47,6 +47,22 @@ describe('orders module behavior', () => {
     expect(html).toContain('function syncQtyUI');
   });
 
+  test('school San Juan products start at 15 and offer quick quantity presets', () => {
+    const fs = require('fs');
+    const path = require('path');
+    const html = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
+
+    expect(html).toContain("const SCHOOL_MINIMUM_QTY_IDS = ['sjChicha04', 'sjCombo', 'sjJuane']");
+    expect(html).toContain('function setQtyPreset');
+    expect(html).toContain("actual === 0");
+    expect(html).toContain('ST.cart[id] = 15');
+    for (const id of ['sjChicha04', 'sjCombo', 'sjJuane']) {
+      for (const qty of [15, 20, 25, 30, 35, 40]) {
+        expect(html).toContain(`setQtyPreset('${id}',${qty})`);
+      }
+    }
+  });
+
   test('public 20L bidon appears as a normal product with returnable options', () => {
     const fs = require('fs');
     const path = require('path');
