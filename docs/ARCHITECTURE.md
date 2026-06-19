@@ -2,6 +2,8 @@
 
 ASWA sigue siendo una aplicacion estatica HTML/CSS/JavaScript con Firebase, pero la direccion nueva es modular: `index.html` queda como shell legacy mientras la logica se mueve por dominios a `src/`.
 
+La guia de producto viva esta en [PRODUCT_BRIEF.md](PRODUCT_BRIEF.md): mision, vision, problema, solucion, modulos principales y objetivo comercial.
+
 ## Capas
 
 - `index.html`: shell legacy de la experiencia principal. Debe ir perdiendo responsabilidades en migraciones pequenas.

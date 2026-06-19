@@ -7074,6 +7074,31 @@ function actualizarPromoEscolarUI() {
   calcTotal();
 }
 
+function validarMinimoPromoEscolar(mostrarErrores = false) {
+  const productosMinimos = [
+    { id:'sjCombo', nombre:'combo escolar con juane y chicha' },
+    { id:'sjChicha04', nombre:'chicha escolar 400 ml' },
+    { id:'sjJuane', nombre:'juane escolar' }
+  ];
+  const productoMenorAlMinimo = productosMinimos.find(p => {
+    const qty = Number(ST.cart[p.id] || 0);
+    return qty > 0 && qty < 15;
+  });
+  if (!productoMenorAlMinimo) return { ok:true };
+  const msg = 'Pedido minimo escolar: ' + productoMenorAlMinimo.nombre + ' requiere 15 unidades o mas. El bidon 20 litros no tiene minimo.';
+  if (mostrarErrores) {
+    mostrarPasoCompra('products');
+    const card = document.getElementById('c-' + productoMenorAlMinimo.id);
+    if (card) {
+      card.scrollIntoView({ behavior:'smooth', block:'center' });
+      card.style.boxShadow = '0 0 0 2px rgba(250,204,21,.8), 0 0 28px rgba(250,204,21,.28)';
+      setTimeout(() => { card.style.boxShadow = ''; }, 2800);
+    }
+    tst(msg, 5200);
+  }
+  return { ok:false, error: msg, producto: productoMenorAlMinimo };
+}
+
 function obtenerPromoEscolar(mostrarErrores = false) {
   if (!promoEscolarActiva()) return { ok:true, activo:false };
   const colegio = sanitizeInput(document.getElementById('colegioNombre')?.value || '', 90);
@@ -7085,15 +7110,7 @@ function obtenerPromoEscolar(mostrarErrores = false) {
   const distrito = sanitizeInput(document.getElementById('colegioDistrito')?.value || '', 40);
   const modoBidon = document.querySelector('input[name="colegioBidonModo"]:checked')?.value || 'recarga';
   const conBidon = modoBidon !== 'incluido';
-  const productosPorAlumno = [
-    { id:'sjCombo', nombre:'combo escolar con juane y chicha' },
-    { id:'sjChicha04', nombre:'chicha escolar 400 ml' },
-    { id:'sjJuane', nombre:'juane escolar' }
-  ];
-  const productoMenorAlMinimo = productosPorAlumno.find(p => {
-    const qty = Number(ST.cart[p.id] || 0);
-    return qty > 0 && qty < 15;
-  });
+  const minimoEscolar = validarMinimoPromoEscolar(false);
   const fail = (error, campo = 'colegioNombre') => {
     if (mostrarErrores) marcarCampoPedido(campo, error);
     return { ok:false, activo:true, error };
@@ -7104,8 +7121,9 @@ function obtenerPromoEscolar(mostrarErrores = false) {
   if (!esCanalVenta && !seccion) return fail('Ingresa la seccion o nombre del aula.', 'colegioSeccion');
   if (!Number.isFinite(alumnos) || alumnos < 1) return fail('Ingresa la cantidad aproximada para orientar el pedido.', 'colegioAlumnos');
   if (!distrito) return fail('Selecciona el distrito del centro educativo.', 'colegioDistrito');
-  if (productoMenorAlMinimo) {
-    return fail('La compra minima de ' + productoMenorAlMinimo.nombre + ' es de 15 unidades por presentacion. Sube la cantidad a 15 o mas para continuar. El bidon de 20 litros no tiene minimo.', 'colegioAlumnos');
+  if (!minimoEscolar.ok) {
+    if (mostrarErrores) return { ...validarMinimoPromoEscolar(true), activo:true };
+    return { ...minimoEscolar, activo:true };
   }
   if (ST.pago === 'Efectivo') return fail('La promo escolar San Juan solo acepta pago anticipado. Cambia el metodo de pago.', 'colegioNombre');
   if (!document.getElementById('reservaActiva')?.checked) return fail('La promo escolar San Juan debe reservarse con fecha y hora.', 'reservaActiva');
@@ -7264,7 +7282,11 @@ function continuarCompraPaso(paso) {
     mostrarPasoCompra('products');
     return tst('Elige al menos un producto para continuar.', 2600);
   }
-  if (paso === 'delivery') return mostrarPasoCompra('delivery');
+  if (paso === 'delivery') {
+    const minimoEscolar = validarMinimoPromoEscolar(true);
+    if (!minimoEscolar.ok) return;
+    return mostrarPasoCompra('delivery');
+  }
   if (paso === 'payment') {
     const zonaEl = document.getElementById('zona');
     const zonaValor = zonaEl?.value || '';
@@ -9568,6 +9590,8 @@ function continuarPedidoInteligente() {
     return tst('Elige una chicha y cantidad para continuar.', 2400);
   }
   if (paso === 'zona') {
+    const minimoEscolar = validarMinimoPromoEscolar(true);
+    if (!minimoEscolar.ok) return;
     irPedidoRapido('zona');
     return tst('Elige tu zona de entrega para calcular el total.', 2400);
   }
@@ -16540,7 +16564,7 @@ async function admRechazarYape(pedidoId, telefono, nombre) {
    PWA — INSTALAR COMO APP
 ══════════════════════════════════════ */
 let _pwaPrompt = null;
-const ASWA_PWA_CACHE_NAME = 'aswa-v38';
+const ASWA_PWA_CACHE_NAME = 'aswa-v39';
 const ASWA_PLAY_STORE_URL = '';
 
 function pwaEsStandalone() {
@@ -19993,7 +20017,7 @@ function registrarSW() {
   if (!('serviceWorker' in navigator)) return;
 
   const SW_CODE = `
-const CACHE_NAME = 'aswa-v38';
+const CACHE_NAME = 'aswa-v39';
 const VERSION_PARAM = 'aswa_sw';
 const SHELL = [
   './',
@@ -20090,7 +20114,7 @@ self.addEventListener('message', e => {
 });
 `;
 
-  return pwaLimpiarSWLegacy().then(() => navigator.serviceWorker.register('./sw.js?v=38', { scope: './' }))
+  return pwaLimpiarSWLegacy().then(() => navigator.serviceWorker.register('./sw.js?v=39', { scope: './' }))
     .then(reg => {
       console.log('[SW] Registrado:', reg.scope);
 

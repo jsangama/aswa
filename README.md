@@ -129,6 +129,7 @@ Base de datos estructurada en Firestore con soporte para futura expansión multi
 
 Ver tambien:
 
+- [docs/PRODUCT_BRIEF.md](docs/PRODUCT_BRIEF.md)
 - [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)
 - [docs/GITHUB_SETUP.md](docs/GITHUB_SETUP.md)
 
