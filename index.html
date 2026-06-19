@@ -979,6 +979,20 @@
     }
     .school-grid { display:grid; gap:8px; margin-bottom:10px; }
     .school-product { background:rgba(0,0,0,.22); border-color:rgba(250,204,21,.22); }
+    .school-qty-card { flex-wrap:wrap; align-items:flex-start; }
+    .school-product-main { flex:1; min-width:0; }
+    .school-qty-presets {
+      flex:1 0 100%; display:grid; grid-template-columns:repeat(6,1fr);
+      gap:6px; margin-top:2px;
+    }
+    .school-qty-preset {
+      border:1px solid rgba(250,204,21,.34); border-radius:9px;
+      background:rgba(250,204,21,.08); color:#fde68a;
+      font:900 11px 'Poppins',sans-serif; padding:8px 2px;
+      cursor:pointer; transition:transform .1s, border-color .15s, background .15s;
+    }
+    .school-qty-preset:active { transform:scale(.96); }
+    .school-qty-preset:hover { border-color:rgba(250,204,21,.75); background:rgba(250,204,21,.16); }
     .school-product .pimg { background:#050505; object-fit:contain; padding:3px; }
     #c-sjBidon .pimg { width:76px; height:76px; padding:2px; }
     #c-sjBidonPublic .pimg { width:76px; height:76px; padding:2px; object-fit:contain; }
@@ -4291,9 +4305,9 @@
       </div>
       <div class="school-section-label">Presentaciones por seccion</div>
       <div class="school-section-help">Promocion escolar tambien disponible para cafetines y minimarkets. Cada presentacion tiene minimo 15 unidades, excepto el bidon 20L.</div>
-      <div class="pc school-product" id="c-sjChicha04">
+      <div class="pc school-product school-qty-card" id="c-sjChicha04">
         <img src="assets/images/products/optimized/san-juan-chicha-400ml.jpg" alt="Chicha escolar 400 ml" class="pimg">
-        <div style="flex:1">
+        <div class="school-product-main">
           <div class="pn">ASWA escolar sanjuanera</div>
           <div class="pd">Minimo 15 unidades por presentacion. Chicha 400 ml para la seccion</div>
           <div class="pp" id="pr-sjChicha04">S/ 2.50</div>
@@ -4303,10 +4317,18 @@
           <input class="qn qinput" id="q-sjChicha04" type="number" min="0" max="999" inputmode="numeric" value="0" aria-label="Cantidad ASWA escolar sanjuanera" oninput="setQtyDirect('sjChicha04',this.value)" onfocus="this.select()">
           <button class="qb qplus" onclick="qty('sjChicha04',+1)">+</button>
         </div>
+        <div class="school-qty-presets" aria-label="Cantidades rapidas ASWA escolar sanjuanera">
+          <button type="button" class="school-qty-preset" onclick="setQtyPreset('sjChicha04',15)">15</button>
+          <button type="button" class="school-qty-preset" onclick="setQtyPreset('sjChicha04',20)">20</button>
+          <button type="button" class="school-qty-preset" onclick="setQtyPreset('sjChicha04',25)">25</button>
+          <button type="button" class="school-qty-preset" onclick="setQtyPreset('sjChicha04',30)">30</button>
+          <button type="button" class="school-qty-preset" onclick="setQtyPreset('sjChicha04',35)">35</button>
+          <button type="button" class="school-qty-preset" onclick="setQtyPreset('sjChicha04',40)">40</button>
+        </div>
       </div>
-      <div class="pc school-product" id="c-sjCombo">
+      <div class="pc school-product school-qty-card" id="c-sjCombo">
         <img src="assets/images/products/optimized/san-juan-combo-escolar.jpg" alt="Combo escolar San Juan" class="pimg">
-        <div style="flex:1">
+        <div class="school-product-main">
           <div class="pn">Combo escolar sanjuanero</div>
           <div class="pd">Minimo 15 unidades por presentacion. Juane + chicha 400 ml para la seccion</div>
           <div class="pp" id="pr-sjCombo">S/ 4.00</div>
@@ -4316,10 +4338,18 @@
           <input class="qn qinput" id="q-sjCombo" type="number" min="0" max="999" inputmode="numeric" value="0" aria-label="Cantidad combo escolar sanjuanero" oninput="setQtyDirect('sjCombo',this.value)" onfocus="this.select()">
           <button class="qb qplus" onclick="qty('sjCombo',+1)">+</button>
         </div>
+        <div class="school-qty-presets" aria-label="Cantidades rapidas combo escolar sanjuanero">
+          <button type="button" class="school-qty-preset" onclick="setQtyPreset('sjCombo',15)">15</button>
+          <button type="button" class="school-qty-preset" onclick="setQtyPreset('sjCombo',20)">20</button>
+          <button type="button" class="school-qty-preset" onclick="setQtyPreset('sjCombo',25)">25</button>
+          <button type="button" class="school-qty-preset" onclick="setQtyPreset('sjCombo',30)">30</button>
+          <button type="button" class="school-qty-preset" onclick="setQtyPreset('sjCombo',35)">35</button>
+          <button type="button" class="school-qty-preset" onclick="setQtyPreset('sjCombo',40)">40</button>
+        </div>
       </div>
-      <div class="pc school-product" id="c-sjJuane">
+      <div class="pc school-product school-qty-card" id="c-sjJuane">
         <img src="assets/images/products/optimized/san-juan-juane-escolar.jpg" alt="Solo juane escolar" class="pimg">
-        <div style="flex:1">
+        <div class="school-product-main">
           <div class="pn">Solo juane escolar</div>
           <div class="pd">Minimo 15 unidades por presentacion. Juane para la seccion</div>
           <div class="pp" id="pr-sjJuane">S/ 2.50</div>
@@ -4328,6 +4358,14 @@
           <button class="qb qminus" onclick="qty('sjJuane',-1)">-</button>
           <input class="qn qinput" id="q-sjJuane" type="number" min="0" max="999" inputmode="numeric" value="0" aria-label="Cantidad solo juane escolar" oninput="setQtyDirect('sjJuane',this.value)" onfocus="this.select()">
           <button class="qb qplus" onclick="qty('sjJuane',+1)">+</button>
+        </div>
+        <div class="school-qty-presets" aria-label="Cantidades rapidas solo juane escolar">
+          <button type="button" class="school-qty-preset" onclick="setQtyPreset('sjJuane',15)">15</button>
+          <button type="button" class="school-qty-preset" onclick="setQtyPreset('sjJuane',20)">20</button>
+          <button type="button" class="school-qty-preset" onclick="setQtyPreset('sjJuane',25)">25</button>
+          <button type="button" class="school-qty-preset" onclick="setQtyPreset('sjJuane',30)">30</button>
+          <button type="button" class="school-qty-preset" onclick="setQtyPreset('sjJuane',35)">35</button>
+          <button type="button" class="school-qty-preset" onclick="setQtyPreset('sjJuane',40)">40</button>
         </div>
       </div>
       <div class="school-note school-minimum-note"><strong>Minimo escolar:</strong> 15 unidades por presentacion. Puedes elegir solo chicha ASWA 400 ml, solo juane o combo. El bidon 20L no tiene minimo.</div>
@@ -6996,6 +7034,7 @@ const PRODUCT_META = {
   sjJuane: { nombre:'Solo juane escolar', corto:'Juane escolar', escolar:true },
   sjJuaneFamiliar: { nombre:'Juane institucional', corto:'Juane institucional', sanJuanInstitucional:true }
 };
+const SCHOOL_MINIMUM_QTY_IDS = ['sjChicha04', 'sjCombo', 'sjJuane'];
 const PRODUCT_IDS = Object.keys(PRODUCT_META);
 function aswaCartModule() {
   return window.ASWA?.modules?.cart || null;
@@ -7405,9 +7444,24 @@ function syncQtyUI(id) {
 
 function qty(id, d) {
   normalizarCarrito();
-  ST.cart[id] = Math.max(0, Number(ST.cart[id] || 0) + d);
+  const actual = Number(ST.cart[id] || 0);
+  if (SCHOOL_MINIMUM_QTY_IDS.includes(id) && d > 0 && actual === 0) {
+    ST.cart[id] = 15;
+  } else if (SCHOOL_MINIMUM_QTY_IDS.includes(id) && d < 0 && actual <= 15) {
+    ST.cart[id] = 0;
+  } else {
+    ST.cart[id] = Math.max(0, actual + d);
+  }
   syncQtyUI(id);
   if (PRODUCT_META[id]?.sanJuanPublico) actualizarBidonPublicoUI();
+  if (PRODUCT_META[id]?.escolar || PRODUCT_META[id]?.sanJuanInstitucional) actualizarPromoEscolarUI();
+  calcTotal();
+}
+
+function setQtyPreset(id, value) {
+  normalizarCarrito();
+  ST.cart[id] = Math.min(999, Math.max(0, Number(value) || 0));
+  syncQtyUI(id);
   if (PRODUCT_META[id]?.escolar || PRODUCT_META[id]?.sanJuanInstitucional) actualizarPromoEscolarUI();
   calcTotal();
 }
@@ -7422,6 +7476,7 @@ function setQtyDirect(id, value) {
   calcTotal();
 }
 window.qty = qty;
+window.setQtyPreset = setQtyPreset;
 window.setQtyDirect = setQtyDirect;
 window.syncQtyUI = syncQtyUI;
 window.continuarCompraPaso = continuarCompraPaso;
@@ -16703,7 +16758,7 @@ async function admRechazarYape(pedidoId, telefono, nombre) {
    PWA — INSTALAR COMO APP
 ══════════════════════════════════════ */
 let _pwaPrompt = null;
-const ASWA_PWA_CACHE_NAME = 'aswa-v40';
+const ASWA_PWA_CACHE_NAME = 'aswa-v41';
 const ASWA_PLAY_STORE_URL = '';
 
 function pwaEsStandalone() {
@@ -20156,7 +20211,7 @@ function registrarSW() {
   if (!('serviceWorker' in navigator)) return;
 
   const SW_CODE = `
-const CACHE_NAME = 'aswa-v40';
+const CACHE_NAME = 'aswa-v41';
 const VERSION_PARAM = 'aswa_sw';
 const SHELL = [
   './',
@@ -20253,7 +20308,7 @@ self.addEventListener('message', e => {
 });
 `;
 
-  return pwaLimpiarSWLegacy().then(() => navigator.serviceWorker.register('./sw.js?v=40', { scope: './' }))
+  return pwaLimpiarSWLegacy().then(() => navigator.serviceWorker.register('./sw.js?v=41', { scope: './' }))
     .then(reg => {
       console.log('[SW] Registrado:', reg.scope);
 

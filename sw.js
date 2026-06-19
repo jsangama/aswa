@@ -1,5 +1,5 @@
-// ASWA Service Worker v40 - https://jsangama.github.io/aswa/
-const CACHE_NAME = 'aswa-v40';
+// ASWA Service Worker v41 - https://jsangama.github.io/aswa/
+const CACHE_NAME = 'aswa-v41';
 const VERSION_PARAM = 'aswa_sw';
 const BASE = new URL('./', self.registration.scope).pathname;
 const ASSETS = [

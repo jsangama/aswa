@@ -12,8 +12,8 @@ describe('modular architecture scaffold', () => {
     const html = read('index.html');
 
     expect(html).toContain('<script type="module" src="src/main.js"></script>');
-    expect(html).toContain("const ASWA_PWA_CACHE_NAME = 'aswa-v40'");
-    expect(html).toContain("navigator.serviceWorker.register('./sw.js?v=40'");
+    expect(html).toContain("const ASWA_PWA_CACHE_NAME = 'aswa-v41'");
+    expect(html).toContain("navigator.serviceWorker.register('./sw.js?v=41'");
   });
 
   test('keeps domain modules outside the monolithic html file', () => {
