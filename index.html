@@ -9007,6 +9007,7 @@ function seleccionarZonaInicio(nombre, precio) {
 
 function seleccionarZonaEstimador(nombre, precio) {
   seleccionarZonaVisual(nombre, precio);
+  actualizarTotalInicio();
   if (typeof tst === 'function') {
     const delivery = promoSinDeliveryActiva()
       ? 'delivery S/ 0 por promo San Juan'
