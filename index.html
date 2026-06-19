@@ -1202,6 +1202,63 @@
       white-space:nowrap;
     }
     .zona-change-btn:active { transform:scale(.98); }
+    .inicio-cost-card {
+      margin:14px 0 12px;
+      border:1px solid rgba(250,204,21,.32);
+      background:linear-gradient(180deg,rgba(250,204,21,.09),rgba(255,255,255,.025));
+      border-radius:16px;
+      padding:13px;
+    }
+    .inicio-cost-head {
+      display:flex;
+      justify-content:space-between;
+      gap:12px;
+      align-items:flex-start;
+      margin-bottom:10px;
+    }
+    .inicio-cost-title {
+      color:var(--txt);
+      font-size:13px;
+      font-weight:900;
+      line-height:1.25;
+    }
+    .inicio-cost-sub {
+      color:var(--mut);
+      font-size:10px;
+      line-height:1.45;
+      margin-top:3px;
+    }
+    .inicio-total-pill {
+      background:var(--y);
+      color:#111;
+      border-radius:999px;
+      padding:7px 10px;
+      font-size:15px;
+      font-weight:900;
+      white-space:nowrap;
+    }
+    .inicio-cost-breakdown {
+      border-top:1px solid rgba(255,255,255,.08);
+      padding-top:10px;
+      display:grid;
+      gap:6px;
+    }
+    .inicio-cost-row {
+      display:flex;
+      justify-content:space-between;
+      gap:12px;
+      color:var(--mut);
+      font-size:11px;
+      font-weight:700;
+    }
+    .inicio-cost-row strong { color:var(--txt); }
+    .inicio-cost-note {
+      margin-top:9px;
+      color:#fde68a;
+      font-size:10px;
+      line-height:1.45;
+      font-weight:800;
+    }
     .home-coverage {
       max-width:430px;
       margin:14px auto 18px;
@@ -4308,9 +4365,42 @@
         </div>
       </div>
     </div>
+    <div class="inicio-cost-card" id="inicioCostCard" aria-live="polite">
+      <div class="inicio-cost-head">
+        <div>
+          <div class="inicio-cost-title">Total estimado con zona</div>
+          <div class="inicio-cost-sub">Elige productos y zona aqui mismo para saber cuanto pagaras antes de registrar tus datos.</div>
+        </div>
+        <div class="inicio-total-pill" id="inicioTotalEstimado">S/ 0.00</div>
+      </div>
+      <div class="zona-quick-grid" id="inicioZonaQuickGrid">
+        <button type="button" class="zona-quick-btn inicio-zona-btn" data-zona-nombre="Morales" data-zona-precio="3" onclick="seleccionarZonaEstimador('Morales',3)">
+          <span class="zona-quick-top"><span>Morales</span><span class="zona-quick-price">+ S/ 3</span></span>
+          <span class="zona-quick-sub">Delivery local</span>
+        </button>
+        <button type="button" class="zona-quick-btn inicio-zona-btn" data-zona-nombre="Tarapoto" data-zona-precio="4" onclick="seleccionarZonaEstimador('Tarapoto',4)">
+          <span class="zona-quick-top"><span>Tarapoto</span><span class="zona-quick-price">+ S/ 4</span></span>
+          <span class="zona-quick-sub">Entrega urbana</span>
+        </button>
+        <button type="button" class="zona-quick-btn inicio-zona-btn" data-zona-nombre="Banda" data-zona-precio="5" onclick="seleccionarZonaEstimador('Banda',5)">
+          <span class="zona-quick-top"><span>Banda</span><span class="zona-quick-price">+ S/ 5</span></span>
+          <span class="zona-quick-sub">Banda de Shilcayo</span>
+        </button>
+        <button type="button" class="zona-quick-btn inicio-zona-btn" data-zona-nombre="Recojo" data-zona-precio="0" onclick="seleccionarZonaEstimador('Recojo',0)">
+          <span class="zona-quick-top"><span>Recojo</span><span class="zona-quick-price">S/ 0</span></span>
+          <span class="zona-quick-sub">Sin delivery</span>
+        </button>
+      </div>
+      <div class="inicio-cost-breakdown">
+        <div class="inicio-cost-row"><span>Productos</span><strong id="inicioSubtotalEstimado">S/ 0.00</strong></div>
+        <div class="inicio-cost-row"><span id="inicioDeliveryLabel">Zona / delivery</span><strong id="inicioDeliveryEstimado">Elige zona</strong></div>
+        <div class="inicio-cost-row"><span>Total real antes de datos</span><strong id="inicioTotalLinea">S/ 0.00</strong></div>
+      </div>
+      <div class="inicio-cost-note" id="inicioTotalNota">Sin datos personales todavia: primero mira el costo total y luego registras el pedido.</div>
+    </div>
     <div class="purchase-step-actions">
       <button type="button" class="purchase-next-btn" id="btnContinuarInteligente" onclick="continuarPedidoInteligente()">Continuar con entrega</button>
-      <div class="purchase-step-note">Primero elige tus productos. Despues te pediremos zona, celular y pago.</div>
+      <div class="purchase-step-note">Primero elige productos y zona para ver el total. Despues registras celular, direccion y pago.</div>
     </div>
   </section>
 
@@ -7399,6 +7489,7 @@ function calcTotal() {
   });
   actualizarBotonContinuar();
   actualizarCarritoFlotante();
+  actualizarTotalInicio();
 }
 
 function toggleCuponPanel() {
@@ -8914,6 +9005,17 @@ function seleccionarZonaInicio(nombre, precio) {
   }
 }
 
+function seleccionarZonaEstimador(nombre, precio) {
+  seleccionarZonaVisual(nombre, precio);
+  actualizarTotalInicio();
+  if (typeof tst === 'function') {
+    const delivery = promoSinDeliveryActiva()
+      ? 'delivery S/ 0 por promo San Juan'
+      : (precio === 0 ? 'sin delivery' : 'delivery S/ ' + Number(precio).toFixed(2));
+    tst('Total actualizado: ' + nombre + ' - ' + delivery, 2200);
+  }
+}
+
 function irACoberturaEntrega() {
   const section = document.getElementById('homeCoverageSection');
   if (section) {
@@ -8944,6 +9046,43 @@ function actualizarZonaVisual() {
 
   actualizarZonaResumen(opt, precio);
   actualizarETAVisual(texto, precio);
+}
+
+function actualizarTotalInicio() {
+  const totalEl = document.getElementById('inicioTotalEstimado');
+  if (!totalEl) return;
+
+  const subtotal = Math.max(0, +(Number(ST.raw || 0) - Number(ST.delivery || 0)).toFixed(2));
+  const zonaEl = document.getElementById('zona');
+  const zonaElegida = !!(zonaEl && zonaEl.value !== '');
+  const promoGratis = promoSinDeliveryActiva();
+  const delivery = Number(ST.delivery || 0);
+
+  const subtotalEl = document.getElementById('inicioSubtotalEstimado');
+  const deliveryEl = document.getElementById('inicioDeliveryEstimado');
+  const deliveryLabel = document.getElementById('inicioDeliveryLabel');
+  const totalLinea = document.getElementById('inicioTotalLinea');
+  const nota = document.getElementById('inicioTotalNota');
+
+  totalEl.textContent = 'S/ ' + Number(ST.final || 0).toFixed(2);
+  if (subtotalEl) subtotalEl.textContent = 'S/ ' + subtotal.toFixed(2);
+  if (totalLinea) totalLinea.textContent = 'S/ ' + Number(ST.final || 0).toFixed(2);
+
+  if (deliveryLabel) deliveryLabel.textContent = promoGratis ? 'Delivery promo San Juan' : 'Zona / delivery';
+  if (deliveryEl) {
+    if (promoGratis) deliveryEl.textContent = 'S/ 0.00';
+    else if (zonaElegida) deliveryEl.textContent = 'S/ ' + delivery.toFixed(2);
+    else deliveryEl.textContent = 'Elige zona';
+  }
+  if (nota) {
+    if (promoGratis) {
+      nota.textContent = 'Promo San Juan: no se cobra delivery. El total mostrado ya es el costo real antes de registrar datos.';
+    } else if (zonaElegida) {
+      nota.textContent = 'Total con delivery incluido. Ahora puedes registrar tus datos sin adivinar el costo.';
+    } else {
+      nota.textContent = 'Elige una zona para ver el total completo con delivery antes de registrar datos.';
+    }
+  }
 }
 
 function actualizarZonaResumen(opt, precio) {
@@ -16564,7 +16703,7 @@ async function admRechazarYape(pedidoId, telefono, nombre) {
    PWA — INSTALAR COMO APP
 ══════════════════════════════════════ */
 let _pwaPrompt = null;
-const ASWA_PWA_CACHE_NAME = 'aswa-v39';
+const ASWA_PWA_CACHE_NAME = 'aswa-v40';
 const ASWA_PLAY_STORE_URL = '';
 
 function pwaEsStandalone() {
@@ -20017,7 +20156,7 @@ function registrarSW() {
   if (!('serviceWorker' in navigator)) return;
 
   const SW_CODE = `
-const CACHE_NAME = 'aswa-v39';
+const CACHE_NAME = 'aswa-v40';
 const VERSION_PARAM = 'aswa_sw';
 const SHELL = [
   './',
@@ -20114,7 +20253,7 @@ self.addEventListener('message', e => {
 });
 `;
 
-  return pwaLimpiarSWLegacy().then(() => navigator.serviceWorker.register('./sw.js?v=39', { scope: './' }))
+  return pwaLimpiarSWLegacy().then(() => navigator.serviceWorker.register('./sw.js?v=40', { scope: './' }))
     .then(reg => {
       console.log('[SW] Registrado:', reg.scope);
 
