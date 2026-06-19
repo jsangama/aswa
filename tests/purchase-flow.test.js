@@ -52,15 +52,31 @@ describe('guided purchase flow', () => {
     expect(html).toContain('const minimoEscolar = validarMinimoPromoEscolar(true)');
     expect(html).toContain('if (!minimoEscolar.ok) return;');
     expect(html).toContain("return mostrarPasoCompra('delivery')");
-    expect(html).toContain('Primero elige tus productos. Despues te pediremos zona, celular y pago.');
+    expect(html).toContain('Primero elige productos y zona para ver el total. Despues registras celular, direccion y pago.');
   });
 
-  test('only shows the floating app installer after purchase and keeps sw v39 installable', () => {
+  test('shows zone-inclusive total before asking customer data', () => {
+    const html = readHtml();
+
+    expect(html).toContain('id="inicioCostCard"');
+    expect(html).toContain('Total estimado con zona');
+    expect(html).toContain("seleccionarZonaEstimador('Morales',3)");
+    expect(html).toContain("seleccionarZonaEstimador('Tarapoto',4)");
+    expect(html).toContain("seleccionarZonaEstimador('Banda',5)");
+    expect(html).toContain("seleccionarZonaEstimador('Recojo',0)");
+    expect(html).toContain('id="inicioTotalEstimado"');
+    expect(html).toContain('id="inicioDeliveryEstimado"');
+    expect(html).toContain('function actualizarTotalInicio()');
+    expect(html).toContain('Promo San Juan: no se cobra delivery');
+    expect(html).toContain('actualizarTotalInicio();');
+  });
+
+  test('only shows the floating app installer after purchase and keeps sw v40 installable', () => {
     const html = readHtml();
     const sw = fs.readFileSync(path.join(__dirname, '..', 'sw.js'), 'utf8');
 
     expect(html).toContain('function pwaCompraEnCurso');
-    expect(html).toContain("const ASWA_PWA_CACHE_NAME = 'aswa-v39'");
+    expect(html).toContain("const ASWA_PWA_CACHE_NAME = 'aswa-v40'");
     expect(html).toContain('async function pwaForzarVersionNueva');
     expect(html).toContain("urlActual.searchParams.get('aswa_sw') !== ASWA_PWA_CACHE_NAME");
     expect(html).toContain("urlActual.searchParams.set('aswa_sw', ASWA_PWA_CACHE_NAME)");
@@ -73,11 +89,11 @@ describe('guided purchase flow', () => {
     expect(html).toContain("lsGet('succ_active') === '1'");
     expect(html).toContain('!postCompra || pwaCompraEnCurso() || pwaEsStandalone()');
     expect(html).toContain('/\\/sw\\.js(?:\\?|$)/.test(script)');
-    expect(html).toContain("navigator.serviceWorker.register('./sw.js?v=39'");
-    expect(html).toContain("const CACHE_NAME = 'aswa-v39'");
+    expect(html).toContain("navigator.serviceWorker.register('./sw.js?v=40'");
+    expect(html).toContain("const CACHE_NAME = 'aswa-v40'");
     expect(html).toContain("fetch(new Request(e.request, { cache: 'no-store' }))");
     expect(html).toContain("url.searchParams.set(VERSION_PARAM, CACHE_NAME)");
-    expect(sw).toContain("const CACHE_NAME = 'aswa-v39'");
+    expect(sw).toContain("const CACHE_NAME = 'aswa-v40'");
     expect(sw).toContain("fetch(new Request(e.request, { cache: 'no-store' }))");
     expect(sw).toContain("url.searchParams.set(VERSION_PARAM, CACHE_NAME)");
   });
