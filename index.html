@@ -4520,12 +4520,13 @@
 
     <div class="fld">
       <label>Teléfono</label>
-      <input type="tel" id="telefono" class="inp" maxlength="9"
-             placeholder="9XXXXXXXX" inputmode="numeric" autocomplete="tel">
+      <input type="tel" id="telefono" class="inp" maxlength="15"
+             placeholder="9XXXXXXXX" inputmode="numeric" autocomplete="tel"
+             oninput="normalizarTelefonoPedido(this); actualizarBotonContinuar()">
     </div>
     <div class="fld">
       <label>Nombre completo</label>
-      <input type="text" id="nombre" class="inp"
+      <input type="text" id="nombre" class="inp" oninput="actualizarBotonContinuar()"
              placeholder="¿Cómo te llamamos?" autocomplete="name">
     </div>
     <div class="fld">
@@ -4561,7 +4562,7 @@
     <div class="fld">
       <label>Dirección de entrega</label>
       <input type="text" id="direccion" class="inp"
-             oninput="dirBuscar(this.value)" onfocus="dirBuscar(this.value)"
+             oninput="dirBuscar(this.value); actualizarBotonContinuar()" onfocus="dirBuscar(this.value)"
              placeholder="Calle, número, referencia" autocomplete="street-address">
       <div id="dirSugerencias" class="dir-sug-box"></div>
       <div style="font-size:11px;color:var(--mut);margin-top:6px;padding:0 4px">
@@ -7419,7 +7420,7 @@ function continuarCompraPaso(paso) {
   if (paso === 'payment') {
     const zonaEl = document.getElementById('zona');
     const zonaValor = zonaEl?.value || '';
-    const tel = document.getElementById('telefono')?.value.trim() || '';
+    const tel = normalizarTelefonoPedido(document.getElementById('telefono'));
     const nom = document.getElementById('nombre')?.value.trim() || '';
     const dir = document.getElementById('direccion')?.value.trim() || '';
     const zonaTxt = zonaEl?.options[zonaEl.selectedIndex]?.text || '';
@@ -9743,6 +9744,19 @@ function marcarZonaPedido(msg) {
   return false;
 }
 
+function normalizarTelefonoValor(value) {
+  let digits = String(value || '').replace(/\D/g, '');
+  if (digits.length > 9 && digits.startsWith('51')) digits = digits.slice(-9);
+  return digits.slice(0, 9);
+}
+
+function normalizarTelefonoPedido(input) {
+  if (!input) return '';
+  const tel = normalizarTelefonoValor(input.value);
+  if (input.value !== tel) input.value = tel;
+  return tel;
+}
+
 function obtenerPasoPendientePedido() {
   const items = pedidoItemsLista();
   if (!items.length) return 'productos';
@@ -9751,7 +9765,8 @@ function obtenerPasoPendientePedido() {
   const zonaValor = zonaEl?.value || '';
   if (!zonaValor) return 'zona';
 
-  const tel = document.getElementById('telefono')?.value.trim() || '';
+  const telEl = document.getElementById('telefono');
+  const tel = normalizarTelefonoPedido(telEl);
   const nom = document.getElementById('nombre')?.value.trim() || '';
   const dir = document.getElementById('direccion')?.value.trim() || '';
   const zonaTxt = zonaEl?.options[zonaEl.selectedIndex]?.text || '';
@@ -9789,10 +9804,16 @@ function continuarPedidoInteligente() {
     irPedidoRapido('zona');
     return tst('Elige tu zona de entrega para calcular el total.', 2400);
   }
-  if (paso === 'telefono') return marcarCampoPedido('telefono', 'Ingresa un telefono valido de 9 digitos');
-  if (paso === 'nombre') return marcarCampoPedido('nombre', 'Ingresa tu nombre completo');
-  if (paso === 'direccion') return marcarCampoPedido('direccion', 'Ingresa tu direccion o una referencia de entrega');
-  return abrirResumen();
+  if (paso === 'telefono' || paso === 'nombre' || paso === 'direccion') {
+    mostrarPasoCompra('delivery', false);
+    const campo = paso === 'telefono' ? 'telefono' : (paso === 'nombre' ? 'nombre' : 'direccion');
+    const msg = paso === 'telefono'
+      ? 'Ingresa un telefono valido de 9 digitos'
+      : (paso === 'nombre' ? 'Ingresa tu nombre completo' : 'Ingresa tu direccion o una referencia de entrega');
+    setTimeout(() => marcarCampoPedido(campo, msg), 120);
+    return false;
+  }
+  return continuarCompraPaso('payment');
 }
 
 function abrirResumen(soloCarrito = false) {
@@ -16758,7 +16779,7 @@ async function admRechazarYape(pedidoId, telefono, nombre) {
    PWA — INSTALAR COMO APP
 ══════════════════════════════════════ */
 let _pwaPrompt = null;
-const ASWA_PWA_CACHE_NAME = 'aswa-v41';
+const ASWA_PWA_CACHE_NAME = 'aswa-v42';
 const ASWA_PLAY_STORE_URL = '';
 
 function pwaEsStandalone() {
@@ -20211,7 +20232,7 @@ function registrarSW() {
   if (!('serviceWorker' in navigator)) return;
 
   const SW_CODE = `
-const CACHE_NAME = 'aswa-v41';
+const CACHE_NAME = 'aswa-v42';
 const VERSION_PARAM = 'aswa_sw';
 const SHELL = [
   './',
@@ -20308,7 +20329,7 @@ self.addEventListener('message', e => {
 });
 `;
 
-  return pwaLimpiarSWLegacy().then(() => navigator.serviceWorker.register('./sw.js?v=41', { scope: './' }))
+  return pwaLimpiarSWLegacy().then(() => navigator.serviceWorker.register('./sw.js?v=42', { scope: './' }))
     .then(reg => {
       console.log('[SW] Registrado:', reg.scope);
 
