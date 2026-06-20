@@ -75,17 +75,31 @@ describe('guided purchase flow', () => {
 
     expect(fn).toContain("paso === 'telefono' || paso === 'nombre' || paso === 'direccion'");
     expect(fn).toContain("mostrarPasoCompra('delivery', false)");
-    expect(fn).toContain('setTimeout(() => marcarCampoPedido(campo, msg), 120)');
+    expect(fn).toContain("document.getElementById('datosPedidoSection')?.scrollIntoView");
+    expect(fn).toContain('setTimeout(() => marcarCampoPedido(campo, msg), 260)');
     expect(fn).toContain("return continuarCompraPaso('payment')");
     expect(fn).not.toContain('return abrirResumen()');
   });
 
-  test('only shows the floating app installer after purchase and keeps sw v42 installable', () => {
+  test('keeps validation messages visible above the floating admin button', () => {
+    const html = readHtml();
+    const toastBlocks = html.match(/\.tst \{[\s\S]*?\n    \}/g) || [];
+
+    expect(toastBlocks.length).toBeGreaterThanOrEqual(1);
+    for (const block of toastBlocks) {
+      expect(block).toContain('top:calc(env(safe-area-inset-top, 0px) + 14px)');
+      expect(block).toContain('z-index:2000');
+      expect(block).toContain('max-width:calc(100vw - 28px)');
+    }
+    expect(html).toContain("telefono: 'LLENAR DATOS'");
+  });
+
+  test('only shows the floating app installer after purchase and keeps sw v43 installable', () => {
     const html = readHtml();
     const sw = fs.readFileSync(path.join(__dirname, '..', 'sw.js'), 'utf8');
 
     expect(html).toContain('function pwaCompraEnCurso');
-    expect(html).toContain("const ASWA_PWA_CACHE_NAME = 'aswa-v42'");
+    expect(html).toContain("const ASWA_PWA_CACHE_NAME = 'aswa-v43'");
     expect(html).toContain('async function pwaForzarVersionNueva');
     expect(html).toContain("urlActual.searchParams.get('aswa_sw') !== ASWA_PWA_CACHE_NAME");
     expect(html).toContain("urlActual.searchParams.set('aswa_sw', ASWA_PWA_CACHE_NAME)");
@@ -98,11 +112,11 @@ describe('guided purchase flow', () => {
     expect(html).toContain("lsGet('succ_active') === '1'");
     expect(html).toContain('!postCompra || pwaCompraEnCurso() || pwaEsStandalone()');
     expect(html).toContain('/\\/sw\\.js(?:\\?|$)/.test(script)');
-    expect(html).toContain("navigator.serviceWorker.register('./sw.js?v=42'");
-    expect(html).toContain("const CACHE_NAME = 'aswa-v42'");
+    expect(html).toContain("navigator.serviceWorker.register('./sw.js?v=43'");
+    expect(html).toContain("const CACHE_NAME = 'aswa-v43'");
     expect(html).toContain("fetch(new Request(e.request, { cache: 'no-store' }))");
     expect(html).toContain("url.searchParams.set(VERSION_PARAM, CACHE_NAME)");
-    expect(sw).toContain("const CACHE_NAME = 'aswa-v42'");
+    expect(sw).toContain("const CACHE_NAME = 'aswa-v43'");
     expect(sw).toContain("fetch(new Request(e.request, { cache: 'no-store' }))");
     expect(sw).toContain("url.searchParams.set(VERSION_PARAM, CACHE_NAME)");
   });
