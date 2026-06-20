@@ -2734,13 +2734,14 @@
 
     /* ══ TOAST ══ */
     .tst {
-      position:fixed; bottom:140px; left:50%;
-      transform:translateX(-50%) translateY(16px);
+      position:fixed; top:calc(env(safe-area-inset-top, 0px) + 14px); left:50%;
+      transform:translateX(-50%) translateY(-16px);
       background:var(--s2); color:var(--txt); border:1px solid var(--brd);
       padding:10px 22px; border-radius:999px;
       font-size:13px; font-weight:600; 
-      opacity:0; transition:all .28s; z-index:500;
-      pointer-events:none; white-space:nowrap;
+      opacity:0; transition:all .28s; z-index:2000;
+      pointer-events:none; white-space:normal; text-align:center;
+      width:max-content; max-width:calc(100vw - 28px);
     }
     .tst.on { opacity:1; transform:translateX(-50%) translateY(0); }
 
@@ -9784,9 +9785,9 @@ function actualizarBotonContinuar() {
   const labels = {
     productos: 'ELEGIR CHICHA',
     zona: 'ELEGIR ZONA',
-    telefono: 'DATOS',
-    nombre: 'DATOS',
-    direccion: 'DIRECCION',
+    telefono: 'LLENAR DATOS',
+    nombre: 'LLENAR DATOS',
+    direccion: 'LLENAR DATOS',
     resumen: 'CONTINUAR ->'
   };
   btn.textContent = labels[paso] || 'CONTINUAR ->';
@@ -9806,11 +9807,12 @@ function continuarPedidoInteligente() {
   }
   if (paso === 'telefono' || paso === 'nombre' || paso === 'direccion') {
     mostrarPasoCompra('delivery', false);
+    document.getElementById('datosPedidoSection')?.scrollIntoView({ behavior:'smooth', block:'start' });
     const campo = paso === 'telefono' ? 'telefono' : (paso === 'nombre' ? 'nombre' : 'direccion');
     const msg = paso === 'telefono'
       ? 'Ingresa un telefono valido de 9 digitos'
       : (paso === 'nombre' ? 'Ingresa tu nombre completo' : 'Ingresa tu direccion o una referencia de entrega');
-    setTimeout(() => marcarCampoPedido(campo, msg), 120);
+    setTimeout(() => marcarCampoPedido(campo, msg), 260);
     return false;
   }
   return continuarCompraPaso('payment');
@@ -16779,7 +16781,7 @@ async function admRechazarYape(pedidoId, telefono, nombre) {
    PWA — INSTALAR COMO APP
 ══════════════════════════════════════ */
 let _pwaPrompt = null;
-const ASWA_PWA_CACHE_NAME = 'aswa-v42';
+const ASWA_PWA_CACHE_NAME = 'aswa-v43';
 const ASWA_PLAY_STORE_URL = '';
 
 function pwaEsStandalone() {
@@ -20232,7 +20234,7 @@ function registrarSW() {
   if (!('serviceWorker' in navigator)) return;
 
   const SW_CODE = `
-const CACHE_NAME = 'aswa-v42';
+const CACHE_NAME = 'aswa-v43';
 const VERSION_PARAM = 'aswa_sw';
 const SHELL = [
   './',
@@ -20329,7 +20331,7 @@ self.addEventListener('message', e => {
 });
 `;
 
-  return pwaLimpiarSWLegacy().then(() => navigator.serviceWorker.register('./sw.js?v=42', { scope: './' }))
+  return pwaLimpiarSWLegacy().then(() => navigator.serviceWorker.register('./sw.js?v=43', { scope: './' }))
     .then(reg => {
       console.log('[SW] Registrado:', reg.scope);
 
@@ -23890,13 +23892,14 @@ function secRatingOmitir() {
 
     /* ══ TOAST ══ */
     .tst {
-      position:fixed; bottom:140px; left:50%;
-      transform:translateX(-50%) translateY(16px);
+      position:fixed; top:calc(env(safe-area-inset-top, 0px) + 14px); left:50%;
+      transform:translateX(-50%) translateY(-16px);
       background:var(--s2); color:var(--txt); border:1px solid var(--brd);
       padding:10px 22px; border-radius:999px;
       font-size:13px; font-weight:600; 
-      opacity:0; transition:all .28s; z-index:500;
-      pointer-events:none; white-space:nowrap;
+      opacity:0; transition:all .28s; z-index:2000;
+      pointer-events:none; white-space:normal; text-align:center;
+      width:max-content; max-width:calc(100vw - 28px);
     }
     .tst.on { opacity:1; transform:translateX(-50%) translateY(0); }
 

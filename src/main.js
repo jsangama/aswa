@@ -15,7 +15,7 @@ const modules = {
   cart: createCartService(),
   purchaseFlow: createPurchaseFlow({ document }),
   pwaCache: createPwaCacheController({
-    cacheName: 'aswa-v42',
+    cacheName: 'aswa-v43',
     serviceWorker: navigator.serviceWorker,
     location,
     sessionStorage,
