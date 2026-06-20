@@ -2046,6 +2046,30 @@
     .paybox-ico    { font-size:30px; flex-shrink:0; }
     .paybox-titulo { font-family:'Bebas Neue',cursive; font-size:22px; letter-spacing:.08em; line-height:1; }
     .paybox-sub    { font-size:11px; color:var(--mut); margin-top:2px; }
+    .pago-total-card,
+    .paybox-monto,
+    .efectivo-total-card {
+      background:linear-gradient(135deg,rgba(250,204,21,.14),rgba(34,197,94,.08));
+      border:1px solid rgba(250,204,21,.38); border-radius:14px;
+      padding:12px 14px; margin:10px 0 12px;
+      display:flex; align-items:center; justify-content:space-between; gap:12px;
+    }
+    .pago-total-label,
+    .paybox-monto-label,
+    .efectivo-total-label {
+      color:#fef3c7; font-size:11px; font-weight:900;
+      text-transform:uppercase; letter-spacing:.08em; line-height:1.25;
+    }
+    .pago-total-value,
+    .paybox-monto-value,
+    .efectivo-total-value {
+      color:#facc15; font-family:'Bebas Neue',cursive;
+      font-size:30px; line-height:1; white-space:nowrap; letter-spacing:.03em;
+    }
+    .pago-total-help {
+      margin:-5px 0 10px; color:var(--mut);
+      font-size:11px; line-height:1.45; text-align:center;
+    }
     .paybox-body   { padding:16px; }
     .paybox-qr {
       width:190px; height:190px; border-radius:14px; object-fit:contain;
@@ -4709,6 +4733,13 @@
   <!-- PAGO v2 — 10 métodos -->
   <section id="pagoPedidoSection">
     <div class="stitle">Método de pago</div>
+    <div class="pago-total-card" id="pagoTotalCard">
+      <div>
+        <div class="pago-total-label">Total a pagar con delivery</div>
+        <div class="pago-total-help" id="pagoTotalHelp">Este es el monto final antes de elegir como pagar.</div>
+      </div>
+      <div class="pago-total-value" id="pagoTotalMonto">S/ 0.00</div>
+    </div>
 
     <!-- Fila 1A: Yape · Plin BBVA · Plin Interbank -->
     <div class="pgrd-label">Billeteras electronicas</div>
@@ -4788,6 +4819,10 @@
         </div>
       </div>
       <div class="paybox-body">
+        <div class="paybox-monto" id="payboxMontoBox">
+          <div class="paybox-monto-label" id="payboxMontoLabel">Monto a pagar</div>
+          <div class="paybox-monto-value" id="payboxMonto">S/ 0.00</div>
+        </div>
         <img id="payboxQR" class="paybox-qr" src="assets/images/embedded/embedded-13161f6f2f35.jpg" alt="QR pago"
              onerror="this.style.display='none'">
         <div class="paybox-num"     id="payboxNum">+51 947 999 736</div>
@@ -4830,6 +4865,10 @@
 
     <!-- Vuelto — solo Efectivo -->
     <div class="vbox" id="vueltoBox" style="display:none">
+      <div class="efectivo-total-card">
+        <div class="efectivo-total-label">Total a cobrar en efectivo</div>
+        <div class="efectivo-total-value" id="efectivoTotalMonto">S/ 0.00</div>
+      </div>
       <span class="vlbl">¿Con cuánto pagarás?</span>
       <input type="number" id="pagoCon" class="inp"
              placeholder="S/ 0.00" inputmode="decimal" oninput="calcVuelto()">
@@ -7646,6 +7685,7 @@ function calcTotal() {
   actualizarCarritoFlotante();
   actualizarTotalInicio();
   actualizarZonaContinueFab();
+  actualizarMontoPagoUI();
 }
 
 function toggleCuponPanel() {
@@ -7968,6 +8008,7 @@ function setPago(metodo) {
     if (uploadBox) uploadBox.classList.remove('show');
     _limpiarFotoComprobante();
     calcTotal();
+    actualizarMontoPagoUI();
     actualizarReservaUI();
     tst('💵 Pagarás al recibir tu pedido', 2000);
     return;
@@ -8043,6 +8084,7 @@ function setPago(metodo) {
   }
 
   calcTotal();
+  actualizarMontoPagoUI();
   actualizarReservaUI();
 }
 
@@ -9490,7 +9532,42 @@ function actualizarHorarioMini() {
 
 function calcVuelto() {
   const p = Number(document.getElementById('pagoCon').value) || 0;
-  document.getElementById('vmsg').textContent = 'Vuelto: S/ ' + Math.max(0, p - ST.final).toFixed(2);
+  const total = Number(ST.final || 0);
+  const msg = document.getElementById('vmsg');
+  if (msg) msg.textContent = 'Vuelto: S/ ' + Math.max(0, p - total).toFixed(2);
+}
+
+function actualizarMontoPagoUI() {
+  const total = Number(ST.final || 0);
+  const totalText = 'S/ ' + total.toFixed(2);
+  const esEfectivo = ST.pago === 'Efectivo';
+  const esBanco = ['Interbank', 'BBVA', 'Banbif'].includes(ST.pago);
+
+  const setText = (id, text) => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = text;
+  };
+
+  setText('pagoTotalMonto', totalText);
+  setText('payboxMonto', totalText);
+  setText('efectivoTotalMonto', totalText);
+  setText('payboxMontoLabel', esBanco ? 'Monto a transferir' : 'Monto a pagar');
+
+  const help = document.getElementById('pagoTotalHelp');
+  if (help) {
+    help.textContent = esEfectivo
+      ? 'Paga este total al recibir. Ingresa abajo con cuanto pagaras para calcular tu vuelto.'
+      : (esBanco
+          ? 'Transfiere exactamente este monto por banco y sube el comprobante.'
+          : 'Paga exactamente este monto por billetera y sube el comprobante.');
+  }
+
+  const pagoCon = document.getElementById('pagoCon');
+  if (pagoCon) {
+    pagoCon.placeholder = total > 0 ? totalText : 'S/ 0.00';
+    pagoCon.min = total.toFixed(2);
+  }
+  calcVuelto();
 }
 
 function perfilLeerGuardado() {
@@ -16915,7 +16992,7 @@ async function admRechazarYape(pedidoId, telefono, nombre) {
    PWA — INSTALAR COMO APP
 ══════════════════════════════════════ */
 let _pwaPrompt = null;
-const ASWA_PWA_CACHE_NAME = 'aswa-v45';
+const ASWA_PWA_CACHE_NAME = 'aswa-v46';
 const ASWA_PLAY_STORE_URL = '';
 
 function pwaEsStandalone() {
@@ -20368,7 +20445,7 @@ function registrarSW() {
   if (!('serviceWorker' in navigator)) return;
 
   const SW_CODE = `
-const CACHE_NAME = 'aswa-v45';
+const CACHE_NAME = 'aswa-v46';
 const VERSION_PARAM = 'aswa_sw';
 const SHELL = [
   './',
@@ -20465,7 +20542,7 @@ self.addEventListener('message', e => {
 });
 `;
 
-  return pwaLimpiarSWLegacy().then(() => navigator.serviceWorker.register('./sw.js?v=45', { scope: './' }))
+  return pwaLimpiarSWLegacy().then(() => navigator.serviceWorker.register('./sw.js?v=46', { scope: './' }))
     .then(reg => {
       console.log('[SW] Registrado:', reg.scope);
 
@@ -23501,6 +23578,30 @@ function secRatingOmitir() {
     .paybox-ico    { font-size:30px; flex-shrink:0; }
     .paybox-titulo { font-family:'Bebas Neue',cursive; font-size:22px; letter-spacing:.08em; line-height:1; }
     .paybox-sub    { font-size:11px; color:var(--mut); margin-top:2px; }
+    .pago-total-card,
+    .paybox-monto,
+    .efectivo-total-card {
+      background:linear-gradient(135deg,rgba(250,204,21,.14),rgba(34,197,94,.08));
+      border:1px solid rgba(250,204,21,.38); border-radius:14px;
+      padding:12px 14px; margin:10px 0 12px;
+      display:flex; align-items:center; justify-content:space-between; gap:12px;
+    }
+    .pago-total-label,
+    .paybox-monto-label,
+    .efectivo-total-label {
+      color:#fef3c7; font-size:11px; font-weight:900;
+      text-transform:uppercase; letter-spacing:.08em; line-height:1.25;
+    }
+    .pago-total-value,
+    .paybox-monto-value,
+    .efectivo-total-value {
+      color:#facc15; font-family:'Bebas Neue',cursive;
+      font-size:30px; line-height:1; white-space:nowrap; letter-spacing:.03em;
+    }
+    .pago-total-help {
+      margin:-5px 0 10px; color:var(--mut);
+      font-size:11px; line-height:1.45; text-align:center;
+    }
     .paybox-body   { padding:16px; }
     .paybox-qr {
       width:190px; height:190px; border-radius:14px; object-fit:contain;
