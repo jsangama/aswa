@@ -2203,6 +2203,33 @@
       line-height:1.5;
       text-align:center;
     }
+    .duda-compra-prompt {
+      display:none; position:fixed; top:calc(env(safe-area-inset-top, 0px) + 58px);
+      left:50%; transform:translateX(-50%); z-index:1500;
+      width:calc(100% - 24px); max-width:406px;
+      background:linear-gradient(180deg,#151515,#0b0b0c);
+      border:1px solid rgba(250,204,21,.42); border-radius:14px;
+      box-shadow:0 18px 44px rgba(0,0,0,.42); padding:13px;
+    }
+    .duda-compra-prompt.show { display:block; animation:fi .22s ease; }
+    .duda-compra-title { color:#facc15; font-size:13px; font-weight:950; line-height:1.25; }
+    .duda-compra-text { color:#f5f5f4; font-size:12px; line-height:1.45; margin:5px 0 10px; }
+    .duda-compra-actions { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+    .duda-compra-btn {
+      border:0; border-radius:11px; padding:11px 8px;
+      font:900 12px 'Poppins',sans-serif; cursor:pointer;
+    }
+    .duda-compra-btn.more { background:rgba(255,255,255,.08); color:#fff; border:1px solid rgba(255,255,255,.12); }
+    .duda-compra-btn.done { background:linear-gradient(135deg,#facc15,#f59e0b); color:#111; }
+    .zona-continue-fab {
+      display:none; position:fixed; left:50%; bottom:18px; transform:translateX(-50%);
+      z-index:1300; width:calc(100% - 28px); max-width:402px;
+      border:0; border-radius:16px; padding:15px 16px;
+      background:linear-gradient(135deg,#facc15,#f59e0b); color:#111;
+      font:950 14px 'Poppins',sans-serif; box-shadow:0 18px 42px rgba(245,158,11,.30);
+      cursor:pointer;
+    }
+    .zona-continue-fab.show { display:block; }
     body.purchase-step-products #homeCoverageSection,
     body.purchase-step-products #datosPedidoSection,
     body.purchase-step-products #pagoPedidoSection,
@@ -3963,7 +3990,7 @@
   <div class="easy-start-sub">Empieza por la chicha. Luego completa zona, datos y pago. Sin salir de esta app.</div>
   <div class="easy-start-steps" aria-hidden="true">
     <div class="easy-step"><strong>1. Chicha</strong><span>Elige cantidad</span></div>
-    <div class="easy-step"><strong>2. Datos</strong><span>Nombre y direccion</span></div>
+    <div class="easy-step"><strong>2. Datos</strong><span>Nombre y direccion si es delivery</span></div>
     <div class="easy-step"><strong>3. Pago</strong><span>Confirma pedido</span></div>
   </div>
   <div class="easy-start-actions">
@@ -4439,8 +4466,17 @@
     </div>
     <div class="purchase-step-actions">
       <button type="button" class="purchase-next-btn" id="btnContinuarInteligente" onclick="continuarPedidoInteligente()">Continuar con entrega</button>
-      <div class="purchase-step-note">Primero elige productos y zona para ver el total. Despues registras celular, direccion y pago.</div>
+      <div class="purchase-step-note">Primero elige productos y zona para ver el total. Despues registras celular, nombre y direccion solo si es delivery.</div>
     </div>
+    <div class="duda-compra-prompt" id="dudaCompraPrompt" role="dialog" aria-live="polite" aria-label="Ayuda para continuar pedido">
+      <div class="duda-compra-title">Agregaras mas al carrito de compra o solo eso pediras?</div>
+      <div class="duda-compra-text">Si ya elegiste tu chicha, te ayudo a terminar el pedido sin adivinar el siguiente paso.</div>
+      <div class="duda-compra-actions">
+        <button type="button" class="duda-compra-btn more" onclick="dudaCompraAgregarMas()">Agregar mas</button>
+        <button type="button" class="duda-compra-btn done" onclick="dudaCompraSoloEso()">Solo pedire eso</button>
+      </div>
+    </div>
+    <button type="button" class="zona-continue-fab" id="zonaContinueFab" onclick="continuarPedidoInteligente()">Continuar</button>
   </section>
 
   <!-- DATOS -->
@@ -4566,7 +4602,7 @@
              oninput="dirBuscar(this.value); actualizarBotonContinuar()" onfocus="dirBuscar(this.value)"
              placeholder="Calle, número, referencia" autocomplete="street-address">
       <div id="dirSugerencias" class="dir-sug-box"></div>
-      <div style="font-size:11px;color:var(--mut);margin-top:6px;padding:0 4px">
+      <div id="direccionPedidoHelp" style="font-size:11px;color:var(--mut);margin-top:6px;padding:0 4px">
         ¿No aparece tu dirección? Puedes escribirla manualmente.
       </div>
     </div>
@@ -7390,6 +7426,9 @@ function mostrarPasoCompra(paso = 'products', scroll = true) {
   if (scroll) {
     setTimeout(() => document.getElementById(targets[paso] || targets.products)?.scrollIntoView({ behavior:'smooth', block:'start' }), 80);
   }
+  if (paso !== 'products') ocultarDudaCompraPrompt();
+  actualizarZonaContinueFab();
+  programarAyudaCompra();
 }
 
 function mostrarPostCompraUI() {
@@ -7405,6 +7444,59 @@ function mostrarPostCompraUI() {
 
 function compraTieneProductos() {
   return pedidoItemsLista().length > 0;
+}
+
+let dudaCompraTimer = null;
+let dudaCompraOculta = false;
+let guiaSoloPedidoActiva = false;
+
+function compraEnPasoProductos() {
+  return document.body.classList.contains('purchase-step-products');
+}
+
+function ocultarDudaCompraPrompt() {
+  document.getElementById('dudaCompraPrompt')?.classList.remove('show');
+}
+
+function programarAyudaCompra() {
+  if (dudaCompraTimer) clearTimeout(dudaCompraTimer);
+  if (dudaCompraOculta || !compraTieneProductos() || !compraEnPasoProductos()) return;
+  dudaCompraTimer = setTimeout(() => {
+    if (!dudaCompraOculta && compraTieneProductos() && compraEnPasoProductos()) {
+      document.getElementById('dudaCompraPrompt')?.classList.add('show');
+    }
+  }, 45000);
+}
+
+function dudaCompraAgregarMas() {
+  dudaCompraOculta = true;
+  guiaSoloPedidoActiva = false;
+  ocultarDudaCompraPrompt();
+  document.getElementById('productosSection')?.scrollIntoView({ behavior:'smooth', block:'start' });
+  tst('Puedes agregar mas presentaciones: 2L, 3L, 4L, bidon o combos San Juan.', 3200);
+}
+
+function dudaCompraSoloEso() {
+  dudaCompraOculta = true;
+  guiaSoloPedidoActiva = true;
+  ocultarDudaCompraPrompt();
+  const zonaBox = document.getElementById('inicioCostCard') || document.getElementById('homeCoverageSection');
+  zonaBox?.scrollIntoView({ behavior:'smooth', block:'center' });
+  tst('Haz clic en tu zona para la entrega de tu pedido y despues dale Continuar.', 4200);
+  actualizarZonaContinueFab();
+}
+
+function actualizarZonaContinueFab() {
+  const btn = document.getElementById('zonaContinueFab');
+  const zonaEl = document.getElementById('zona');
+  if (!btn) return;
+  const puedeMostrar = guiaSoloPedidoActiva
+    && compraTieneProductos()
+    && zonaEl?.value
+    && !document.body.classList.contains('purchase-step-payment')
+    && !document.body.classList.contains('purchase-complete');
+  btn.classList.toggle('show', Boolean(puedeMostrar));
+  if (puedeMostrar) btn.textContent = obtenerPasoPendientePedido() === 'resumen' ? 'Continuar con pago' : 'Continuar con datos';
 }
 
 function continuarCompraPaso(paso) {
@@ -7423,7 +7515,7 @@ function continuarCompraPaso(paso) {
     const zonaValor = zonaEl?.value || '';
     const tel = normalizarTelefonoPedido(document.getElementById('telefono'));
     const nom = document.getElementById('nombre')?.value.trim() || '';
-    const dir = document.getElementById('direccion')?.value.trim() || '';
+    const dir = direccionPedidoValor();
     const zonaTxt = zonaEl?.options[zonaEl.selectedIndex]?.text || '';
     const requiereDireccion = !/recojo/i.test(zonaTxt);
     if (!zonaValor) return marcarZonaPedido('Selecciona tu zona de entrega');
@@ -7458,6 +7550,8 @@ function qty(id, d) {
   if (PRODUCT_META[id]?.sanJuanPublico) actualizarBidonPublicoUI();
   if (PRODUCT_META[id]?.escolar || PRODUCT_META[id]?.sanJuanInstitucional) actualizarPromoEscolarUI();
   calcTotal();
+  dudaCompraOculta = false;
+  programarAyudaCompra();
 }
 
 function setQtyPreset(id, value) {
@@ -7466,6 +7560,8 @@ function setQtyPreset(id, value) {
   syncQtyUI(id);
   if (PRODUCT_META[id]?.escolar || PRODUCT_META[id]?.sanJuanInstitucional) actualizarPromoEscolarUI();
   calcTotal();
+  dudaCompraOculta = false;
+  programarAyudaCompra();
 }
 
 function setQtyDirect(id, value) {
@@ -7476,6 +7572,8 @@ function setQtyDirect(id, value) {
   if (PRODUCT_META[id]?.sanJuanPublico) actualizarBidonPublicoUI();
   if (PRODUCT_META[id]?.escolar || PRODUCT_META[id]?.sanJuanInstitucional) actualizarPromoEscolarUI();
   calcTotal();
+  dudaCompraOculta = false;
+  programarAyudaCompra();
 }
 window.qty = qty;
 window.setQtyPreset = setQtyPreset;
@@ -7547,6 +7645,7 @@ function calcTotal() {
   actualizarBotonContinuar();
   actualizarCarritoFlotante();
   actualizarTotalInicio();
+  actualizarZonaContinueFab();
 }
 
 function toggleCuponPanel() {
@@ -9048,6 +9147,10 @@ function seleccionarZonaVisual(nombre, precio) {
     calcTotal();
     mostrarNotaNacional(sel);
     actualizarZonaVisual();
+    if (typeof guiaSoloPedidoActiva !== 'undefined' && guiaSoloPedidoActiva) {
+      actualizarZonaContinueFab();
+      tst('Zona lista. Dale Continuar para llenar tus datos y finalizar el pedido.', 3600);
+    }
   }
 }
 
@@ -9103,6 +9206,37 @@ function actualizarZonaVisual() {
 
   actualizarZonaResumen(opt, precio);
   actualizarETAVisual(texto, precio);
+  actualizarDireccionRecojoUI(texto);
+}
+
+function zonaSeleccionadaEsRecojo() {
+  const zonaEl = document.getElementById('zona');
+  const zonaTxt = zonaEl?.options[zonaEl.selectedIndex]?.text || '';
+  return /recojo/i.test(zonaTxt);
+}
+
+function direccionPedidoValor() {
+  const dir = document.getElementById('direccion')?.value.trim() || '';
+  return zonaSeleccionadaEsRecojo() && !dir ? 'Recojo en local' : dir;
+}
+
+function actualizarDireccionRecojoUI(textoZona = '') {
+  const esRecojo = textoZona ? textoZona.includes('recojo') : zonaSeleccionadaEsRecojo();
+  const input = document.getElementById('direccion');
+  const label = input?.closest('.fld')?.querySelector('label');
+  const help = document.getElementById('direccionPedidoHelp');
+  if (label) label.textContent = esRecojo ? 'Referencia para recojo (opcional)' : 'Direccion de entrega';
+  if (input) {
+    input.required = !esRecojo;
+    input.placeholder = esRecojo
+      ? 'Opcional: nombre de quien recoge o referencia'
+      : 'Calle, numero, referencia';
+  }
+  if (help) {
+    help.textContent = esRecojo
+      ? 'Para recojo no pedimos direccion. Guardaremos el cliente con celular y nombre; el pedido queda como Recojo en local.'
+      : 'No aparece tu direccion? Puedes escribirla manualmente.';
+  }
 }
 
 function actualizarTotalInicio() {
@@ -9376,7 +9510,7 @@ function perfilGuardarCliente(silencioso = true) {
   const perfil = {
     telefono: tel,
     nombre: document.getElementById('nombre')?.value.trim() || '',
-    direccion: document.getElementById('direccion')?.value.trim() || '',
+    direccion: direccionPedidoValor(),
     notaEntrega: document.getElementById('notaEntrega')?.value.trim() || '',
     zona: zonaEl?.value || '',
     zonaTexto: zonaEl?.options[zonaEl.selectedIndex]?.text || '',
@@ -9848,7 +9982,7 @@ function abrirResumen(soloCarrito = false) {
   if (ST.final <= 0)    return tst('Selecciona al menos un producto 🛒');
   const tel = document.getElementById('telefono').value.trim();
   const nom = document.getElementById('nombre').value.trim();
-  const dir = document.getElementById('direccion').value.trim();
+  const dir = direccionPedidoValor();
   const dis = document.getElementById('zona').value;
   const zonaEl = document.getElementById('zona');
   const zonaTxt = zonaEl?.options[zonaEl.selectedIndex]?.text || '';
@@ -9961,7 +10095,7 @@ async function enviarPedido() {
 
   const telefono    = sanitizeInput(document.getElementById('telefono').value, 15);
   const nombre      = sanitizeInput(document.getElementById('nombre').value, 80);
-  const direccion   = sanitizeInput(document.getElementById('direccion').value || 'No especificada', 200);
+  const direccion   = sanitizeInput(direccionPedidoValor() || 'No especificada', 200);
   const notaEntrega = sanitizeInput(document.getElementById('notaEntrega')?.value || '', 160);
   const zonaSel     = document.getElementById('zona');
   const zonaTexto   = sanitizeInput(zonaSel.options[zonaSel.selectedIndex]?.text || '', 100);
@@ -16781,7 +16915,7 @@ async function admRechazarYape(pedidoId, telefono, nombre) {
    PWA — INSTALAR COMO APP
 ══════════════════════════════════════ */
 let _pwaPrompt = null;
-const ASWA_PWA_CACHE_NAME = 'aswa-v43';
+const ASWA_PWA_CACHE_NAME = 'aswa-v45';
 const ASWA_PLAY_STORE_URL = '';
 
 function pwaEsStandalone() {
@@ -20234,7 +20368,7 @@ function registrarSW() {
   if (!('serviceWorker' in navigator)) return;
 
   const SW_CODE = `
-const CACHE_NAME = 'aswa-v43';
+const CACHE_NAME = 'aswa-v45';
 const VERSION_PARAM = 'aswa_sw';
 const SHELL = [
   './',
@@ -20331,7 +20465,7 @@ self.addEventListener('message', e => {
 });
 `;
 
-  return pwaLimpiarSWLegacy().then(() => navigator.serviceWorker.register('./sw.js?v=43', { scope: './' }))
+  return pwaLimpiarSWLegacy().then(() => navigator.serviceWorker.register('./sw.js?v=45', { scope: './' }))
     .then(reg => {
       console.log('[SW] Registrado:', reg.scope);
 

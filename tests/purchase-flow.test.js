@@ -52,7 +52,7 @@ describe('guided purchase flow', () => {
     expect(html).toContain('const minimoEscolar = validarMinimoPromoEscolar(true)');
     expect(html).toContain('if (!minimoEscolar.ok) return;');
     expect(html).toContain("return mostrarPasoCompra('delivery')");
-    expect(html).toContain('Primero elige productos y zona para ver el total. Despues registras celular, direccion y pago.');
+    expect(html).toContain('Primero elige productos y zona para ver el total. Despues registras celular, nombre y direccion solo si es delivery.');
   });
 
   test('shows zone-inclusive total before asking customer data', () => {
@@ -94,12 +94,39 @@ describe('guided purchase flow', () => {
     expect(html).toContain("telefono: 'LLENAR DATOS'");
   });
 
-  test('only shows the floating app installer after purchase and keeps sw v43 installable', () => {
+  test('treats pickup orders as customer registration without delivery address', () => {
+    const html = readHtml();
+
+    expect(html).toContain('function zonaSeleccionadaEsRecojo()');
+    expect(html).toContain('function direccionPedidoValor()');
+    expect(html).toContain("return zonaSeleccionadaEsRecojo() && !dir ? 'Recojo en local' : dir");
+    expect(html).toContain('function actualizarDireccionRecojoUI');
+    expect(html).toContain('Referencia para recojo (opcional)');
+    expect(html).toContain('Para recojo no pedimos direccion. Guardaremos el cliente con celular y nombre; el pedido queda como Recojo en local.');
+    expect(html).toContain("const direccion   = sanitizeInput(direccionPedidoValor() || 'No especificada', 200)");
+  });
+
+  test('guides uncertain customers after adding a product', () => {
+    const html = readHtml();
+
+    expect(html).toContain('id="dudaCompraPrompt"');
+    expect(html).toContain('Agregaras mas al carrito de compra o solo eso pediras?');
+    expect(html).toContain('dudaCompraAgregarMas()');
+    expect(html).toContain('dudaCompraSoloEso()');
+    expect(html).toContain('id="zonaContinueFab"');
+    expect(html).toContain('let dudaCompraTimer = null');
+    expect(html).toContain('function programarAyudaCompra()');
+    expect(html).toContain('}, 45000)');
+    expect(html).toContain('Haz clic en tu zona para la entrega de tu pedido y despues dale Continuar.');
+    expect(html).toContain('Zona lista. Dale Continuar para llenar tus datos y finalizar el pedido.');
+  });
+
+  test('only shows the floating app installer after purchase and keeps sw v45 installable', () => {
     const html = readHtml();
     const sw = fs.readFileSync(path.join(__dirname, '..', 'sw.js'), 'utf8');
 
     expect(html).toContain('function pwaCompraEnCurso');
-    expect(html).toContain("const ASWA_PWA_CACHE_NAME = 'aswa-v43'");
+    expect(html).toContain("const ASWA_PWA_CACHE_NAME = 'aswa-v45'");
     expect(html).toContain('async function pwaForzarVersionNueva');
     expect(html).toContain("urlActual.searchParams.get('aswa_sw') !== ASWA_PWA_CACHE_NAME");
     expect(html).toContain("urlActual.searchParams.set('aswa_sw', ASWA_PWA_CACHE_NAME)");
@@ -112,11 +139,11 @@ describe('guided purchase flow', () => {
     expect(html).toContain("lsGet('succ_active') === '1'");
     expect(html).toContain('!postCompra || pwaCompraEnCurso() || pwaEsStandalone()');
     expect(html).toContain('/\\/sw\\.js(?:\\?|$)/.test(script)');
-    expect(html).toContain("navigator.serviceWorker.register('./sw.js?v=43'");
-    expect(html).toContain("const CACHE_NAME = 'aswa-v43'");
+    expect(html).toContain("navigator.serviceWorker.register('./sw.js?v=45'");
+    expect(html).toContain("const CACHE_NAME = 'aswa-v45'");
     expect(html).toContain("fetch(new Request(e.request, { cache: 'no-store' }))");
     expect(html).toContain("url.searchParams.set(VERSION_PARAM, CACHE_NAME)");
-    expect(sw).toContain("const CACHE_NAME = 'aswa-v43'");
+    expect(sw).toContain("const CACHE_NAME = 'aswa-v45'");
     expect(sw).toContain("fetch(new Request(e.request, { cache: 'no-store' }))");
     expect(sw).toContain("url.searchParams.set(VERSION_PARAM, CACHE_NAME)");
   });
