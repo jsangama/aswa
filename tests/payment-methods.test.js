@@ -50,6 +50,9 @@ describe('payment methods layout', () => {
     expect(document.getElementById('payboxMontoLabel').textContent).toContain('Monto a pagar');
 
     expect(html).toContain('function actualizarMontoPagoUI()');
+    expect(html).toContain('window.ASWA?.modules?.paymentPage');
+    expect(html).toContain('paymentPage.updateFromState(ST)');
+    expect(html).toContain('paymentPage.updateCashChange({ total })');
     expect(html).toContain("setText('pagoTotalMonto', totalText)");
     expect(html).toContain("setText('payboxMonto', totalText)");
     expect(html).toContain("setText('efectivoTotalMonto', totalText)");
@@ -58,5 +61,21 @@ describe('payment methods layout', () => {
     expect(html).toContain('Transfiere exactamente este monto por banco y sube el comprobante.');
     expect(html).toContain('Paga exactamente este monto por billetera y sube el comprobante.');
     expect(html).toContain("pagoCon.placeholder = total > 0 ? totalText : 'S/ 0.00'");
+  });
+
+  test('keeps payment logic in modules, components and page orchestrator', () => {
+    const paymentModule = fs.readFileSync(path.join(__dirname, '..', 'src/modules/payment-methods.js'), 'utf8');
+    const paymentComponent = fs.readFileSync(path.join(__dirname, '..', 'src/components/payment-total-card.js'), 'utf8');
+    const paymentPage = fs.readFileSync(path.join(__dirname, '..', 'src/pages/payment-page.js'), 'utf8');
+    const main = fs.readFileSync(path.join(__dirname, '..', 'src/main.js'), 'utf8');
+
+    expect(paymentModule).toContain('export function getPaymentChannel');
+    expect(paymentModule).toContain('export function calculateCashChange');
+    expect(paymentComponent).toContain('export function updatePaymentTotalCard');
+    expect(paymentComponent).toContain('export function updateCashChangeText');
+    expect(paymentPage).toContain("from '../modules/payment-methods.js'");
+    expect(paymentPage).toContain("from '../components/payment-total-card.js'");
+    expect(main).toContain("paymentMethods: createPaymentMethodsService()");
+    expect(main).toContain("paymentPage: createPaymentPage({ document })");
   });
 });

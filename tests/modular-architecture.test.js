@@ -12,8 +12,8 @@ describe('modular architecture scaffold', () => {
     const html = read('index.html');
 
     expect(html).toContain('<script type="module" src="src/main.js"></script>');
-    expect(html).toContain("const ASWA_PWA_CACHE_NAME = 'aswa-v46'");
-    expect(html).toContain("navigator.serviceWorker.register('./sw.js?v=46'");
+    expect(html).toContain("const ASWA_PWA_CACHE_NAME = 'aswa-v47'");
+    expect(html).toContain("navigator.serviceWorker.register('./sw.js?v=47'");
   });
 
   test('keeps domain modules outside the monolithic html file', () => {
@@ -22,8 +22,11 @@ describe('modular architecture scaffold', () => {
       'src/modules/storage.js',
       'src/modules/cart.js',
       'src/modules/catalog.js',
+      'src/modules/payment-methods.js',
       'src/modules/purchase-flow.js',
       'src/modules/pwa-cache.js',
+      'src/components/payment-total-card.js',
+      'src/pages/payment-page.js',
     ];
 
     for (const modulePath of modules) {
@@ -36,8 +39,10 @@ describe('modular architecture scaffold', () => {
     expect(main).toContain("from './modules/storage.js'");
     expect(main).toContain("from './modules/cart.js'");
     expect(main).toContain("from './modules/catalog.js'");
+    expect(main).toContain("from './modules/payment-methods.js'");
     expect(main).toContain("from './modules/purchase-flow.js'");
     expect(main).toContain("from './modules/pwa-cache.js'");
+    expect(main).toContain("from './pages/payment-page.js'");
     expect(main).toContain('window.ASWA');
   });
 
@@ -52,8 +57,11 @@ describe('modular architecture scaffold', () => {
     expect(sw).toContain("BASE + 'src/modules/app-shell.js'");
     expect(sw).toContain("BASE + 'src/modules/cart.js'");
     expect(sw).toContain("BASE + 'src/modules/catalog.js'");
+    expect(sw).toContain("BASE + 'src/modules/payment-methods.js'");
     expect(sw).toContain("BASE + 'src/modules/purchase-flow.js'");
     expect(sw).toContain("BASE + 'src/modules/pwa-cache.js'");
     expect(sw).toContain("BASE + 'src/modules/storage.js'");
+    expect(sw).toContain("BASE + 'src/components/payment-total-card.js'");
+    expect(sw).toContain("BASE + 'src/pages/payment-page.js'");
   });
 });
