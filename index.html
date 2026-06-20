@@ -9531,13 +9531,24 @@ function actualizarHorarioMini() {
 }
 
 function calcVuelto() {
-  const p = Number(document.getElementById('pagoCon').value) || 0;
   const total = Number(ST.final || 0);
+  const paymentPage = window.ASWA?.modules?.paymentPage;
+  if (paymentPage?.updateCashChange) {
+    paymentPage.updateCashChange({ total });
+    return;
+  }
+  const p = Number(document.getElementById('pagoCon')?.value) || 0;
   const msg = document.getElementById('vmsg');
   if (msg) msg.textContent = 'Vuelto: S/ ' + Math.max(0, p - total).toFixed(2);
 }
 
 function actualizarMontoPagoUI() {
+  const paymentPage = window.ASWA?.modules?.paymentPage;
+  if (paymentPage?.updateFromState) {
+    paymentPage.updateFromState(ST);
+    return;
+  }
+
   const total = Number(ST.final || 0);
   const totalText = 'S/ ' + total.toFixed(2);
   const esEfectivo = ST.pago === 'Efectivo';
@@ -16992,7 +17003,7 @@ async function admRechazarYape(pedidoId, telefono, nombre) {
    PWA — INSTALAR COMO APP
 ══════════════════════════════════════ */
 let _pwaPrompt = null;
-const ASWA_PWA_CACHE_NAME = 'aswa-v46';
+const ASWA_PWA_CACHE_NAME = 'aswa-v47';
 const ASWA_PLAY_STORE_URL = '';
 
 function pwaEsStandalone() {
@@ -20445,7 +20456,7 @@ function registrarSW() {
   if (!('serviceWorker' in navigator)) return;
 
   const SW_CODE = `
-const CACHE_NAME = 'aswa-v46';
+const CACHE_NAME = 'aswa-v47';
 const VERSION_PARAM = 'aswa_sw';
 const SHELL = [
   './',
@@ -20454,9 +20465,12 @@ const SHELL = [
   './src/modules/app-shell.js',
   './src/modules/cart.js',
   './src/modules/catalog.js',
+  './src/modules/payment-methods.js',
   './src/modules/purchase-flow.js',
   './src/modules/pwa-cache.js',
-  './src/modules/storage.js'
+  './src/modules/storage.js',
+  './src/components/payment-total-card.js',
+  './src/pages/payment-page.js'
 ];
 
 // Instalar: cachear el shell
@@ -20542,7 +20556,7 @@ self.addEventListener('message', e => {
 });
 `;
 
-  return pwaLimpiarSWLegacy().then(() => navigator.serviceWorker.register('./sw.js?v=46', { scope: './' }))
+  return pwaLimpiarSWLegacy().then(() => navigator.serviceWorker.register('./sw.js?v=47', { scope: './' }))
     .then(reg => {
       console.log('[SW] Registrado:', reg.scope);
 
