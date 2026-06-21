@@ -1,171 +1,175 @@
-🌽 ASWA – Sistema Digital de Pedidos | La Rica Chicha
+# ASWA - Sistema Digital de Pedidos | La Rica Chicha
 
-Tradición amazónica con tecnología moderna.
+Tradicion amazonica con tecnologia moderna.
 
-ASWA es una plataforma digital de pedidos diseñada para modernizar la venta de productos tradicionales como la chicha de maíz suave, integrando automatización, gestión de clientes y herramientas de crecimiento.
+ASWA es una plataforma digital de pedidos para modernizar la venta de chicha y productos tradicionales, integrando catalogo, carrito, delivery, pagos, clientes, fidelizacion, administracion y contenido generado por clientes.
 
-Actualmente implementada para La Rica Chicha en Tarapoto y Morales.
+Actualmente esta implementada para La Rica Chicha en Morales y Tarapoto, Peru.
 
-📍 Ubicación y Contacto
+## Ubicacion Y Contacto
 
-Dirección:
-Jr. Sargento Lores #425, Morales – Tarapoto, Perú
+Direccion: Jr. Sargento Lores #425, Morales - Tarapoto, Peru
 
-Referencia:
-Cerca al parque central de Morales
-
-Mapa:
-Abrir en Google Maps
+Referencia: cerca al parque central de Morales
 
 Pedidos por WhatsApp:
-📱 +51 955 273 229
-📱 +51 986 445 531
 
-Pagos vía Yape:
-📲 +51 947 999 736
+- +51 955 273 229
+- +51 986 445 531
 
-🚀 Funcionalidades Principales
-🛒 Sistema de Ventas Inteligente
+Pagos via Yape:
 
-Catálogo interactivo (2L, 3L, 4L)
+- +51 947 999 736
 
-Carrito dinámico
+## Funcionalidades Principales
 
-Cálculo automático de delivery por distrito:
+### Sistema De Ventas
 
-Morales
+- Catalogo interactivo de productos ASWA.
+- Carrito dinamico.
+- Total estimado desde el inicio con zona y delivery.
+- Recojo en local sin pedir direccion obligatoria.
+- Flujo progresivo: productos, zona/datos, pago y resumen.
+- Generacion de pedido con datos listos para gestion interna.
 
-Tarapoto
+### Delivery Y Zonas
 
-Banda de Shilcayo
+- Morales.
+- Tarapoto.
+- Banda de Shilcayo.
+- Recojo en local.
+- Envio nacional coordinado.
+- Promociones San Juan sin delivery cuando corresponde.
 
-Opción de recojo en local con mapa integrado
+### Metodos De Pago
 
-Generación automática del mensaje de pedido para WhatsApp
+- Efectivo al recibir con calculo de vuelto.
+- Yape, Plin y otras billeteras.
+- Transferencias bancarias.
+- Monto final visible en la pantalla de pago.
+- Comprobante obligatorio para billeteras y bancos.
 
-📦 Gestión de Pedidos
+### Gestion De Pedidos
 
-Registro automático en base de datos
+- Registro automatico en Firebase.
+- Estados de pedido: pendiente, pagado, en reparto, confirmado y cerrado.
+- Panel administrativo privado.
+- Panel de deliverista.
+- Seguimiento y herramientas operativas.
 
-Estados de pedido:
+### Fidelizacion Y Crecimiento
 
-Pendiente
+- Referidos.
+- Beneficios por cliente.
+- Niveles de fidelizacion.
+- Promociones.
+- UGC: contenido generado por clientes.
+- Soporte y asistente informativo.
 
-Pagado
+## Arquitectura Actual
 
-En reparto
+El proyecto ya no debe crecer como un solo `index.html`. La direccion tecnica es modular y escalable.
 
-Confirmado
+`index.html` se mantiene como shell legacy mientras las responsabilidades se migran poco a poco a `src/`.
 
-Panel administrativo privado para seguimiento
+```text
+.
+|-- index.html
+|-- ugc.html
+|-- src/
+|   |-- main.js
+|   |-- modules/
+|   |   |-- app-shell.js
+|   |   |-- cart.js
+|   |   |-- catalog.js
+|   |   |-- delivery-options.js
+|   |   |-- payment-methods.js
+|   |   |-- purchase-flow.js
+|   |   |-- pwa-cache.js
+|   |   |-- storage.js
+|   |-- components/
+|   |   |-- delivery-address-field.js
+|   |   |-- payment-total-card.js
+|   |-- pages/
+|       |-- delivery-page.js
+|       |-- payment-page.js
+|-- js/
+|   |-- app-config.js
+|-- assets/images/
+|-- docs/
+|-- tests/
+|-- scripts/
+|-- functions/
+```
 
-🎁 Sistema de Fidelización
+### Capas
 
-Descuentos por referidos
+- `src/modules`: reglas de negocio y servicios por dominio.
+- `src/components`: componentes de UI reutilizables.
+- `src/pages`: orquestadores de pantallas.
+- `src/main.js`: entrada modular que registra `window.ASWA.modules`.
+- `index.html`: shell legacy que conserva compatibilidad mientras se migra.
+- `dist/`: artefacto generado para Firebase Hosting.
 
-Activación de beneficios por tiempo limitado
+### Modulos Migrados
 
-Niveles de cliente (Bronce, Plata, Oro)
-
-Alertas de vencimiento de beneficios
-
-🖼 Sistema UGC (Contenido Generado por Clientes)
-
-Clientes pueden subir fotos y contenido
-
-Panel para aprobar o rechazar publicaciones
-
-Métricas de rendimiento y ROI estimado
-
-Control de contenidos destacados y utilizados
-
-🧾 Documentación Comercial
-
-Generación de nota de venta interna
-
-Estructura preparada para boleta y factura electrónica
-
-Preparado para integración con sistemas fiscales en Perú
-
-💻 Tecnologías Utilizadas
-
-Frontend:
-
-HTML5
-
-Tailwind CSS (diseño moderno y responsivo)
-
-JavaScript (ES6+)
-
-Backend & Base de Datos:
-
-Firebase
-
-Firestore (Base de datos en tiempo real)
-
-Authentication (Seguridad)
-
-Storage (Imágenes y documentos)
-
-Cloud Functions (Automatización)
-
-Mapas:
-
-Google Maps Embed API
-
-Deploy:
-
-Firebase Hosting + GitHub Actions
-
-🏗 Arquitectura del Proyecto
-/index.html
-/ugc.html
-/css
-/js
-/assets
-/images
-
-Base de datos estructurada en Firestore con soporte para futura expansión multi-negocio.
+- Carrito y calculo de totales.
+- Flujo de compra progresivo.
+- Metodos de pago y monto total visible.
+- Zona, recojo en local y direccion opcional.
+- Cache PWA.
+- Storage con prefijo por negocio.
+- Catalogo base.
 
 Ver tambien:
 
+- [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)
 - [docs/PRODUCT_BRIEF.md](docs/PRODUCT_BRIEF.md)
 - [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)
 - [docs/GITHUB_SETUP.md](docs/GITHUB_SETUP.md)
 
-🌎 Visión del Proyecto
+## Tecnologias
 
-ASWA no es solo una tienda online.
+Frontend:
 
-Es la base de una futura plataforma SaaS diseñada para que cualquier pequeño negocio pueda:
+- HTML5.
+- CSS propio responsivo.
+- JavaScript ES modules.
+- PWA con service worker.
 
-Vender online
+Backend y datos:
 
-Gestionar delivery
+- Firebase Hosting.
+- Cloud Firestore.
+- Firebase Authentication.
+- Firebase Storage.
+- Cloud Functions.
 
-Automatizar fidelización
+Calidad y despliegue:
 
-Generar comprobantes
+- Jest.
+- GitHub Actions.
+- Firebase CLI.
+- Scripts de build y preflight en `scripts/`.
 
-Escalar digitalmente
+## Estado Actual
+
+- MVP funcional.
+- Sistema de pedidos activo.
+- Flujo de compra guiado.
+- Total con delivery visible antes de registrar datos.
+- Metodos de pago con monto final.
+- Panel administrativo.
+- Panel de deliverista.
+- Base de datos operativa en Firebase.
+- Arquitectura en migracion modular.
+
+## Vision
+
+ASWA no es solo una tienda online. Es la base de una futura plataforma SaaS para que pequenos negocios puedan vender online, gestionar delivery, automatizar fidelizacion, generar comprobantes y escalar digitalmente.
 
 La Rica Chicha es el primer caso real implementado.
 
-📸 Vista Previa
+## Filosofia
 
-(Agrega aquí una captura de pantalla del sistema funcionando)
-
-🔥 Estado Actual
-
-✔ MVP funcional
-✔ Sistema de pedidos activo
-✔ Integración WhatsApp
-✔ Base de datos operativa
-✔ Panel administrativo
-
-En proceso de evolución hacia sistema SaaS multi-negocio.
-
-✨ Filosofía
-
-Tradición y sabor en cada sorbo.
-Tecnología y visión en cada pedido.
+Tradicion y sabor en cada sorbo. Tecnologia y vision en cada pedido.
