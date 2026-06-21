@@ -96,14 +96,29 @@ describe('guided purchase flow', () => {
 
   test('treats pickup orders as customer registration without delivery address', () => {
     const html = readHtml();
+    const deliveryModule = fs.readFileSync(path.join(__dirname, '..', 'src/modules/delivery-options.js'), 'utf8');
+    const deliveryComponent = fs.readFileSync(path.join(__dirname, '..', 'src/components/delivery-address-field.js'), 'utf8');
+    const deliveryPage = fs.readFileSync(path.join(__dirname, '..', 'src/pages/delivery-page.js'), 'utf8');
+    const main = fs.readFileSync(path.join(__dirname, '..', 'src/main.js'), 'utf8');
 
     expect(html).toContain('function zonaSeleccionadaEsRecojo()');
     expect(html).toContain('function direccionPedidoValor()');
+    expect(html).toContain('window.ASWA?.modules?.deliveryPage');
+    expect(html).toContain('deliveryPage.orderAddressValue()');
+    expect(html).toContain('deliveryPage.updateAddressField(textoZona)');
     expect(html).toContain("return zonaSeleccionadaEsRecojo() && !dir ? 'Recojo en local' : dir");
     expect(html).toContain('function actualizarDireccionRecojoUI');
     expect(html).toContain('Referencia para recojo (opcional)');
     expect(html).toContain('Para recojo no pedimos direccion. Guardaremos el cliente con celular y nombre; el pedido queda como Recojo en local.');
     expect(html).toContain("const direccion   = sanitizeInput(direccionPedidoValor() || 'No especificada', 200)");
+    expect(deliveryModule).toContain('export function isPickupZoneText');
+    expect(deliveryModule).toContain('export function resolveOrderAddress');
+    expect(deliveryModule).toContain('export function getAddressFieldState');
+    expect(deliveryComponent).toContain('export function updateDeliveryAddressField');
+    expect(deliveryPage).toContain("from '../modules/delivery-options.js'");
+    expect(deliveryPage).toContain("from '../components/delivery-address-field.js'");
+    expect(main).toContain('deliveryOptions: createDeliveryOptionsService()');
+    expect(main).toContain('deliveryPage: createDeliveryPage({ document })');
   });
 
   test('guides uncertain customers after adding a product', () => {
@@ -121,12 +136,12 @@ describe('guided purchase flow', () => {
     expect(html).toContain('Zona lista. Dale Continuar para llenar tus datos y finalizar el pedido.');
   });
 
-  test('only shows the floating app installer after purchase and keeps sw v47 installable', () => {
+  test('only shows the floating app installer after purchase and keeps sw v48 installable', () => {
     const html = readHtml();
     const sw = fs.readFileSync(path.join(__dirname, '..', 'sw.js'), 'utf8');
 
     expect(html).toContain('function pwaCompraEnCurso');
-    expect(html).toContain("const ASWA_PWA_CACHE_NAME = 'aswa-v47'");
+    expect(html).toContain("const ASWA_PWA_CACHE_NAME = 'aswa-v48'");
     expect(html).toContain('async function pwaForzarVersionNueva');
     expect(html).toContain("urlActual.searchParams.get('aswa_sw') !== ASWA_PWA_CACHE_NAME");
     expect(html).toContain("urlActual.searchParams.set('aswa_sw', ASWA_PWA_CACHE_NAME)");
@@ -139,11 +154,11 @@ describe('guided purchase flow', () => {
     expect(html).toContain("lsGet('succ_active') === '1'");
     expect(html).toContain('!postCompra || pwaCompraEnCurso() || pwaEsStandalone()');
     expect(html).toContain('/\\/sw\\.js(?:\\?|$)/.test(script)');
-    expect(html).toContain("navigator.serviceWorker.register('./sw.js?v=47'");
-    expect(html).toContain("const CACHE_NAME = 'aswa-v47'");
+    expect(html).toContain("navigator.serviceWorker.register('./sw.js?v=48'");
+    expect(html).toContain("const CACHE_NAME = 'aswa-v48'");
     expect(html).toContain("fetch(new Request(e.request, { cache: 'no-store' }))");
     expect(html).toContain("url.searchParams.set(VERSION_PARAM, CACHE_NAME)");
-    expect(sw).toContain("const CACHE_NAME = 'aswa-v47'");
+    expect(sw).toContain("const CACHE_NAME = 'aswa-v48'");
     expect(sw).toContain("fetch(new Request(e.request, { cache: 'no-store' }))");
     expect(sw).toContain("url.searchParams.set(VERSION_PARAM, CACHE_NAME)");
   });

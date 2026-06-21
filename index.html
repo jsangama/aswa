@@ -9252,17 +9252,29 @@ function actualizarZonaVisual() {
 }
 
 function zonaSeleccionadaEsRecojo() {
+  const deliveryPage = window.ASWA?.modules?.deliveryPage;
+  if (deliveryPage?.isPickupSelected) return deliveryPage.isPickupSelected();
+
   const zonaEl = document.getElementById('zona');
   const zonaTxt = zonaEl?.options[zonaEl.selectedIndex]?.text || '';
   return /recojo/i.test(zonaTxt);
 }
 
 function direccionPedidoValor() {
+  const deliveryPage = window.ASWA?.modules?.deliveryPage;
+  if (deliveryPage?.orderAddressValue) return deliveryPage.orderAddressValue();
+
   const dir = document.getElementById('direccion')?.value.trim() || '';
   return zonaSeleccionadaEsRecojo() && !dir ? 'Recojo en local' : dir;
 }
 
 function actualizarDireccionRecojoUI(textoZona = '') {
+  const deliveryPage = window.ASWA?.modules?.deliveryPage;
+  if (deliveryPage?.updateAddressField) {
+    deliveryPage.updateAddressField(textoZona);
+    return;
+  }
+
   const esRecojo = textoZona ? textoZona.includes('recojo') : zonaSeleccionadaEsRecojo();
   const input = document.getElementById('direccion');
   const label = input?.closest('.fld')?.querySelector('label');
@@ -17003,7 +17015,7 @@ async function admRechazarYape(pedidoId, telefono, nombre) {
    PWA — INSTALAR COMO APP
 ══════════════════════════════════════ */
 let _pwaPrompt = null;
-const ASWA_PWA_CACHE_NAME = 'aswa-v47';
+const ASWA_PWA_CACHE_NAME = 'aswa-v48';
 const ASWA_PLAY_STORE_URL = '';
 
 function pwaEsStandalone() {
@@ -20456,7 +20468,7 @@ function registrarSW() {
   if (!('serviceWorker' in navigator)) return;
 
   const SW_CODE = `
-const CACHE_NAME = 'aswa-v47';
+const CACHE_NAME = 'aswa-v48';
 const VERSION_PARAM = 'aswa_sw';
 const SHELL = [
   './',
@@ -20465,11 +20477,14 @@ const SHELL = [
   './src/modules/app-shell.js',
   './src/modules/cart.js',
   './src/modules/catalog.js',
+  './src/modules/delivery-options.js',
   './src/modules/payment-methods.js',
   './src/modules/purchase-flow.js',
   './src/modules/pwa-cache.js',
   './src/modules/storage.js',
+  './src/components/delivery-address-field.js',
   './src/components/payment-total-card.js',
+  './src/pages/delivery-page.js',
   './src/pages/payment-page.js'
 ];
 
@@ -20556,7 +20571,7 @@ self.addEventListener('message', e => {
 });
 `;
 
-  return pwaLimpiarSWLegacy().then(() => navigator.serviceWorker.register('./sw.js?v=47', { scope: './' }))
+  return pwaLimpiarSWLegacy().then(() => navigator.serviceWorker.register('./sw.js?v=48', { scope: './' }))
     .then(reg => {
       console.log('[SW] Registrado:', reg.scope);
 
