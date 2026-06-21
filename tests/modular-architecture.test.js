@@ -72,4 +72,19 @@ describe('modular architecture scaffold', () => {
     expect(sw).toContain("BASE + 'src/pages/delivery-page.js'");
     expect(sw).toContain("BASE + 'src/pages/payment-page.js'");
   });
+
+  test('documents the public modular architecture in the repository README', () => {
+    const readme = read('README.md');
+
+    expect(readme).toContain('## Arquitectura Actual');
+    expect(readme).toContain('src/modules');
+    expect(readme).toContain('src/components');
+    expect(readme).toContain('src/pages');
+    expect(readme).toContain('index.html` se mantiene como shell legacy');
+    expect(readme).toContain('payment-methods.js');
+    expect(readme).toContain('delivery-options.js');
+    expect(readme).toContain('Arquitectura en migracion modular');
+    expect(readme).not.toContain('/index.html\n/ugc.html\n/css\n/js\n/assets\n/images');
+    expect(readme).not.toContain('Tailwind CSS');
+  });
 });
