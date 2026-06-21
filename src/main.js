@@ -6,6 +6,8 @@ import { createPurchaseFlow } from './modules/purchase-flow.js';
 import { createPwaCacheController } from './modules/pwa-cache.js';
 import { createPaymentMethodsService } from './modules/payment-methods.js';
 import { createPaymentPage } from './pages/payment-page.js';
+import { createDeliveryOptionsService } from './modules/delivery-options.js';
+import { createDeliveryPage } from './pages/delivery-page.js';
 
 const existing = window.ASWA || {};
 
@@ -16,10 +18,12 @@ const modules = {
   catalog: createCatalogService({ products: PRODUCT_CATALOG }),
   cart: createCartService(),
   purchaseFlow: createPurchaseFlow({ document }),
+  deliveryOptions: createDeliveryOptionsService(),
+  deliveryPage: createDeliveryPage({ document }),
   paymentMethods: createPaymentMethodsService(),
   paymentPage: createPaymentPage({ document }),
   pwaCache: createPwaCacheController({
-    cacheName: 'aswa-v47',
+    cacheName: 'aswa-v48',
     serviceWorker: navigator.serviceWorker,
     location,
     sessionStorage,

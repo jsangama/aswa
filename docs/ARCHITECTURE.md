@@ -23,6 +23,7 @@ La guia de producto viva esta en [PRODUCT_BRIEF.md](PRODUCT_BRIEF.md): mision, v
 - `storage.js`: adaptador de `localStorage` con prefijo por negocio.
 - `catalog.js`: catalogo publico y consulta de productos por dominio.
 - `purchase-flow.js`: estados del flujo de compra progresivo.
+- `delivery-options.js`: reglas de zona, recojo en local y direccion requerida/opcional.
 - `pwa-cache.js`: helpers para versionar PWA y refrescar clientes instalados.
 - `payment-methods.js`: reglas de metodos de pago, bancos, textos y calculo de vuelto.
 - `auth.js`: login admin/delivery usando `window.ASWA_CONFIG`.
@@ -34,6 +35,8 @@ La guia de producto viva esta en [PRODUCT_BRIEF.md](PRODUCT_BRIEF.md): mision, v
 
 - `pages/payment-page.js`: pantalla de metodos de pago. Lee el estado legacy y delega la vista del total.
 - `components/payment-total-card.js`: actualiza los elementos visibles del monto total y vuelto sin conocer reglas de negocio.
+- `pages/delivery-page.js`: pantalla de datos/zona. Lee la zona seleccionada y delega la direccion.
+- `components/delivery-address-field.js`: actualiza label, placeholder, required y ayuda del campo direccion.
 
 ## Regla De Migracion
 
