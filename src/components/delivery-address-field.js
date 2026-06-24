@@ -19,3 +19,26 @@ export function updateDeliveryAddressField({
     help.textContent = state.help || 'No aparece tu direccion? Puedes escribirla manualmente.';
   }
 }
+
+export function updateNationalShippingNotice({
+  document: doc = document,
+  noticeId = 'nationalShippingNotice',
+  selected = false,
+  notice = {},
+} = {}) {
+  const box = doc.getElementById(noticeId);
+  if (!box) return;
+
+  box.style.display = selected ? 'block' : 'none';
+  box.setAttribute('aria-hidden', selected ? 'false' : 'true');
+
+  const title = box.querySelector('[data-national-title]');
+  const summary = box.querySelector('[data-national-summary]');
+  const list = box.querySelector('[data-national-conditions]');
+
+  if (title && notice.title) title.textContent = notice.title;
+  if (summary && notice.summary) summary.textContent = notice.summary;
+  if (list && Array.isArray(notice.conditions)) {
+    list.innerHTML = notice.conditions.map((item) => `<li>${item}</li>`).join('');
+  }
+}
