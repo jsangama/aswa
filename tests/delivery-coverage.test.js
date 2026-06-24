@@ -85,9 +85,12 @@ describe('home delivery coverage section', () => {
 
     const zone = window.document.getElementById('zona');
     const note = window.document.querySelector('.home-zone-note');
+    const conditions = window.document.getElementById('nationalShippingNoticeInicio');
 
     expect(zone.value).toBe('10');
     expect(zone.options[zone.selectedIndex].textContent).toContain('agencia');
     expect(note.textContent).toContain('agencia');
+    expect(window.document.querySelector('[data-zona-nombre="Nacional"]')).toBeTruthy();
+    expect(conditions.textContent).toContain('flete desde la agencia');
   });
 });

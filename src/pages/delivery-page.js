@@ -1,9 +1,14 @@
 import {
   getAddressFieldState,
+  getNationalShippingNotice,
   isPickupZoneText,
+  isNationalZoneText,
   resolveOrderAddress,
 } from '../modules/delivery-options.js';
-import { updateDeliveryAddressField } from '../components/delivery-address-field.js';
+import {
+  updateDeliveryAddressField,
+  updateNationalShippingNotice,
+} from '../components/delivery-address-field.js';
 
 export function createDeliveryPage({ document: doc = document } = {}) {
   function selectedZoneText() {
@@ -15,6 +20,10 @@ export function createDeliveryPage({ document: doc = document } = {}) {
     return isPickupZoneText(zoneText);
   }
 
+  function isNationalSelected(zoneText = selectedZoneText()) {
+    return isNationalZoneText(zoneText);
+  }
+
   function orderAddressValue({
     zoneText = selectedZoneText(),
     address = doc.getElementById('direccion')?.value || '',
@@ -23,13 +32,20 @@ export function createDeliveryPage({ document: doc = document } = {}) {
   }
 
   function updateAddressField(zoneText = selectedZoneText()) {
+    const nationalSelected = isNationalSelected(zoneText);
     updateDeliveryAddressField({
       document: doc,
       state: getAddressFieldState({ zoneText }),
     });
+    updateNationalShippingNotice({
+      document: doc,
+      selected: nationalSelected,
+      notice: getNationalShippingNotice({ selected: nationalSelected }),
+    });
   }
 
   return {
+    isNationalSelected,
     isPickupSelected,
     orderAddressValue,
     selectedZoneText,

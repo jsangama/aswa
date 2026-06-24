@@ -1147,6 +1147,15 @@
       border-color:var(--y);
       background:rgba(250,204,21,.08);
     }
+    .zona-quick-btn.national {
+      grid-column:1/-1;
+      border-color:rgba(59,130,246,.35);
+      background:linear-gradient(135deg,rgba(59,130,246,.13),rgba(250,204,21,.06));
+    }
+    .zona-quick-btn.national.active {
+      border-color:#60a5fa;
+      background:linear-gradient(135deg,rgba(59,130,246,.22),rgba(250,204,21,.1));
+    }
     .zona-quick-top {
       display:flex;
       align-items:center;
@@ -1272,6 +1281,39 @@
       font-size:10px;
       line-height:1.45;
       font-weight:800;
+    }
+    .national-shipping-notice {
+      display:none;
+      margin:10px 0;
+      border:1px solid rgba(96,165,250,.35);
+      background:linear-gradient(180deg,rgba(59,130,246,.12),rgba(250,204,21,.055));
+      border-radius:14px;
+      padding:12px 13px;
+      color:var(--txt);
+    }
+    .national-shipping-notice.show,
+    .national-shipping-notice[aria-hidden="false"] { display:block; }
+    .national-shipping-title {
+      color:#bfdbfe;
+      font-size:12px;
+      font-weight:900;
+      text-transform:uppercase;
+      letter-spacing:.06em;
+      margin-bottom:5px;
+    }
+    .national-shipping-summary {
+      color:#fef3c7;
+      font-size:12px;
+      font-weight:800;
+      line-height:1.45;
+      margin-bottom:7px;
+    }
+    .national-shipping-list {
+      margin:0;
+      padding-left:17px;
+      color:var(--txt);
+      font-size:11px;
+      line-height:1.55;
     }
     .home-coverage {
       max-width:430px;
@@ -4480,6 +4522,10 @@
           <span class="zona-quick-top"><span>Recojo</span><span class="zona-quick-price">S/ 0</span></span>
           <span class="zona-quick-sub">Sin delivery</span>
         </button>
+        <button type="button" class="zona-quick-btn inicio-zona-btn national" data-zona-nombre="Nacional" data-zona-precio="10" onclick="seleccionarZonaEstimador('Nacional',10)">
+          <span class="zona-quick-top"><span>Nacional</span><span class="zona-quick-price">+ S/ 10</span></span>
+          <span class="zona-quick-sub">ASWA lleva tu pedido hasta agencia. El flete destino lo pagas al recoger.</span>
+        </button>
       </div>
       <div class="inicio-cost-breakdown">
         <div class="inicio-cost-row"><span>Productos</span><strong id="inicioSubtotalEstimado">S/ 0.00</strong></div>
@@ -4487,6 +4533,16 @@
         <div class="inicio-cost-row"><span>Total real antes de datos</span><strong id="inicioTotalLinea">S/ 0.00</strong></div>
       </div>
       <div class="inicio-cost-note" id="inicioTotalNota">Sin datos personales todavia: primero mira el costo total y luego registras el pedido.</div>
+      <div class="national-shipping-notice" id="nationalShippingNoticeInicio" aria-hidden="true">
+        <div class="national-shipping-title">Condiciones para envio nacional</div>
+        <div class="national-shipping-summary">S/ 10.00 cubre solo el traslado de ASWA hasta la agencia en Tarapoto.</div>
+        <ul class="national-shipping-list">
+          <li>El flete desde la agencia hasta tu ciudad no esta incluido.</li>
+          <li>Lo pagas directamente a la agencia al recoger tu pedido.</li>
+          <li>Coordinaremos por WhatsApp agencia, destinatario y horario.</li>
+          <li>Se envia solo despues de confirmar el pago.</li>
+        </ul>
+      </div>
     </div>
     <div class="purchase-step-actions">
       <button type="button" class="purchase-next-btn" id="btnContinuarInteligente" onclick="continuarPedidoInteligente()">Continuar con entrega</button>
@@ -4722,6 +4778,16 @@
           📞 Coordinaremos contigo la agencia y los detalles por WhatsApp.
         </div>
       </div>
+    </div>
+    <div class="national-shipping-notice" id="nationalShippingNotice" aria-hidden="true">
+      <div class="national-shipping-title" data-national-title>Condiciones para envio nacional</div>
+      <div class="national-shipping-summary" data-national-summary>S/ 10.00 cubre solo el traslado de ASWA hasta la agencia en Tarapoto.</div>
+      <ul class="national-shipping-list" data-national-conditions>
+        <li>ASWA cobra S/ 10.00 por llevar tu pedido hasta una agencia de transporte.</li>
+        <li>El flete desde la agencia hasta tu ciudad no esta incluido; lo pagas directamente al recoger.</li>
+        <li>Coordinaremos por WhatsApp la agencia disponible, datos del destinatario y horario de entrega.</li>
+        <li>El pedido nacional se prepara y envia solo despues de confirmar el pago.</li>
+      </ul>
     </div>
     <div class="purchase-step-actions">
       <button type="button" class="purchase-next-btn" onclick="continuarCompraPaso('payment')">Continuar con pago</button>
@@ -9276,20 +9342,25 @@ function actualizarDireccionRecojoUI(textoZona = '') {
   }
 
   const esRecojo = textoZona ? textoZona.includes('recojo') : zonaSeleccionadaEsRecojo();
+  const esNacional = /nacional|agencia/i.test(textoZona || '');
   const input = document.getElementById('direccion');
   const label = input?.closest('.fld')?.querySelector('label');
   const help = document.getElementById('direccionPedidoHelp');
-  if (label) label.textContent = esRecojo ? 'Referencia para recojo (opcional)' : 'Direccion de entrega';
+  if (label) label.textContent = esRecojo
+    ? 'Referencia para recojo (opcional)'
+    : (esNacional ? 'Ciudad, agencia y datos de envio nacional' : 'Direccion de entrega');
   if (input) {
     input.required = !esRecojo;
     input.placeholder = esRecojo
       ? 'Opcional: nombre de quien recoge o referencia'
-      : 'Calle, numero, referencia';
+      : (esNacional ? 'Ciudad, agencia preferida, DNI y nombre de quien recoge' : 'Calle, numero, referencia');
   }
   if (help) {
     help.textContent = esRecojo
       ? 'Para recojo no pedimos direccion. Guardaremos el cliente con celular y nombre; el pedido queda como Recojo en local.'
-      : 'No aparece tu direccion? Puedes escribirla manualmente.';
+      : (esNacional
+          ? 'Para envio nacional escribe ciudad, agencia preferida y datos de quien recogera. El flete destino se paga en agencia.'
+          : 'No aparece tu direccion? Puedes escribirla manualmente.');
   }
 }
 
@@ -9300,6 +9371,8 @@ function actualizarTotalInicio() {
   const subtotal = Math.max(0, +(Number(ST.raw || 0) - Number(ST.delivery || 0)).toFixed(2));
   const zonaEl = document.getElementById('zona');
   const zonaElegida = !!(zonaEl && zonaEl.value !== '');
+  const zonaTexto = zonaEl?.options[zonaEl.selectedIndex]?.text || '';
+  const esNacional = /nacional|agencia/i.test(zonaTexto);
   const promoGratis = promoSinDeliveryActiva();
   const delivery = Number(ST.delivery || 0);
 
@@ -9308,6 +9381,7 @@ function actualizarTotalInicio() {
   const deliveryLabel = document.getElementById('inicioDeliveryLabel');
   const totalLinea = document.getElementById('inicioTotalLinea');
   const nota = document.getElementById('inicioTotalNota');
+  const nacionalInicio = document.getElementById('nationalShippingNoticeInicio');
 
   totalEl.textContent = 'S/ ' + Number(ST.final || 0).toFixed(2);
   if (subtotalEl) subtotalEl.textContent = 'S/ ' + subtotal.toFixed(2);
@@ -9322,11 +9396,17 @@ function actualizarTotalInicio() {
   if (nota) {
     if (promoGratis) {
       nota.textContent = 'Promo San Juan: no se cobra delivery. El total mostrado ya es el costo real antes de registrar datos.';
+    } else if (esNacional) {
+      nota.textContent = 'Envio nacional: el total incluye S/ 10.00 hasta agencia. El flete a tu ciudad se paga al recoger.';
     } else if (zonaElegida) {
       nota.textContent = 'Total con delivery incluido. Ahora puedes registrar tus datos sin adivinar el costo.';
     } else {
       nota.textContent = 'Elige una zona para ver el total completo con delivery antes de registrar datos.';
     }
+  }
+  if (nacionalInicio) {
+    nacionalInicio.style.display = esNacional ? 'block' : 'none';
+    nacionalInicio.setAttribute('aria-hidden', esNacional ? 'false' : 'true');
   }
 }
 
@@ -17015,7 +17095,7 @@ async function admRechazarYape(pedidoId, telefono, nombre) {
    PWA — INSTALAR COMO APP
 ══════════════════════════════════════ */
 let _pwaPrompt = null;
-const ASWA_PWA_CACHE_NAME = 'aswa-v48';
+const ASWA_PWA_CACHE_NAME = 'aswa-v49';
 const ASWA_PLAY_STORE_URL = '';
 
 function pwaEsStandalone() {
@@ -20468,7 +20548,7 @@ function registrarSW() {
   if (!('serviceWorker' in navigator)) return;
 
   const SW_CODE = `
-const CACHE_NAME = 'aswa-v48';
+const CACHE_NAME = 'aswa-v49';
 const VERSION_PARAM = 'aswa_sw';
 const SHELL = [
   './',
@@ -20571,7 +20651,7 @@ self.addEventListener('message', e => {
 });
 `;
 
-  return pwaLimpiarSWLegacy().then(() => navigator.serviceWorker.register('./sw.js?v=48', { scope: './' }))
+  return pwaLimpiarSWLegacy().then(() => navigator.serviceWorker.register('./sw.js?v=49', { scope: './' }))
     .then(reg => {
       console.log('[SW] Registrado:', reg.scope);
 
