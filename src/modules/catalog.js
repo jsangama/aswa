@@ -3,11 +3,11 @@ export const PRODUCT_CATALOG = [
   { id: 'p3l', name: 'Chicha ASWA 3 litros', shortName: '3 litros', price: 13, group: 'catalogo' },
   { id: 'p4l', name: 'Chicha ASWA 4 litros', shortName: '4 litros', price: 15, group: 'catalogo' },
   { id: 'sjBidonPublic', name: 'Bidon ASWA 20L', shortName: 'Bidon 20L', price: 60, group: 'catalogo' },
-  { id: 'sjBidon', name: 'Bidon escolar sanjuanero 20L', shortName: 'Bidon escolar', price: 50, group: 'escolar' },
-  { id: 'sjChicha04', name: 'ASWA escolar sanjuanera 400 ml', shortName: 'Chicha 400 ml', price: 2.5, group: 'escolar' },
-  { id: 'sjJuane', name: 'Solo juane escolar', shortName: 'Juane escolar', price: 2.5, group: 'escolar' },
-  { id: 'sjCombo', name: 'Combo chicha 400 ml + juane escolar', shortName: 'Combo escolar', price: 4, group: 'escolar' },
-  { id: 'sjJuaneFamiliar', name: 'Juane institucional', shortName: 'Juane institucional', price: 25, group: 'institucional' },
+  { id: 'sjBidon', name: 'Pedido para Kioscos - Chicha ASWA 20L', shortName: 'Pedido para Kioscos', price: 50, group: 'escolar' },
+  { id: 'sjChicha04', name: 'Chicha ASWA 400 ml', shortName: 'Chicha 400 ml', price: 2.5, group: 'escolar' },
+  { id: 'sjJuane', name: 'Pack 24 Chichas ASWA', shortName: 'Pack 24 Chichas', price: 60, group: 'escolar' },
+  { id: 'sjCombo', name: 'Pack 12 Chichas ASWA', shortName: 'Pack 12 Chichas', price: 30, group: 'escolar' },
+  { id: 'sjJuaneFamiliar', name: 'Pedido Institucional de Chicha ASWA', shortName: 'Pedido Institucional', price: 0, group: 'institucional' },
 ];
 
 export function createCatalogService({ products = PRODUCT_CATALOG } = {}) {

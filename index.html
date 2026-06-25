@@ -4391,13 +4391,14 @@
     </div>
 
     <div class="san-juan-card" id="sanJuanEscolar">
-      <span class="sj-badge">San Juan 2026 - colegios</span>
-      <div class="sj-title">Promo escolar sanjuanera</div>
-      <div class="sj-sub">Pedidos por seccion para jardines, primarias y colegios de Banda de Shilcayo, Morales y Tarapoto. Reserva con pago anticipado por billeteras o transferencia.</div>
+      <span class="sj-badge">Campana permanente para colegios y kioscos</span>
+      <div class="sj-title">🏫 Chicha para Refrigerios Escolares</div>
+      <div class="sj-sub">Chicha ASWA elaborada con maiz seleccionado. Ideal para refrigerios escolares, kioscos, eventos educativos y actividades institucionales. Disponible por unidad, paquetes y pedidos al por mayor.</div>
       <div class="sj-media">
-        <img src="assets/images/products/optimized/san-juan-bidon-20l.png" alt="Bidon escolar san juanero 20 litros">
-        <img src="assets/images/products/optimized/san-juan-combo-escolar.jpg" alt="Combo escolar San Juan con juane y chicha">
+        <img src="assets/images/products/optimized/san-juan-bidon-20l.png" alt="Chicha ASWA para kioscos escolares">
+        <img src="assets/images/products/optimized/san-juan-chicha-400ml.jpg" alt="Chicha ASWA 400 ml para refrigerios escolares">
       </div>
+      <button type="button" class="purchase-next-btn" onclick="solicitarChichaColegio()">Solicitar Chicha para mi Colegio</button>
       <div class="school-grid">
         <input type="text" id="colegioNombre" class="inp" maxlength="90" placeholder="Nombre de la institucion. Ej: Jardin de ninos 301 Tarapoto">
         <select id="colegioTipo" class="inp" onchange="actualizarNivelEscolarUI()">
@@ -4405,7 +4406,7 @@
           <option value="jardin">Jardin / inicial</option>
           <option value="primaria">Primaria</option>
           <option value="colegio">Colegio / secundaria</option>
-          <option value="cafetin">Cafetin escolar</option>
+          <option value="cafetin">Kiosco escolar</option>
           <option value="minimarket">Minimarket</option>
         </select>
         <select id="colegioGrado" class="inp">
@@ -4421,7 +4422,7 @@
         </select>
       </div>
       <div class="school-section-label">Bidon 20 litros - envase retornable</div>
-      <div class="school-section-help">Estas opciones pertenecen solo al bidon de 20 litros: puedes pedir recarga con bidon vacio o agregar un bidon nuevo por S/ 20 adicionales.</div>
+      <div class="school-section-help">Pedido para kioscos: puedes pedir recarga con bidon vacio o agregar un bidon nuevo retornable por S/ 20 adicionales.</div>
       <div class="bidon-price-options" aria-label="Opciones de precio para bidon escolar">
         <label class="bidon-price-option is-active" id="bidonOptRecarga">
           <input type="radio" name="colegioBidonModo" id="colegioBidonRecarga" value="recarga" checked onchange="actualizarPromoEscolarUI()">
@@ -4444,7 +4445,7 @@
       <div class="pc school-product" id="c-sjBidon">
         <img src="assets/images/products/optimized/san-juan-bidon-20l.png" alt="Bidon 20 litros" class="pimg">
         <div style="flex:1">
-          <div class="pn">Bidon escolar sanjuanero</div>
+          <div class="pn">Pedido para Kioscos</div>
           <div class="pd" id="sjBidonDesc">Chicha ASWA 20 litros. Precio sin bidon/envase nuevo.</div>
           <div class="pp" id="pr-sjBidon">S/ 50.00</div>
         </div>
@@ -4455,20 +4456,20 @@
         </div>
       </div>
       <div class="school-section-label">Presentaciones por seccion</div>
-      <div class="school-section-help">Promocion escolar tambien disponible para cafetines y minimarkets. Cada presentacion tiene minimo 15 unidades, excepto el bidon 20L.</div>
+      <div class="school-section-help">Opciones para colegios, kioscos escolares y eventos educativos. La chicha 400 ml inicia desde 15 unidades; los packs ayudan a pedir mas rapido.</div>
       <div class="pc school-product school-qty-card" id="c-sjChicha04">
         <img src="assets/images/products/optimized/san-juan-chicha-400ml.jpg" alt="Chicha escolar 400 ml" class="pimg">
         <div class="school-product-main">
-          <div class="pn">ASWA escolar sanjuanera</div>
-          <div class="pd">Minimo 15 unidades por presentacion. Chicha 400 ml para la seccion</div>
+          <div class="pn">Chicha ASWA 400 ml</div>
+          <div class="pd">Minimo 15 unidades. Ideal para loncheras, aulas y refrigerios.</div>
           <div class="pp" id="pr-sjChicha04">S/ 2.50</div>
         </div>
         <div class="qw">
           <button class="qb qminus" onclick="qty('sjChicha04',-1)">-</button>
-          <input class="qn qinput" id="q-sjChicha04" type="number" min="0" max="999" inputmode="numeric" value="0" aria-label="Cantidad ASWA escolar sanjuanera" oninput="setQtyDirect('sjChicha04',this.value)" onfocus="this.select()">
+          <input class="qn qinput" id="q-sjChicha04" type="number" min="0" max="999" inputmode="numeric" value="0" aria-label="Cantidad Chicha ASWA 400 ml" oninput="setQtyDirect('sjChicha04',this.value)" onfocus="this.select()">
           <button class="qb qplus" onclick="qty('sjChicha04',+1)">+</button>
         </div>
-        <div class="school-qty-presets" aria-label="Cantidades rapidas ASWA escolar sanjuanera">
+        <div class="school-qty-presets" aria-label="Cantidades rapidas Chicha ASWA 400 ml">
           <button type="button" class="school-qty-preset" onclick="setQtyPreset('sjChicha04',15)">15</button>
           <button type="button" class="school-qty-preset" onclick="setQtyPreset('sjChicha04',20)">20</button>
           <button type="button" class="school-qty-preset" onclick="setQtyPreset('sjChicha04',25)">25</button>
@@ -4478,18 +4479,18 @@
         </div>
       </div>
       <div class="pc school-product school-qty-card" id="c-sjCombo">
-        <img src="assets/images/products/optimized/san-juan-combo-escolar.jpg" alt="Combo escolar San Juan" class="pimg">
+        <img src="assets/images/products/optimized/san-juan-chicha-400ml.jpg" alt="Pack 12 Chichas ASWA" class="pimg">
         <div class="school-product-main">
-          <div class="pn">Combo escolar sanjuanero</div>
-          <div class="pd">Minimo 15 unidades por presentacion. Juane + chicha 400 ml para la seccion</div>
-          <div class="pp" id="pr-sjCombo">S/ 4.00</div>
+          <div class="pn">Pack 12 Chichas ASWA</div>
+          <div class="pd">12 botellas de Chicha ASWA 400 ml para refrigerios escolares.</div>
+          <div class="pp" id="pr-sjCombo">S/ 30.00</div>
         </div>
         <div class="qw">
           <button class="qb qminus" onclick="qty('sjCombo',-1)">-</button>
-          <input class="qn qinput" id="q-sjCombo" type="number" min="0" max="999" inputmode="numeric" value="0" aria-label="Cantidad combo escolar sanjuanero" oninput="setQtyDirect('sjCombo',this.value)" onfocus="this.select()">
+          <input class="qn qinput" id="q-sjCombo" type="number" min="0" max="999" inputmode="numeric" value="0" aria-label="Cantidad Pack 12 Chichas ASWA" oninput="setQtyDirect('sjCombo',this.value)" onfocus="this.select()">
           <button class="qb qplus" onclick="qty('sjCombo',+1)">+</button>
         </div>
-        <div class="school-qty-presets" aria-label="Cantidades rapidas combo escolar sanjuanero">
+        <div class="school-qty-presets" aria-label="Cantidades rapidas Pack 12 Chichas ASWA">
           <button type="button" class="school-qty-preset" onclick="setQtyPreset('sjCombo',15)">15</button>
           <button type="button" class="school-qty-preset" onclick="setQtyPreset('sjCombo',20)">20</button>
           <button type="button" class="school-qty-preset" onclick="setQtyPreset('sjCombo',25)">25</button>
@@ -4499,18 +4500,18 @@
         </div>
       </div>
       <div class="pc school-product school-qty-card" id="c-sjJuane">
-        <img src="assets/images/products/optimized/san-juan-juane-escolar.jpg" alt="Solo juane escolar" class="pimg">
+        <img src="assets/images/products/optimized/san-juan-chicha-400ml.jpg" alt="Pack 24 Chichas ASWA" class="pimg">
         <div class="school-product-main">
-          <div class="pn">Solo juane escolar</div>
-          <div class="pd">Minimo 15 unidades por presentacion. Juane para la seccion</div>
-          <div class="pp" id="pr-sjJuane">S/ 2.50</div>
+          <div class="pn">Pack 24 Chichas ASWA</div>
+          <div class="pd">24 botellas de Chicha ASWA 400 ml para kioscos o actividades educativas.</div>
+          <div class="pp" id="pr-sjJuane">S/ 60.00</div>
         </div>
         <div class="qw">
           <button class="qb qminus" onclick="qty('sjJuane',-1)">-</button>
-          <input class="qn qinput" id="q-sjJuane" type="number" min="0" max="999" inputmode="numeric" value="0" aria-label="Cantidad solo juane escolar" oninput="setQtyDirect('sjJuane',this.value)" onfocus="this.select()">
+          <input class="qn qinput" id="q-sjJuane" type="number" min="0" max="999" inputmode="numeric" value="0" aria-label="Cantidad Pack 24 Chichas ASWA" oninput="setQtyDirect('sjJuane',this.value)" onfocus="this.select()">
           <button class="qb qplus" onclick="qty('sjJuane',+1)">+</button>
         </div>
-        <div class="school-qty-presets" aria-label="Cantidades rapidas solo juane escolar">
+        <div class="school-qty-presets" aria-label="Cantidades rapidas Pack 24 Chichas ASWA">
           <button type="button" class="school-qty-preset" onclick="setQtyPreset('sjJuane',15)">15</button>
           <button type="button" class="school-qty-preset" onclick="setQtyPreset('sjJuane',20)">20</button>
           <button type="button" class="school-qty-preset" onclick="setQtyPreset('sjJuane',25)">25</button>
@@ -4519,38 +4520,33 @@
           <button type="button" class="school-qty-preset" onclick="setQtyPreset('sjJuane',40)">40</button>
         </div>
       </div>
-      <div class="school-note school-minimum-note"><strong>Minimo escolar:</strong> 15 unidades por presentacion. Puedes elegir solo chicha ASWA 400 ml, solo juane o combo. El bidon 20L no tiene minimo.</div>
+      <div class="school-note school-minimum-note"><strong>Pedido escolar:</strong> Chicha ASWA 400 ml desde 15 unidades. Tambien puedes elegir packs de 12, packs de 24 o coordinar pedidos al por mayor para kioscos e instituciones.</div>
       <details class="school-more-details">
-        <summary>Ver condiciones de la promo San Juan</summary>
-        <div class="school-note">Pedido escolar para centros educativos, cafetines y minimarkets. Se atiende durante junio, excepto el 24 de junio. No se cobra delivery en esta promocion. Solo con reserva y pago anticipado: Yape, Plin, Agora, BIM o transferencia bancaria. No aplica efectivo.</div>
-        <div class="school-note">
-          <strong>Juane familiar institucional</strong><br>
-          Para bancos, empresas, oficinas y grupos de trabajadores. Entrega unica por reserva el 22 de junio, dos dias antes de San Juan. No se cobra delivery en esta promocion.
-        </div>
+        <summary>Ver condiciones para colegios y kioscos</summary>
+        <div class="school-note">Campana permanente para centros educativos, kioscos escolares, eventos educativos y actividades institucionales. Los pedidos se coordinan segun cantidad, zona y disponibilidad de entrega. El delivery se calcula segun la zona seleccionada.</div>
+        <div class="school-note"><strong>Pedido Institucional</strong><br>Para colegios, promotores, municipios, academias, eventos y empresas que desean cotizar chicha por volumen.</div>
       </details>
       <div class="school-grid" style="margin-top:10px">
         <input type="text" id="instNombre" class="inp" maxlength="90" placeholder="Institucion, empresa, banco u oficina">
         <select id="instTipo" class="inp">
           <option value="">Tipo de grupo</option>
-          <option value="Banco">Banco</option>
-          <option value="Empresa">Empresa</option>
-          <option value="Oficina">Oficina</option>
-          <option value="Trabajadores">Grupo de trabajadores</option>
+          <option value="Colegio">Colegio</option>
+          <option value="Kiosco escolar">Kiosco escolar</option>
+          <option value="Evento educativo">Evento educativo</option>
+          <option value="Institucion">Institucion</option>
           <option value="Otro">Otro</option>
         </select>
-        <input type="text" id="instArea" class="inp" maxlength="70" placeholder="Area, sede o grupo. Ej: Agencia Morales">
+        <input type="text" id="instArea" class="inp" maxlength="70" placeholder="Area, sede o grupo. Ej: Primaria turno manana">
       </div>
       <div class="pc school-product" id="c-sjJuaneFamiliar">
-        <img src="assets/images/products/optimized/san-juan-juane-institucional.jpg" alt="Juane familiar institucional" class="pimg">
+        <img src="assets/images/products/optimized/san-juan-bidon-20l.png" alt="Pedido institucional de Chicha ASWA" class="pimg">
         <div style="flex:1">
-          <div class="pn">Juane institucional</div>
-          <div class="pd">Juane institucional con frejol y aji.</div>
-          <div class="pp" id="pr-sjJuaneFamiliar">S/ 25.00</div>
+          <div class="pn">Pedido Institucional</div>
+          <div class="pd">Cotiza Chicha ASWA por mayor para colegios, kioscos y eventos educativos.</div>
+          <div class="pp" id="pr-sjJuaneFamiliar">Cotizar</div>
         </div>
         <div class="qw">
-          <button class="qb qminus" onclick="qty('sjJuaneFamiliar',-1)">-</button>
-          <span class="qn" id="q-sjJuaneFamiliar">0</span>
-          <button class="qb qplus" onclick="qty('sjJuaneFamiliar',+1)">+</button>
+          <button type="button" class="qb qplus" onclick="solicitarChichaColegio()" aria-label="Solicitar Pedido Institucional">+</button>
         </div>
       </div>
     </div>
@@ -7213,7 +7209,7 @@ function esperarFB() {
 /* ── ESTADO GLOBAL ── */
 const ST = {
   cart: { p2l: 0, p3l: 0, p4l: 0, sjBidonPublic: 0, sjBidon: 0, sjChicha04: 0, sjCombo: 0, sjJuane: 0, sjJuaneFamiliar: 0 },
-  precio: { p2l: 9, p3l: 13, p4l: 15, sjBidonPublic: 60, sjBidon: 50, sjChicha04: 2.5, sjCombo: 4, sjJuane: 2.5, sjJuaneFamiliar: 25 },
+  precio: { p2l: 9, p3l: 13, p4l: 15, sjBidonPublic: 60, sjBidon: 50, sjChicha04: 2.5, sjCombo: 30, sjJuane: 60, sjJuaneFamiliar: 0 },
   pago: 'Efectivo',
   raw: 0,
   final: 0,
@@ -7239,13 +7235,13 @@ const PRODUCT_META = {
   p3l: { nombre:'Chicha ASWA 3 litros', corto:'3 litros', regular:true },
   p4l: { nombre:'Chicha ASWA 4 litros', corto:'4 litros', regular:true },
   sjBidonPublic: { nombre:'Bidon ASWA 20L', corto:'Bidon ASWA 20L', sanJuanPublico:true },
-  sjBidon: { nombre:'Bidon escolar sanjuanero 20L', corto:'Bidon San Juan 20L', escolar:true },
-  sjChicha04: { nombre:'ASWA escolar sanjuanera 0.4L', corto:'ASWA escolar 0.4L', escolar:true },
-  sjCombo: { nombre:'Combo chicha 400 ml + juane escolar', corto:'Combo escolar', escolar:true },
-  sjJuane: { nombre:'Solo juane escolar', corto:'Juane escolar', escolar:true },
-  sjJuaneFamiliar: { nombre:'Juane institucional', corto:'Juane institucional', sanJuanInstitucional:true }
+  sjBidon: { nombre:'Pedido para Kioscos - Chicha ASWA 20L', corto:'Pedido para Kioscos', escolar:true },
+  sjChicha04: { nombre:'Chicha ASWA 400 ml', corto:'Chicha 400 ml', escolar:true },
+  sjCombo: { nombre:'Pack 12 Chichas ASWA', corto:'Pack 12 Chichas', escolar:true },
+  sjJuane: { nombre:'Pack 24 Chichas ASWA', corto:'Pack 24 Chichas', escolar:true },
+  sjJuaneFamiliar: { nombre:'Pedido Institucional de Chicha ASWA', corto:'Pedido Institucional', institucionalChicha:true }
 };
-const SCHOOL_MINIMUM_QTY_IDS = ['sjChicha04', 'sjCombo', 'sjJuane'];
+const SCHOOL_MINIMUM_QTY_IDS = ['sjChicha04'];
 const PRODUCT_IDS = Object.keys(PRODUCT_META);
 function aswaCartModule() {
   return window.ASWA?.modules?.cart || null;
@@ -7260,9 +7256,9 @@ const PRODUCT_IMAGE_SRC = {
   sjBidonPublic: 'assets/images/products/optimized/san-juan-bidon-20l.png',
   sjBidon: 'assets/images/products/optimized/san-juan-bidon-20l.png',
   sjChicha04: 'assets/images/products/optimized/san-juan-chicha-400ml.jpg',
-  sjCombo: 'assets/images/products/optimized/san-juan-combo-escolar.jpg',
-  sjJuane: 'assets/images/products/optimized/san-juan-juane-escolar.jpg',
-  sjJuaneFamiliar: 'assets/images/embedded/embedded-7b1dc49e9921.jpg'
+  sjCombo: 'assets/images/products/optimized/san-juan-chicha-400ml.jpg',
+  sjJuane: 'assets/images/products/optimized/san-juan-chicha-400ml.jpg',
+  sjJuaneFamiliar: 'assets/images/products/optimized/san-juan-bidon-20l.png'
 };
 const SAN_JUAN_ESCOLAR_INICIO = '2026-06-01';
 const SAN_JUAN_ESCOLAR_FIN = '2026-06-30';
@@ -7314,7 +7310,7 @@ function promoEscolarActiva() {
 }
 
 function promoInstitucionalSanJuanActiva() {
-  return Number(ST.cart.sjJuaneFamiliar || 0) > 0;
+  return false;
 }
 
 function promoSanJuanActiva() {
@@ -7322,7 +7318,7 @@ function promoSanJuanActiva() {
 }
 
 function promoSinDeliveryActiva() {
-  return promoSanJuanActiva();
+  return false;
 }
 
 function maxFechaISO(a, b) {
@@ -7333,16 +7329,6 @@ function aplicarLimitesFechaSanJuan() {
   const fechaReserva = document.getElementById('reservaFecha');
   if (!fechaReserva) return;
   const hoy = reservaFechaLimaISO();
-  if (promoInstitucionalSanJuanActiva()) {
-    fechaReserva.min = maxFechaISO(hoy, SAN_JUAN_INSTITUCIONAL_FECHA);
-    fechaReserva.max = SAN_JUAN_INSTITUCIONAL_FECHA;
-    return;
-  }
-  if (promoEscolarActiva()) {
-    fechaReserva.min = maxFechaISO(hoy, SAN_JUAN_ESCOLAR_INICIO);
-    fechaReserva.max = SAN_JUAN_ESCOLAR_FIN;
-    return;
-  }
   fechaReserva.min = hoy;
   fechaReserva.removeAttribute('max');
 }
@@ -7369,7 +7355,7 @@ function actualizarNivelEscolarUI() {
     if (seccion) seccion.placeholder = 'Seccion alfabetica. Ej: A hasta J';
   } else if (tipo === 'cafetin' || tipo === 'minimarket') {
     opts.push({ value:'no aplica', text:'No aplica' });
-    if (seccion) seccion.placeholder = 'Area o referencia. Ej: Cafetin principal';
+    if (seccion) seccion.placeholder = 'Area o referencia. Ej: Kiosco principal';
   } else if (seccion) {
     seccion.placeholder = 'Seccion. Ej: A, B, C o Los Conejitos';
   }
@@ -7406,26 +7392,24 @@ function actualizarPromoEscolarUI() {
   document.getElementById('bidonOptIncluido')?.classList.toggle('is-active', !conBidon);
   const reserva = document.getElementById('reservaActiva');
   aplicarLimitesFechaSanJuan();
-  if (promoSanJuanActiva() && reserva && !reserva.checked) {
+  if (promoEscolarActiva() && reserva && !reserva.checked) {
     reserva.checked = true;
     actualizarReservaUI();
   }
-  if (promoSanJuanActiva() && ST.pago === 'Efectivo') setPago('Yape');
+  if (promoEscolarActiva() && ST.pago === 'Efectivo') setPago('Yape');
   calcTotal();
 }
 
 function validarMinimoPromoEscolar(mostrarErrores = false) {
   const productosMinimos = [
-    { id:'sjCombo', nombre:'combo escolar con juane y chicha' },
-    { id:'sjChicha04', nombre:'chicha escolar 400 ml' },
-    { id:'sjJuane', nombre:'juane escolar' }
+    { id:'sjChicha04', nombre:'Chicha ASWA 400 ml' }
   ];
   const productoMenorAlMinimo = productosMinimos.find(p => {
     const qty = Number(ST.cart[p.id] || 0);
     return qty > 0 && qty < 15;
   });
   if (!productoMenorAlMinimo) return { ok:true };
-  const msg = 'Pedido minimo escolar: ' + productoMenorAlMinimo.nombre + ' requiere 15 unidades o mas. El bidon 20 litros no tiene minimo.';
+  const msg = 'Pedido minimo escolar: ' + productoMenorAlMinimo.nombre + ' requiere 15 unidades o mas. Los packs y pedidos para kioscos se pueden coordinar por separado.';
   if (mostrarErrores) {
     mostrarPasoCompra('products');
     const card = document.getElementById('c-' + productoMenorAlMinimo.id);
@@ -7465,9 +7449,9 @@ function obtenerPromoEscolar(mostrarErrores = false) {
     if (mostrarErrores) return { ...validarMinimoPromoEscolar(true), activo:true };
     return { ...minimoEscolar, activo:true };
   }
-  if (ST.pago === 'Efectivo') return fail('La promo escolar San Juan solo acepta pago anticipado. Cambia el metodo de pago.', 'colegioNombre');
-  if (!document.getElementById('reservaActiva')?.checked) return fail('La promo escolar San Juan debe reservarse con fecha y hora.', 'reservaActiva');
-  const tipoLabel = { jardin:'Jardin / inicial', primaria:'Primaria', colegio:'Colegio / secundaria', cafetin:'Cafetin escolar', minimarket:'Minimarket' }[tipo] || tipo;
+  if (ST.pago === 'Efectivo') return fail('Los pedidos escolares de Chicha ASWA se confirman con pago anticipado. Cambia el metodo de pago.', 'colegioNombre');
+  if (!document.getElementById('reservaActiva')?.checked) return fail('El pedido escolar de Chicha ASWA debe reservarse con fecha y hora.', 'reservaActiva');
+  const tipoLabel = { jardin:'Jardin / inicial', primaria:'Primaria', colegio:'Colegio / secundaria', cafetin:'Kiosco escolar', minimarket:'Minimarket' }[tipo] || tipo;
   const seccionTexto = esCanalVenta
     ? tipoLabel + ' - ' + alumnos + ' unidades aprox.'
     : tipoLabel + ' - ' + grado + ' - seccion ' + seccion + ' - ' + alumnos + ' alumnos aprox.';
@@ -7483,7 +7467,7 @@ function obtenerPromoEscolar(mostrarErrores = false) {
     distrito,
     con_bidon_vacio: conBidon,
     extra_bidon: conBidon ? 0 : 20,
-    campania:'san_juan_escolar_2026',
+    campania:'chicha_refrigerios_escolares',
     texto: colegio + ' - ' + seccionTexto + ' (' + distrito + ')'
   };
 }
@@ -7500,8 +7484,8 @@ function obtenerPromoInstitucionalSanJuan(mostrarErrores = false) {
   if (!institucion) return fail('Ingresa el nombre del banco, empresa, oficina o institucion.', 'instNombre');
   if (!tipo) return fail('Selecciona el tipo de grupo institucional.', 'instTipo');
   if (!area) return fail('Ingresa el area, sede o grupo de trabajadores.', 'instArea');
-  if (ST.pago === 'Efectivo') return fail('El juane familiar institucional solo acepta pago anticipado. Cambia el metodo de pago.', 'instNombre');
-  if (!document.getElementById('reservaActiva')?.checked) return fail('El juane familiar institucional debe reservarse con fecha y hora.', 'reservaActiva');
+  if (ST.pago === 'Efectivo') return fail('El pedido institucional de Chicha ASWA solo acepta pago anticipado. Cambia el metodo de pago.', 'instNombre');
+  if (!document.getElementById('reservaActiva')?.checked) return fail('El pedido institucional de Chicha ASWA debe reservarse con fecha y hora.', 'reservaActiva');
   return {
     ok:true,
     activo:true,
@@ -7646,7 +7630,7 @@ function dudaCompraAgregarMas() {
   guiaSoloPedidoActiva = false;
   ocultarDudaCompraPrompt();
   document.getElementById('productosSection')?.scrollIntoView({ behavior:'smooth', block:'start' });
-  tst('Puedes agregar mas presentaciones: 2L, 3L, 4L, bidon o combos San Juan.', 3200);
+  tst('Puedes agregar mas presentaciones: 2L, 3L, 4L, bidon, packs escolares o pedidos para kioscos.', 3200);
 }
 
 function dudaCompraSoloEso() {
@@ -8111,7 +8095,7 @@ function toggleMasBilleteras(force) {
 
 function setPago(metodo) {
   if (metodo === 'Efectivo' && pedidoEspecialRequierePagoDigital()) {
-    tst('Reservas, regalos y bidon San Juanero solo aceptan Yape, Plin, Agora, BIM o transferencia.', 3600);
+    tst('Reservas, regalos y pedidos escolares solo aceptan Yape, Plin, Agora, BIM o transferencia.', 3600);
     metodo = 'Yape';
   }
   ST.pago = metodo;
@@ -8241,6 +8225,12 @@ function abrirWhatsAppComprobante(nombre, telefono, pid) {
   window.open('https://wa.me/' + getWA1() + '?text=' + encodeURIComponent(texto), '_blank');
 }
 
+function solicitarChichaColegio() {
+  const texto = 'Hola, deseo cotizar Chicha ASWA para refrigerios escolares de mi institución educativa o kiosco.';
+  window.open('https://wa.me/' + getWA1() + '?text=' + encodeURIComponent(texto), '_blank');
+}
+window.solicitarChichaColegio = solicitarChichaColegio;
+
 
 function mostrarNotaNacional(sel) {
   const nota = document.getElementById('notaNacional');
@@ -8316,16 +8306,16 @@ const CATALOGO_PUBLICO_FORZADO = {
     foto: 'assets/images/products/optimized/galon familiar de 4 litros.jpg'
   },
   sjCombo: {
-    nombre: 'Combo chicha 400 ml + juane escolar',
-    desc: 'Promo escolar para colegios, cafetines y minimarkets.',
-    precio: 4,
-    foto: 'assets/images/products/optimized/san-juan-combo-escolar.jpg'
+    nombre: 'Pack 12 Chichas ASWA',
+    desc: '12 botellas de Chicha ASWA 400 ml para refrigerios escolares.',
+    precio: 30,
+    foto: 'assets/images/products/optimized/san-juan-chicha-400ml.jpg'
   },
   sjJuaneFamiliar: {
-    nombre: 'Juane institucional',
-    desc: 'Juane institucional con frejol y aji.',
-    precio: 25,
-    foto: 'assets/images/products/optimized/san-juan-juane-institucional.jpg'
+    nombre: 'Pedido Institucional de Chicha ASWA',
+    desc: 'Cotizacion por volumen para colegios, kioscos y eventos educativos.',
+    precio: 0,
+    foto: 'assets/images/products/optimized/san-juan-bidon-20l.png'
   }
 };
 const CATALOGO_DEFAULT = [
@@ -8379,8 +8369,8 @@ const CATALOGO_DEFAULT = [
   },
   {
     id: 'sjBidon',
-    nombre: 'Bidon escolar sanjuanero 20L',
-    desc: 'Promo escolar con pago anticipado.',
+    nombre: 'Pedido para Kioscos - Chicha ASWA 20L',
+    desc: 'Chicha ASWA 20 litros para kioscos escolares.',
     precio: 50,
     stock: 99,
     activo: true,
@@ -8391,7 +8381,7 @@ const CATALOGO_DEFAULT = [
   },
   {
     id: 'sjChicha04',
-    nombre: 'ASWA escolar sanjuanera 0.4L',
+    nombre: 'Chicha ASWA 400 ml',
     desc: 'Presentacion escolar de 400 ml por seccion.',
     precio: 2.5,
     stock: 99,
@@ -8403,36 +8393,36 @@ const CATALOGO_DEFAULT = [
   },
   {
     id: 'sjCombo',
-    nombre: 'Combo chicha 400 ml + juane escolar',
-    desc: 'Promo escolar para colegios, cafetines y minimarkets.',
-    precio: 4,
+    nombre: 'Pack 12 Chichas ASWA',
+    desc: '12 botellas de Chicha ASWA 400 ml para refrigerios escolares.',
+    precio: 30,
     stock: 99,
     activo: true,
-    foto: 'assets/images/products/optimized/san-juan-combo-escolar.jpg',
+    foto: 'assets/images/products/optimized/san-juan-chicha-400ml.jpg',
     orden: 7,
     businessId: CATALOGO_BUSINESS_ID,
     business_id: CATALOGO_BUSINESS_ID_CANONICAL
   },
   {
     id: 'sjJuane',
-    nombre: 'Solo juane escolar',
-    desc: 'Juane para la seccion con entrega coordinada.',
-    precio: 2.5,
+    nombre: 'Pack 24 Chichas ASWA',
+    desc: '24 botellas de Chicha ASWA 400 ml para kioscos o actividades educativas.',
+    precio: 60,
     stock: 99,
     activo: true,
-    foto: 'assets/images/products/optimized/san-juan-juane-escolar.jpg',
+    foto: 'assets/images/products/optimized/san-juan-chicha-400ml.jpg',
     orden: 8,
     businessId: CATALOGO_BUSINESS_ID,
     business_id: CATALOGO_BUSINESS_ID_CANONICAL
   },
   {
     id: 'sjJuaneFamiliar',
-    nombre: 'Juane institucional',
-    desc: 'Juane institucional con frejol y aji.',
-    precio: 25,
+    nombre: 'Pedido Institucional de Chicha ASWA',
+    desc: 'Cotizacion por volumen para colegios, kioscos y eventos educativos.',
+    precio: 0,
     stock: 99,
     activo: true,
-    foto: 'assets/images/products/optimized/san-juan-juane-institucional.jpg',
+    foto: 'assets/images/products/optimized/san-juan-bidon-20l.png',
     orden: 9,
     businessId: CATALOGO_BUSINESS_ID,
     business_id: CATALOGO_BUSINESS_ID_CANONICAL
@@ -8450,10 +8440,10 @@ const CATALOGO_PRECIO_FORZADO = {
   p2l: 9,
   p3l: 13,
   p4l: 15,
-  sjCombo: 4,
-  sjJuaneFamiliar: 25,
+  sjCombo: 30,
+  sjJuaneFamiliar: 0,
   sjChicha04: 2.5,
-  sjJuane: 2.5,
+  sjJuane: 60,
   sjBidonPublic: 60,
   sjBidon: 50
 };
@@ -8673,14 +8663,14 @@ function actualizarReservaUI() {
   }
   const reserva = obtenerReservaPedido(false);
   const etiquetaReserva = promoEscolarActiva()
-    ? 'Promo escolar San Juan reservada: '
-    : (promoInstitucionalSanJuanActiva() ? 'Juane familiar institucional reservado: ' : 'Reserva programada: ');
-  const reglaSanJuan = promoInstitucionalSanJuanActiva()
-    ? '. Entrega unica el 22/06/2026, dos dias antes de San Juan.'
-    : (promoEscolarActiva() ? '. Disponible durante junio, excepto el 24/06/2026.' : '');
+    ? 'Chicha para Refrigerios Escolares reservada: '
+    : (promoInstitucionalSanJuanActiva() ? 'Pedido Institucional reservado: ' : 'Reserva programada: ');
+  const reglaEscolar = promoEscolarActiva()
+    ? '. Campana permanente sujeta a disponibilidad y zona de entrega.'
+    : '';
   info.classList.add(reserva.ok ? 'ok' : 'err');
   info.textContent = reserva.ok
-    ? etiquetaReserva + reserva.texto + reglaSanJuan + ' El pedido se activa con pago digital verificado.'
+    ? etiquetaReserva + reserva.texto + reglaEscolar + ' El pedido se activa con pago digital verificado.'
     : reserva.error;
 }
 
@@ -8697,17 +8687,6 @@ function obtenerReservaPedido(mostrarErrores = false) {
   if (!fecha) return fail('Selecciona la fecha de reserva.', 'reservaFecha');
   if (!hora) return fail('Selecciona la hora de entrega.', 'reservaHora');
   if (fecha < reservaFechaLimaISO()) return fail('La reserva no puede ser para una fecha pasada.', 'reservaFecha');
-  if (promoInstitucionalSanJuanActiva() && fecha !== SAN_JUAN_INSTITUCIONAL_FECHA) {
-    return fail('El juane familiar institucional se entrega solo el 22/06/2026, dos dias antes de San Juan.', 'reservaFecha');
-  }
-  if (promoEscolarActiva()) {
-    if (fecha < SAN_JUAN_ESCOLAR_INICIO || fecha > SAN_JUAN_ESCOLAR_FIN) {
-      return fail('Los pedidos escolares San Juan se programan durante junio de 2026.', 'reservaFecha');
-    }
-    if (fecha === SAN_JUAN_FECHA_BLOQUEADA) {
-      return fail('El 24 de junio no se programan pedidos escolares por la fiesta de San Juan.', 'reservaFecha');
-    }
-  }
   if (!reservaEnHorario(fecha, hora)) {
     return fail('Horario no disponible. Lunes a viernes 7:00 am - 5:30 pm y sabados 7:00 am - 2:00 pm.', 'reservaHora');
   }
@@ -9346,7 +9325,7 @@ function seleccionarZonaEstimador(nombre, precio) {
   actualizarTotalInicio();
   if (typeof tst === 'function') {
     const delivery = promoSinDeliveryActiva()
-      ? 'delivery S/ 0 por promo San Juan'
+      ? 'delivery S/ 0 por campana escolar'
       : (precio === 0 ? 'sin delivery' : 'delivery S/ ' + Number(precio).toFixed(2));
     tst('Total actualizado: ' + nombre + ' - ' + delivery, 2200);
   }
@@ -9460,7 +9439,7 @@ function actualizarTotalInicio() {
   if (totalLinea) totalLinea.textContent = totalTexto;
   if (fixedTotal) fixedTotal.textContent = totalTexto;
 
-  if (deliveryLabel) deliveryLabel.textContent = promoGratis ? 'Delivery promo San Juan' : 'Zona / delivery';
+  if (deliveryLabel) deliveryLabel.textContent = promoGratis ? 'Delivery campana escolar' : 'Zona / delivery';
   if (deliveryEl) {
     if (promoGratis) deliveryEl.textContent = 'S/ 0.00';
     else if (zonaElegida) deliveryEl.textContent = 'S/ ' + delivery.toFixed(2);
@@ -9468,7 +9447,7 @@ function actualizarTotalInicio() {
   }
   if (nota) {
     if (promoGratis) {
-      nota.textContent = 'Promo San Juan: no se cobra delivery. El total mostrado ya es el costo real antes de registrar datos.';
+      nota.textContent = 'Campana escolar: el total mostrado ya es el costo real antes de registrar datos.';
     } else if (esNacional) {
       nota.textContent = 'Envio nacional: el total incluye S/ 10.00 hasta agencia. El flete a tu ciudad se paga al recoger.';
     } else if (zonaElegida) {
@@ -9478,7 +9457,7 @@ function actualizarTotalInicio() {
     }
   }
   if (fixedDetail) {
-    if (promoGratis) fixedDetail.textContent = 'Promo San Juan: sin delivery';
+    if (promoGratis) fixedDetail.textContent = 'Campana escolar';
     else if (esNacional) fixedDetail.textContent = 'Hasta agencia + flete destino aparte';
     else if (zonaElegida) fixedDetail.textContent = 'Productos + zona incluida';
     else fixedDetail.textContent = 'Productos + zona por elegir';
@@ -10287,7 +10266,7 @@ function abrirResumen(soloCarrito = false) {
 
   pedidoItemsLista().forEach(it => row(it.qty+'× '+it.nombre, 'S/ '+it.total.toFixed(2)));
   if (ST.delivery) row('Delivery','S/ '+ST.delivery.toFixed(2));
-  else if (promoSinDeliveryActiva()) row('Delivery promocion San Juan','S/ 0.00');
+  else if (promoSinDeliveryActiva()) row('Delivery campana escolar','S/ 0.00');
   if (reservaPedido.activa) row('Reserva de entrega', reservaPedido.texto);
   if (promoEscolar.activo) row('Centro educativo / seccion', promoEscolar.texto);
   if (promoInstitucional.activo) row('Institucion / grupo', promoInstitucional.texto);
@@ -10421,7 +10400,7 @@ async function enviarPedido() {
       ? '🎟 *Cupon '+ST.disc.cupCod+':*   _−S/ '+descFijoAmt.toFixed(2)+'_\n'
       : '')
     +(promoSinDeliveryActiva()
-      ? '🚚 *Delivery promo San Juan:*   _S/ 0.00_\n'
+      ? '🚚 *Delivery campana escolar:*   _S/ 0.00_\n'
       : '🚚 *Delivery:*   _+S/ '+ST.delivery.toFixed(2)+'_\n')
     +sep+'\n'
     +'💰 *TOTAL A PAGAR*\n'
@@ -10433,8 +10412,8 @@ async function enviarPedido() {
     +(notaEntrega ? '📝 *Nota:* '+notaEntrega+'\n' : '')
     +(ST.gpsUrl ? '📡 *GPS:* '+ST.gpsUrl+'\n' : '')
     +(reservaPedido.activa ? 'Reserva programada: '+reservaPedido.texto+'\n' : '')
-    +(promoEscolar.activo ? 'PROMO ESCOLAR SAN JUAN: '+promoEscolar.texto+'\nBidon vacio: '+(promoEscolar.con_bidon_vacio ? 'Si' : 'No, compra con bidon incluido (+S/ 20)')+'\n' : '')
-    +(promoInstitucional.activo ? 'JUANE FAMILIAR INSTITUCIONAL SAN JUAN: '+promoInstitucional.texto+'\nEntrega programada: 22/06/2026, dos dias antes de San Juan.\n' : '')
+    +(promoEscolar.activo ? 'CHICHA PARA REFRIGERIOS ESCOLARES: '+promoEscolar.texto+'\nBidon vacio: '+(promoEscolar.con_bidon_vacio ? 'Si' : 'No, compra con bidon incluido (+S/ 20)')+'\n' : '')
+    +(promoInstitucional.activo ? 'PEDIDO INSTITUCIONAL DE CHICHA ASWA: '+promoInstitucional.texto+'\n' : '')
     +(regaloPedido.activo ? 'REGALO PARA ('+regaloPedido.relacion+'): '+regaloPedido.nombre+' - '+regaloPedido.telefono+'\n' : '')
     +(regaloPedido.activo && regaloPedido.mensaje ? 'Mensaje regalo: '+regaloPedido.mensaje+'\n' : '')
     +'Distancia planta-cliente: '+distanciaRuta.texto+'\n'
@@ -14221,13 +14200,13 @@ const ASWA_SUPPORT_KNOWLEDGE = [
     tema: 'productos y precios',
     priority: 2,
     keywords: ['precio', 'cuanto cuesta', 'cuanto vale', 'costo', 'producto', '2l', '3l', '4l', 'bidon'],
-    respuesta: 'Productos principales: Chicha ASWA 2L S/ 9, Chicha ASWA 3L S/ 13 y Chicha ASWA Familiar 4L S/ 15. En recarga de bidon 20L pagas S/ 60 y ahorras S/ 15, equivalente a una presentacion familiar de 4L. Con bidon/envase nuevo retornable queda en S/ 80. En promo escolar San Juan queda en S/ 50 recarga o S/ 70 con bidon nuevo.'
+    respuesta: 'Productos principales: Chicha ASWA 2L S/ 9, Chicha ASWA 3L S/ 13 y Chicha ASWA Familiar 4L S/ 15. En recarga de bidon 20L pagas S/ 60 y ahorras S/ 15, equivalente a una presentacion familiar de 4L. Para refrigerios escolares ofrecemos Chicha ASWA 400 ml S/ 2.50, Pack 12 Chichas ASWA S/ 30, Pack 24 Chichas ASWA S/ 60 y pedidos para kioscos o instituciones.'
   },
   {
-    tema: 'campana san juan',
+    tema: 'chicha para refrigerios escolares',
     priority: 8,
-    keywords: ['campana san juan', 'campana san juanera', 'campana sanjuanera', 'sanjuanera', 'san juanera', 'san juan', 'fiestas de san juan', 'promo escolar', 'centros educativos', 'colegios', 'juane', 'bidon san juan', 'en que consiste'],
-    respuesta: 'La campana sanjuanera ASWA esta pensada para centros educativos: jardines, primarias y colegios de Banda de Shilcayo, Morales y Tarapoto. La pide normalmente el encargado de aula, padre, madre o tesorero de la seccion. Pedido minimo: 15 unidades por presentacion, excepto el bidon 20L que no tiene minimo. Ofrece chicha ASWA 400 ml S/ 2.50, solo juane S/ 2.50, combo juane + chicha 400 ml S/ 4.00 y bidon 20L S/ 50 recarga o S/ 70 con bidon nuevo. No cobramos delivery en la promo escolar para apoyar a los padres de familia. Se reserva con pago anticipado por Yape, Plin, Agora, BIM o transferencia; no aplica efectivo.'
+    keywords: ['refrigerio escolar', 'refrigerios escolares', 'kiosco escolar', 'kioscos', 'pedido institucional', 'centros educativos', 'colegios', 'chicha escolar', 'pack chichas', 'chicha 400 ml', 'en que consiste'],
+    respuesta: 'Chicha para Refrigerios Escolares es una campana permanente para centros educativos, kioscos escolares, eventos educativos y actividades institucionales. Ofrece Chicha ASWA 400 ml S/ 2.50 desde 15 unidades, Pack 12 Chichas ASWA S/ 30, Pack 24 Chichas ASWA S/ 60 y pedidos para kioscos o instituciones. Se coordina segun cantidad, zona y disponibilidad de entrega; el delivery se calcula segun la zona seleccionada.'
   },
   {
     tema: 'historia aswa',
@@ -14293,7 +14272,7 @@ const ASWA_SUPPORT_KNOWLEDGE = [
     tema: 'capacidades asistente',
     priority: 9,
     keywords: ['puedes responder', 'puedes responde', 'puedes contestar', 'respondes todo', 'responde todo', 'responder todo', 'todo lo que te mencione', 'todo lo mencionado', 'hasta ahora', 'que sabes responder', 'que puedes responder'],
-    respuesta: 'Si, puedo responder con coherencia sobre lo trabajado en la app: como hacer pedidos, productos y precios, campana San Juan, centros educativos, pedido minimo, chicha 400 ml, juane, combo, bidon 20L, pagos, delivery, reservas, regalos, beneficios, referidos, concursos, sugerencias, modo prueba, Nota de Venta, seguimiento e historia de ASWA. Si me preguntas por un estado real de pedido, pago aprobado o decision del negocio, necesito el telefono/detalle y lo debe revisar el equipo ASWA.'
+    respuesta: 'Si, puedo responder con coherencia sobre lo trabajado en la app: como hacer pedidos, productos y precios, Chicha para Refrigerios Escolares, centros educativos, pedido minimo, chicha 400 ml, packs de chicha, pedidos para kioscos, pedido institucional, bidon 20L, pagos, delivery, reservas, regalos, beneficios, referidos, concursos, sugerencias, modo prueba, Nota de Venta, seguimiento e historia de ASWA. Si me preguntas por un estado real de pedido, pago aprobado o decision del negocio, necesito el telefono/detalle y lo debe revisar el equipo ASWA.'
   }
 ];
 
@@ -14317,24 +14296,24 @@ const ASWA_APP_KNOWLEDGE_CHUNKS = [
     respuesta: 'Productos principales: Chicha ASWA 2L S/ 9, Chicha ASWA 3L S/ 13 y Chicha ASWA Familiar 4L S/ 15. Si es para pocas personas conviene 2L; para compartir, 3L; y para familia o reunion, 4L.'
   },
   {
-    tema: 'campana san juan completa',
-    terms: ['san juan','san juanera','sanjuanera','campana','fiestas','colegio','colegios','centro educativo','centros educativos','escolar','juane','bidon','institucional','seccion','salon'],
-    respuesta: 'La campana sanjuanera ASWA es para Fiestas de San Juan y esta dirigida a centros educativos: jardines, primarias y colegios de Banda de Shilcayo, Morales y Tarapoto. Normalmente la coordina el encargado del aula, padre, madre o tesorero de la seccion. Pedido minimo: 15 unidades por presentacion; el bidon 20L no tiene minimo. Ofrece chicha ASWA 400 ml S/ 2.50, solo juane S/ 2.50, combo juane + chicha 400 ml S/ 4.00 y bidon 20L S/ 50 recarga o S/ 70 con bidon nuevo. No cobramos delivery en promo escolar para apoyar a los padres de familia. Requiere reserva y pago anticipado por Yape, Plin, Agora, BIM o transferencia; no aplica efectivo.'
+    tema: 'chicha para refrigerios escolares',
+    terms: ['refrigerio escolar','refrigerios escolares','kiosco','kioscos','colegio','colegios','centro educativo','centros educativos','escolar','chicha 400','pack','bidon','institucional','seccion','salon'],
+    respuesta: 'Chicha para Refrigerios Escolares es una campana permanente para jardines, primarias, colegios, kioscos escolares y eventos educativos. Pedido minimo: Chicha ASWA 400 ml desde 15 unidades. Tambien hay Pack 12 Chichas ASWA S/ 30, Pack 24 Chichas ASWA S/ 60 y pedido para kioscos con bidon 20L S/ 50 recarga o S/ 70 con bidon nuevo. El delivery se calcula segun zona y la reserva se confirma con pago anticipado.'
   },
   {
-    tema: 'bidon san juan',
-    terms: ['bidon','20l','20 litros','recarga','envase','san juanero','obra','cuadrilla'],
-    respuesta: 'El bidon ASWA 20L se calcula comparandolo con 5 familiares de 4L: cinco familiares cuestan S/ 75. En recarga de bidon 20L pagas S/ 60 y ahorras S/ 15, equivalente a una presentacion familiar de 4L. Si necesitas bidon/envase nuevo retornable, el total es S/ 80. La promo escolar San Juan mantiene precio especial: S/ 50 recarga o S/ 70 con bidon nuevo. Cobra delivery segun zona y puedes pagar con efectivo, Yape, Plin o transferencia.'
+    tema: 'bidon ASWA 20L',
+    terms: ['bidon','20l','20 litros','recarga','envase','kiosco','kioscos','obra','cuadrilla'],
+    respuesta: 'El bidon ASWA 20L se calcula comparandolo con 5 familiares de 4L: cinco familiares cuestan S/ 75. En recarga de bidon 20L pagas S/ 60 y ahorras S/ 15, equivalente a una presentacion familiar de 4L. Si necesitas bidon/envase nuevo retornable, el total es S/ 80. Para kioscos escolares tambien se puede cotizar Chicha ASWA 20L desde la seccion Chicha para Refrigerios Escolares. Cobra delivery segun zona y puedes pagar con efectivo, Yape, Plin o transferencia.'
   },
   {
     tema: 'promo escolar',
     terms: ['promo escolar','colegio','colegios','centro educativo','centros educativos','jardin','primaria','secundaria','seccion','salon','estudiantes','aula','padres de familia','tesorero'],
-    respuesta: 'La promo escolar San Juan es para centros educativos: jardines, primarias y colegios de Banda de Shilcayo, Morales y Tarapoto. La coordina un encargado del aula, padre, madre o tesorero de la seccion. Minimo 15 unidades por presentacion: chicha ASWA 400 ml S/ 2.50, solo juane S/ 2.50 o combo juane + chicha S/ 4.00. El bidon 20L no tiene minimo: recarga S/ 50 o con bidon nuevo S/ 70. No cobramos delivery en esta campana para apoyar a los padres de familia. Requiere reserva y pago anticipado.'
+    respuesta: 'Chicha para Refrigerios Escolares es para centros educativos, kioscos escolares y eventos educativos. La coordina un encargado del aula, administracion, kiosco o institucion. Minimo 15 unidades para Chicha ASWA 400 ml S/ 2.50; tambien hay Pack 12 Chichas ASWA S/ 30, Pack 24 Chichas ASWA S/ 60 y pedido para kioscos con bidon 20L. El delivery se calcula segun zona y requiere reserva con pago anticipado.'
   },
   {
-    tema: 'juane familiar institucional',
-    terms: ['juane familiar','institucional','banco','empresa','oficina','trabajadores','22/06','22 de junio'],
-    respuesta: 'El juane familiar institucional es para bancos, empresas, oficinas y grupos de trabajadores. Tiene entrega unica el 22/06/2026, dos dias antes de San Juan, y no cobra delivery dentro de esta promocion.'
+    tema: 'pedido institucional',
+    terms: ['pedido institucional','institucional','colegio','kiosco','empresa','oficina','evento educativo','mayorista'],
+    respuesta: 'El Pedido Institucional permite cotizar Chicha ASWA por volumen para colegios, kioscos, empresas, oficinas y eventos educativos. Se coordina cantidad, fecha, zona, forma de pago y condiciones de entrega por WhatsApp.'
   },
   {
     tema: 'pagos y comprobantes',
@@ -14389,7 +14368,7 @@ const ASWA_APP_KNOWLEDGE_CHUNKS = [
   {
     tema: 'capacidades asistente',
     terms: ['puedes responder','puedes responde','puedes contestar','respondes todo','responde todo','responder todo','todo lo que te mencione','todo lo mencionado','hasta ahora','que sabes responder','que puedes responder','capacidad','capacidades'],
-    respuesta: 'Si, puedo responder sobre el contenido trabajado en ASWA: pedidos, productos, precios, campana San Juan para colegios, pedido minimo, productos escolares, pagos, delivery, reservas, regalos, referidos, cupones, concursos, sugerencias, modo prueba, Nota de Venta, seguimiento e historia de ASWA. Mi limite: no debo inventar estados reales de pedidos, pagos aprobados, stock o decisiones del negocio; para eso pido datos y lo revisa el equipo ASWA.'
+    respuesta: 'Si, puedo responder sobre el contenido trabajado en ASWA: pedidos, productos, precios, Chicha para Refrigerios Escolares, pedido minimo, packs escolares de chicha, pedidos para kioscos, pago, delivery, reservas, regalos, referidos, cupones, concursos, sugerencias, modo prueba, Nota de Venta, seguimiento e historia de ASWA. Mi limite: no debo inventar estados reales de pedidos, pagos aprobados, stock o decisiones del negocio; para eso pido datos y lo revisa el equipo ASWA.'
   }
 ];
 
@@ -14467,7 +14446,7 @@ function _chatRespuestaProductoDirecta(texto) {
   const quiereComprar = /(quiero|deseo|necesito|deme|dame|pedir|comprar|llevar|manda|mandame)/.test(t);
 
   if (/\bbidon(?:es)?\b/.test(t)) {
-    return 'El bidon ASWA es de 20 litros. En recarga de bidon 20L pagas S/ 60 y ahorras S/ 15, equivalente a una presentacion familiar de 4L. Con bidon/envase nuevo retornable cuesta S/ 80. La promo escolar San Juan queda con precio especial: recarga S/ 50 o con bidon nuevo S/ 70. Puedes pagarlo con efectivo, Yape, Plin o transferencia. Si quieres pedirlo, escribe por ejemplo: "quiero 1 bidon recarga" o "quiero 1 bidon con envase nuevo".';
+    return 'El bidon ASWA es de 20 litros. En recarga de bidon 20L pagas S/ 60 y ahorras S/ 15, equivalente a una presentacion familiar de 4L. Con bidon/envase nuevo retornable cuesta S/ 80. Para kioscos escolares e instituciones se puede cotizar Chicha ASWA 20L desde la seccion Chicha para Refrigerios Escolares. Puedes pagarlo con efectivo, Yape, Plin o transferencia. Si quieres pedirlo, escribe por ejemplo: "quiero 1 bidon recarga" o "quiero 1 bidon con envase nuevo".';
   }
 
   if (/\bgalon(?:es)?\b/.test(t)) {
@@ -17188,7 +17167,7 @@ async function admRechazarYape(pedidoId, telefono, nombre) {
    PWA — INSTALAR COMO APP
 ══════════════════════════════════════ */
 let _pwaPrompt = null;
-const ASWA_PWA_CACHE_NAME = 'aswa-v50';
+const ASWA_PWA_CACHE_NAME = 'aswa-v51';
 const ASWA_PLAY_STORE_URL = '';
 
 function pwaEsStandalone() {
@@ -20641,7 +20620,7 @@ function registrarSW() {
   if (!('serviceWorker' in navigator)) return;
 
   const SW_CODE = `
-const CACHE_NAME = 'aswa-v50';
+const CACHE_NAME = 'aswa-v51';
 const VERSION_PARAM = 'aswa_sw';
 const SHELL = [
   './',
@@ -20744,7 +20723,7 @@ self.addEventListener('message', e => {
 });
 `;
 
-  return pwaLimpiarSWLegacy().then(() => navigator.serviceWorker.register('./sw.js?v=50', { scope: './' }))
+  return pwaLimpiarSWLegacy().then(() => navigator.serviceWorker.register('./sw.js?v=51', { scope: './' }))
     .then(reg => {
       console.log('[SW] Registrado:', reg.scope);
 

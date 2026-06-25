@@ -33,10 +33,12 @@ describe('public home stage 1', () => {
     expect(html).toContain('Chicha ASWA 3 litros');
     expect(html).toContain('Chicha ASWA 4 litros');
     expect(html).toContain('Bidon ASWA 20L');
-    expect(html).toContain('ASWA escolar sanjuanera');
-    expect(html).toContain('Combo escolar sanjuanero');
-    expect(html).toContain('Solo juane escolar');
-    expect(html).toContain('Juane institucional');
+    expect(html).toContain('Chicha para Refrigerios Escolares');
+    expect(html).toContain('Chicha ASWA 400 ml');
+    expect(html).toContain('Pack 12 Chichas ASWA');
+    expect(html).toContain('Pack 24 Chichas ASWA');
+    expect(html).toContain('Pedido para Kioscos');
+    expect(html).toContain('Pedido Institucional');
     expect(html).toContain('id="btnCarritoFlotante"');
     expect(html).toContain('id="cartCountText"');
     expect(html).toContain('onclick="abrirResumen(true)"');
