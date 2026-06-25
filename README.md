@@ -39,7 +39,7 @@ Pagos via Yape:
 - Banda de Shilcayo.
 - Recojo en local.
 - Envio nacional coordinado.
-- Promociones San Juan sin delivery cuando corresponde.
+- Campana permanente de Chicha para Refrigerios Escolares, kioscos y pedidos institucionales.
 
 ### Metodos De Pago
 

@@ -32,7 +32,7 @@ describe('orders module behavior', () => {
     expect(html).toContain('pedidoComprobanteRealHtml');
   });
 
-  test('school San Juan products allow direct quantity entry', () => {
+  test('school chicha products allow direct quantity entry', () => {
     const fs = require('fs');
     const path = require('path');
     const html = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
@@ -47,12 +47,12 @@ describe('orders module behavior', () => {
     expect(html).toContain('function syncQtyUI');
   });
 
-  test('school San Juan products start at 15 and offer quick quantity presets', () => {
+  test('school chicha products start at 15 and offer quick quantity presets', () => {
     const fs = require('fs');
     const path = require('path');
     const html = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
 
-    expect(html).toContain("const SCHOOL_MINIMUM_QTY_IDS = ['sjChicha04', 'sjCombo', 'sjJuane']");
+    expect(html).toContain("const SCHOOL_MINIMUM_QTY_IDS = ['sjChicha04']");
     expect(html).toContain('function setQtyPreset');
     expect(html).toContain("actual === 0");
     expect(html).toContain('ST.cart[id] = 15');
@@ -79,7 +79,7 @@ describe('orders module behavior', () => {
     expect(html).toContain('ahorras S/ 15');
     expect(html).toContain('equivalente a una presentacion familiar de 4L');
     expect(html).not.toContain('id="sanJuanPublico"');
-    expect(html).not.toContain('El bidon San Juanero para obra o publico general solo acepta');
+    expect(html).not.toContain('El bidon para obra o publico general solo acepta');
     expect(html).toContain('Puedes pagarlo con efectivo, Yape, Plin o transferencia');
   });
 

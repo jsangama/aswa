@@ -58,15 +58,15 @@ function loadAssistantApi() {
 describe('support assistant replies', () => {
   const reply = loadAssistantReply();
 
-  test('explains the San Juan school campaign with audience, minimum, prices and delivery', () => {
-    const text = reply('como funciono o en que consiste la campana san juanera');
+  test('explains the school chicha campaign with audience, minimum, packs and delivery', () => {
+    const text = reply('como funciona la chicha para refrigerios escolares y kioscos');
 
     expect(text).toContain('centros educativos');
-    expect(text).toContain('Pedido minimo');
-    expect(text).toContain('chicha ASWA 400 ml S/ 2.50');
-    expect(text).toContain('solo juane S/ 2.50');
-    expect(text).toContain('combo juane + chicha 400 ml S/ 4.00');
-    expect(text).toContain('No cobramos delivery');
+    expect(text).toContain('Chicha ASWA 400 ml S/ 2.50');
+    expect(text).toContain('Pack 12 Chichas ASWA S/ 30');
+    expect(text).toContain('Pack 24 Chichas ASWA S/ 60');
+    expect(text).toContain('delivery se calcula segun la zona');
+    expect(text).not.toContain('juane');
     expect(text).not.toContain('Productos principales');
   });
 
@@ -82,7 +82,7 @@ describe('support assistant replies', () => {
     const text = reply('yapuedes responde a todo lo que te mencione en hasta ahora');
 
     expect(text).toContain('puedo responder con coherencia');
-    expect(text).toContain('campana San Juan');
+    expect(text).toContain('Chicha para Refrigerios Escolares');
     expect(text).toContain('Nota de Venta');
     expect(text).toContain('historia de ASWA');
     expect(text).not.toContain('Escribe, por ejemplo');
@@ -356,7 +356,7 @@ describe('support assistant replies', () => {
     expect(text).toContain('ahorras S/ 15');
     expect(text).toContain('equivalente a una presentacion familiar de 4L');
     expect(text).toContain('bidon/envase nuevo retornable cuesta S/ 80');
-    expect(text).toContain('promo escolar San Juan queda con precio especial');
+    expect(text).toContain('Para kioscos escolares e instituciones se puede cotizar Chicha ASWA 20L');
     expect(text).toContain('Puedes pagarlo con efectivo');
   });
 

@@ -46,7 +46,7 @@ npm run catalogo:sync-school-prices -- --business aswa001 --dry-run yes
 npm run catalogo:sync-school-prices -- --business aswa001
 ```
 
-Ese comando deja en `S/ 2.50` el `solo juane escolar`, en `S/ 2.50` la `chicha ASWA 400 ml` y en `S/ 4.00` el `combo escolar sanjuanero`, respetando el negocio `aswa001`.
+Ese comando deja en `S/ 2.50` la `Chicha ASWA 400 ml`, en `S/ 30.00` el `Pack 12 Chichas ASWA` y en `S/ 60.00` el `Pack 24 Chichas ASWA`, respetando el negocio `aswa001`.
 
 ## Deploy manual
 
