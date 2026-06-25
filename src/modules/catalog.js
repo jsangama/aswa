@@ -1,12 +1,11 @@
 export const PRODUCT_CATALOG = [
+  { id: 'p400', name: 'Chicha ASWA 400 ml', shortName: '400 ml', price: 2.5, group: 'catalogo' },
   { id: 'p2l', name: 'Chicha ASWA 2 litros', shortName: '2 litros', price: 9, group: 'catalogo' },
   { id: 'p3l', name: 'Chicha ASWA 3 litros', shortName: '3 litros', price: 13, group: 'catalogo' },
   { id: 'p4l', name: 'Chicha ASWA 4 litros', shortName: '4 litros', price: 15, group: 'catalogo' },
   { id: 'sjBidonPublic', name: 'Bidon ASWA 20L', shortName: 'Bidon 20L', price: 60, group: 'catalogo' },
-  { id: 'sjBidon', name: 'Pedido para Kioscos - Chicha ASWA 20L', shortName: 'Pedido para Kioscos', price: 50, group: 'escolar' },
-  { id: 'sjChicha04', name: 'Chicha ASWA 400 ml', shortName: 'Chicha 400 ml', price: 2.5, group: 'escolar' },
-  { id: 'sjJuane', name: 'Pack 24 Chichas ASWA', shortName: 'Pack 24 Chichas', price: 60, group: 'escolar' },
-  { id: 'sjCombo', name: 'Pack 12 Chichas ASWA', shortName: 'Pack 12 Chichas', price: 30, group: 'escolar' },
+  { id: 'sjBidon', name: 'Timbo ASWA 20 litros', shortName: 'Timbo 20L', price: 50, group: 'escolar' },
+  { id: 'sjChicha04', name: 'Pack Escolar ASWA 400 ml', shortName: 'Pack 15 x 400 ml', price: 30, group: 'escolar' },
   { id: 'sjJuaneFamiliar', name: 'Pedido Institucional de Chicha ASWA', shortName: 'Pedido Institucional', price: 0, group: 'institucional' },
 ];
 

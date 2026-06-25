@@ -32,35 +32,35 @@ describe('orders module behavior', () => {
     expect(html).toContain('pedidoComprobanteRealHtml');
   });
 
-  test('school chicha products allow direct quantity entry', () => {
+  test('public 400 ml and private institutional products are wired to cart', () => {
     const fs = require('fs');
     const path = require('path');
     const html = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
 
+    expect(html).toContain('id="c-p400"');
+    expect(html).toContain("qty('p400',+1)");
+    expect(html).toContain("p400: { nombre:'Chicha ASWA 400 ml'");
+    expect(html).toContain('p400: 2.5');
     expect(html).toContain('id="q-sjChicha04" type="number"');
     expect(html).toContain("setQtyDirect('sjChicha04',this.value)");
-    expect(html).toContain('id="q-sjCombo" type="number"');
-    expect(html).toContain("setQtyDirect('sjCombo',this.value)");
-    expect(html).toContain('id="q-sjJuane" type="number"');
-    expect(html).toContain("setQtyDirect('sjJuane',this.value)");
+    expect(html).toContain("sjChicha04: { nombre:'Pack Escolar ASWA 400 ml'");
+    expect(html).toContain("sjBidon: { nombre:'Timbo ASWA 20 litros'");
     expect(html).toContain('function setQtyDirect');
     expect(html).toContain('function syncQtyUI');
   });
 
-  test('school chicha products start at 15 and offer quick quantity presets', () => {
+  test('institutional section stays private behind access code', () => {
     const fs = require('fs');
     const path = require('path');
     const html = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
 
-    expect(html).toContain("const SCHOOL_MINIMUM_QTY_IDS = ['sjChicha04']");
-    expect(html).toContain('function setQtyPreset');
-    expect(html).toContain("actual === 0");
-    expect(html).toContain('ST.cart[id] = 15');
-    for (const id of ['sjChicha04', 'sjCombo', 'sjJuane']) {
-      for (const qty of [15, 20, 25, 30, 35, 40]) {
-        expect(html).toContain(`setQtyPreset('${id}',${qty})`);
-      }
-    }
+    expect(html).toContain('id="institutionalPrivateContent" hidden');
+    expect(html).toContain('const INSTITUTIONAL_ACCESS_CODES');
+    expect(html).toContain("'ASWA2026'");
+    expect(html).toContain('function verificarAccesoInstitucional');
+    expect(html).toContain('Los productos institucionales, precios especiales, packs escolares y timbos se muestran solo con codigo.');
+    expect(html).toContain('Esta seccion es exclusiva para instituciones educativas, refrigerios y kioscos escolares.');
+    expect(html).toContain("const SCHOOL_MINIMUM_QTY_IDS = []");
   });
 
   test('public 20L bidon appears as a normal product with returnable options', () => {

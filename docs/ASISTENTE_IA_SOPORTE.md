@@ -56,7 +56,7 @@ Puede orientar sobre:
 - ejemplos de pedido para que el cliente copie y complete
 - recomendacion de presentacion segun necesidad
 - productos y precios visibles en la app
-- Chicha para Refrigerios Escolares para colegios, kioscos e instituciones
+- catalogo general y Programa Institucional privado con codigo
 - zonas de delivery: Morales, Tarapoto, Banda de Shilcayo y recojo en local
 - pagos digitales, efectivo y comprobantes
 - reservas, regalos y pedidos programados
@@ -106,17 +106,24 @@ Tambien puede recordar beneficios:
 
 Todo pedido real debe terminar con Nota de Venta. La app no debe generar la venta final apenas se envia el pedido; primero debe entregarse y el cliente debe confirmar la recepcion. Asi se evita mezclar pedidos pendientes con ventas reales.
 
-## Chicha para Refrigerios Escolares
+## Estructura Comercial
 
-La campana escolar es permanente y esta enfocada en chicha para colegios, kioscos, eventos educativos y actividades institucionales.
+El catalogo general es visible para todos.
 
-- Producto principal: Chicha ASWA elaborada con maiz seleccionado.
-- Chicha ASWA 400 ml: ideal para loncheras, aulas y refrigerios; pedido desde 15 unidades.
-- Pack 12 Chichas ASWA: paquete practico para aulas, kioscos y actividades pequenas.
-- Pack 24 Chichas ASWA: paquete para kioscos, eventos educativos o actividades con mayor asistencia.
-- Pedido para Kioscos: permite coordinar chicha por volumen, incluido bidon 20L cuando corresponda.
-- Pedido Institucional: cotizacion para colegios, promotores, municipios, academias, eventos y empresas.
-- Condiciones: se coordina segun cantidad, zona y disponibilidad de entrega. El delivery se calcula segun la zona seleccionada.
+- Chicha ASWA 400 ml: S/ 2.50 por unidad, venta minima 1 unidad.
+- Chicha ASWA 2L, 3L y 4L se mantienen visibles.
+- El precio del producto no incluye delivery.
+- Delivery: Morales S/ 3.00, Tarapoto S/ 4.00 y La Banda de Shilcayo S/ 5.00.
+
+El Programa Institucional ASWA es privado y requiere codigo de acceso.
+
+- No debe mostrar productos institucionales, precios, packs ni timbos al publico general.
+- Mensaje para no autorizados: "Esta seccion es exclusiva para instituciones educativas, refrigerios y kioscos escolares. Solicite informacion o una visita comercial para obtener acceso."
+- Pack Escolar ASWA 400 ml: 15 botellas por S/ 30.00, costo unitario S/ 2.00.
+- Precio sugerido al cliente final: S/ 3.00 por botella.
+- Venta estimada: 15 x S/ 3.00 = S/ 45.00.
+- Ganancia estimada: S/ 15.00 por pack.
+- Timbo ASWA 20L: recarga S/ 50.00 o timbo nuevo con envase S/ 70.00.
 - Mensaje sugerido de WhatsApp: "Hola, deseo cotizar Chicha ASWA para refrigerios escolares de mi institucion educativa o kiosco."
 
 ## Activar en Firebase
