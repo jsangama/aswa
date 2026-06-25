@@ -2269,6 +2269,59 @@
       line-height:1.5;
       text-align:center;
     }
+    .fixed-order-total-bar {
+      display:none;
+      position:fixed;
+      left:50%;
+      bottom:104px;
+      transform:translateX(-50%);
+      z-index:1180;
+      width:calc(100% - 24px);
+      max-width:406px;
+      border:1px solid rgba(250,204,21,.42);
+      background:linear-gradient(135deg,rgba(9,9,11,.97),rgba(24,24,27,.98));
+      box-shadow:0 18px 44px rgba(0,0,0,.46), 0 0 24px rgba(250,204,21,.12);
+      border-radius:16px;
+      padding:10px 12px;
+      backdrop-filter:blur(10px);
+    }
+    body.purchase-step-products .fixed-order-total-bar,
+    body.purchase-step-delivery .fixed-order-total-bar { display:block; }
+    .fixed-order-total-row {
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+    }
+    .fixed-order-total-label {
+      color:var(--mut);
+      font-size:10px;
+      font-weight:900;
+      letter-spacing:.09em;
+      text-transform:uppercase;
+    }
+    .fixed-order-total-detail {
+      color:#fef3c7;
+      font-size:11px;
+      font-weight:800;
+      margin-top:2px;
+      line-height:1.3;
+    }
+    .fixed-order-total-amount {
+      color:var(--y);
+      font-family:'Bebas Neue',cursive;
+      font-size:32px;
+      line-height:1;
+      white-space:nowrap;
+      letter-spacing:.03em;
+    }
+    .fixed-order-total-hint {
+      color:var(--mut);
+      font-size:10px;
+      font-weight:700;
+      line-height:1.35;
+      margin-top:6px;
+    }
     .duda-compra-prompt {
       display:none; position:fixed; top:calc(env(safe-area-inset-top, 0px) + 58px);
       left:50%; transform:translateX(-50%); z-index:1500;
@@ -2367,6 +2420,10 @@
     body.purchase-step-delivery main,
     body.purchase-step-payment main {
       padding-bottom: 26px;
+    }
+    body.purchase-step-products main,
+    body.purchase-step-delivery main {
+      padding-bottom: 172px;
     }
 
     /* ══ GALERÍA ══ */
@@ -4558,6 +4615,17 @@
     </div>
     <button type="button" class="zona-continue-fab" id="zonaContinueFab" onclick="continuarPedidoInteligente()">Continuar</button>
   </section>
+
+  <div class="fixed-order-total-bar" id="fixedOrderTotalBar" aria-live="polite">
+    <div class="fixed-order-total-row">
+      <div>
+        <div class="fixed-order-total-label">Total a pagar</div>
+        <div class="fixed-order-total-detail" id="fixedOrderTotalDetail">Productos + zona</div>
+      </div>
+      <div class="fixed-order-total-amount" id="fixedOrderTotalAmount">S/ 0.00</div>
+    </div>
+    <div class="fixed-order-total-hint" id="fixedOrderTotalHint">Este monto se actualiza al agregar productos o elegir zona.</div>
+  </div>
 
   <!-- DATOS -->
   <section id="datosPedidoSection">
@@ -9382,10 +9450,15 @@ function actualizarTotalInicio() {
   const totalLinea = document.getElementById('inicioTotalLinea');
   const nota = document.getElementById('inicioTotalNota');
   const nacionalInicio = document.getElementById('nationalShippingNoticeInicio');
+  const fixedTotal = document.getElementById('fixedOrderTotalAmount');
+  const fixedDetail = document.getElementById('fixedOrderTotalDetail');
+  const fixedHint = document.getElementById('fixedOrderTotalHint');
 
-  totalEl.textContent = 'S/ ' + Number(ST.final || 0).toFixed(2);
+  const totalTexto = 'S/ ' + Number(ST.final || 0).toFixed(2);
+  totalEl.textContent = totalTexto;
   if (subtotalEl) subtotalEl.textContent = 'S/ ' + subtotal.toFixed(2);
-  if (totalLinea) totalLinea.textContent = 'S/ ' + Number(ST.final || 0).toFixed(2);
+  if (totalLinea) totalLinea.textContent = totalTexto;
+  if (fixedTotal) fixedTotal.textContent = totalTexto;
 
   if (deliveryLabel) deliveryLabel.textContent = promoGratis ? 'Delivery promo San Juan' : 'Zona / delivery';
   if (deliveryEl) {
@@ -9403,6 +9476,17 @@ function actualizarTotalInicio() {
     } else {
       nota.textContent = 'Elige una zona para ver el total completo con delivery antes de registrar datos.';
     }
+  }
+  if (fixedDetail) {
+    if (promoGratis) fixedDetail.textContent = 'Promo San Juan: sin delivery';
+    else if (esNacional) fixedDetail.textContent = 'Hasta agencia + flete destino aparte';
+    else if (zonaElegida) fixedDetail.textContent = 'Productos + zona incluida';
+    else fixedDetail.textContent = 'Productos + zona por elegir';
+  }
+  if (fixedHint) {
+    if (esNacional) fixedHint.textContent = 'Nacional: S/ 10 hasta agencia; flete a tu ciudad se paga al recoger.';
+    else if (zonaElegida) fixedHint.textContent = 'Monto fijo visible antes de llenar datos y pagar.';
+    else fixedHint.textContent = 'Elige tu zona para ver el total completo antes de comprar.';
   }
   if (nacionalInicio) {
     nacionalInicio.style.display = esNacional ? 'block' : 'none';
@@ -11130,6 +11214,15 @@ function _generarHtmlNota() {
   body.purchase-step-delivery main,
   body.purchase-step-payment main {
     padding-bottom: 26px !important;
+  }
+  body.purchase-step-products main,
+  body.purchase-step-delivery main {
+    padding-bottom: 172px !important;
+  }
+  body.purchase-step-payment .fixed-order-total-bar,
+  body.purchase-complete .fixed-order-total-bar,
+  body.aswa-home-step1 .fixed-order-total-bar {
+    display: none !important;
   }
   body.purchase-step-products #installPWA,
   body.purchase-step-delivery #installPWA,
@@ -17095,7 +17188,7 @@ async function admRechazarYape(pedidoId, telefono, nombre) {
    PWA — INSTALAR COMO APP
 ══════════════════════════════════════ */
 let _pwaPrompt = null;
-const ASWA_PWA_CACHE_NAME = 'aswa-v49';
+const ASWA_PWA_CACHE_NAME = 'aswa-v50';
 const ASWA_PLAY_STORE_URL = '';
 
 function pwaEsStandalone() {
@@ -20548,7 +20641,7 @@ function registrarSW() {
   if (!('serviceWorker' in navigator)) return;
 
   const SW_CODE = `
-const CACHE_NAME = 'aswa-v49';
+const CACHE_NAME = 'aswa-v50';
 const VERSION_PARAM = 'aswa_sw';
 const SHELL = [
   './',
@@ -20651,7 +20744,7 @@ self.addEventListener('message', e => {
 });
 `;
 
-  return pwaLimpiarSWLegacy().then(() => navigator.serviceWorker.register('./sw.js?v=49', { scope: './' }))
+  return pwaLimpiarSWLegacy().then(() => navigator.serviceWorker.register('./sw.js?v=50', { scope: './' }))
     .then(reg => {
       console.log('[SW] Registrado:', reg.scope);
 
