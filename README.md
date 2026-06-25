@@ -39,7 +39,7 @@ Pagos via Yape:
 - Banda de Shilcayo.
 - Recojo en local.
 - Envio nacional coordinado.
-- Campana permanente de Chicha para Refrigerios Escolares, kioscos y pedidos institucionales.
+- Chicha ASWA 400 ml publica y Programa Institucional privado con codigo.
 
 ### Metodos De Pago
 

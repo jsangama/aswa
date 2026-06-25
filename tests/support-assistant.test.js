@@ -58,14 +58,14 @@ function loadAssistantApi() {
 describe('support assistant replies', () => {
   const reply = loadAssistantReply();
 
-  test('explains the school chicha campaign with audience, minimum, packs and delivery', () => {
-    const text = reply('como funciona la chicha para refrigerios escolares y kioscos');
+  test('explains the private institutional program with access code, pack margin and timbo', () => {
+    const text = reply('como funciona el programa institucional para refrigerios escolares y kioscos');
 
-    expect(text).toContain('centros educativos');
-    expect(text).toContain('Chicha ASWA 400 ml S/ 2.50');
-    expect(text).toContain('Pack 12 Chichas ASWA S/ 30');
-    expect(text).toContain('Pack 24 Chichas ASWA S/ 60');
-    expect(text).toContain('delivery se calcula segun la zona');
+    expect(text).toContain('seccion privada');
+    expect(text).toContain('Requiere codigo institucional');
+    expect(text).toContain('15 botellas por S/ 30');
+    expect(text).toContain('ganancia estimada S/ 15');
+    expect(text).toContain('Timbo ASWA 20L');
     expect(text).not.toContain('juane');
     expect(text).not.toContain('Productos principales');
   });
@@ -82,7 +82,7 @@ describe('support assistant replies', () => {
     const text = reply('yapuedes responde a todo lo que te mencione en hasta ahora');
 
     expect(text).toContain('puedo responder con coherencia');
-    expect(text).toContain('Chicha para Refrigerios Escolares');
+    expect(text).toContain('Programa Institucional ASWA');
     expect(text).toContain('Nota de Venta');
     expect(text).toContain('historia de ASWA');
     expect(text).not.toContain('Escribe, por ejemplo');
@@ -356,7 +356,7 @@ describe('support assistant replies', () => {
     expect(text).toContain('ahorras S/ 15');
     expect(text).toContain('equivalente a una presentacion familiar de 4L');
     expect(text).toContain('bidon/envase nuevo retornable cuesta S/ 80');
-    expect(text).toContain('Para kioscos escolares e instituciones se puede cotizar Chicha ASWA 20L');
+    expect(text).toContain('Para instituciones con codigo, el Timbo ASWA 20L tiene precio privado');
     expect(text).toContain('Puedes pagarlo con efectivo');
   });
 
