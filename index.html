@@ -17266,7 +17266,7 @@ async function admRechazarYape(pedidoId, telefono, nombre) {
    PWA — INSTALAR COMO APP
 ══════════════════════════════════════ */
 let _pwaPrompt = null;
-const ASWA_PWA_CACHE_NAME = 'aswa-v53';
+const ASWA_PWA_CACHE_NAME = 'aswa-v54';
 const ASWA_PLAY_STORE_URL = '';
 
 function pwaEsStandalone() {
@@ -17304,8 +17304,7 @@ function pwaCompraEnCurso() {
 function pwaMostrarBotonDescarga() {
   const btn = document.getElementById('installPWA');
   if (!btn) return;
-  const esCelular = pwaEsAndroid() || pwaEsIOS();
-  btn.style.display = (!esCelular || pwaEsStandalone()) ? 'none' : 'block';
+  btn.style.display = pwaEsStandalone() ? 'none' : 'block';
   btn.textContent = pwaEsIOS() ? '📲 Instalar en iPhone' : '📲 Descargar app';
 }
 
@@ -20725,7 +20724,7 @@ function registrarSW() {
   if (!('serviceWorker' in navigator)) return;
 
   const SW_CODE = `
-const CACHE_NAME = 'aswa-v53';
+const CACHE_NAME = 'aswa-v54';
 const VERSION_PARAM = 'aswa_sw';
 const SHELL = [
   './',
@@ -20828,7 +20827,7 @@ self.addEventListener('message', e => {
 });
 `;
 
-  return pwaLimpiarSWLegacy().then(() => navigator.serviceWorker.register('./sw.js?v=53', { scope: './' }))
+  return pwaLimpiarSWLegacy().then(() => navigator.serviceWorker.register('./sw.js?v=54', { scope: './' }))
     .then(reg => {
       console.log('[SW] Registrado:', reg.scope);
 
