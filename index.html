@@ -3861,7 +3861,7 @@
   padding:10px 18px; font-size:12px; font-weight:800; cursor:pointer;
   font-family:'Poppins',sans-serif; box-shadow:0 4px 16px rgba(250,204,21,.4);
   animation:pulse-btn 2s infinite; white-space:nowrap;
-">📲 Descargar app</button>
+">📲 Descargar / instalar</button>
 
 <div id="pwaInstallModal" style="display:none;position:fixed;inset:0;z-index:9900;background:rgba(0,0,0,.82);backdrop-filter:blur(12px);align-items:center;justify-content:center;padding:20px">
   <div style="width:100%;max-width:390px;background:linear-gradient(180deg,#18181b,#0f0f11);border:1px solid rgba(250,204,21,.28);border-radius:22px;padding:18px;box-shadow:0 24px 80px rgba(0,0,0,.68)">
@@ -11260,9 +11260,6 @@ function _generarHtmlNota() {
   body.purchase-step-products .chat-fab,
   body.purchase-step-products .quick-access-panel,
   body.purchase-step-products .btn-tutorial-top,
-  body.purchase-step-products #installPWA,
-  body.purchase-step-products #installPWA,
-  body.purchase-step-products #installPWA,
   body.purchase-step-delivery #pwaInstallCard,
   body.purchase-step-delivery #promoSlider,
   body.purchase-step-delivery #promoDots,
@@ -11278,9 +11275,6 @@ function _generarHtmlNota() {
   body.purchase-step-delivery .chat-fab,
   body.purchase-step-delivery .quick-access-panel,
   body.purchase-step-delivery .btn-tutorial-top,
-  body.purchase-step-delivery #installPWA,
-  body.purchase-step-delivery #installPWA,
-  body.purchase-step-delivery #installPWA,
   body.purchase-step-payment #pwaInstallCard,
   body.purchase-step-payment #promoSlider,
   body.purchase-step-payment #promoDots,
@@ -11296,8 +11290,7 @@ function _generarHtmlNota() {
   body.purchase-step-payment #fbarPedir,
   body.purchase-step-payment .chat-fab,
   body.purchase-step-payment .quick-access-panel,
-  body.purchase-step-payment .btn-tutorial-top,
-  body.purchase-step-payment #installPWA {
+  body.purchase-step-payment .btn-tutorial-top {
     display: none !important;
   }
   body.purchase-step-products main,
@@ -11312,11 +11305,6 @@ function _generarHtmlNota() {
   body.purchase-step-payment .fixed-order-total-bar,
   body.purchase-complete .fixed-order-total-bar,
   body.aswa-home-step1 .fixed-order-total-bar {
-    display: none !important;
-  }
-  body.purchase-step-products #installPWA,
-  body.purchase-step-delivery #installPWA,
-  body.purchase-step-payment #installPWA {
     display: none !important;
   }
 </style>
@@ -17278,7 +17266,7 @@ async function admRechazarYape(pedidoId, telefono, nombre) {
    PWA — INSTALAR COMO APP
 ══════════════════════════════════════ */
 let _pwaPrompt = null;
-const ASWA_PWA_CACHE_NAME = 'aswa-v52';
+const ASWA_PWA_CACHE_NAME = 'aswa-v53';
 const ASWA_PLAY_STORE_URL = '';
 
 function pwaEsStandalone() {
@@ -17316,8 +17304,9 @@ function pwaCompraEnCurso() {
 function pwaMostrarBotonDescarga() {
   const btn = document.getElementById('installPWA');
   if (!btn) return;
-  const postCompra = document.getElementById('succScreen')?.classList.contains('on') || lsGet('succ_active') === '1';
-  btn.style.display = (!postCompra || pwaCompraEnCurso() || pwaEsStandalone()) ? 'none' : 'block';
+  const esCelular = pwaEsAndroid() || pwaEsIOS();
+  btn.style.display = (!esCelular || pwaEsStandalone()) ? 'none' : 'block';
+  btn.textContent = pwaEsIOS() ? '📲 Instalar en iPhone' : '📲 Descargar app';
 }
 
 function pwaUrlActual() {
@@ -17450,8 +17439,8 @@ function pwaCerrarModal() {
 function pwaMostrarSugerencia() {
   const card = document.getElementById('pwaInstallCard');
   pwaMostrarBotonDescarga();
-  const postCompra = document.getElementById('succScreen')?.classList.contains('on') || lsGet('succ_active') === '1';
-  if (!postCompra || pwaCompraEnCurso() || !card || pwaEsStandalone() || lsGet('pwa_install_dismissed') === '1') return;
+  const esCelular = pwaEsAndroid() || pwaEsIOS();
+  if (!esCelular || pwaCompraEnCurso() || !card || pwaEsStandalone() || lsGet('pwa_install_dismissed') === '1') return;
   card.style.display = 'block';
   const btn = document.getElementById('pwaInstallMainBtn');
   const help = document.getElementById('pwaInstallHelp');
@@ -17476,8 +17465,12 @@ function pwaMostrarAyudaManual() {
   const help = document.getElementById('pwaInstallHelp');
   if (help) {
     help.style.display = 'block';
-    help.innerHTML = 'Si no aparece el instalador automatico, usa el menu del navegador. En Chrome busca el icono de instalar en la barra de direcciones o abre el menu y toca "Instalar app".';
+    help.innerHTML = pwaEsIOS()
+      ? 'En iPhone abre ASWA en Safari, toca Compartir y elige "Agregar a pantalla de inicio".'
+      : 'Si no aparece el instalador automatico, usa el menu del navegador. En Chrome busca el icono de instalar en la barra de direcciones o abre el menu y toca "Instalar app".';
   }
+  const body = document.getElementById('pwaInstallModalBody');
+  if (body) body.innerHTML = pwaTextoInstrucciones();
   tst('Tu navegador necesita usar el instalador del menu o barra de direcciones.', 4200);
 }
 
@@ -20732,7 +20725,7 @@ function registrarSW() {
   if (!('serviceWorker' in navigator)) return;
 
   const SW_CODE = `
-const CACHE_NAME = 'aswa-v52';
+const CACHE_NAME = 'aswa-v53';
 const VERSION_PARAM = 'aswa_sw';
 const SHELL = [
   './',
@@ -20835,7 +20828,7 @@ self.addEventListener('message', e => {
 });
 `;
 
-  return pwaLimpiarSWLegacy().then(() => navigator.serviceWorker.register('./sw.js?v=52', { scope: './' }))
+  return pwaLimpiarSWLegacy().then(() => navigator.serviceWorker.register('./sw.js?v=53', { scope: './' }))
     .then(reg => {
       console.log('[SW] Registrado:', reg.scope);
 
@@ -26978,7 +26971,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
 <style id="purchaseFlowRealFinalOverrides">
   body.purchase-step-products #pwaInstallCard,
-  body.purchase-step-products #installPWA,
   body.purchase-step-products #btnRef,
   body.purchase-step-products #promoSlider,
   body.purchase-step-products #promoDots,
@@ -27002,7 +26994,6 @@ document.addEventListener('DOMContentLoaded', function() {
   body.purchase-step-products .quick-access-panel,
   body.purchase-step-products .btn-tutorial-top,
   body.purchase-step-delivery #pwaInstallCard,
-  body.purchase-step-delivery #installPWA,
   body.purchase-step-delivery #btnRef,
   body.purchase-step-delivery #promoSlider,
   body.purchase-step-delivery #promoDots,
@@ -27023,7 +27014,6 @@ document.addEventListener('DOMContentLoaded', function() {
   body.purchase-step-delivery .quick-access-panel,
   body.purchase-step-delivery .btn-tutorial-top,
   body.purchase-step-payment #pwaInstallCard,
-  body.purchase-step-payment #installPWA,
   body.purchase-step-payment #btnRef,
   body.purchase-step-payment #promoSlider,
   body.purchase-step-payment #promoDots,
@@ -27050,11 +27040,6 @@ document.addEventListener('DOMContentLoaded', function() {
   body.purchase-step-delivery main,
   body.purchase-step-payment main {
     padding-bottom: 26px !important;
-  }
-  body.purchase-step-products #installPWA,
-  body.purchase-step-delivery #installPWA,
-  body.purchase-step-payment #installPWA {
-    display: none !important;
   }
 </style>
 

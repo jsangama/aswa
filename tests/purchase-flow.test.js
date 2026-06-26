@@ -6,7 +6,7 @@ function readHtml() {
 }
 
 describe('guided purchase flow', () => {
-  test('keeps benefits, app install, and social content out of the purchase steps', () => {
+  test('keeps benefits and social content out while leaving mobile app install available', () => {
     const html = readHtml();
 
     expect(html).toContain('id="purchaseFlowRealFinalOverrides"');
@@ -18,15 +18,15 @@ describe('guided purchase flow', () => {
     expect(html).toContain('body.purchase-step-products .easy-start');
     expect(html).toContain('body.purchase-step-products .quick-order');
     expect(html).toContain('body.purchase-step-products #homeCoverageSection');
-    expect(html).toContain('body.purchase-step-products #installPWA');
+    expect(html).not.toContain('body.purchase-step-products #installPWA,\n');
 
     expect(html).toContain('body.purchase-step-delivery #productosSection');
     expect(html).toContain('body.purchase-step-delivery #pagoPedidoSection');
-    expect(html).toContain('body.purchase-step-delivery #installPWA');
+    expect(html).not.toContain('body.purchase-step-delivery #installPWA,\n');
 
     expect(html).toContain('body.purchase-step-payment #productosSection');
     expect(html).toContain('body.purchase-step-payment #datosPedidoSection');
-    expect(html).toContain('body.purchase-step-payment #installPWA');
+    expect(html).not.toContain('body.purchase-step-payment #installPWA,\n');
   });
 
   test('moves benefits and app install into the post-purchase success screen', () => {
@@ -155,12 +155,12 @@ describe('guided purchase flow', () => {
     expect(html).toContain('Zona lista. Dale Continuar para llenar tus datos y finalizar el pedido.');
   });
 
-  test('only shows the floating app installer after purchase and keeps sw v52 installable', () => {
+  test('shows the floating app installer on mobile and keeps sw v53 installable', () => {
     const html = readHtml();
     const sw = fs.readFileSync(path.join(__dirname, '..', 'sw.js'), 'utf8');
 
     expect(html).toContain('function pwaCompraEnCurso');
-    expect(html).toContain("const ASWA_PWA_CACHE_NAME = 'aswa-v52'");
+    expect(html).toContain("const ASWA_PWA_CACHE_NAME = 'aswa-v53'");
     expect(html).toContain('async function pwaForzarVersionNueva');
     expect(html).toContain("urlActual.searchParams.get('aswa_sw') !== ASWA_PWA_CACHE_NAME");
     expect(html).toContain("urlActual.searchParams.set('aswa_sw', ASWA_PWA_CACHE_NAME)");
@@ -170,14 +170,14 @@ describe('guided purchase flow', () => {
     expect(html).toContain("document.body.classList.add('purchase-complete')");
     expect(html).toContain('mostrarPostCompraUI();');
     expect(html).toContain('}, 45000);');
-    expect(html).toContain("lsGet('succ_active') === '1'");
-    expect(html).toContain('!postCompra || pwaCompraEnCurso() || pwaEsStandalone()');
+    expect(html).toContain('const esCelular = pwaEsAndroid() || pwaEsIOS()');
+    expect(html).toContain("btn.textContent = pwaEsIOS() ? '📲 Instalar en iPhone' : '📲 Descargar app'");
     expect(html).toContain('/\\/sw\\.js(?:\\?|$)/.test(script)');
-    expect(html).toContain("navigator.serviceWorker.register('./sw.js?v=52'");
-    expect(html).toContain("const CACHE_NAME = 'aswa-v52'");
+    expect(html).toContain("navigator.serviceWorker.register('./sw.js?v=53'");
+    expect(html).toContain("const CACHE_NAME = 'aswa-v53'");
     expect(html).toContain("fetch(new Request(e.request, { cache: 'no-store' }))");
     expect(html).toContain("url.searchParams.set(VERSION_PARAM, CACHE_NAME)");
-    expect(sw).toContain("const CACHE_NAME = 'aswa-v52'");
+    expect(sw).toContain("const CACHE_NAME = 'aswa-v53'");
     expect(sw).toContain("fetch(new Request(e.request, { cache: 'no-store' }))");
     expect(sw).toContain("url.searchParams.set(VERSION_PARAM, CACHE_NAME)");
   });
