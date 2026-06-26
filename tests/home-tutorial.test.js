@@ -10,7 +10,7 @@ describe('public home stage 1', () => {
     expect(html).toContain('body.purchase-step-products #btnRef');
     expect(html).toContain('body.purchase-step-products .btn-tutorial-top');
     expect(html).toContain('body.purchase-step-products #pwaInstallCard');
-    expect(html).toContain('body.purchase-step-products #installPWA');
+    expect(html).not.toContain('body.purchase-step-products #installPWA,');
     expect(html).toContain('body.purchase-step-products #promoSlider');
     expect(html).toContain('body.purchase-step-products .easy-start');
     expect(html).toContain('body.purchase-step-products .quick-order');
