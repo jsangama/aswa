@@ -8,7 +8,7 @@ global.TextEncoder = global.TextEncoder || TextEncoder;
 const { JSDOM, VirtualConsole } = require('jsdom');
 
 function setupPaymentDom() {
-  const html = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
+  const html = fs.readFileSync(path.join(__dirname, '..', 'src/features/legacy/legacy-shell.html'), 'utf8');
   return new JSDOM(html, {
     url: 'http://localhost',
     virtualConsole: new VirtualConsole()
@@ -30,7 +30,7 @@ describe('payment methods layout', () => {
     const document = setupPaymentDom();
     const extraPanel = document.getElementById('pagoBilleterasExtra');
     const extraWallets = Array.from(extraPanel.querySelectorAll('.popt')).map(el => el.id);
-    const html = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
+    const html = fs.readFileSync(path.join(__dirname, '..', 'src/features/legacy/legacy-shell.html'), 'utf8');
 
     expect(extraPanel.classList.contains('show')).toBe(false);
     expect(extraWallets).toEqual(['pay-BIM', 'pay-Agora', 'pay-Binance']);
@@ -41,7 +41,7 @@ describe('payment methods layout', () => {
 
   test('shows the final total in cash, wallet and bank payment instructions', () => {
     const document = setupPaymentDom();
-    const html = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
+    const html = fs.readFileSync(path.join(__dirname, '..', 'src/features/legacy/legacy-shell.html'), 'utf8');
 
     expect(document.getElementById('pagoTotalMonto')).toBeTruthy();
     expect(document.getElementById('payboxMonto')).toBeTruthy();

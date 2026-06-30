@@ -2,7 +2,7 @@ const fs = require('fs');
 const path = require('path');
 
 function loadAssistantReply() {
-  const html = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
+  const html = fs.readFileSync(path.join(__dirname, '..', 'src/features/legacy/legacy-shell.html'), 'utf8');
   const start = html.indexOf('const ASWA_SUPPORT_KNOWLEDGE = [');
   const end = html.indexOf('async function _chatResponderAutomatico', start);
 
@@ -15,7 +15,7 @@ function loadAssistantReply() {
 }
 
 function loadAssistantApi() {
-  const html = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
+  const html = fs.readFileSync(path.join(__dirname, '..', 'src/features/legacy/legacy-shell.html'), 'utf8');
   const start = html.indexOf('const ASWA_SUPPORT_KNOWLEDGE = [');
   const end = html.indexOf('async function _chatResponderAutomatico', start);
 

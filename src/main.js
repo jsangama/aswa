@@ -23,7 +23,7 @@ const modules = {
   paymentMethods: createPaymentMethodsService(),
   paymentPage: createPaymentPage({ document }),
   pwaCache: createPwaCacheController({
-    cacheName: 'aswa-v55',
+    cacheName: 'aswa-v56',
     serviceWorker: navigator.serviceWorker,
     location,
     sessionStorage,

@@ -15,7 +15,7 @@ describe('orders module behavior', () => {
   test('receipt choice is offered after delivery confirmation', () => {
     const fs = require('fs');
     const path = require('path');
-    const html = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
+    const html = fs.readFileSync(path.join(__dirname, '..', 'src/features/legacy/legacy-shell.html'), 'utf8');
 
     expect(html).toContain('id="comprobanteFinalModal"');
     expect(html).toContain('id="comprobanteTipo"');
@@ -35,7 +35,7 @@ describe('orders module behavior', () => {
   test('public 400 ml and private institutional products are wired to cart', () => {
     const fs = require('fs');
     const path = require('path');
-    const html = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
+    const html = fs.readFileSync(path.join(__dirname, '..', 'src/features/legacy/legacy-shell.html'), 'utf8');
 
     expect(html).toContain('id="c-p400"');
     expect(html).toContain("qty('p400',+1)");
@@ -52,7 +52,7 @@ describe('orders module behavior', () => {
   test('institutional section stays private behind access code', () => {
     const fs = require('fs');
     const path = require('path');
-    const html = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
+    const html = fs.readFileSync(path.join(__dirname, '..', 'src/features/legacy/legacy-shell.html'), 'utf8');
 
     expect(html).toContain('id="institutionalPrivateContent" hidden');
     expect(html).toContain('const INSTITUTIONAL_ACCESS_CODES');
@@ -66,7 +66,7 @@ describe('orders module behavior', () => {
   test('public 20L bidon appears as a normal product with returnable options', () => {
     const fs = require('fs');
     const path = require('path');
-    const html = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
+    const html = fs.readFileSync(path.join(__dirname, '..', 'src/features/legacy/legacy-shell.html'), 'utf8');
 
     expect(html).toContain('<div class="pn">Bidon ASWA 20L</div>');
     expect(html.indexOf('class="bidon-normal-options"')).toBeLessThan(html.indexOf('id="c-sjBidonPublic"'));

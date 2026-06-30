@@ -1,11 +1,16 @@
-// ASWA Service Worker v55 - https://jsangama.github.io/aswa/
-const CACHE_NAME = 'aswa-v55';
+// ASWA Service Worker v56 - https://jsangama.github.io/aswa/
+const CACHE_NAME = 'aswa-v56';
 const VERSION_PARAM = 'aswa_sw';
 const BASE = new URL('./', self.registration.scope).pathname;
 const ASSETS = [
   BASE,
   BASE + 'index.html',
   BASE + 'manifest.json',
+  BASE + 'src/app/main.js',
+  BASE + 'src/app/router.js',
+  BASE + 'src/app/routes.js',
+  BASE + 'src/features/legacy/index.js',
+  BASE + 'src/features/legacy/legacy-shell.html',
   BASE + 'src/main.js',
   BASE + 'src/modules/app-shell.js',
   BASE + 'src/modules/cart.js',

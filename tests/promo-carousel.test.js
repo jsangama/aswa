@@ -8,7 +8,7 @@ global.TextEncoder = global.TextEncoder || TextEncoder;
 const { JSDOM, VirtualConsole } = require('jsdom');
 
 function setupCarouselDom() {
-  const html = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
+  const html = fs.readFileSync(path.join(__dirname, '..', 'src/features/legacy/legacy-shell.html'), 'utf8');
   const virtualConsole = new VirtualConsole();
   return new JSDOM(html, {
     runScripts: 'dangerously',
