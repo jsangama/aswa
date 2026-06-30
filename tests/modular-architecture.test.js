@@ -12,8 +12,8 @@ describe('modular architecture scaffold', () => {
     const html = read('index.html');
 
     expect(html).toContain('<script type="module" src="src/main.js"></script>');
-    expect(html).toContain("const ASWA_PWA_CACHE_NAME = 'aswa-v54'");
-    expect(html).toContain("navigator.serviceWorker.register('./sw.js?v=54'");
+    expect(html).toContain("const ASWA_PWA_CACHE_NAME = 'aswa-v55'");
+    expect(html).toContain("navigator.serviceWorker.register('./sw.js?v=55'");
   });
 
   test('keeps domain modules outside the monolithic html file', () => {
@@ -22,6 +22,7 @@ describe('modular architecture scaffold', () => {
       'src/modules/storage.js',
       'src/modules/cart.js',
       'src/modules/catalog.js',
+      'src/modules/commercial-structure.js',
       'src/modules/delivery-options.js',
       'src/modules/payment-methods.js',
       'src/modules/purchase-flow.js',
@@ -62,6 +63,7 @@ describe('modular architecture scaffold', () => {
     expect(sw).toContain("BASE + 'src/modules/app-shell.js'");
     expect(sw).toContain("BASE + 'src/modules/cart.js'");
     expect(sw).toContain("BASE + 'src/modules/catalog.js'");
+    expect(sw).toContain("BASE + 'src/modules/commercial-structure.js'");
     expect(sw).toContain("BASE + 'src/modules/delivery-options.js'");
     expect(sw).toContain("BASE + 'src/modules/payment-methods.js'");
     expect(sw).toContain("BASE + 'src/modules/purchase-flow.js'");
@@ -86,5 +88,19 @@ describe('modular architecture scaffold', () => {
     expect(readme).toContain('Arquitectura en migracion modular');
     expect(readme).not.toContain('/index.html\n/ugc.html\n/css\n/js\n/assets\n/images');
     expect(readme).not.toContain('Tailwind CSS');
+  });
+
+  test('keeps commercial catalog data separated from catalog service logic', () => {
+    const catalog = read('src/modules/catalog.js');
+    const commercial = read('src/modules/commercial-structure.js');
+
+    expect(catalog).toContain("from './commercial-structure.js'");
+    expect(catalog).toContain('createCatalogService');
+    expect(catalog).not.toContain("id: 'p400'");
+    expect(commercial).toContain('PUBLIC_CATALOG_PRODUCTS');
+    expect(commercial).toContain('INSTITUTIONAL_CATALOG_PRODUCTS');
+    expect(commercial).toContain('INSTITUTIONAL_ACCESS_CODES');
+    expect(commercial).toContain('createCommercialCatalog');
+    expect(commercial).toContain('isInstitutionalAccessCode');
   });
 });

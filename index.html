@@ -17266,7 +17266,7 @@ async function admRechazarYape(pedidoId, telefono, nombre) {
    PWA — INSTALAR COMO APP
 ══════════════════════════════════════ */
 let _pwaPrompt = null;
-const ASWA_PWA_CACHE_NAME = 'aswa-v54';
+const ASWA_PWA_CACHE_NAME = 'aswa-v55';
 const ASWA_PLAY_STORE_URL = '';
 
 function pwaEsStandalone() {
@@ -20724,7 +20724,7 @@ function registrarSW() {
   if (!('serviceWorker' in navigator)) return;
 
   const SW_CODE = `
-const CACHE_NAME = 'aswa-v54';
+const CACHE_NAME = 'aswa-v55';
 const VERSION_PARAM = 'aswa_sw';
 const SHELL = [
   './',
@@ -20733,6 +20733,7 @@ const SHELL = [
   './src/modules/app-shell.js',
   './src/modules/cart.js',
   './src/modules/catalog.js',
+  './src/modules/commercial-structure.js',
   './src/modules/delivery-options.js',
   './src/modules/payment-methods.js',
   './src/modules/purchase-flow.js',
@@ -20827,7 +20828,7 @@ self.addEventListener('message', e => {
 });
 `;
 
-  return pwaLimpiarSWLegacy().then(() => navigator.serviceWorker.register('./sw.js?v=54', { scope: './' }))
+  return pwaLimpiarSWLegacy().then(() => navigator.serviceWorker.register('./sw.js?v=55', { scope: './' }))
     .then(reg => {
       console.log('[SW] Registrado:', reg.scope);
 
