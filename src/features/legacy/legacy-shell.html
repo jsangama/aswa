@@ -59,39 +59,16 @@
   <script type="module" src="src/main.js"></script>
 
   <script type="module">
-    import { initializeApp }
-      from "https://www.gstatic.com/firebasejs/11.1.0/firebase-app.js";
-    import { getFirestore, collection, addDoc, query, where,
-             getDocs, onSnapshot, serverTimestamp, doc, updateDoc,
-             getDoc, setDoc, deleteDoc, orderBy, limit }
-      from "https://www.gstatic.com/firebasejs/11.1.0/firebase-firestore.js";
-    import { getAuth, signInAnonymously, onAuthStateChanged, signInWithEmailAndPassword, signOut }
-      from "https://www.gstatic.com/firebasejs/11.1.0/firebase-auth.js";
-    import { getStorage, ref, uploadBytes, getDownloadURL }
-      from "https://www.gstatic.com/firebasejs/11.1.0/firebase-storage.js";
+    import { installFirebaseGlobals }
+      from "./src/shared/services/firebase-service.js";
 
-    const cfg = window.ASWA_CONFIG?.FIREBASE;
-    if (!cfg?.apiKey) {
-      throw new Error('Firebase config missing. Check js/app-config.js.');
-    }
-    const app    = initializeApp(cfg);
-    window.db    = getFirestore(app);
-    window.auth  = getAuth(app);
-    window.storage = getStorage(app);
-
-    window.FB = {
-      collection, addDoc, query, where, getDocs, onSnapshot,
-      serverTimestamp, doc, updateDoc, getDoc, setDoc, deleteDoc, orderBy, limit
-    };
-    window.FBStorage = { ref, uploadBytes, getDownloadURL };
-    window.ASWA_STORAGE_ENABLED = window.ASWA_CONFIG?.STORAGE_MODE === 'firebase_storage';
-    // Aliases directos para evidEnviar (sistema de misiones)
-    window.ST_REF = ref;
-    window.ST_UP  = uploadBytes;
-    window.ST_URL = getDownloadURL;
-    window.ST_REF  = ref;           // alias para evidencias de misiones
-    window.ST_UP   = uploadBytes;
-    window.ST_URL  = getDownloadURL;
+    const firebaseServices = installFirebaseGlobals(window);
+    const {
+      signInAnonymously,
+      onAuthStateChanged,
+      signInWithEmailAndPassword,
+      signOut
+    } = firebaseServices.authApi;
 
     function _aswaExpectedRoleOk(actualRole, expectedRole) {
       if (expectedRole === 'owner') return actualRole === 'owner';
@@ -17266,7 +17243,7 @@ async function admRechazarYape(pedidoId, telefono, nombre) {
    PWA — INSTALAR COMO APP
 ══════════════════════════════════════ */
 let _pwaPrompt = null;
-const ASWA_PWA_CACHE_NAME = 'aswa-v56';
+const ASWA_PWA_CACHE_NAME = 'aswa-v57';
 const ASWA_PLAY_STORE_URL = '';
 
 function pwaEsStandalone() {
@@ -20724,7 +20701,7 @@ function registrarSW() {
   if (!('serviceWorker' in navigator)) return;
 
   const SW_CODE = `
-const CACHE_NAME = 'aswa-v56';
+const CACHE_NAME = 'aswa-v57';
 const VERSION_PARAM = 'aswa_sw';
 const SHELL = [
   './',
@@ -20734,6 +20711,7 @@ const SHELL = [
   './src/app/routes.js',
   './src/features/legacy/index.js',
   './src/features/legacy/legacy-shell.html',
+  './src/shared/services/firebase-service.js',
   './src/main.js',
   './src/modules/app-shell.js',
   './src/modules/cart.js',
@@ -20833,7 +20811,7 @@ self.addEventListener('message', e => {
 });
 `;
 
-  return pwaLimpiarSWLegacy().then(() => navigator.serviceWorker.register('./sw.js?v=56', { scope: './' }))
+  return pwaLimpiarSWLegacy().then(() => navigator.serviceWorker.register('./sw.js?v=57', { scope: './' }))
     .then(reg => {
       console.log('[SW] Registrado:', reg.scope);
 
