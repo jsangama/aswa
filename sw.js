@@ -1,5 +1,5 @@
-// ASWA Service Worker v56 - https://jsangama.github.io/aswa/
-const CACHE_NAME = 'aswa-v56';
+// ASWA Service Worker v57 - https://jsangama.github.io/aswa/
+const CACHE_NAME = 'aswa-v57';
 const VERSION_PARAM = 'aswa_sw';
 const BASE = new URL('./', self.registration.scope).pathname;
 const ASSETS = [
@@ -11,6 +11,7 @@ const ASSETS = [
   BASE + 'src/app/routes.js',
   BASE + 'src/features/legacy/index.js',
   BASE + 'src/features/legacy/legacy-shell.html',
+  BASE + 'src/shared/services/firebase-service.js',
   BASE + 'src/main.js',
   BASE + 'src/modules/app-shell.js',
   BASE + 'src/modules/cart.js',

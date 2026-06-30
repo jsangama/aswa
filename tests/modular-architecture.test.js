@@ -86,6 +86,7 @@ describe('modular architecture scaffold', () => {
     expect(sw).toContain("BASE + 'src/app/routes.js'");
     expect(sw).toContain("BASE + 'src/features/legacy/index.js'");
     expect(sw).toContain("BASE + 'src/features/legacy/legacy-shell.html'");
+    expect(sw).toContain("BASE + 'src/shared/services/firebase-service.js'");
     expect(sw).toContain("BASE + 'src/main.js'");
     expect(sw).toContain("BASE + 'src/modules/app-shell.js'");
     expect(sw).toContain("BASE + 'src/modules/cart.js'");
@@ -134,5 +135,23 @@ describe('modular architecture scaffold', () => {
     expect(commercial).toContain('INSTITUTIONAL_ACCESS_CODES');
     expect(commercial).toContain('createCommercialCatalog');
     expect(commercial).toContain('isInstitutionalAccessCode');
+  });
+
+  test('keeps Firebase access behind the shared service boundary', () => {
+    const legacy = read('src/features/legacy/legacy-shell.html');
+    const firebaseService = read('src/shared/services/firebase-service.js');
+
+    expect(legacy).toContain('installFirebaseGlobals');
+    expect(legacy).toContain('./src/shared/services/firebase-service.js');
+    expect(legacy).not.toContain('from "https://www.gstatic.com/firebasejs/11.1.0/firebase-app.js"');
+    expect(legacy).not.toContain('from "https://www.gstatic.com/firebasejs/11.1.0/firebase-firestore.js"');
+    expect(legacy).not.toContain('from "https://www.gstatic.com/firebasejs/11.1.0/firebase-auth.js"');
+    expect(legacy).not.toContain('from "https://www.gstatic.com/firebasejs/11.1.0/firebase-storage.js"');
+    expect(firebaseService).toContain('installFirebaseGlobals');
+    expect(firebaseService).toContain('createFirebaseServices');
+    expect(firebaseService).toContain('getFirebaseServices');
+    expect(firebaseService).toContain('https://www.gstatic.com/firebasejs/11.1.0/firebase-app.js');
+    expect(firebaseService).toContain('windowRef.FB = services.fb');
+    expect(firebaseService).toContain('windowRef.FBStorage = services.storageApi');
   });
 });
