@@ -70,13 +70,40 @@ Pagos via Yape:
 
 El proyecto ya no debe crecer como un solo `index.html`. La direccion tecnica es modular y escalable.
 
-`index.html` se mantiene como shell legacy mientras las responsabilidades se migran poco a poco a `src/`.
+`index.html` ahora es solo el shell de arranque: contiene `<div id="app"></div>` y carga `src/app/main.js`. La experiencia actual vive temporalmente en `src/features/legacy/legacy-shell.html` mientras se migra feature por feature.
 
 ```text
 .
 |-- index.html
 |-- ugc.html
 |-- src/
+|   |-- app/
+|   |   |-- main.js
+|   |   |-- router.js
+|   |   |-- routes.js
+|   |-- layouts/
+|   |   |-- app-layout.js
+|   |   |-- admin-layout.js
+|   |   |-- delivery-layout.js
+|   |-- features/
+|   |   |-- catalog/
+|   |   |-- cart/
+|   |   |-- checkout/
+|   |   |-- payment/
+|   |   |-- delivery/
+|   |   |-- orders/
+|   |   |-- customers/
+|   |   |-- auth/
+|   |   |-- admin/
+|   |   |-- reports/
+|   |   |-- ugc/
+|   |   |-- legacy/
+|   |-- shared/
+|   |   |-- components/
+|   |   |-- services/
+|   |   |-- utils/
+|   |   |-- store/
+|   |   |-- styles/
 |   |-- main.js
 |   |-- modules/
 |   |   |-- app-shell.js
@@ -104,11 +131,15 @@ El proyecto ya no debe crecer como un solo `index.html`. La direccion tecnica es
 
 ### Capas
 
-- `src/modules`: reglas de negocio y servicios por dominio.
-- `src/components`: componentes de UI reutilizables.
-- `src/pages`: orquestadores de pantallas.
-- `src/main.js`: entrada modular que registra `window.ASWA.modules`.
-- `index.html`: shell legacy que conserva compatibilidad mientras se migra.
+- `src/app`: arranque, rutas y router de la aplicacion.
+- `src/features`: funcionalidades autonomas por dominio.
+- `src/shared`: componentes, servicios, utilidades y store compartidos.
+- `src/layouts`: layouts reutilizables para app, admin y delivery.
+- `src/modules`: servicios legacy ya extraidos, usados por features durante la migracion.
+- `src/components`: componentes legacy reutilizables.
+- `src/pages`: orquestadores legacy de pantallas.
+- `src/main.js`: entrada legacy que registra `window.ASWA.modules` dentro de `features/legacy`.
+- `index.html`: shell limpio de aplicacion.
 - `dist/`: artefacto generado para Firebase Hosting.
 
 ### Modulos Migrados
@@ -120,6 +151,8 @@ El proyecto ya no debe crecer como un solo `index.html`. La direccion tecnica es
 - Cache PWA.
 - Storage con prefijo por negocio.
 - Catalogo base.
+- Shell limpio con router feature-based.
+- Feature legacy aislado para no seguir creciendo el entrypoint.
 
 Ver tambien:
 

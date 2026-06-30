@@ -1,23 +1,56 @@
 # ASWA Platform - Architecture
 
-ASWA sigue siendo una aplicacion estatica HTML/CSS/JavaScript con Firebase, pero la direccion nueva es modular: `index.html` queda como shell legacy mientras la logica se mueve por dominios a `src/`.
+ASWA sigue siendo una aplicacion estatica HTML/CSS/JavaScript con Firebase, pero la direccion nueva es modular y feature-based: `index.html` queda como shell limpio y la funcionalidad vive en `src/`.
 
 La guia de producto viva esta en [PRODUCT_BRIEF.md](PRODUCT_BRIEF.md): mision, vision, problema, solucion, modulos principales y objetivo comercial.
 
 ## Capas
 
-- `index.html`: shell legacy de la experiencia principal. Debe ir perdiendo responsabilidades en migraciones pequenas.
+- `index.html`: shell de arranque. Solo contiene metadatos minimos, `<div id="app"></div>` y `src/app/main.js`.
 - `ugc.html`: experiencia UGC y flujo relacionado.
 - `js/app-config.js`: configuracion publica versionada.
 - `js/local-config.js`: configuracion local sensible, ignorada por Git y cargada manualmente solo en entornos privados.
-- `src/main.js`: entrada modular cargada por `index.html`.
-- `src/modules`: modulos por dominio para ir separando logica de negocio.
-- `src/components`: componentes de UI reutilizables, sin reglas de negocio.
-- `src/pages`: orquestadores de pantallas; conectan estado, modulos y componentes.
+- `src/app`: entrada principal, router y definicion de rutas.
+- `src/layouts`: layouts reutilizables para app, admin y delivery.
+- `src/features`: funcionalidades autonomas por dominio.
+- `src/shared`: componentes, servicios, utilidades, store y estilos compartidos.
+- `src/features/legacy`: experiencia actual aislada mientras se extraen features reales.
+- `src/main.js`: entrada legacy cargada dentro de `features/legacy`.
+- `src/modules`: servicios legacy ya extraidos; se iran moviendo a features.
+- `src/components`: componentes legacy reutilizables, sin reglas de negocio.
+- `src/pages`: orquestadores legacy de pantallas; conectan estado, modulos y componentes.
 - `assets/images`: imagenes fuera de la raiz para reducir desorden.
 - `docs/archive`: copias historicas o archivos de referencia que no deben competir con la app principal.
 
-## Modulos nuevos
+## Estructura Feature-Based
+
+```text
+src/
+|-- app/
+|-- layouts/
+|-- shared/
+|   |-- components/
+|   |-- services/
+|   |-- utils/
+|   |-- store/
+|   |-- styles/
+|-- features/
+|   |-- catalog/
+|   |-- cart/
+|   |-- checkout/
+|   |-- payment/
+|   |-- delivery/
+|   |-- orders/
+|   |-- customers/
+|   |-- auth/
+|   |-- admin/
+|   |-- reports/
+|   |-- ugc/
+|   |-- legacy/
+|-- assets/
+```
+
+## Modulos legacy ya extraidos
 
 - `app-shell.js`: registro de modulos y estado de preparacion.
 - `storage.js`: adaptador de `localStorage` con prefijo por negocio.
@@ -40,27 +73,27 @@ La guia de producto viva esta en [PRODUCT_BRIEF.md](PRODUCT_BRIEF.md): mision, v
 
 ## Regla De Migracion
 
-Cada nueva funcionalidad debe nacer en `src/modules` cuando sea posible. Si todavia depende del HTML legacy, se expone desde `window.ASWA.modules` y luego se reemplazan las funciones inline por llamadas al modulo.
+Cada nueva funcionalidad debe nacer en `src/features/<feature>`. Si necesita piezas compartidas, estas van en `src/shared`. Si todavia depende del HTML legacy, se conecta desde `src/features/legacy` y luego se reemplazan las funciones inline por llamadas a la feature.
 
 La migracion segura es:
 
-1. Extraer una funcion pura a `src/modules`.
-2. Si toca UI, crear o reutilizar un componente en `src/components`.
-3. Si corresponde a una pantalla, conectarla desde `src/pages`.
+1. Extraer una funcion pura al servicio de su feature.
+2. Si toca UI, crear o reutilizar un componente dentro de la feature.
+3. Si varias features lo necesitan, moverlo a `src/shared`.
 4. Cubrirla con pruebas o una prueba de contrato.
-5. Conectarla desde `src/main.js`.
-6. Reemplazar el bloque inline de `index.html` solo cuando el comportamiento ya este verificado.
+5. Conectarla desde `src/app/router.js` o desde el feature legacy mientras convivan.
+6. Reemplazar el bloque inline de `src/features/legacy/legacy-shell.html` solo cuando el comportamiento ya este verificado.
 
 ## Compatibilidad
 
-Los archivos en `js/` se mantienen para no romper la version actual. La migracion debe continuar moviendo funciones desde HTML inline hacia `src/modules` en cambios pequenos y probados.
+Los archivos en `js/` y `src/features/legacy/legacy-shell.html` se mantienen para no romper la version actual. La migracion debe continuar moviendo funciones desde HTML inline hacia features autonomas en cambios pequenos y probados.
 
 ## Firebase
 
-La inicializacion principal vive en `index.html` y `ugc.html`, leyendo `window.ASWA_CONFIG.FIREBASE`.
+La inicializacion principal de la experiencia legacy vive en `src/features/legacy/legacy-shell.html` y `ugc.html`, leyendo `window.ASWA_CONFIG.FIREBASE`.
 
 `js/app-config.js` carga defaults publicos y combina cualquier `window.ASWA_CONFIG` ya existente. No solicita archivos ignorados, para evitar 404 en Firebase Hosting.
 
-`dist/` es el artefacto generado para Firebase Hosting y contiene solo los archivos publicos necesarios. El build copia `src/` porque `index.html` carga `src/main.js` como modulo.
+`dist/` es el artefacto generado para Firebase Hosting y contiene solo los archivos publicos necesarios. El build copia `src/` porque `index.html` carga `src/app/main.js` como modulo.
 
 Las claves Firebase usadas en frontend no deben tratarse como secreto. La seguridad real debe estar en reglas de Firebase, autenticacion y validaciones del backend.
