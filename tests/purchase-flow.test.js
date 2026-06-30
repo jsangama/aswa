@@ -160,7 +160,7 @@ describe('guided purchase flow', () => {
     const sw = fs.readFileSync(path.join(__dirname, '..', 'sw.js'), 'utf8');
 
     expect(html).toContain('function pwaCompraEnCurso');
-    expect(html).toContain("const ASWA_PWA_CACHE_NAME = 'aswa-v54'");
+    expect(html).toContain("const ASWA_PWA_CACHE_NAME = 'aswa-v55'");
     expect(html).toContain('async function pwaForzarVersionNueva');
     expect(html).toContain("urlActual.searchParams.get('aswa_sw') !== ASWA_PWA_CACHE_NAME");
     expect(html).toContain("urlActual.searchParams.set('aswa_sw', ASWA_PWA_CACHE_NAME)");
@@ -173,11 +173,11 @@ describe('guided purchase flow', () => {
     expect(html).toContain("btn.style.display = pwaEsStandalone() ? 'none' : 'block'");
     expect(html).toContain("btn.textContent = pwaEsIOS() ? '📲 Instalar en iPhone' : '📲 Descargar app'");
     expect(html).toContain('/\\/sw\\.js(?:\\?|$)/.test(script)');
-    expect(html).toContain("navigator.serviceWorker.register('./sw.js?v=54'");
-    expect(html).toContain("const CACHE_NAME = 'aswa-v54'");
+    expect(html).toContain("navigator.serviceWorker.register('./sw.js?v=55'");
+    expect(html).toContain("const CACHE_NAME = 'aswa-v55'");
     expect(html).toContain("fetch(new Request(e.request, { cache: 'no-store' }))");
     expect(html).toContain("url.searchParams.set(VERSION_PARAM, CACHE_NAME)");
-    expect(sw).toContain("const CACHE_NAME = 'aswa-v54'");
+    expect(sw).toContain("const CACHE_NAME = 'aswa-v55'");
     expect(sw).toContain("fetch(new Request(e.request, { cache: 'no-store' }))");
     expect(sw).toContain("url.searchParams.set(VERSION_PARAM, CACHE_NAME)");
   });
