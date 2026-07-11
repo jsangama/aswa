@@ -107,6 +107,10 @@ describe('modular architecture scaffold', () => {
     const readme = read('README.md');
 
     expect(readme).toContain('## Arquitectura Actual');
+    expect(readme).toContain('Este proyecto utiliza una arquitectura modular');
+    expect(readme).toContain('multiples archivos y carpetas');
+    expect(readme).toContain('componentes, servicios y paginas independientes');
+    expect(readme).toContain('plataforma SaaS');
     expect(readme).toContain('src/app');
     expect(readme).toContain('src/features');
     expect(readme).toContain('src/shared');
