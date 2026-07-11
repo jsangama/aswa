@@ -1,0 +1,5 @@
+# GitHub Linguist
+# These files are kept for compatibility/history, but should not define the
+# repository language mix shown in GitHub's "Languages" panel.
+docs/archive/** linguist-generated=true
+src/features/legacy/legacy-shell.html linguist-generated=true

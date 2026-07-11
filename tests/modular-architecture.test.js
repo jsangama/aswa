@@ -127,6 +127,16 @@ describe('modular architecture scaffold', () => {
     expect(readme).not.toContain('Tailwind CSS');
   });
 
+  test('excludes legacy and archive html from GitHub language statistics', () => {
+    const attributes = read('.gitattributes');
+    const readme = read('README.md');
+
+    expect(attributes).toContain('docs/archive/** linguist-generated=true');
+    expect(attributes).toContain('src/features/legacy/legacy-shell.html linguist-generated=true');
+    expect(readme).toContain('Nota sobre GitHub Languages');
+    expect(readme).toContain('linguist-generated');
+  });
+
   test('keeps commercial catalog data separated from catalog service logic', () => {
     const catalog = read('src/modules/catalog.js');
     const commercial = read('src/modules/commercial-structure.js');
