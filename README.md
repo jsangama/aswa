@@ -76,6 +76,8 @@ La logica de la aplicacion se organiza por responsabilidades: pantallas, compone
 
 `index.html` ahora es solo el shell de arranque: contiene `<div id="app"></div>` y carga `src/app/main.js`. La experiencia actual vive temporalmente en `src/features/legacy/legacy-shell.html` mientras se migra feature por feature.
 
+Nota sobre GitHub Languages: el archivo legacy y los archivos historicos se conservan para compatibilidad, pero estan marcados en `.gitattributes` como `linguist-generated` para que no distorsionen el porcentaje real de lenguajes del proyecto.
+
 ```text
 .
 |-- index.html
