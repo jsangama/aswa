@@ -2,6 +2,10 @@
 
 ASWA sigue siendo una aplicacion estatica HTML/CSS/JavaScript con Firebase, pero la direccion nueva es modular y feature-based: `index.html` queda como shell limpio y la funcionalidad vive en `src/`.
 
+Este proyecto esta distribuido en multiples archivos y carpetas, siguiendo una arquitectura modular. No se concentra toda la logica en un unico `index.html`, sino que se organiza en componentes, servicios y paginas independientes para facilitar el mantenimiento y la escalabilidad.
+
+La arquitectura separa interfaz, logica de negocio, estado compartido y acceso a Firebase. Cada modulo debe cargar solo lo que necesita y debe poder evolucionar sin afectar a las demas funcionalidades.
+
 La guia de producto viva esta en [PRODUCT_BRIEF.md](PRODUCT_BRIEF.md): mision, vision, problema, solucion, modulos principales y objetivo comercial.
 
 ## Capas

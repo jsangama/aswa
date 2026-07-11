@@ -70,6 +70,10 @@ Pagos via Yape:
 
 El proyecto ya no debe crecer como un solo `index.html`. La direccion tecnica es modular y escalable.
 
+Este proyecto utiliza una arquitectura modular. Esta distribuido en multiples archivos y carpetas, con componentes, servicios y paginas independientes, en lugar de concentrar todo en un unico `index.html`. Esto facilita su mantenimiento y escalabilidad.
+
+La logica de la aplicacion se organiza por responsabilidades: pantallas, componentes reutilizables, servicios de datos, estado compartido y funcionalidades independientes. Esta estructura prepara ASWA para crecer como plataforma SaaS sin volver a depender de un archivo gigante.
+
 `index.html` ahora es solo el shell de arranque: contiene `<div id="app"></div>` y carga `src/app/main.js`. La experiencia actual vive temporalmente en `src/features/legacy/legacy-shell.html` mientras se migra feature por feature.
 
 ```text
